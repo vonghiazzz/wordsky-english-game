@@ -1,7 +1,7 @@
 // WordSky V4 server-side API. Vercel Node Function, PostgreSQL as durable source of truth.
 import {sql,transaction} from '../lib/db.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
-import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reconcile,answerQuestion,publicState,fail} from '../lib/game.js';
+import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 
 const AUTH_COOKIE='ws_auth';
@@ -78,7 +78,24 @@ function adminInputEvent(b){
  return {title,password_hash:hashPassword(b.password),max_players:max,rounds:b.rounds.map(normalizeRound)};
 }
 function codeGen(){const letters='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:7},()=>letters[randomInt(letters.length)]).join('')}
+// Check the active vocabulary in the same DB transaction as event creation/update.
+async function ensureVocabulary(db,rounds){
+ for(const round of rounds){
+  const needed=requiredWords(round);
+  if(!needed)continue;
+  if(!round.topic_id)throw fail('Vòng từ vựng phải chọn chủ đề');
+  const count=await db.query('SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id WHERE w.topic_id=$1 AND w.enabled=true AND t.enabled=true',[round.topic_id]);
+  const available=count.rows[0]?.n||0;
+  if(available<needed)throw fail(`Chủ đề cần ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ.`);
+ }
+}
+// Lock referenced events while checking the state to avoid live vocabulary edits.
+async function ensureTopicNotLive(db,topicId){
+ const active=await db.query("SELECT e.id FROM ws_events e JOIN ws_rounds r ON r.event_id=e.id WHERE r.topic_id=$1 AND e.status IN ('OPEN','LIVE') FOR SHARE OF e",[topicId]);
+ if(active.rows.length)throw fail('Không thể sửa hoặc ẩn từ vựng trong chủ đề của cuộc thi đang mở.',409);
+}
 async function adminCreateEvent(req){mustAdmin(req);const b=adminInputEvent(body(req));return transaction(async db=>{
+ await ensureVocabulary(db,b.rounds);
  let code=codeGen();
  const rr=await db.query('INSERT INTO ws_events(title,join_code,password_hash,max_players) VALUES($1,$2,$3,$4) RETURNING id,join_code,status',[b.title,code,b.password_hash,b.max_players]);
  const e=rr.rows[0];await writeRounds(db,e.id,b.rounds);await audit(db,'event.create',e.id,{title:b.title,rounds:b.rounds.length});return e;
@@ -90,7 +107,13 @@ async function adminUpdateEvent(req,id){mustAdmin(req);if(badId(id))throw fail('
  const title=b.title?normalizeName(b.title,120):x.rows[0].title;
  const max=b.max_players?toInt(b.max_players):x.rows[0].max_players;
  if(title.length<3||max<2||max>500)throw fail('Cấu hình không hợp lệ');
- if(b.rounds){if(!Array.isArray(b.rounds)||b.rounds.length<1||b.rounds.length>12)throw fail('Vòng thi không hợp lệ');await db.query('DELETE FROM ws_rounds WHERE event_id=$1',[id]);await writeRounds(db,id,b.rounds.map(normalizeRound))}
+ if(b.rounds){
+  if(!Array.isArray(b.rounds)||b.rounds.length<1||b.rounds.length>12)throw fail('Vòng thi không hợp lệ');
+  const rounds=b.rounds.map(normalizeRound);
+  await ensureVocabulary(db,rounds);
+  await db.query('DELETE FROM ws_rounds WHERE event_id=$1',[id]);
+  await writeRounds(db,id,rounds);
+ }
  if(b.password && (typeof b.password!=='string'||b.password.length<8))throw fail('Mật khẩu phòng ít nhất 8 ký tự');
  const pw=b.password?hashPassword(b.password):x.rows[0].password_hash;
  await db.query('UPDATE ws_events SET title=$1,max_players=$2,password_hash=$3 WHERE id=$4',[title,max,pw,id]);await audit(db,'event.update',id,{title,max});return {success:true};
@@ -99,6 +122,11 @@ async function adminStatus(req,id,verb){mustAdmin(req);if(badId(id))throw fail('
  const a=await db.query('SELECT * FROM ws_events WHERE id=$1 FOR UPDATE',[id]);if(!a.rows.length)throw fail('Không tìm thấy cuộc thi',404);let e=a.rows[0];
  const expected=verb==='open'?['DRAFT']:verb==='start'?['OPEN']:['OPEN','LIVE','DRAFT'];
  if(!expected.includes(e.status))throw fail('Trạng thái cuộc thi không hợp lệ',409);
+ if(verb==='open'||verb==='start'){
+  const rr=await db.query('SELECT mode,difficulty,question_count,topic_id FROM ws_rounds WHERE event_id=$1 ORDER BY position',[id]);
+  if(!rr.rows.length)throw fail('Cuộc thi chưa có vòng chơi');
+  await ensureVocabulary(db,rr.rows);
+ }
  if(verb==='start'){
   const cnt=await db.query('SELECT count(*)::int n FROM ws_participants WHERE event_id=$1',[id]);if(cnt.rows[0].n<1)throw fail('Cần ít nhất một người tham gia trước khi bắt đầu');
  }
@@ -156,7 +184,7 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
   let words=[];
   if(round.mode!=='CAR'){
    if(!round.topic_id)throw fail('Vòng học từ vựng chưa chọn chủ đề',400);
-   const wordLimit=round.question_count+(round.mode==='MATCH'?4:0);const data=await db.query('SELECT id,english,meaning FROM ws_words WHERE topic_id=$1 AND enabled=true ORDER BY random() LIMIT $2',[round.topic_id,wordLimit]);words=data.rows;
+   const wordLimit=requiredWords(round);const data=await db.query('SELECT id,english,meaning FROM ws_words WHERE topic_id=$1 AND enabled=true ORDER BY random() LIMIT $2',[round.topic_id,wordLimit]);words=data.rows;
   }
   const st=createState(round,words,now,ends);
   const saved=await db.query('INSERT INTO ws_runs(participant_id,round_id,state) VALUES($1,$2,$3::jsonb) ON CONFLICT(participant_id,round_id) DO NOTHING RETURNING id,state',[p.id,roundId,JSON.stringify(st)]);
@@ -198,13 +226,26 @@ export default async function handler(req,res){
    const d=await sql('INSERT INTO ws_topics(title) VALUES($1) RETURNING id,title',[title]);return output(res,201,d.rows[0]);
   }
   if(method==='PATCH'&&r[0]==='admin'&&r[1]==='topics'&&r.length===3){mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');const b=body(req);const title=normalizeName(b.title,80);if(title.length<2)throw fail('Tên không hợp lệ');const d=await sql('UPDATE ws_topics SET title=$1 WHERE id=$2 RETURNING id,title',[title,r[2]]);if(!d.rows.length)throw fail('Không tìm thấy',404);return output(res,200,d.rows[0])}
-  if(method==='DELETE'&&r[0]==='admin'&&r[1]==='topics'&&r.length===3){mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');await sql('UPDATE ws_topics SET enabled=false WHERE id=$1',[r[2]]);return output(res,200,{ok:true})}
+  if(method==='DELETE'&&r[0]==='admin'&&r[1]==='topics'&&r.length===3){
+   mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');
+   await transaction(async db=>{await ensureTopicNotLive(db,r[2]);await db.query('UPDATE ws_topics SET enabled=false WHERE id=$1',[r[2]])});
+   return output(res,200,{ok:true});
+  }
   if(method==='POST'&&key==='admin/words'){
    mustAdmin(req);const b=body(req);if(badId(b.topic_id))throw fail('Chủ đề không hợp lệ');const english=normalizeName(b.english,80),meaning=normalizeName(b.meaning,180);
-   if(!english||!meaning)throw fail('Thiếu từ tiếng Anh hoặc nghĩa');const q=await sql('INSERT INTO ws_words(topic_id,english,meaning,ipa,example,translation) VALUES($1,$2,$3,$4,$5,$6) RETURNING id',[b.topic_id,english,meaning,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250)]);return output(res,201,q.rows[0]);
+   if(!english||!meaning)throw fail('Thiếu từ tiếng Anh hoặc nghĩa');const q=await transaction(async db=>{await ensureTopicNotLive(db,b.topic_id);return db.query('INSERT INTO ws_words(topic_id,english,meaning,ipa,example,translation) VALUES($1,$2,$3,$4,$5,$6) RETURNING id',[b.topic_id,english,meaning,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250)])});return output(res,201,q.rows[0]);
   }
-  if(method==='PATCH'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');const b=body(req);const en=normalizeName(b.english,80),vi=normalizeName(b.meaning,180);if(!en||!vi)throw fail('Thiếu từ hoặc nghĩa');const q=await sql('UPDATE ws_words SET english=$1,meaning=$2,ipa=$3,example=$4,translation=$5 WHERE id=$6 RETURNING id',[en,vi,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250),r[2]]);if(!q.rows.length)throw fail('Không tìm thấy',404);return output(res,200,q.rows[0])}
-  if(method==='DELETE'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');await sql('UPDATE ws_words SET enabled=false WHERE id=$1',[r[2]]);return output(res,200,{ok:true})}
+  if(method==='PATCH'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');const b=body(req);const en=normalizeName(b.english,80),vi=normalizeName(b.meaning,180);if(!en||!vi)throw fail('Thiếu từ hoặc nghĩa');const q=await transaction(async db=>{
+    const current=await db.query('SELECT topic_id FROM ws_words WHERE id=$1 FOR UPDATE',[r[2]]);if(!current.rows.length)throw fail('Không tìm thấy',404);
+    await ensureTopicNotLive(db,current.rows[0].topic_id);
+    return db.query('UPDATE ws_words SET english=$1,meaning=$2,ipa=$3,example=$4,translation=$5 WHERE id=$6 RETURNING id',[en,vi,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250),r[2]]);
+   });return output(res,200,q.rows[0]);
+  }
+  if(method==='DELETE'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){
+   mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');
+   await transaction(async db=>{const word=await db.query('SELECT topic_id FROM ws_words WHERE id=$1 FOR UPDATE',[r[2]]);if(!word.rows.length)throw fail('Không tìm thấy',404);await ensureTopicNotLive(db,word.rows[0].topic_id);await db.query('UPDATE ws_words SET enabled=false WHERE id=$1',[r[2]])});
+   return output(res,200,{ok:true});
+  }
   if(method==='GET'&&key==='admin/features'){mustAdmin(req);const features=await sql('SELECT feature_key,enabled,updated_at FROM ws_features ORDER BY feature_key');return output(res,200,{features:features.rows})}
   if(method==='PATCH'&&r[0]==='admin'&&r[1]==='features'&&r[2]&&r.length===3){mustAdmin(req);const key=r[2].toUpperCase();if(!['MATCH','BOMB','CAR','ATTENDANCE','SIGNUP'].includes(key))throw fail('Feature không hợp lệ');const b=body(req);if(typeof b.enabled!=='boolean')throw fail('enabled phải là true hoặc false');const q=await sql('INSERT INTO ws_features(feature_key,enabled) VALUES($1,$2) ON CONFLICT(feature_key) DO UPDATE SET enabled=excluded.enabled,updated_at=now() RETURNING feature_key,enabled',[key,b.enabled]);return output(res,200,q.rows[0])}
   if(method==='GET'&&key==='admin/events'){mustAdmin(req);return output(res,200,{events:await adminList()})}

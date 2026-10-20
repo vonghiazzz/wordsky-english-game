@@ -1,13 +1,148 @@
-import test from 'node:test';import assert from 'node:assert/strict';
-import {rankForXp,awardedAttendance,createState,answerQuestion,reconcile,publicState,normalizeRound,roundWindows,normalizeAnswer} from '../lib/game.js';
-const words=Array.from({length:20},(_,i)=>({id:`word-${i}`,english:`word${i}`,meaning:`Nghĩa ${i}`}));
-const base={difficulty:'NORMAL',duration_seconds:120,question_count:5,points_per_correct:100,penalty:25,weight:1};
-test('rank & attendance',()=>{assert.equal(rankForXp(0),'Đồng');assert.equal(rankForXp(600),'Vàng');assert.equal(awardedAttendance(1),25);assert.equal(awardedAttendance(9),55)});
-test('round config and time windows',()=>{assert.throws(()=>normalizeRound({...base,mode:'MATCH',weight:200}));const windows=roundWindows('2026-10-20T00:00:00Z',[{duration_seconds:50},{duration_seconds:90}]);assert.equal(new Date(windows[1].ends_at).getTime()-new Date(windows[0].starts_at).getTime(),140000)});
-test('matching: server determines correct pair and prevents repeating',()=>{const r={...base,mode:'MATCH'},s=createState(r,words,1e9);const ids=s.pairs.map(p=>p.id);const ok=answerQuestion(s,r,{leftId:ids[0],rightId:ids[0]},1e9+100);assert.equal(ok.result.correct,true);assert.equal(s.score,100);assert.throws(()=>answerQuestion(s,r,{leftId:ids[0],rightId:ids[0]},1e9+200));const masked=publicState(s);assert.ok(masked.pairs.every(x=>!('answer' in x)));assert.ok(masked.distractors.every(x=>!('english' in x)))});
-test('bomb: correct word awards points, missed bomb loses health',()=>{const r={...base,mode:'BOMB'},s=createState(r,words,1e9);const b=s.bombs[0];const ok=answerQuestion(s,r,{bombId:b.id,answer:b.english.toUpperCase()},1e9+50);assert.equal(ok.result.correct,true);assert.equal(s.score,100);assert.equal(publicState(s,1e9+50).bombs.some(x=>'english' in x),false);const before=s.health;reconcile(s,r,1e9+20000);assert.ok(s.health<before)});
-test('car: safe lane earns points, collisions lose health',()=>{const r={...base,mode:'CAR'},s=createState(r,words,1e9);const correctLane=[0,1,2,3,4].find(x=>!s.levels[0].blocked.includes(x));answerQuestion(s,r,{lane:correctLane},1e9+20);assert.ok(s.score>=100);const bad=s.levels[1].blocked[0];answerQuestion(s,r,{lane:bad},1e9+40);assert.equal(s.health,2)});
-test('normalizes accents and prevents unsafe/too long answers',()=>{assert.equal(normalizeAnswer(' WoRD-12 '),'word 12');const r={...base,mode:'BOMB'},s=createState(r,words,1e9);assert.throws(()=>answerQuestion(s,r,{bombId:s.bombs[0].id,answer:'x'.repeat(120)},1e9+10))});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  rankForXp, awardedAttendance, createState, answerQuestion, reconcile,
+  publicState, normalizeRound, roundWindows, normalizeAnswer,
+  requiredWords, assertWordCapacity, MIN_CAR_STEP_MS,
+} from '../lib/game.js';
 
-test('difficulty adds matching distractors without leaking their English answers',()=>{const normal=createState({...base,mode:'MATCH',difficulty:'NORMAL'},words,1000);const hard=createState({...base,mode:'MATCH',difficulty:'HARD'},words,1000);assert.equal(normal.distractors.length,2);assert.equal(hard.distractors.length,4);const masked=publicState(hard,1001);assert.ok(masked.distractors.every(x=>!('english' in x)))});
-test('car multiplier lane gives double correct points',()=>{const round={...base,mode:'CAR',difficulty:'HARD'},state=createState(round,words,2000);const doubleLane=state.levels[0].double;assert.equal(state.levels[0].blocked.includes(doubleLane),false);const answer=answerQuestion(state,round,{lane:doubleLane},2002);assert.equal(answer.result.awarded,200);assert.equal(answer.result.multiplier,2)});
+const words = Array.from({ length: 20 }, (_, i) => ({
+  id: `word-${i}`, english: `word${i}`, meaning: `Meaning ${i}`,
+}));
+const base = { difficulty: 'NORMAL', duration_seconds: 120, question_count: 5,
+  points_per_correct: 100, penalty: 25, weight: 1 };
+
+const playRight = (s, index) => ({ leftId: s.pairs[index].id, rightId: s.pairs[index].rightId });
+
+test('rank and attendance', () => {
+  assert.equal(rankForXp(0), '\u0110\u1ed3ng');
+  assert.equal(rankForXp(600), 'V\u00e0ng');
+  assert.equal(awardedAttendance(1), 25);
+  assert.equal(awardedAttendance(9), 55);
+});
+
+test('round config and time windows', () => {
+  assert.throws(() => normalizeRound({ ...base, mode: 'MATCH', weight: 200 }));
+  assert.throws(() => normalizeRound({ ...base, mode: 'MATCH', topic_id: null }));
+  const windows = roundWindows('2026-10-20T00:00:00Z', [{ duration_seconds: 50 }, { duration_seconds: 90 }]);
+  assert.equal(new Date(windows[1].ends_at) - new Date(windows[0].starts_at), 140000);
+});
+
+test('MATCH: server validates correct pair by a secret mapping, never a shared public ID', () => {
+  const round = { ...base, mode: 'MATCH' };
+  const state = createState(round, words, 1000000);
+  const pub = publicState(state, 1000000);
+  const leftIds = new Set(pub.pairs.map(p => p.id));
+  const rightIds = new Set(pub.rightOptions.map(p => p.id));
+
+  assert.equal(pub.rightOptions.length, round.question_count + 2);
+  assert.equal(rightIds.size, pub.rightOptions.length);
+  assert.ok(pub.pairs.every(p => !('meaning' in p) && !('rightId' in p)));
+  assert.ok(pub.rightOptions.every(p => !('english' in p) && !leftIds.has(p.id)));
+  assert.ok(!('distractors' in pub));
+  assert.equal(pub.rightOptions.every((p, i, arr) => i === 0 || p.id > arr[i - 1].id), true);
+
+  // A left ID can never be used as a right ID, even if it is the matching word.
+  assert.throws(() => answerQuestion(state, round, {
+    leftId: state.pairs[0].id, rightId: state.pairs[0].id,
+  }, 1000100));
+
+  const answer = answerQuestion(state, round, playRight(state, 0), 1000200);
+  assert.equal(answer.result.correct, true);
+  assert.equal(state.score, 100);
+  assert.throws(() => answerQuestion(state, round, playRight(state, 0), 1000300));
+  assert.ok(pub.pairs.every(p => !('meaning' in p)));
+});
+
+test('MATCH: wrong independent right choice loses points, distractor is not a valid match', () => {
+  const round = { ...base, mode: 'MATCH', difficulty: 'HARD' };
+  const state = createState(round, words, 1000000);
+  const left = state.pairs[0];
+  const other = state.pairs[1].rightId;
+  const wrong = answerQuestion(state, round, { leftId: left.id, rightId: other }, 1000100);
+  assert.equal(wrong.result.correct, false);
+  assert.equal(state.mistakes, 1);
+  assert.equal(state.pairs[0].matched, false);
+  const distractor = state.distractors[0];
+  answerQuestion(state, round, { leftId: left.id, rightId: distractor.rightId }, 1000200);
+  assert.equal(state.mistakes, 2);
+  assert.equal(answerQuestion(state, round, { leftId: left.id, rightId: left.rightId }, 1000300).result.correct, true);
+});
+
+test('BOMB: correct word scores, missed bombs lose health, public data hides English', () => {
+  const round = { ...base, mode: 'BOMB' };
+  const state = createState(round, words, 1000000);
+  const bomb = state.bombs[0];
+  assert.equal(answerQuestion(state, round, { bombId: bomb.id, answer: bomb.english.toUpperCase() }, 1000050).result.correct, true);
+  assert.equal(state.score, 100);
+  assert.ok(publicState(state, 1000050).bombs.every(b => !('english' in b)));
+  const healthBefore = state.health;
+  reconcile(state, round, 1020000);
+  assert.ok(state.health < healthBefore);
+});
+
+test('CAR: reject early input on server, allow only when the stage is ready', () => {
+  const round = { ...base, mode: 'CAR' };
+  const now = 1000000;
+  const state = createState(round, [], now);
+  const first = [0, 1, 2, 3, 4].find(lane => !state.levels[0].blocked.includes(lane));
+  assert.equal(publicState(state, now).nextAllowedAt, now + MIN_CAR_STEP_MS);
+  for (const early of [now, now + 1, now + MIN_CAR_STEP_MS - 1]) {
+    assert.throws(() => answerQuestion(state, round, { lane: first }, early), e => e.status === 409);
+    assert.equal(state.index, 0);
+    assert.equal(state.score, 0);
+  }
+  const accepted = answerQuestion(state, round, { lane: first }, now + MIN_CAR_STEP_MS);
+  assert.equal(accepted.result.correct, true);
+  assert.ok(state.score >= 100);
+  assert.equal(state.index, 1);
+  const next = state.levels[1].blocked[0];
+  assert.throws(() => answerQuestion(state, round, { lane: next }, now + MIN_CAR_STEP_MS + 1), e => e.status === 409);
+  assert.equal(state.index, 1);
+  answerQuestion(state, round, { lane: next }, now + MIN_CAR_STEP_MS * 2);
+  assert.equal(state.health, 2);
+});
+
+test('CAR: impossible to finish 8 stages within milliseconds and earn full score', () => {
+  const round = { ...base, mode: 'CAR', question_count: 8 };
+  const state = createState(round, [], 1000000);
+  for (let index = 0; index < 8; index++) {
+    const lane = state.levels[state.index]?.double;
+    assert.throws(() => answerQuestion(state, round, { lane }, 1000000 + index + 1), e => e.status === 409);
+  }
+  assert.equal(state.index, 0);
+  assert.equal(state.score, 0);
+});
+
+test('CAR: multiplier lane still gives double points after the readiness period', () => {
+  const round = { ...base, mode: 'CAR', difficulty: 'HARD' };
+  const state = createState(round, [], 2000);
+  const double = state.levels[0].double;
+  assert.ok(!state.levels[0].blocked.includes(double));
+  const result = answerQuestion(state, round, { lane: double }, 2000 + MIN_CAR_STEP_MS);
+  assert.equal(result.result.awarded, 200);
+  assert.equal(result.result.multiplier, 2);
+});
+
+test('MATCH and BOMB vocabulary capacity must cover all choices and distractors', () => {
+  const normal = { ...base, mode: 'MATCH', question_count: 8, difficulty: 'NORMAL' };
+  const hard = { ...normal, difficulty: 'HARD' };
+  const easy = { ...normal, difficulty: 'EASY' };
+  assert.equal(requiredWords(normal), 10);
+  assert.equal(requiredWords(hard), 12);
+  assert.equal(requiredWords(easy), 8);
+  assert.equal(requiredWords({ ...base, mode: 'BOMB', question_count: 10 }), 10);
+  assert.equal(requiredWords({ ...base, mode: 'CAR', question_count: 30 }), 0);
+  assert.throws(() => assertWordCapacity(hard, 10), e => e.status === 400);
+  assert.throws(() => createState(hard, words.slice(0, 10), 1000), e => e.status === 400);
+  assert.equal(createState(normal, words.slice(0, 10), 1000).distractors.length, 2);
+  assert.equal(createState({ ...hard, question_count: 6 }, words.slice(0, 10), 1000).distractors.length, 4);
+  assert.throws(() => createState({ ...base, mode: 'BOMB', question_count: 11 }, words.slice(0, 10), 1000), e => e.status === 400);
+});
+
+test('normalization blocks excessive BOM input', () => {
+  assert.equal(normalizeAnswer(' WoRD-12 '), 'word 12');
+  const round = { ...base, mode: 'BOMB' };
+  const state = createState(round, words, 1000000);
+  assert.throws(() => answerQuestion(state, round, { bombId: state.bombs[0].id, answer: 'x'.repeat(120) }, 1000010));
+});
