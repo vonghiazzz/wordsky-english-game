@@ -1,0 +1,1874 @@
+{
+  "Daily Life": [
+    [
+      "wake",
+      "/weɪk/",
+      "Thức dậy (wake up)",
+      "I wake up at seven.",
+      "Tôi thức dậy lúc bảy giờ."
+    ],
+    [
+      "sleep",
+      "/sliːp/",
+      "Ngủ",
+      "I sleep at ten.",
+      "Tôi ngủ lúc mười giờ."
+    ],
+    [
+      "study",
+      "/ˈstʌdi/",
+      "Học",
+      "I study English.",
+      "Tôi học tiếng Anh."
+    ],
+    [
+      "work",
+      "/wɜːrk/",
+      "Làm việc",
+      "I work every day.",
+      "Tôi làm việc mỗi ngày."
+    ],
+    [
+      "eat",
+      "/iːt/",
+      "Ăn",
+      "I eat breakfast.",
+      "Tôi ăn sáng."
+    ],
+    [
+      "drink",
+      "/drɪŋk/",
+      "Uống",
+      "I drink water.",
+      "Tôi uống nước."
+    ],
+    [
+      "walk",
+      "/wɔːk/",
+      "Đi bộ",
+      "I walk to school.",
+      "Tôi đi bộ đến trường."
+    ],
+    [
+      "read",
+      "/riːd/",
+      "Đọc",
+      "I read a book.",
+      "Tôi đọc sách."
+    ],
+    [
+      "write",
+      "/raɪt/",
+      "Viết",
+      "I write a note.",
+      "Tôi viết ghi chú."
+    ],
+    [
+      "cook",
+      "/kʊk/",
+      "Nấu ăn",
+      "I cook dinner.",
+      "Tôi nấu bữa tối."
+    ]
+  ],
+  "Family": [
+    [
+      "mother",
+      "/ˈmʌðər/",
+      "Mẹ",
+      "My mother is kind.",
+      "Mẹ tôi tốt bụng."
+    ],
+    [
+      "father",
+      "/ˈfɑːðər/",
+      "Bố",
+      "My father is tall.",
+      "Bố tôi cao."
+    ],
+    [
+      "sister",
+      "/ˈsɪstər/",
+      "Chị / em gái",
+      "My sister is happy.",
+      "Chị tôi vui vẻ."
+    ],
+    [
+      "brother",
+      "/ˈbrʌðər/",
+      "Anh / em trai",
+      "My brother is young.",
+      "Em trai tôi còn nhỏ."
+    ],
+    [
+      "friend",
+      "/frend/",
+      "Bạn bè",
+      "She is my friend.",
+      "Cô ấy là bạn tôi."
+    ],
+    [
+      "family",
+      "/ˈfæməli/",
+      "Gia đình",
+      "I love my family.",
+      "Tôi yêu gia đình."
+    ],
+    [
+      "baby",
+      "/ˈbeɪbi/",
+      "Em bé",
+      "The baby is sleeping.",
+      "Em bé đang ngủ."
+    ],
+    [
+      "child",
+      "/tʃaɪld/",
+      "Đứa trẻ",
+      "The child is playing.",
+      "Đứa trẻ đang chơi."
+    ],
+    [
+      "uncle",
+      "/ˈʌŋkəl/",
+      "Chú / bác / cậu",
+      "My uncle is funny.",
+      "Chú tôi hài hước."
+    ],
+    [
+      "aunt",
+      "/ænt/",
+      "Cô / dì / bác gái",
+      "My aunt is a teacher.",
+      "Dì tôi là giáo viên."
+    ]
+  ],
+  "Food": [
+    [
+      "apple",
+      "/ˈæpəl/",
+      "Quả táo",
+      "I eat an apple.",
+      "Tôi ăn một quả táo."
+    ],
+    [
+      "bread",
+      "/bred/",
+      "Bánh mì",
+      "I like bread.",
+      "Tôi thích bánh mì."
+    ],
+    [
+      "rice",
+      "/raɪs/",
+      "Cơm / gạo",
+      "We eat rice.",
+      "Chúng tôi ăn cơm."
+    ],
+    [
+      "milk",
+      "/mɪlk/",
+      "Sữa",
+      "I drink milk.",
+      "Tôi uống sữa."
+    ],
+    [
+      "water",
+      "/ˈwɔːtər/",
+      "Nước",
+      "Water is important.",
+      "Nước rất quan trọng."
+    ],
+    [
+      "egg",
+      "/eɡ/",
+      "Trứng",
+      "I eat an egg.",
+      "Tôi ăn một quả trứng."
+    ],
+    [
+      "fish",
+      "/fɪʃ/",
+      "Cá",
+      "I like fish.",
+      "Tôi thích cá."
+    ],
+    [
+      "banana",
+      "/bəˈnænə/",
+      "Chuối",
+      "This banana is sweet.",
+      "Quả chuối này ngọt."
+    ],
+    [
+      "soup",
+      "/suːp/",
+      "Súp",
+      "The soup is hot.",
+      "Súp nóng."
+    ],
+    [
+      "fruit",
+      "/fruːt/",
+      "Trái cây",
+      "I eat fruit.",
+      "Tôi ăn trái cây."
+    ]
+  ],
+  "Places": [
+    [
+      "school",
+      "/skuːl/",
+      "Trường học",
+      "I go to school.",
+      "Tôi đến trường."
+    ],
+    [
+      "house",
+      "/haʊs/",
+      "Ngôi nhà",
+      "This is my house.",
+      "Đây là nhà tôi."
+    ],
+    [
+      "park",
+      "/pɑːrk/",
+      "Công viên",
+      "We walk in the park.",
+      "Chúng tôi đi bộ trong công viên."
+    ],
+    [
+      "shop",
+      "/ʃɒp/",
+      "Cửa hàng",
+      "I go to the shop.",
+      "Tôi đến cửa hàng."
+    ],
+    [
+      "office",
+      "/ˈɒfɪs/",
+      "Văn phòng",
+      "She works in an office.",
+      "Cô ấy làm trong văn phòng."
+    ],
+    [
+      "room",
+      "/ruːm/",
+      "Căn phòng",
+      "My room is clean.",
+      "Phòng tôi sạch sẽ."
+    ],
+    [
+      "street",
+      "/striːt/",
+      "Con đường",
+      "The street is busy.",
+      "Con đường đông đúc."
+    ],
+    [
+      "city",
+      "/ˈsɪti/",
+      "Thành phố",
+      "I live in a city.",
+      "Tôi sống ở thành phố."
+    ],
+    [
+      "beach",
+      "/biːtʃ/",
+      "Bãi biển",
+      "We visit the beach.",
+      "Chúng tôi đến bãi biển."
+    ],
+    [
+      "market",
+      "/ˈmɑːrkɪt/",
+      "Chợ",
+      "She goes to the market.",
+      "Cô ấy đi chợ."
+    ]
+  ],
+  "Greetings - Chào hỏi": [
+    [
+      "hello",
+      "/həˈloʊ/",
+      "Xin chào",
+      "Hello, my name is Mai.",
+      "Xin chào, tôi tên là Mai."
+    ],
+    [
+      "hi",
+      "/haɪ/",
+      "Chào (thân mật)",
+      "Hi, how are you?",
+      "Chào, bạn khỏe không?"
+    ],
+    [
+      "goodbye",
+      "/ɡʊdˈbaɪ/",
+      "Tạm biệt",
+      "Goodbye, see you tomorrow.",
+      "Tạm biệt, hẹn gặp bạn ngày mai."
+    ],
+    [
+      "welcome",
+      "/ˈwelkəm/",
+      "Chào mừng",
+      "Welcome to our home.",
+      "Chào mừng đến nhà chúng tôi."
+    ],
+    [
+      "please",
+      "/pliːz/",
+      "Làm ơn",
+      "Please open the door.",
+      "Làm ơn mở cửa."
+    ],
+    [
+      "thanks",
+      "/θæŋks/",
+      "Cảm ơn",
+      "Thanks for your help.",
+      "Cảm ơn bạn đã giúp đỡ."
+    ],
+    [
+      "sorry",
+      "/ˈsɑːri/",
+      "Xin lỗi",
+      "Sorry, I am late.",
+      "Xin lỗi, tôi đến muộn."
+    ],
+    [
+      "yes",
+      "/jes/",
+      "Có / vâng",
+      "Yes, I understand.",
+      "Vâng, tôi hiểu."
+    ],
+    [
+      "no",
+      "/noʊ/",
+      "Không",
+      "No, I do not need it.",
+      "Không, tôi không cần nó."
+    ],
+    [
+      "excuse me",
+      "/ɪkˈskjuːz miː/",
+      "Xin lỗi, cho hỏi",
+      "Excuse me, where is the station?",
+      "Xin lỗi, nhà ga ở đâu?"
+    ]
+  ],
+  "Numbers - Số đếm": [
+    [
+      "one",
+      "/wʌn/",
+      "Một",
+      "I have one sister.",
+      "Tôi có một chị gái."
+    ],
+    [
+      "two",
+      "/tuː/",
+      "Hai",
+      "Two people are here.",
+      "Có hai người ở đây."
+    ],
+    [
+      "three",
+      "/θriː/",
+      "Ba",
+      "I need three pens.",
+      "Tôi cần ba cây bút."
+    ],
+    [
+      "four",
+      "/fɔːr/",
+      "Bốn",
+      "There are four chairs.",
+      "Có bốn cái ghế."
+    ],
+    [
+      "five",
+      "/faɪv/",
+      "Năm",
+      "She has five books.",
+      "Cô ấy có năm quyển sách."
+    ],
+    [
+      "six",
+      "/sɪks/",
+      "Sáu",
+      "I wake up at six.",
+      "Tôi thức dậy lúc sáu giờ."
+    ],
+    [
+      "seven",
+      "/ˈsevən/",
+      "Bảy",
+      "We meet at seven.",
+      "Chúng tôi gặp nhau lúc bảy giờ."
+    ],
+    [
+      "eight",
+      "/eɪt/",
+      "Tám",
+      "He has eight apples.",
+      "Anh ấy có tám quả táo."
+    ],
+    [
+      "nine",
+      "/naɪn/",
+      "Chín",
+      "The class starts at nine.",
+      "Lớp học bắt đầu lúc chín giờ."
+    ],
+    [
+      "ten",
+      "/ten/",
+      "Mười",
+      "I study for ten minutes.",
+      "Tôi học trong mười phút."
+    ]
+  ],
+  "Time & Dates - Thời gian": [
+    [
+      "today",
+      "/təˈdeɪ/",
+      "Hôm nay",
+      "Today is a good day.",
+      "Hôm nay là một ngày tốt đẹp."
+    ],
+    [
+      "tomorrow",
+      "/təˈmɑːroʊ/",
+      "Ngày mai",
+      "I will call you tomorrow.",
+      "Tôi sẽ gọi cho bạn ngày mai."
+    ],
+    [
+      "yesterday",
+      "/ˈjestərdeɪ/",
+      "Hôm qua",
+      "I was busy yesterday.",
+      "Hôm qua tôi bận."
+    ],
+    [
+      "morning",
+      "/ˈmɔːrnɪŋ/",
+      "Buổi sáng",
+      "I study in the morning.",
+      "Tôi học vào buổi sáng."
+    ],
+    [
+      "afternoon",
+      "/ˌæftərˈnuːn/",
+      "Buổi chiều",
+      "We play in the afternoon.",
+      "Chúng tôi chơi vào buổi chiều."
+    ],
+    [
+      "evening",
+      "/ˈiːvnɪŋ/",
+      "Buổi tối",
+      "I cook in the evening.",
+      "Tôi nấu ăn vào buổi tối."
+    ],
+    [
+      "week",
+      "/wiːk/",
+      "Tuần",
+      "I exercise every week.",
+      "Tôi tập thể dục mỗi tuần."
+    ],
+    [
+      "month",
+      "/mʌnθ/",
+      "Tháng",
+      "This month is busy.",
+      "Tháng này rất bận."
+    ],
+    [
+      "year",
+      "/jɪr/",
+      "Năm",
+      "I learn English this year.",
+      "Tôi học tiếng Anh trong năm nay."
+    ],
+    [
+      "weekend",
+      "/ˈwiːkend/",
+      "Cuối tuần",
+      "We rest on the weekend.",
+      "Chúng tôi nghỉ vào cuối tuần."
+    ]
+  ],
+  "Colors - Màu sắc": [
+    [
+      "red",
+      "/red/",
+      "Màu đỏ",
+      "The bag is red.",
+      "Chiếc túi màu đỏ."
+    ],
+    [
+      "blue",
+      "/bluː/",
+      "Màu xanh dương",
+      "The sky is blue.",
+      "Bầu trời màu xanh dương."
+    ],
+    [
+      "green",
+      "/ɡriːn/",
+      "Màu xanh lá",
+      "The leaves are green.",
+      "Lá cây màu xanh lá."
+    ],
+    [
+      "yellow",
+      "/ˈjeloʊ/",
+      "Màu vàng",
+      "The banana is yellow.",
+      "Quả chuối màu vàng."
+    ],
+    [
+      "black",
+      "/blæk/",
+      "Màu đen",
+      "I have a black phone.",
+      "Tôi có một chiếc điện thoại màu đen."
+    ],
+    [
+      "white",
+      "/waɪt/",
+      "Màu trắng",
+      "She wears a white shirt.",
+      "Cô ấy mặc áo sơ mi trắng."
+    ],
+    [
+      "pink",
+      "/pɪŋk/",
+      "Màu hồng",
+      "This flower is pink.",
+      "Bông hoa này màu hồng."
+    ],
+    [
+      "purple",
+      "/ˈpɜːrpəl/",
+      "Màu tím",
+      "I like purple flowers.",
+      "Tôi thích hoa màu tím."
+    ],
+    [
+      "orange",
+      "/ˈɔːrɪndʒ/",
+      "Màu cam",
+      "My bike is orange.",
+      "Xe đạp của tôi màu cam."
+    ],
+    [
+      "brown",
+      "/braʊn/",
+      "Màu nâu",
+      "The table is brown.",
+      "Cái bàn màu nâu."
+    ]
+  ],
+  "Clothes - Quần áo": [
+    [
+      "shirt",
+      "/ʃɜːrt/",
+      "Áo sơ mi",
+      "My shirt is blue.",
+      "Áo sơ mi của tôi màu xanh."
+    ],
+    [
+      "t-shirt",
+      "/ˈtiː ʃɜːrt/",
+      "Áo thun",
+      "I wear a T-shirt.",
+      "Tôi mặc áo thun."
+    ],
+    [
+      "pants",
+      "/pænts/",
+      "Quần dài",
+      "These pants are new.",
+      "Chiếc quần dài này mới."
+    ],
+    [
+      "shorts",
+      "/ʃɔːrts/",
+      "Quần đùi",
+      "I wear shorts at home.",
+      "Tôi mặc quần đùi ở nhà."
+    ],
+    [
+      "dress",
+      "/dres/",
+      "Váy liền",
+      "Her dress is pretty.",
+      "Chiếc váy của cô ấy đẹp."
+    ],
+    [
+      "shoes",
+      "/ʃuːz/",
+      "Giày",
+      "My shoes are clean.",
+      "Đôi giày của tôi sạch."
+    ],
+    [
+      "socks",
+      "/sɑːks/",
+      "Tất / vớ",
+      "I need clean socks.",
+      "Tôi cần đôi tất sạch."
+    ],
+    [
+      "jacket",
+      "/ˈdʒækɪt/",
+      "Áo khoác",
+      "Take your jacket with you.",
+      "Hãy mang theo áo khoác."
+    ],
+    [
+      "hat",
+      "/hæt/",
+      "Mũ",
+      "He wears a black hat.",
+      "Anh ấy đội mũ đen."
+    ],
+    [
+      "bag",
+      "/bæɡ/",
+      "Túi xách",
+      "My bag is on the chair.",
+      "Túi của tôi ở trên ghế."
+    ]
+  ],
+  "Home - Nhà cửa": [
+    [
+      "kitchen",
+      "/ˈkɪtʃən/",
+      "Nhà bếp",
+      "My mother is in the kitchen.",
+      "Mẹ tôi đang ở trong bếp."
+    ],
+    [
+      "bedroom",
+      "/ˈbedruːm/",
+      "Phòng ngủ",
+      "My bedroom is small.",
+      "Phòng ngủ của tôi nhỏ."
+    ],
+    [
+      "bathroom",
+      "/ˈbæθruːm/",
+      "Phòng tắm",
+      "The bathroom is upstairs.",
+      "Phòng tắm ở tầng trên."
+    ],
+    [
+      "living room",
+      "/ˈlɪvɪŋ ruːm/",
+      "Phòng khách",
+      "We watch TV in the living room.",
+      "Chúng tôi xem TV trong phòng khách."
+    ],
+    [
+      "table",
+      "/ˈteɪbəl/",
+      "Cái bàn",
+      "The cup is on the table.",
+      "Cái cốc ở trên bàn."
+    ],
+    [
+      "chair",
+      "/tʃer/",
+      "Cái ghế",
+      "Please sit on the chair.",
+      "Mời bạn ngồi xuống ghế."
+    ],
+    [
+      "bed",
+      "/bed/",
+      "Cái giường",
+      "The bed is comfortable.",
+      "Chiếc giường rất thoải mái."
+    ],
+    [
+      "door",
+      "/dɔːr/",
+      "Cửa ra vào",
+      "Close the door, please.",
+      "Làm ơn đóng cửa."
+    ],
+    [
+      "window",
+      "/ˈwɪndoʊ/",
+      "Cửa sổ",
+      "Open the window.",
+      "Hãy mở cửa sổ."
+    ],
+    [
+      "sofa",
+      "/ˈsoʊfə/",
+      "Ghế sofa",
+      "The cat is on the sofa.",
+      "Con mèo ở trên ghế sofa."
+    ]
+  ],
+  "School - Trường học": [
+    [
+      "student",
+      "/ˈstuːdənt/",
+      "Học sinh / sinh viên",
+      "I am a student.",
+      "Tôi là sinh viên."
+    ],
+    [
+      "teacher",
+      "/ˈtiːtʃər/",
+      "Giáo viên",
+      "Our teacher is friendly.",
+      "Giáo viên của chúng tôi thân thiện."
+    ],
+    [
+      "lesson",
+      "/ˈlesən/",
+      "Bài học",
+      "This lesson is easy.",
+      "Bài học này dễ."
+    ],
+    [
+      "class",
+      "/klæs/",
+      "Lớp học",
+      "Our class starts at eight.",
+      "Lớp chúng tôi bắt đầu lúc tám giờ."
+    ],
+    [
+      "homework",
+      "/ˈhoʊmwɜːrk/",
+      "Bài tập về nhà",
+      "I do my homework.",
+      "Tôi làm bài tập về nhà."
+    ],
+    [
+      "notebook",
+      "/ˈnoʊtbʊk/",
+      "Quyển vở",
+      "I write in my notebook.",
+      "Tôi viết vào vở."
+    ],
+    [
+      "pencil",
+      "/ˈpensəl/",
+      "Bút chì",
+      "This pencil is sharp.",
+      "Cây bút chì này nhọn."
+    ],
+    [
+      "question",
+      "/ˈkwestʃən/",
+      "Câu hỏi",
+      "I have a question.",
+      "Tôi có một câu hỏi."
+    ],
+    [
+      "answer",
+      "/ˈænsər/",
+      "Câu trả lời",
+      "I know the answer.",
+      "Tôi biết câu trả lời."
+    ],
+    [
+      "exam",
+      "/ɪɡˈzæm/",
+      "Kỳ thi",
+      "The exam is tomorrow.",
+      "Kỳ thi diễn ra ngày mai."
+    ]
+  ],
+  "Jobs - Nghề nghiệp": [
+    [
+      "doctor",
+      "/ˈdɑːktər/",
+      "Bác sĩ",
+      "The doctor helps patients.",
+      "Bác sĩ giúp đỡ bệnh nhân."
+    ],
+    [
+      "nurse",
+      "/nɜːrs/",
+      "Y tá / điều dưỡng",
+      "The nurse is kind.",
+      "Điều dưỡng rất tốt bụng."
+    ],
+    [
+      "engineer",
+      "/ˌendʒɪˈnɪr/",
+      "Kỹ sư",
+      "My brother is an engineer.",
+      "Anh trai tôi là kỹ sư."
+    ],
+    [
+      "programmer",
+      "/ˈproʊɡræmər/",
+      "Lập trình viên",
+      "She works as a programmer.",
+      "Cô ấy làm lập trình viên."
+    ],
+    [
+      "manager",
+      "/ˈmænɪdʒər/",
+      "Người quản lý",
+      "The manager is busy.",
+      "Người quản lý đang bận."
+    ],
+    [
+      "meeting",
+      "/ˈmiːtɪŋ/",
+      "Cuộc họp",
+      "We have a meeting at ten.",
+      "Chúng tôi có cuộc họp lúc mười giờ."
+    ],
+    [
+      "email",
+      "/ˈiːmeɪl/",
+      "Thư điện tử",
+      "I send an email to my team.",
+      "Tôi gửi email cho nhóm."
+    ],
+    [
+      "project",
+      "/ˈprɑːdʒekt/",
+      "Dự án",
+      "Our project is ready.",
+      "Dự án của chúng tôi đã sẵn sàng."
+    ],
+    [
+      "customer",
+      "/ˈkʌstəmər/",
+      "Khách hàng",
+      "The customer needs help.",
+      "Khách hàng cần hỗ trợ."
+    ],
+    [
+      "salary",
+      "/ˈsæləri/",
+      "Tiền lương",
+      "He gets his salary monthly.",
+      "Anh ấy nhận lương hàng tháng."
+    ]
+  ],
+  "Shopping - Mua sắm": [
+    [
+      "price",
+      "/praɪs/",
+      "Giá tiền",
+      "What is the price?",
+      "Giá bao nhiêu?"
+    ],
+    [
+      "cheap",
+      "/tʃiːp/",
+      "Rẻ",
+      "This shirt is cheap.",
+      "Chiếc áo này rẻ."
+    ],
+    [
+      "expensive",
+      "/ɪkˈspensɪv/",
+      "Đắt",
+      "This phone is expensive.",
+      "Điện thoại này đắt."
+    ],
+    [
+      "discount",
+      "/ˈdɪskaʊnt/",
+      "Giảm giá",
+      "There is a discount today.",
+      "Hôm nay có giảm giá."
+    ],
+    [
+      "money",
+      "/ˈmʌni/",
+      "Tiền",
+      "I need some money.",
+      "Tôi cần một ít tiền."
+    ],
+    [
+      "cash",
+      "/kæʃ/",
+      "Tiền mặt",
+      "Can I pay in cash?",
+      "Tôi có thể trả bằng tiền mặt không?"
+    ],
+    [
+      "card",
+      "/kɑːrd/",
+      "Thẻ thanh toán",
+      "I pay by card.",
+      "Tôi thanh toán bằng thẻ."
+    ],
+    [
+      "receipt",
+      "/rɪˈsiːt/",
+      "Biên lai",
+      "Please keep the receipt.",
+      "Hãy giữ biên lai."
+    ],
+    [
+      "size",
+      "/saɪz/",
+      "Kích cỡ",
+      "What size do you need?",
+      "Bạn cần cỡ nào?"
+    ],
+    [
+      "buy",
+      "/baɪ/",
+      "Mua",
+      "I want to buy a jacket.",
+      "Tôi muốn mua một chiếc áo khoác."
+    ]
+  ],
+  "Transport - Di chuyển": [
+    [
+      "car",
+      "/kɑːr/",
+      "Ô tô",
+      "My father drives a car.",
+      "Bố tôi lái ô tô."
+    ],
+    [
+      "bus",
+      "/bʌs/",
+      "Xe buýt",
+      "I take the bus to work.",
+      "Tôi đi xe buýt đến chỗ làm."
+    ],
+    [
+      "train",
+      "/treɪn/",
+      "Tàu hỏa",
+      "The train is late.",
+      "Tàu hỏa đến muộn."
+    ],
+    [
+      "bicycle",
+      "/ˈbaɪsɪkəl/",
+      "Xe đạp",
+      "I ride a bicycle.",
+      "Tôi đi xe đạp."
+    ],
+    [
+      "motorbike",
+      "/ˈmoʊtərbaɪk/",
+      "Xe máy",
+      "He goes to school by motorbike.",
+      "Anh ấy đi học bằng xe máy."
+    ],
+    [
+      "taxi",
+      "/ˈtæksi/",
+      "Xe taxi",
+      "We call a taxi.",
+      "Chúng tôi gọi taxi."
+    ],
+    [
+      "plane",
+      "/pleɪn/",
+      "Máy bay",
+      "The plane leaves at noon.",
+      "Máy bay khởi hành lúc trưa."
+    ],
+    [
+      "station",
+      "/ˈsteɪʃən/",
+      "Nhà ga / trạm",
+      "The station is near here.",
+      "Nhà ga ở gần đây."
+    ],
+    [
+      "ticket",
+      "/ˈtɪkɪt/",
+      "Vé",
+      "I have a bus ticket.",
+      "Tôi có vé xe buýt."
+    ],
+    [
+      "traffic",
+      "/ˈtræfɪk/",
+      "Giao thông",
+      "Traffic is heavy today.",
+      "Hôm nay giao thông đông đúc."
+    ]
+  ],
+  "Travel - Du lịch": [
+    [
+      "passport",
+      "/ˈpæspɔːrt/",
+      "Hộ chiếu",
+      "I need my passport.",
+      "Tôi cần hộ chiếu."
+    ],
+    [
+      "suitcase",
+      "/ˈsuːtkeɪs/",
+      "Vali",
+      "My suitcase is heavy.",
+      "Vali của tôi nặng."
+    ],
+    [
+      "hotel",
+      "/hoʊˈtel/",
+      "Khách sạn",
+      "We stay at a hotel.",
+      "Chúng tôi ở khách sạn."
+    ],
+    [
+      "airport",
+      "/ˈerpɔːrt/",
+      "Sân bay",
+      "The airport is far away.",
+      "Sân bay ở xa."
+    ],
+    [
+      "flight",
+      "/flaɪt/",
+      "Chuyến bay",
+      "Our flight is at nine.",
+      "Chuyến bay của chúng tôi lúc chín giờ."
+    ],
+    [
+      "booking",
+      "/ˈbʊkɪŋ/",
+      "Việc đặt chỗ",
+      "I have a hotel booking.",
+      "Tôi đã đặt phòng khách sạn."
+    ],
+    [
+      "journey",
+      "/ˈdʒɜːrni/",
+      "Hành trình",
+      "The journey takes two hours.",
+      "Hành trình mất hai giờ."
+    ],
+    [
+      "map",
+      "/mæp/",
+      "Bản đồ",
+      "Look at the map.",
+      "Hãy xem bản đồ."
+    ],
+    [
+      "tourist",
+      "/ˈtʊrɪst/",
+      "Du khách",
+      "The tourist takes photos.",
+      "Du khách chụp ảnh."
+    ],
+    [
+      "vacation",
+      "/veɪˈkeɪʃən/",
+      "Kỳ nghỉ",
+      "We are on vacation.",
+      "Chúng tôi đang đi nghỉ."
+    ]
+  ],
+  "Weather - Thời tiết": [
+    [
+      "sunny",
+      "/ˈsʌni/",
+      "Có nắng",
+      "It is sunny today.",
+      "Hôm nay trời nắng."
+    ],
+    [
+      "rainy",
+      "/ˈreɪni/",
+      "Có mưa",
+      "It is rainy outside.",
+      "Ngoài trời đang mưa."
+    ],
+    [
+      "cloudy",
+      "/ˈklaʊdi/",
+      "Nhiều mây",
+      "The sky is cloudy.",
+      "Bầu trời nhiều mây."
+    ],
+    [
+      "windy",
+      "/ˈwɪndi/",
+      "Có gió",
+      "It is windy at the beach.",
+      "Ở bãi biển có gió."
+    ],
+    [
+      "hot",
+      "/hɑːt/",
+      "Nóng",
+      "It is hot in summer.",
+      "Mùa hè trời nóng."
+    ],
+    [
+      "cold",
+      "/koʊld/",
+      "Lạnh",
+      "It is cold this morning.",
+      "Sáng nay trời lạnh."
+    ],
+    [
+      "warm",
+      "/wɔːrm/",
+      "Ấm áp",
+      "The weather is warm.",
+      "Thời tiết ấm áp."
+    ],
+    [
+      "cool",
+      "/kuːl/",
+      "Mát mẻ",
+      "The evening is cool.",
+      "Buổi tối trời mát."
+    ],
+    [
+      "storm",
+      "/stɔːrm/",
+      "Cơn bão",
+      "A storm is coming.",
+      "Một cơn bão đang đến."
+    ],
+    [
+      "forecast",
+      "/ˈfɔːrkæst/",
+      "Dự báo thời tiết",
+      "I check the forecast.",
+      "Tôi xem dự báo thời tiết."
+    ]
+  ],
+  "Body & Health - Cơ thể": [
+    [
+      "head",
+      "/hed/",
+      "Đầu",
+      "My head hurts.",
+      "Tôi đau đầu."
+    ],
+    [
+      "eye",
+      "/aɪ/",
+      "Mắt",
+      "My left eye is red.",
+      "Mắt trái của tôi bị đỏ."
+    ],
+    [
+      "ear",
+      "/ɪr/",
+      "Tai",
+      "My ear hurts.",
+      "Tôi bị đau tai."
+    ],
+    [
+      "nose",
+      "/noʊz/",
+      "Mũi",
+      "My nose is cold.",
+      "Mũi tôi lạnh."
+    ],
+    [
+      "mouth",
+      "/maʊθ/",
+      "Miệng",
+      "Open your mouth, please.",
+      "Làm ơn mở miệng."
+    ],
+    [
+      "hand",
+      "/hænd/",
+      "Bàn tay",
+      "Wash your hands.",
+      "Hãy rửa tay."
+    ],
+    [
+      "foot",
+      "/fʊt/",
+      "Bàn chân",
+      "My foot is tired.",
+      "Bàn chân tôi mỏi."
+    ],
+    [
+      "stomach",
+      "/ˈstʌmək/",
+      "Bụng / dạ dày",
+      "My stomach hurts.",
+      "Tôi đau bụng."
+    ],
+    [
+      "healthy",
+      "/ˈhelθi/",
+      "Khỏe mạnh",
+      "I eat healthy food.",
+      "Tôi ăn thức ăn lành mạnh."
+    ],
+    [
+      "medicine",
+      "/ˈmedɪsɪn/",
+      "Thuốc",
+      "The doctor gives me medicine.",
+      "Bác sĩ cho tôi thuốc."
+    ]
+  ],
+  "Feelings - Cảm xúc": [
+    [
+      "happy",
+      "/ˈhæpi/",
+      "Vui vẻ",
+      "I feel happy today.",
+      "Hôm nay tôi thấy vui."
+    ],
+    [
+      "sad",
+      "/sæd/",
+      "Buồn",
+      "She feels sad.",
+      "Cô ấy cảm thấy buồn."
+    ],
+    [
+      "angry",
+      "/ˈæŋɡri/",
+      "Tức giận",
+      "He is angry now.",
+      "Anh ấy đang tức giận."
+    ],
+    [
+      "tired",
+      "/ˈtaɪərd/",
+      "Mệt mỏi",
+      "I am tired after work.",
+      "Tôi mệt sau giờ làm."
+    ],
+    [
+      "excited",
+      "/ɪkˈsaɪtɪd/",
+      "Hào hứng",
+      "We are excited about the trip.",
+      "Chúng tôi hào hứng về chuyến đi."
+    ],
+    [
+      "nervous",
+      "/ˈnɜːrvəs/",
+      "Lo lắng, hồi hộp",
+      "I feel nervous before the exam.",
+      "Tôi hồi hộp trước kỳ thi."
+    ],
+    [
+      "scared",
+      "/skerd/",
+      "Sợ hãi",
+      "The child is scared.",
+      "Đứa trẻ sợ hãi."
+    ],
+    [
+      "calm",
+      "/kɑːm/",
+      "Bình tĩnh",
+      "Please stay calm.",
+      "Làm ơn hãy bình tĩnh."
+    ],
+    [
+      "proud",
+      "/praʊd/",
+      "Tự hào",
+      "I am proud of you.",
+      "Tôi tự hào về bạn."
+    ],
+    [
+      "bored",
+      "/bɔːrd/",
+      "Chán",
+      "I am bored at home.",
+      "Tôi thấy chán ở nhà."
+    ]
+  ],
+  "Sports & Hobbies - Thể thao": [
+    [
+      "badminton",
+      "/ˈbædmɪntən/",
+      "Cầu lông",
+      "I play badminton every weekend.",
+      "Tôi chơi cầu lông mỗi cuối tuần."
+    ],
+    [
+      "football",
+      "/ˈfʊtbɔːl/",
+      "Bóng đá",
+      "They play football after school.",
+      "Họ chơi bóng đá sau giờ học."
+    ],
+    [
+      "basketball",
+      "/ˈbæskɪtbɔːl/",
+      "Bóng rổ",
+      "He likes basketball.",
+      "Anh ấy thích bóng rổ."
+    ],
+    [
+      "swimming",
+      "/ˈswɪmɪŋ/",
+      "Bơi lội",
+      "Swimming is good exercise.",
+      "Bơi lội là bài tập tốt."
+    ],
+    [
+      "running",
+      "/ˈrʌnɪŋ/",
+      "Chạy bộ",
+      "I go running in the morning.",
+      "Tôi chạy bộ vào buổi sáng."
+    ],
+    [
+      "reading",
+      "/ˈriːdɪŋ/",
+      "Đọc sách",
+      "Reading is my hobby.",
+      "Đọc sách là sở thích của tôi."
+    ],
+    [
+      "drawing",
+      "/ˈdrɔːɪŋ/",
+      "Vẽ tranh",
+      "She enjoys drawing.",
+      "Cô ấy thích vẽ tranh."
+    ],
+    [
+      "music",
+      "/ˈmjuːzɪk/",
+      "Âm nhạc",
+      "I listen to music.",
+      "Tôi nghe nhạc."
+    ],
+    [
+      "exercise",
+      "/ˈeksərsaɪz/",
+      "Tập thể dục",
+      "I exercise every day.",
+      "Tôi tập thể dục mỗi ngày."
+    ],
+    [
+      "racket",
+      "/ˈrækɪt/",
+      "Cây vợt",
+      "My racket is new.",
+      "Cây vợt của tôi mới."
+    ]
+  ],
+  "Technology - Công nghệ": [
+    [
+      "computer",
+      "/kəmˈpjuːtər/",
+      "Máy tính",
+      "I use a computer at work.",
+      "Tôi dùng máy tính ở chỗ làm."
+    ],
+    [
+      "phone",
+      "/foʊn/",
+      "Điện thoại",
+      "My phone is charging.",
+      "Điện thoại của tôi đang sạc."
+    ],
+    [
+      "keyboard",
+      "/ˈkiːbɔːrd/",
+      "Bàn phím",
+      "The keyboard is black.",
+      "Bàn phím màu đen."
+    ],
+    [
+      "mouse",
+      "/maʊs/",
+      "Chuột máy tính",
+      "I use a wireless mouse.",
+      "Tôi dùng chuột không dây."
+    ],
+    [
+      "screen",
+      "/skriːn/",
+      "Màn hình",
+      "The screen is bright.",
+      "Màn hình sáng."
+    ],
+    [
+      "internet",
+      "/ˈɪntərnet/",
+      "Mạng Internet",
+      "The internet is slow today.",
+      "Hôm nay mạng Internet chậm."
+    ],
+    [
+      "website",
+      "/ˈwebsaɪt/",
+      "Trang web",
+      "I open the website.",
+      "Tôi mở trang web."
+    ],
+    [
+      "password",
+      "/ˈpæswɜːrd/",
+      "Mật khẩu",
+      "Keep your password safe.",
+      "Hãy giữ mật khẩu an toàn."
+    ],
+    [
+      "software",
+      "/ˈsɔːftwer/",
+      "Phần mềm",
+      "This software is useful.",
+      "Phần mềm này hữu ích."
+    ],
+    [
+      "download",
+      "/ˌdaʊnˈloʊd/",
+      "Tải xuống",
+      "I download a file.",
+      "Tôi tải một tệp xuống."
+    ]
+  ],
+  "Animals - Động vật": [
+    [
+      "dog",
+      "/dɔːɡ/",
+      "Con chó",
+      "The dog is friendly.",
+      "Con chó rất thân thiện."
+    ],
+    [
+      "cat",
+      "/kæt/",
+      "Con mèo",
+      "The cat is sleeping.",
+      "Con mèo đang ngủ."
+    ],
+    [
+      "bird",
+      "/bɜːrd/",
+      "Con chim",
+      "A bird is singing.",
+      "Một con chim đang hót."
+    ],
+    [
+      "rabbit",
+      "/ˈræbɪt/",
+      "Con thỏ",
+      "The rabbit is white.",
+      "Con thỏ màu trắng."
+    ],
+    [
+      "cow",
+      "/kaʊ/",
+      "Con bò",
+      "The cow eats grass.",
+      "Con bò ăn cỏ."
+    ],
+    [
+      "pig",
+      "/pɪɡ/",
+      "Con lợn / heo",
+      "The pig is small.",
+      "Con heo nhỏ."
+    ],
+    [
+      "horse",
+      "/hɔːrs/",
+      "Con ngựa",
+      "The horse runs fast.",
+      "Con ngựa chạy nhanh."
+    ],
+    [
+      "chicken",
+      "/ˈtʃɪkɪn/",
+      "Con gà",
+      "The chicken is in the yard.",
+      "Con gà ở trong sân."
+    ],
+    [
+      "elephant",
+      "/ˈelɪfənt/",
+      "Con voi",
+      "The elephant is big.",
+      "Con voi to lớn."
+    ],
+    [
+      "monkey",
+      "/ˈmʌŋki/",
+      "Con khỉ",
+      "The monkey climbs a tree.",
+      "Con khỉ leo lên cây."
+    ]
+  ],
+  "Nature - Thiên nhiên": [
+    [
+      "tree",
+      "/triː/",
+      "Cây",
+      "The tree is tall.",
+      "Cây rất cao."
+    ],
+    [
+      "flower",
+      "/ˈflaʊər/",
+      "Bông hoa",
+      "This flower smells nice.",
+      "Bông hoa này thơm."
+    ],
+    [
+      "river",
+      "/ˈrɪvər/",
+      "Con sông",
+      "The river is wide.",
+      "Con sông rộng."
+    ],
+    [
+      "mountain",
+      "/ˈmaʊntən/",
+      "Ngọn núi",
+      "We climb a mountain.",
+      "Chúng tôi leo núi."
+    ],
+    [
+      "lake",
+      "/leɪk/",
+      "Hồ",
+      "The lake is beautiful.",
+      "Hồ rất đẹp."
+    ],
+    [
+      "forest",
+      "/ˈfɔːrɪst/",
+      "Rừng",
+      "Many animals live in the forest.",
+      "Nhiều loài vật sống trong rừng."
+    ],
+    [
+      "ocean",
+      "/ˈoʊʃən/",
+      "Đại dương",
+      "The ocean is deep.",
+      "Đại dương rất sâu."
+    ],
+    [
+      "cloud",
+      "/klaʊd/",
+      "Đám mây",
+      "A cloud covers the sun.",
+      "Một đám mây che mặt trời."
+    ],
+    [
+      "moon",
+      "/muːn/",
+      "Mặt trăng",
+      "The moon is bright tonight.",
+      "Tối nay mặt trăng sáng."
+    ],
+    [
+      "star",
+      "/stɑːr/",
+      "Ngôi sao",
+      "I see a star in the sky.",
+      "Tôi thấy một ngôi sao trên trời."
+    ]
+  ],
+  "Verbs - Động từ": [
+    [
+      "come",
+      "/kʌm/",
+      "Đến",
+      "Come here, please.",
+      "Làm ơn đến đây."
+    ],
+    [
+      "go",
+      "/ɡoʊ/",
+      "Đi",
+      "I go to work at eight.",
+      "Tôi đi làm lúc tám giờ."
+    ],
+    [
+      "make",
+      "/meɪk/",
+      "Làm / tạo ra",
+      "I make breakfast.",
+      "Tôi làm bữa sáng."
+    ],
+    [
+      "take",
+      "/teɪk/",
+      "Lấy / mang",
+      "Take your bag with you.",
+      "Hãy mang túi theo."
+    ],
+    [
+      "give",
+      "/ɡɪv/",
+      "Đưa / cho",
+      "Please give me the book.",
+      "Làm ơn đưa tôi quyển sách."
+    ],
+    [
+      "get",
+      "/ɡet/",
+      "Nhận / lấy",
+      "I get a message.",
+      "Tôi nhận được một tin nhắn."
+    ],
+    [
+      "find",
+      "/faɪnd/",
+      "Tìm thấy",
+      "I cannot find my keys.",
+      "Tôi không tìm thấy chìa khóa."
+    ],
+    [
+      "think",
+      "/θɪŋk/",
+      "Nghĩ",
+      "I think this is good.",
+      "Tôi nghĩ điều này tốt."
+    ],
+    [
+      "know",
+      "/noʊ/",
+      "Biết",
+      "I know the answer.",
+      "Tôi biết câu trả lời."
+    ],
+    [
+      "need",
+      "/niːd/",
+      "Cần",
+      "I need some water.",
+      "Tôi cần một ít nước."
+    ]
+  ],
+  "Adjectives - Tính từ": [
+    [
+      "big",
+      "/bɪɡ/",
+      "To, lớn",
+      "This house is big.",
+      "Ngôi nhà này lớn."
+    ],
+    [
+      "small",
+      "/smɔːl/",
+      "Nhỏ",
+      "The room is small.",
+      "Căn phòng nhỏ."
+    ],
+    [
+      "long",
+      "/lɔːŋ/",
+      "Dài",
+      "The road is long.",
+      "Con đường dài."
+    ],
+    [
+      "short",
+      "/ʃɔːrt/",
+      "Ngắn / thấp",
+      "This story is short.",
+      "Câu chuyện này ngắn."
+    ],
+    [
+      "fast",
+      "/fæst/",
+      "Nhanh",
+      "This train is fast.",
+      "Chuyến tàu này nhanh."
+    ],
+    [
+      "slow",
+      "/sloʊ/",
+      "Chậm",
+      "My computer is slow.",
+      "Máy tính của tôi chậm."
+    ],
+    [
+      "easy",
+      "/ˈiːzi/",
+      "Dễ",
+      "This question is easy.",
+      "Câu hỏi này dễ."
+    ],
+    [
+      "difficult",
+      "/ˈdɪfɪkəlt/",
+      "Khó",
+      "English is not always difficult.",
+      "Tiếng Anh không phải lúc nào cũng khó."
+    ],
+    [
+      "new",
+      "/nuː/",
+      "Mới",
+      "I have a new book.",
+      "Tôi có một quyển sách mới."
+    ],
+    [
+      "old",
+      "/oʊld/",
+      "Cũ / già",
+      "This table is old.",
+      "Cái bàn này cũ."
+    ]
+  ],
+  "Restaurant - Nhà hàng": [
+    [
+      "menu",
+      "/ˈmenjuː/",
+      "Thực đơn",
+      "Can I see the menu?",
+      "Tôi xem thực đơn được không?"
+    ],
+    [
+      "order",
+      "/ˈɔːrdər/",
+      "Gọi món",
+      "I want to order lunch.",
+      "Tôi muốn gọi bữa trưa."
+    ],
+    [
+      "waiter",
+      "/ˈweɪtər/",
+      "Nam phục vụ bàn",
+      "The waiter brings our food.",
+      "Người phục vụ mang đồ ăn đến."
+    ],
+    [
+      "waitress",
+      "/ˈweɪtrəs/",
+      "Nữ phục vụ bàn",
+      "The waitress is friendly.",
+      "Nữ phục vụ rất thân thiện."
+    ],
+    [
+      "bill",
+      "/bɪl/",
+      "Hóa đơn",
+      "Can we have the bill?",
+      "Cho chúng tôi xin hóa đơn được không?"
+    ],
+    [
+      "fork",
+      "/fɔːrk/",
+      "Nĩa",
+      "I use a fork to eat.",
+      "Tôi dùng nĩa để ăn."
+    ],
+    [
+      "spoon",
+      "/spuːn/",
+      "Thìa / muỗng",
+      "I need a spoon for soup.",
+      "Tôi cần muỗng để ăn súp."
+    ],
+    [
+      "knife",
+      "/naɪf/",
+      "Dao",
+      "Be careful with the knife.",
+      "Hãy cẩn thận với con dao."
+    ],
+    [
+      "delicious",
+      "/dɪˈlɪʃəs/",
+      "Ngon",
+      "The food is delicious.",
+      "Món ăn rất ngon."
+    ],
+    [
+      "hungry",
+      "/ˈhʌŋɡri/",
+      "Đói",
+      "I am hungry now.",
+      "Bây giờ tôi đói."
+    ]
+  ],
+  "Directions - Chỉ đường": [
+    [
+      "left",
+      "/left/",
+      "Bên trái",
+      "Turn left at the corner.",
+      "Rẽ trái ở góc đường."
+    ],
+    [
+      "right",
+      "/raɪt/",
+      "Bên phải",
+      "Turn right here.",
+      "Rẽ phải ở đây."
+    ],
+    [
+      "straight",
+      "/streɪt/",
+      "Thẳng",
+      "Go straight ahead.",
+      "Đi thẳng về phía trước."
+    ],
+    [
+      "near",
+      "/nɪr/",
+      "Gần",
+      "The bank is near my house.",
+      "Ngân hàng gần nhà tôi."
+    ],
+    [
+      "far",
+      "/fɑːr/",
+      "Xa",
+      "The hospital is far away.",
+      "Bệnh viện ở xa."
+    ],
+    [
+      "behind",
+      "/bɪˈhaɪnd/",
+      "Phía sau",
+      "The shop is behind the school.",
+      "Cửa hàng ở sau trường học."
+    ],
+    [
+      "between",
+      "/bɪˈtwiːn/",
+      "Ở giữa hai nơi",
+      "The cafe is between two shops.",
+      "Quán cà phê ở giữa hai cửa hàng."
+    ],
+    [
+      "next to",
+      "/ˈnekst tuː/",
+      "Bên cạnh",
+      "The park is next to the school.",
+      "Công viên nằm cạnh trường học."
+    ],
+    [
+      "opposite",
+      "/ˈɑːpəzɪt/",
+      "Đối diện",
+      "The bank is opposite the market.",
+      "Ngân hàng ở đối diện chợ."
+    ],
+    [
+      "corner",
+      "/ˈkɔːrnər/",
+      "Góc đường",
+      "Wait for me at the corner.",
+      "Đợi tôi ở góc đường."
+    ]
+  ]
+}

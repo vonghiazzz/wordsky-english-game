@@ -1,23 +1,8 @@
-# macOS
-.DS_Store
-
-# Vercel
-.vercel/
-
-# Dependencies
 node_modules/
-dist/
-build/
-coverage/
-
-# Environment secrets
+.vercel/
 .env
 .env.*
 !.env.example
-
-# Logs
+.DS_Store
 *.log
-
-# Editors
-.idea/
-.vscode/
+coverage/

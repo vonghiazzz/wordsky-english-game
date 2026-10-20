@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1022"><meta name="description" content="Flashcard tiếng Anh và trò chơi bắt chữ rơi luyện từ vựng miễn phí.">
+<title>WordSky — Học tiếng Anh vui hơn</title>
+<style>
+:root{--bg:#0b1022;--panel:#161d38;--panel2:#1d284b;--text:#f8fafc;--muted:#a9b7d5;--sky:#83dcff;--pink:#fb79b8;--gold:#ffd369;--green:#6fe5b5;--bad:#ff838d;--border:#354160}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#1e315f 0%,transparent 44%),radial-gradient(ellipse at 90% 45%,#251b4c 0%,transparent 38%),var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh}button,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible{outline:3px solid var(--sky);outline-offset:3px}.container{width:min(1100px,calc(100% - 32px));margin:auto}.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0;gap:10px}.brand{font-size:23px;font-weight:900;letter-spacing:-.7px}.brand b{color:var(--sky)}.tiny{font-size:13px;color:var(--muted)}.pill{border:1px solid var(--border);border-radius:99px;padding:8px 13px;background:#131c35}.hero{padding:36px 0 22px}.kicker{color:var(--green);font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase}.hero h1{margin:10px 0;font-size:clamp(34px,6vw,62px);line-height:1.07;letter-spacing:-2px}.hero h1 em{font-style:normal;color:var(--sky)}.hero p{font-size:16px;color:var(--muted);max-width:650px;line-height:1.6}.tabs{display:flex;gap:10px;margin:22px 0;flex-wrap:wrap}.tab{border:1px solid var(--border);background:#151d37;color:var(--muted);padding:13px 19px;border-radius:14px;font-weight:750}.tab.active{background:var(--sky);border-color:var(--sky);color:#09152a}.panel{border:1px solid var(--border);background:linear-gradient(165deg,#182441ee,#111a33ee);border-radius:24px;padding:clamp(16px,3vw,30px);box-shadow:0 18px 60px #02081855;margin-bottom:28px}.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}.toolbar h2{margin:0;font-size:24px}.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}select,.smallbtn{background:#243052;border:1px solid #445277;color:white;border-radius:12px;padding:10px 13px}.smallbtn:hover{border-color:var(--sky)}.section-sub{color:var(--muted);font-size:14px;margin:9px 0 21px}.flash-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(220px,.7fr);gap:19px}.flash-card{perspective:1100px;height:315px;cursor:pointer;user-select:none}.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s}.flash-card.flipped .flip-inner{transform:rotateY(180deg)}.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:24px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:25px;background:linear-gradient(125deg,#324985,#1e2f60);border:1px solid #7086c15e}.face.back{transform:rotateY(180deg);background:linear-gradient(125deg,#183f4a,#20485d)}.face h3{font-size:clamp(30px,4vw,46px);margin:13px 0 4px}.ipa{color:#d3ddfb}.hint{color:#c3d0ec;font-size:13px;margin-top:26px}.meaning{color:var(--green);font-size:29px;font-weight:900}.example{font-size:17px;margin-top:13px}.vi{color:#bcd4df;margin-top:8px}.statbox{background:#10192e;border:1px solid var(--border);border-radius:19px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;gap:20px}.statnumber{font-size:32px;font-weight:900;color:var(--gold)}.progress{height:9px;background:#293552;border-radius:99px;overflow:hidden}.progress span{display:block;background:linear-gradient(90deg,var(--sky),var(--green));height:100%;transition:width .3s}.rowbtn{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.primary{background:var(--sky);border:0;color:#061326;padding:13px 19px;border-radius:12px;font-weight:850}.secondary{background:#293658;border:1px solid #445277;color:#fff;padding:13px 17px;border-radius:12px;font-weight:750}.primary:hover{filter:brightness(1.08)}.secondary:hover{border-color:var(--sky)}button:disabled{opacity:.5;cursor:not-allowed}.rule{background:#0d1831;border:1px solid #334368;border-radius:14px;padding:13px;color:#c9d7ee;font-size:14px;line-height:1.5;margin:16px 0}.game-header{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}.metric{background:#0b1730;border:1px solid #32436b;border-radius:14px;padding:11px;text-align:center}.metric strong{display:block;color:white;font-size:22px}.metric span{display:block;font-size:11px;color:#aebddd;text-transform:uppercase;letter-spacing:.7px}.prompt{min-height:122px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;padding:15px 5px;text-align:center}.prompt .translation{color:var(--muted);font-size:14px}.prompt .blanks{font-weight:950;letter-spacing:8px;font-size:clamp(27px,4vw,43px);overflow-wrap:anywhere;line-height:1.5}.prompt .blanks .filled{color:var(--green)}.prompt .blanks .empty{color:var(--gold)}.game-area{position:relative;height:min(47vh,370px);min-height:290px;overflow:hidden;background:linear-gradient(180deg,#0d2148,#13254b 56%,#173452);border:1px solid #496291;border-radius:21px;touch-action:manipulation}.star{position:absolute;background:#d9edff;border-radius:100%;opacity:.7;pointer-events:none}.cloud{position:absolute;opacity:.13;font-size:70px;pointer-events:none}.letter{position:absolute;top:0;display:flex;align-items:center;justify-content:center;width:55px;height:55px;border-radius:17px;background:linear-gradient(140deg,#ffdd89,#ffae75);color:#22243a;font-size:27px;font-weight:1000;border:3px solid #fff0b1;box-shadow:0 8px 25px #0006;user-select:none;touch-action:manipulation;cursor:pointer;will-change:transform}.letter:hover{filter:brightness(1.1)}.letter:active{scale:.92}.game-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0a1537cd;z-index:4;padding:18px}.overlay-box{max-width:420px;text-align:center}.overlay-box h3{font-size:31px;margin:0 0 11px}.overlay-box p{color:#cbd7ee;line-height:1.55}.game-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px}.feedback{min-height:22px;color:var(--gold);font-weight:750;font-size:14px}.key-hint{color:var(--muted);font-size:12px}.hidden{display:none!important}.footer{text-align:center;font-size:13px;color:var(--muted);padding:10px 0 32px}#celebration{color:var(--green)}@media(max-width:700px){.flash-layout{grid-template-columns:1fr}.statbox{flex-direction:row;align-items:center;flex-wrap:wrap}.flash-card{height:285px}.game-header{grid-template-columns:repeat(2,1fr)}.letter{width:49px;height:49px;font-size:24px}.game-area{min-height:330px}.hero{padding-top:16px}.top{padding:16px 0}.prompt .blanks{letter-spacing:5px}}@media(prefers-reduced-motion:reduce){.flip-inner{transition:none}}
+
+input{font:inherit}input:focus-visible{outline:3px solid var(--sky);outline-offset:2px}input:not([type=file]){background:#172443;border:1px solid #445277;color:white;border-radius:11px;padding:11px 12px;min-width:0;width:100%}input::placeholder{color:#8e9fbc}.full{width:100%}.manager-layout{display:grid;grid-template-columns:minmax(260px,.74fr) minmax(0,1.5fr);gap:16px}.manager-block{background:#0c172e;border:1px solid var(--border);padding:20px;border-radius:18px;min-width:0}.manager-block h3{margin:0 0 16px;font-size:19px}.manager-block .section-sep{margin-top:26px}.field-label,.input-group>span{display:block;font-size:13px;color:#c4d0e6;font-weight:650;margin:13px 0 7px}.inline-field{display:flex;gap:8px}.inline-field input{flex:1}.inline-field .primary{white-space:nowrap}.danger{color:#ffc5ca;border-color:#a05763}.danger:hover{border-color:#ff838d}.storage-info{padding:14px 16px;background:#123344;color:#c7eaf4;border:1px solid #336478;border-radius:12px;line-height:1.55;font-size:13px;margin:0 0 20px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.input-group{display:block;min-width:0}.input-group.wide{grid-column:1 / -1}.input-group>span{margin-top:0}.backup-grid{display:flex;flex-wrap:wrap;gap:9px}.backup-grid>*{flex:1;text-align:center;white-space:nowrap}.upload-btn{display:flex;justify-content:center;align-items:center;cursor:pointer}.restore-btn{margin-top:18px}.manager-separator{height:1px;background:var(--border);margin:28px 0 20px}.vocab-list{margin-top:15px;display:grid;gap:9px;max-height:520px;overflow:auto}.vocab-row{background:#182443;border:1px solid #39476a;border-radius:13px;padding:12px;display:flex;gap:12px;align-items:center;justify-content:space-between}.vocab-info{min-width:0;display:flex;flex-direction:column;gap:4px}.vocab-info strong{font-size:16px;color:var(--sky);overflow-wrap:anywhere}.vocab-info span{font-size:14px}.vocab-info small{color:var(--muted);line-height:1.4;overflow-wrap:anywhere}.vocab-actions{display:flex;gap:6px;flex-shrink:0}.vocab-actions .smallbtn{padding:8px;font-size:12px}.empty-message{color:var(--muted);line-height:1.6}.notice{position:fixed;bottom:16px;left:50%;transform:translate(-50%,24px);z-index:99;opacity:0;pointer-events:none;background:#174837;border:1px solid var(--green);color:#ecfff9;padding:12px 18px;border-radius:12px;max-width:min(600px,calc(100vw - 28px));box-shadow:0 14px 45px #000a;transition:opacity .2s,transform .2s}.notice.show{opacity:1;transform:translate(-50%,0)}.notice.error{background:#51252f;border-color:#f47e86;color:#fff}.tab{transition:background .15s}.tabs{position:sticky;top:0;z-index:8;padding:9px 0;background:#0b1022e8;backdrop-filter:blur(10px)}@media(max-width:800px){.manager-layout{grid-template-columns:1fr}}@media(max-width:570px){.form-grid{grid-template-columns:1fr}.vocab-row{align-items:flex-start;flex-direction:column}.vocab-actions{width:100%}.vocab-actions button{flex:1}.manager-block{padding:15px}.storage-info{font-size:12px}.backup-grid>*{white-space:normal}.tabs .tab{flex:1;padding:11px 8px;font-size:13px}}
+
+
+/* Falling-word typing mode + player scoreboards */
+.game-profile{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:12px 0 16px;padding:13px 16px;border-radius:14px;background:#102441;border:1px solid #355072}
+.game-profile label{font-size:13px;color:#bdd8f6;font-weight:800;display:block;margin-bottom:7px}
+.game-profile input{width:min(290px,100%);max-width:100%;padding:11px 13px}
+.game-profile .profile-help{flex:1;color:var(--muted);font-size:13px;line-height:1.55;min-width:200px;margin:0}
+.typing-form{display:flex;align-items:stretch;gap:9px;max-width:620px;margin:8px auto 15px}
+.typing-form input{font-size:18px;min-width:0;flex:1;border-color:#75afd1;background:#0c1b35}
+.typing-form input:focus{border-color:var(--sky);box-shadow:0 0 0 2px #2f9bc244}
+.typing-form button{white-space:nowrap}
+.falling-word{position:absolute;z-index:2;top:0;left:50%;width:min(83%,310px);transform:translate(-50%,-100px);background:linear-gradient(135deg,#ffdfa3,#ffb77c);border:3px solid #fff0bf;color:#20253b;box-shadow:0 15px 40px #0007;border-radius:20px;padding:13px 16px;text-align:center;pointer-events:none;will-change:transform}
+.falling-word strong{display:block;font-size:21px;line-height:1.3;overflow-wrap:anywhere}
+.falling-word span{display:block;font-size:12px;margin-top:5px;font-weight:750}
+.typing-time{color:var(--sky);font-weight:750;font-size:13px;margin:0 0 8px;min-height:20px;text-align:center}
+.scoreboard{margin-top:22px;border:1px solid #365075;border-radius:18px;background:#0d1d37;padding:18px}
+.scoreboard-top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.scoreboard-top h3{margin:0;font-size:19px}
+.scoreboard-list{display:grid;gap:8px}
+.scoreboard-entry{display:grid;grid-template-columns:37px minmax(0,1fr) minmax(75px,auto);gap:10px;align-items:center;background:#182b4a;border:1px solid #2e4870;border-radius:12px;padding:10px 12px}
+.scoreboard-entry.is-you{border-color:#6fe5b5;background:#163a42}
+.scoreboard-rank{font-weight:900;text-align:center;color:var(--gold)}
+.scoreboard-name{font-weight:800;overflow-wrap:anywhere}
+.scoreboard-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.scoreboard-points{color:var(--green);font-size:20px;font-weight:900;text-align:right;white-space:nowrap}
+.scoreboard-points small{font-size:11px;color:var(--muted);font-weight:600}
+.scoreboard-note{font-size:12px;color:var(--muted);line-height:1.6;margin:12px 0}
+.scoreboard-actions{display:flex;gap:9px;flex-wrap:wrap}
+.scoreboard-actions button,.scoreboard-actions label{flex:1;min-width:155px}
+.scoreboard-actions label{cursor:pointer;display:flex;align-items:center;justify-content:center}
+@media(max-width:620px){.typing-form{flex-direction:row}.typing-form button{padding:11px 12px}.game-profile{gap:8px}.game-profile .name-field{flex:1;min-width:200px}.game-profile input{width:100%}.scoreboard{padding:12px}.game-area{min-height:300px}}
+
+</style>
+</head>
+<body><main class="container">
+<header class="top"><div class="brand">☁️ Word<b>Sky</b></div><div class="pill tiny">English for beginners · A1</div></header>
+<section class="hero"><div class="kicker">HỌC VUI • NHỚ LÂU</div><h1>Học từ vựng.<br><em>Bắt chữ trên mây.</em></h1><p>Lật thẻ để nhớ từ mới, chơi bắt chữ rơi hoặc gõ nhanh cả từ trước khi chạm đất. Nhập tên để ghi điểm và so tài với bạn học!</p></section>
+<nav class="tabs" aria-label="Chế độ học"><button class="tab active" id="flashTab" aria-selected="true">🃏 Flashcard</button><button class="tab" id="gameTab" aria-selected="false">🌠 Game chữ rơi</button><button class="tab" id="manageTab" aria-selected="false">⚙️ Quản lý từ vựng</button></nav>
+<section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng.</p><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny">Tiến độ được lưu trên trình duyệt này.</p></div><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
+<section class="panel hidden" id="gamePanel"><div class="toolbar"><h2>🌠 Bắt chữ rơi</h2><div class="controls"><label for="gameTopic">Chủ đề:</label><select id="gameTopic"></select><label for="gameMode">Chế độ:</label><select id="gameMode"><option value="letters">🔠 Bắt chữ cái</option><option value="typing">⚡ Gõ cả từ</option></select><label for="difficulty">Tốc độ:</label><select id="difficulty"><option value="easy">Dễ</option><option value="normal">Vừa</option><option value="hard">Khó</option></select></div></div><div class="game-profile"><div class="name-field"><label for="playerName">👤 Tên người chơi</label><input id="playerName" type="text" maxlength="24" placeholder="Ví dụ: Nghĩa" autocomplete="nickname" aria-describedby="playerHelp"></div><p class="profile-help" id="playerHelp">Nhập tên trước khi bắt đầu. Điểm được ghi theo tên để hai người so tài trên cùng trình duyệt.</p></div>
+<div id="gameRules" class="rule">🎯 <b>Bắt chữ cái:</b> Nhìn nghĩa tiếng Việt, chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z. Chọn sai hoặc bỏ lỡ chữ đúng mất 1 tim.</div><div class="game-header"><div class="metric"><strong id="score">0</strong><span>Điểm</span></div><div class="metric"><strong id="hearts">❤️❤️❤️</strong><span>Máu</span></div><div class="metric"><strong id="round">0 / 10</strong><span>Số từ</span></div><div class="metric"><strong id="best">0</strong><span>Kỷ lục của bạn</span></div></div><div class="prompt" aria-live="polite"><div class="translation" id="clue">Bắt đầu trò chơi để nhận câu hỏi</div><div class="blanks" id="blanks">_ _ _ _ _</div></div><form class="typing-form hidden" id="typingForm" autocomplete="off"><input id="typingAnswer" type="text" maxlength="45" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Gõ cả từ tiếng Anh rồi Enter…" aria-label="Nhập cả từ tiếng Anh" disabled><button type="submit" class="primary" id="submitTyping" disabled>↵ Trả lời</button></form><p id="typingTime" class="typing-time hidden" aria-live="off"></p><div class="game-area" id="gameArea" aria-label="Khu vực chữ cái rơi"><div class="cloud" style="left:10%;top:14%">☁</div><div class="cloud" style="right:10%;top:60%">☁</div><div id="gameOverlay" class="game-overlay"><div class="overlay-box"><h3 id="overlayTitle">Sẵn sàng chưa? 🚀</h3><p id="overlayText">10 từ vựng ngẫu nhiên đang chờ. Chạm vào chữ cái đang rơi hoặc dùng bàn phím để điền từ!</p><button class="primary" id="startGame">▶ Bắt đầu chơi</button></div></div></div><div class="game-footer"><div class="feedback" id="feedback" aria-live="polite"></div><div class="controls"><button class="secondary" id="pauseGame" disabled>⏸ Tạm dừng</button><button class="secondary" id="restartGame">↻ Chơi lại</button></div></div><p class="key-hint" id="gameHint">Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab trình duyệt.</p>
+<section class="scoreboard" aria-labelledby="scoresTitle"><div class="scoreboard-top"><h3 id="scoresTitle">🏆 Bảng điểm người chơi</h3><div class="controls"><label for="rankingMode">Xem điểm:</label><select id="rankingMode"><option value="letters">Bắt chữ cái</option><option value="typing">Gõ cả từ</option></select></div></div><div id="scoreboardList" class="scoreboard-list"><p class="empty-message">Chưa có lượt chơi nào.</p></div><p class="scoreboard-note">Điểm theo tên được lưu trên <b>trình duyệt này</b>, không tự đồng bộ giữa hai thiết bị. Để so điểm giữa hai máy, xuất và nhập file bảng điểm (chỉ hợp nhất điểm, không xóa thẻ).</p><div class="scoreboard-actions"><button type="button" id="exportScores" class="secondary">⬇ Xuất bảng điểm</button><label for="importScores" class="secondary">⬆ Nhập bảng điểm<input id="importScores" class="hidden" type="file" accept=".json,application/json" aria-label="Nhập JSON bảng điểm"></label></div></section></section>
+<section class="panel hidden" id="managePanel">
+  <div class="toolbar"><h2>⚙️ Quản lý từ vựng</h2><div class="controls"><span class="pill tiny"><b id="topicCount">26</b> chủ đề</span><span class="pill tiny"><b id="wordCount">260</b> thẻ</span></div></div>
+  <p class="section-sub">Tự tạo chủ đề và thêm, sửa, xóa từ. <b>Flashcard và game chữ rơi sẽ cập nhật theo bộ từ mới.</b></p>
+  <div class="storage-info">🔒 Thay đổi được lưu <b>trên trình duyệt này</b>, không tự đồng bộ với người học thứ hai. Dùng <b>Xuất JSON</b> và <b>Nhập JSON</b> để chia sẻ bộ thẻ.</div>
+  <div class="manager-layout">
+    <section class="manager-block" aria-labelledby="topicAdminTitle">
+      <h3 id="topicAdminTitle">📚 Chủ đề</h3>
+      <label class="field-label" for="managerTopic">Chọn chủ đề đang quản lý</label>
+      <select id="managerTopic" class="full"></select>
+      <label class="field-label" for="newTopic">Tạo chủ đề mới</label>
+      <div class="inline-field"><input id="newTopic" maxlength="45" placeholder="VD: Sports, School, Công việc" aria-label="Tên chủ đề mới"/><button type="button" class="primary" id="addTopic">＋ Tạo</button></div>
+      <div class="rowbtn"><button type="button" class="secondary" id="renameTopic">✏️ Đổi tên</button><button type="button" class="secondary danger" id="deleteTopic">🗑 Xóa chủ đề</button></div>
+      <h3 class="section-sep">📦 Sao lưu / chia sẻ</h3>
+      <p class="tiny">Xuất file rồi gửi cho người kia; bên kia chọn Nhập JSON để nhận toàn bộ chủ đề.</p>
+      <div class="backup-grid"><button class="secondary" type="button" id="exportData">⬇ Xuất JSON</button><label class="secondary upload-btn" for="importData">⬆ Nhập JSON<input type="file" id="importData" accept="application/json,.json" hidden/></label></div>
+      <button class="secondary restore-btn full" type="button" id="addSampleTopics">＋ Thêm lại 22 chủ đề mới (220 từ)</button>
+      <p class="tiny">Chỉ bổ sung các chủ đề mẫu đang thiếu. Không ghi đè thẻ bạn đã sửa hay chủ đề tự tạo.</p>
+      <button class="secondary restore-btn full" type="button" id="restoreDailyLife">↻ Khôi phục riêng Daily Life (10 từ)</button>
+      <p class="tiny">Chỉ thêm những từ mẫu đang thiếu trong Daily Life, không xóa từ hay chủ đề khác.</p>
+      <button class="smallbtn danger restore-btn" type="button" id="resetVocab">↻ Khôi phục bộ từ mặc định</button>
+    </section>
+    <section class="manager-block" aria-labelledby="wordsAdminTitle">
+      <h3 id="editorTitle">Thêm thẻ mới</h3>
+      <form id="cardForm">
+        <div class="form-grid">
+          <label class="input-group"><span>Từ tiếng Anh *</span><input id="inputWord" placeholder="VD: badminton" maxlength="40" required autocomplete="off"/></label>
+          <label class="input-group"><span>Nghĩa tiếng Việt *</span><input id="inputMeaning" placeholder="VD: cầu lông" maxlength="150" required/></label>
+          <label class="input-group"><span>Phiên âm (tùy chọn)</span><input id="inputIpa" placeholder="/ˈbædmɪntən/" maxlength="100"/></label>
+          <label class="input-group"><span>Ví dụ tiếng Anh (tùy chọn)</span><input id="inputExample" placeholder="I play badminton." maxlength="250"/></label>
+          <label class="input-group wide"><span>Dịch ví dụ (tùy chọn)</span><input id="inputTranslation" placeholder="Tôi chơi cầu lông." maxlength="250"/></label>
+        </div>
+        <div class="rowbtn"><button class="primary" id="saveCard" type="submit">＋ Thêm thẻ</button><button class="secondary hidden" id="cancelEdit" type="button">Hủy sửa</button></div>
+      </form>
+      <div class="manager-separator"></div>
+      <div class="toolbar"><h3>Danh sách thẻ</h3><span class="tiny" id="manageCount"></span></div>
+      <label class="field-label" for="wordSearch">Tìm từ hoặc nghĩa</label><input id="wordSearch" class="full" placeholder="🔎 Tìm kiếm..."/>
+      <div class="vocab-list" id="manageList"></div>
+    </section>
+  </div>
+</section>
+
+<footer class="footer">Made for everyday English learning 🌱 · Tự học miễn phí · Không cần tài khoản</footer>
+</main><div class="notice" id="notice" role="status" aria-live="polite"></div>
+<script>
+const DEFAULT_DATA={
+'Daily Life':[
+['wake','/weɪk/','Thức dậy (wake up)','I wake up at seven.','Tôi thức dậy lúc bảy giờ.'],['sleep','/sliːp/','Ngủ','I sleep at ten.','Tôi ngủ lúc mười giờ.'],['study','/ˈstʌdi/','Học','I study English.','Tôi học tiếng Anh.'],['work','/wɜːrk/','Làm việc','I work every day.','Tôi làm việc mỗi ngày.'],['eat','/iːt/','Ăn','I eat breakfast.','Tôi ăn sáng.'],['drink','/drɪŋk/','Uống','I drink water.','Tôi uống nước.'],['walk','/wɔːk/','Đi bộ','I walk to school.','Tôi đi bộ đến trường.'],['read','/riːd/','Đọc','I read a book.','Tôi đọc sách.'],['write','/raɪt/','Viết','I write a note.','Tôi viết ghi chú.'],['cook','/kʊk/','Nấu ăn','I cook dinner.','Tôi nấu bữa tối.']],
+'Family':[['mother','/ˈmʌðər/','Mẹ','My mother is kind.','Mẹ tôi tốt bụng.'],['father','/ˈfɑːðər/','Bố','My father is tall.','Bố tôi cao.'],['sister','/ˈsɪstər/','Chị / em gái','My sister is happy.','Chị tôi vui vẻ.'],['brother','/ˈbrʌðər/','Anh / em trai','My brother is young.','Em trai tôi còn nhỏ.'],['friend','/frend/','Bạn bè','She is my friend.','Cô ấy là bạn tôi.'],['family','/ˈfæməli/','Gia đình','I love my family.','Tôi yêu gia đình.'],['baby','/ˈbeɪbi/','Em bé','The baby is sleeping.','Em bé đang ngủ.'],['child','/tʃaɪld/','Đứa trẻ','The child is playing.','Đứa trẻ đang chơi.'],['uncle','/ˈʌŋkəl/','Chú / bác / cậu','My uncle is funny.','Chú tôi hài hước.'],['aunt','/ænt/','Cô / dì / bác gái','My aunt is a teacher.','Dì tôi là giáo viên.']],
+'Food':[['apple','/ˈæpəl/','Quả táo','I eat an apple.','Tôi ăn một quả táo.'],['bread','/bred/','Bánh mì','I like bread.','Tôi thích bánh mì.'],['rice','/raɪs/','Cơm / gạo','We eat rice.','Chúng tôi ăn cơm.'],['milk','/mɪlk/','Sữa','I drink milk.','Tôi uống sữa.'],['water','/ˈwɔːtər/','Nước','Water is important.','Nước rất quan trọng.'],['egg','/eɡ/','Trứng','I eat an egg.','Tôi ăn một quả trứng.'],['fish','/fɪʃ/','Cá','I like fish.','Tôi thích cá.'],['banana','/bəˈnænə/','Chuối','This banana is sweet.','Quả chuối này ngọt.'],['soup','/suːp/','Súp','The soup is hot.','Súp nóng.'],['fruit','/fruːt/','Trái cây','I eat fruit.','Tôi ăn trái cây.']],
+'Places':[['school','/skuːl/','Trường học','I go to school.','Tôi đến trường.'],['house','/haʊs/','Ngôi nhà','This is my house.','Đây là nhà tôi.'],['park','/pɑːrk/','Công viên','We walk in the park.','Chúng tôi đi bộ trong công viên.'],['shop','/ʃɒp/','Cửa hàng','I go to the shop.','Tôi đến cửa hàng.'],['office','/ˈɒfɪs/','Văn phòng','She works in an office.','Cô ấy làm trong văn phòng.'],['room','/ruːm/','Căn phòng','My room is clean.','Phòng tôi sạch sẽ.'],['street','/striːt/','Con đường','The street is busy.','Con đường đông đúc.'],['city','/ˈsɪti/','Thành phố','I live in a city.','Tôi sống ở thành phố.'],['beach','/biːtʃ/','Bãi biển','We visit the beach.','Chúng tôi đến bãi biển.'],['market','/ˈmɑːrkɪt/','Chợ','She goes to the market.','Cô ấy đi chợ.']],
+"Greetings - Chào hỏi":[["hello","/həˈloʊ/","Xin chào","Hello, my name is Mai.","Xin chào, tôi tên là Mai."],["hi","/haɪ/","Chào (thân mật)","Hi, how are you?","Chào, bạn khỏe không?"],["goodbye","/ɡʊdˈbaɪ/","Tạm biệt","Goodbye, see you tomorrow.","Tạm biệt, hẹn gặp bạn ngày mai."],["welcome","/ˈwelkəm/","Chào mừng","Welcome to our home.","Chào mừng đến nhà chúng tôi."],["please","/pliːz/","Làm ơn","Please open the door.","Làm ơn mở cửa."],["thanks","/θæŋks/","Cảm ơn","Thanks for your help.","Cảm ơn bạn đã giúp đỡ."],["sorry","/ˈsɑːri/","Xin lỗi","Sorry, I am late.","Xin lỗi, tôi đến muộn."],["yes","/jes/","Có / vâng","Yes, I understand.","Vâng, tôi hiểu."],["no","/noʊ/","Không","No, I do not need it.","Không, tôi không cần nó."],["excuse me","/ɪkˈskjuːz miː/","Xin lỗi, cho hỏi","Excuse me, where is the station?","Xin lỗi, nhà ga ở đâu?"]],"Numbers - Số đếm":[["one","/wʌn/","Một","I have one sister.","Tôi có một chị gái."],["two","/tuː/","Hai","Two people are here.","Có hai người ở đây."],["three","/θriː/","Ba","I need three pens.","Tôi cần ba cây bút."],["four","/fɔːr/","Bốn","There are four chairs.","Có bốn cái ghế."],["five","/faɪv/","Năm","She has five books.","Cô ấy có năm quyển sách."],["six","/sɪks/","Sáu","I wake up at six.","Tôi thức dậy lúc sáu giờ."],["seven","/ˈsevən/","Bảy","We meet at seven.","Chúng tôi gặp nhau lúc bảy giờ."],["eight","/eɪt/","Tám","He has eight apples.","Anh ấy có tám quả táo."],["nine","/naɪn/","Chín","The class starts at nine.","Lớp học bắt đầu lúc chín giờ."],["ten","/ten/","Mười","I study for ten minutes.","Tôi học trong mười phút."]],"Time & Dates - Thời gian":[["today","/təˈdeɪ/","Hôm nay","Today is a good day.","Hôm nay là một ngày tốt đẹp."],["tomorrow","/təˈmɑːroʊ/","Ngày mai","I will call you tomorrow.","Tôi sẽ gọi cho bạn ngày mai."],["yesterday","/ˈjestərdeɪ/","Hôm qua","I was busy yesterday.","Hôm qua tôi bận."],["morning","/ˈmɔːrnɪŋ/","Buổi sáng","I study in the morning.","Tôi học vào buổi sáng."],["afternoon","/ˌæftərˈnuːn/","Buổi chiều","We play in the afternoon.","Chúng tôi chơi vào buổi chiều."],["evening","/ˈiːvnɪŋ/","Buổi tối","I cook in the evening.","Tôi nấu ăn vào buổi tối."],["week","/wiːk/","Tuần","I exercise every week.","Tôi tập thể dục mỗi tuần."],["month","/mʌnθ/","Tháng","This month is busy.","Tháng này rất bận."],["year","/jɪr/","Năm","I learn English this year.","Tôi học tiếng Anh trong năm nay."],["weekend","/ˈwiːkend/","Cuối tuần","We rest on the weekend.","Chúng tôi nghỉ vào cuối tuần."]],"Colors - Màu sắc":[["red","/red/","Màu đỏ","The bag is red.","Chiếc túi màu đỏ."],["blue","/bluː/","Màu xanh dương","The sky is blue.","Bầu trời màu xanh dương."],["green","/ɡriːn/","Màu xanh lá","The leaves are green.","Lá cây màu xanh lá."],["yellow","/ˈjeloʊ/","Màu vàng","The banana is yellow.","Quả chuối màu vàng."],["black","/blæk/","Màu đen","I have a black phone.","Tôi có một chiếc điện thoại màu đen."],["white","/waɪt/","Màu trắng","She wears a white shirt.","Cô ấy mặc áo sơ mi trắng."],["pink","/pɪŋk/","Màu hồng","This flower is pink.","Bông hoa này màu hồng."],["purple","/ˈpɜːrpəl/","Màu tím","I like purple flowers.","Tôi thích hoa màu tím."],["orange","/ˈɔːrɪndʒ/","Màu cam","My bike is orange.","Xe đạp của tôi màu cam."],["brown","/braʊn/","Màu nâu","The table is brown.","Cái bàn màu nâu."]],"Clothes - Quần áo":[["shirt","/ʃɜːrt/","Áo sơ mi","My shirt is blue.","Áo sơ mi của tôi màu xanh."],["t-shirt","/ˈtiː ʃɜːrt/","Áo thun","I wear a T-shirt.","Tôi mặc áo thun."],["pants","/pænts/","Quần dài","These pants are new.","Chiếc quần dài này mới."],["shorts","/ʃɔːrts/","Quần đùi","I wear shorts at home.","Tôi mặc quần đùi ở nhà."],["dress","/dres/","Váy liền","Her dress is pretty.","Chiếc váy của cô ấy đẹp."],["shoes","/ʃuːz/","Giày","My shoes are clean.","Đôi giày của tôi sạch."],["socks","/sɑːks/","Tất / vớ","I need clean socks.","Tôi cần đôi tất sạch."],["jacket","/ˈdʒækɪt/","Áo khoác","Take your jacket with you.","Hãy mang theo áo khoác."],["hat","/hæt/","Mũ","He wears a black hat.","Anh ấy đội mũ đen."],["bag","/bæɡ/","Túi xách","My bag is on the chair.","Túi của tôi ở trên ghế."]],"Home - Nhà cửa":[["kitchen","/ˈkɪtʃən/","Nhà bếp","My mother is in the kitchen.","Mẹ tôi đang ở trong bếp."],["bedroom","/ˈbedruːm/","Phòng ngủ","My bedroom is small.","Phòng ngủ của tôi nhỏ."],["bathroom","/ˈbæθruːm/","Phòng tắm","The bathroom is upstairs.","Phòng tắm ở tầng trên."],["living room","/ˈlɪvɪŋ ruːm/","Phòng khách","We watch TV in the living room.","Chúng tôi xem TV trong phòng khách."],["table","/ˈteɪbəl/","Cái bàn","The cup is on the table.","Cái cốc ở trên bàn."],["chair","/tʃer/","Cái ghế","Please sit on the chair.","Mời bạn ngồi xuống ghế."],["bed","/bed/","Cái giường","The bed is comfortable.","Chiếc giường rất thoải mái."],["door","/dɔːr/","Cửa ra vào","Close the door, please.","Làm ơn đóng cửa."],["window","/ˈwɪndoʊ/","Cửa sổ","Open the window.","Hãy mở cửa sổ."],["sofa","/ˈsoʊfə/","Ghế sofa","The cat is on the sofa.","Con mèo ở trên ghế sofa."]],"School - Trường học":[["student","/ˈstuːdənt/","Học sinh / sinh viên","I am a student.","Tôi là sinh viên."],["teacher","/ˈtiːtʃər/","Giáo viên","Our teacher is friendly.","Giáo viên của chúng tôi thân thiện."],["lesson","/ˈlesən/","Bài học","This lesson is easy.","Bài học này dễ."],["class","/klæs/","Lớp học","Our class starts at eight.","Lớp chúng tôi bắt đầu lúc tám giờ."],["homework","/ˈhoʊmwɜːrk/","Bài tập về nhà","I do my homework.","Tôi làm bài tập về nhà."],["notebook","/ˈnoʊtbʊk/","Quyển vở","I write in my notebook.","Tôi viết vào vở."],["pencil","/ˈpensəl/","Bút chì","This pencil is sharp.","Cây bút chì này nhọn."],["question","/ˈkwestʃən/","Câu hỏi","I have a question.","Tôi có một câu hỏi."],["answer","/ˈænsər/","Câu trả lời","I know the answer.","Tôi biết câu trả lời."],["exam","/ɪɡˈzæm/","Kỳ thi","The exam is tomorrow.","Kỳ thi diễn ra ngày mai."]],"Jobs - Nghề nghiệp":[["doctor","/ˈdɑːktər/","Bác sĩ","The doctor helps patients.","Bác sĩ giúp đỡ bệnh nhân."],["nurse","/nɜːrs/","Y tá / điều dưỡng","The nurse is kind.","Điều dưỡng rất tốt bụng."],["engineer","/ˌendʒɪˈnɪr/","Kỹ sư","My brother is an engineer.","Anh trai tôi là kỹ sư."],["programmer","/ˈproʊɡræmər/","Lập trình viên","She works as a programmer.","Cô ấy làm lập trình viên."],["manager","/ˈmænɪdʒər/","Người quản lý","The manager is busy.","Người quản lý đang bận."],["meeting","/ˈmiːtɪŋ/","Cuộc họp","We have a meeting at ten.","Chúng tôi có cuộc họp lúc mười giờ."],["email","/ˈiːmeɪl/","Thư điện tử","I send an email to my team.","Tôi gửi email cho nhóm."],["project","/ˈprɑːdʒekt/","Dự án","Our project is ready.","Dự án của chúng tôi đã sẵn sàng."],["customer","/ˈkʌstəmər/","Khách hàng","The customer needs help.","Khách hàng cần hỗ trợ."],["salary","/ˈsæləri/","Tiền lương","He gets his salary monthly.","Anh ấy nhận lương hàng tháng."]],"Shopping - Mua sắm":[["price","/praɪs/","Giá tiền","What is the price?","Giá bao nhiêu?"],["cheap","/tʃiːp/","Rẻ","This shirt is cheap.","Chiếc áo này rẻ."],["expensive","/ɪkˈspensɪv/","Đắt","This phone is expensive.","Điện thoại này đắt."],["discount","/ˈdɪskaʊnt/","Giảm giá","There is a discount today.","Hôm nay có giảm giá."],["money","/ˈmʌni/","Tiền","I need some money.","Tôi cần một ít tiền."],["cash","/kæʃ/","Tiền mặt","Can I pay in cash?","Tôi có thể trả bằng tiền mặt không?"],["card","/kɑːrd/","Thẻ thanh toán","I pay by card.","Tôi thanh toán bằng thẻ."],["receipt","/rɪˈsiːt/","Biên lai","Please keep the receipt.","Hãy giữ biên lai."],["size","/saɪz/","Kích cỡ","What size do you need?","Bạn cần cỡ nào?"],["buy","/baɪ/","Mua","I want to buy a jacket.","Tôi muốn mua một chiếc áo khoác."]],"Transport - Di chuyển":[["car","/kɑːr/","Ô tô","My father drives a car.","Bố tôi lái ô tô."],["bus","/bʌs/","Xe buýt","I take the bus to work.","Tôi đi xe buýt đến chỗ làm."],["train","/treɪn/","Tàu hỏa","The train is late.","Tàu hỏa đến muộn."],["bicycle","/ˈbaɪsɪkəl/","Xe đạp","I ride a bicycle.","Tôi đi xe đạp."],["motorbike","/ˈmoʊtərbaɪk/","Xe máy","He goes to school by motorbike.","Anh ấy đi học bằng xe máy."],["taxi","/ˈtæksi/","Xe taxi","We call a taxi.","Chúng tôi gọi taxi."],["plane","/pleɪn/","Máy bay","The plane leaves at noon.","Máy bay khởi hành lúc trưa."],["station","/ˈsteɪʃən/","Nhà ga / trạm","The station is near here.","Nhà ga ở gần đây."],["ticket","/ˈtɪkɪt/","Vé","I have a bus ticket.","Tôi có vé xe buýt."],["traffic","/ˈtræfɪk/","Giao thông","Traffic is heavy today.","Hôm nay giao thông đông đúc."]],"Travel - Du lịch":[["passport","/ˈpæspɔːrt/","Hộ chiếu","I need my passport.","Tôi cần hộ chiếu."],["suitcase","/ˈsuːtkeɪs/","Vali","My suitcase is heavy.","Vali của tôi nặng."],["hotel","/hoʊˈtel/","Khách sạn","We stay at a hotel.","Chúng tôi ở khách sạn."],["airport","/ˈerpɔːrt/","Sân bay","The airport is far away.","Sân bay ở xa."],["flight","/flaɪt/","Chuyến bay","Our flight is at nine.","Chuyến bay của chúng tôi lúc chín giờ."],["booking","/ˈbʊkɪŋ/","Việc đặt chỗ","I have a hotel booking.","Tôi đã đặt phòng khách sạn."],["journey","/ˈdʒɜːrni/","Hành trình","The journey takes two hours.","Hành trình mất hai giờ."],["map","/mæp/","Bản đồ","Look at the map.","Hãy xem bản đồ."],["tourist","/ˈtʊrɪst/","Du khách","The tourist takes photos.","Du khách chụp ảnh."],["vacation","/veɪˈkeɪʃən/","Kỳ nghỉ","We are on vacation.","Chúng tôi đang đi nghỉ."]],"Weather - Thời tiết":[["sunny","/ˈsʌni/","Có nắng","It is sunny today.","Hôm nay trời nắng."],["rainy","/ˈreɪni/","Có mưa","It is rainy outside.","Ngoài trời đang mưa."],["cloudy","/ˈklaʊdi/","Nhiều mây","The sky is cloudy.","Bầu trời nhiều mây."],["windy","/ˈwɪndi/","Có gió","It is windy at the beach.","Ở bãi biển có gió."],["hot","/hɑːt/","Nóng","It is hot in summer.","Mùa hè trời nóng."],["cold","/koʊld/","Lạnh","It is cold this morning.","Sáng nay trời lạnh."],["warm","/wɔːrm/","Ấm áp","The weather is warm.","Thời tiết ấm áp."],["cool","/kuːl/","Mát mẻ","The evening is cool.","Buổi tối trời mát."],["storm","/stɔːrm/","Cơn bão","A storm is coming.","Một cơn bão đang đến."],["forecast","/ˈfɔːrkæst/","Dự báo thời tiết","I check the forecast.","Tôi xem dự báo thời tiết."]],"Body & Health - Cơ thể":[["head","/hed/","Đầu","My head hurts.","Tôi đau đầu."],["eye","/aɪ/","Mắt","My left eye is red.","Mắt trái của tôi bị đỏ."],["ear","/ɪr/","Tai","My ear hurts.","Tôi bị đau tai."],["nose","/noʊz/","Mũi","My nose is cold.","Mũi tôi lạnh."],["mouth","/maʊθ/","Miệng","Open your mouth, please.","Làm ơn mở miệng."],["hand","/hænd/","Bàn tay","Wash your hands.","Hãy rửa tay."],["foot","/fʊt/","Bàn chân","My foot is tired.","Bàn chân tôi mỏi."],["stomach","/ˈstʌmək/","Bụng / dạ dày","My stomach hurts.","Tôi đau bụng."],["healthy","/ˈhelθi/","Khỏe mạnh","I eat healthy food.","Tôi ăn thức ăn lành mạnh."],["medicine","/ˈmedɪsɪn/","Thuốc","The doctor gives me medicine.","Bác sĩ cho tôi thuốc."]],"Feelings - Cảm xúc":[["happy","/ˈhæpi/","Vui vẻ","I feel happy today.","Hôm nay tôi thấy vui."],["sad","/sæd/","Buồn","She feels sad.","Cô ấy cảm thấy buồn."],["angry","/ˈæŋɡri/","Tức giận","He is angry now.","Anh ấy đang tức giận."],["tired","/ˈtaɪərd/","Mệt mỏi","I am tired after work.","Tôi mệt sau giờ làm."],["excited","/ɪkˈsaɪtɪd/","Hào hứng","We are excited about the trip.","Chúng tôi hào hứng về chuyến đi."],["nervous","/ˈnɜːrvəs/","Lo lắng, hồi hộp","I feel nervous before the exam.","Tôi hồi hộp trước kỳ thi."],["scared","/skerd/","Sợ hãi","The child is scared.","Đứa trẻ sợ hãi."],["calm","/kɑːm/","Bình tĩnh","Please stay calm.","Làm ơn hãy bình tĩnh."],["proud","/praʊd/","Tự hào","I am proud of you.","Tôi tự hào về bạn."],["bored","/bɔːrd/","Chán","I am bored at home.","Tôi thấy chán ở nhà."]],"Sports & Hobbies - Thể thao":[["badminton","/ˈbædmɪntən/","Cầu lông","I play badminton every weekend.","Tôi chơi cầu lông mỗi cuối tuần."],["football","/ˈfʊtbɔːl/","Bóng đá","They play football after school.","Họ chơi bóng đá sau giờ học."],["basketball","/ˈbæskɪtbɔːl/","Bóng rổ","He likes basketball.","Anh ấy thích bóng rổ."],["swimming","/ˈswɪmɪŋ/","Bơi lội","Swimming is good exercise.","Bơi lội là bài tập tốt."],["running","/ˈrʌnɪŋ/","Chạy bộ","I go running in the morning.","Tôi chạy bộ vào buổi sáng."],["reading","/ˈriːdɪŋ/","Đọc sách","Reading is my hobby.","Đọc sách là sở thích của tôi."],["drawing","/ˈdrɔːɪŋ/","Vẽ tranh","She enjoys drawing.","Cô ấy thích vẽ tranh."],["music","/ˈmjuːzɪk/","Âm nhạc","I listen to music.","Tôi nghe nhạc."],["exercise","/ˈeksərsaɪz/","Tập thể dục","I exercise every day.","Tôi tập thể dục mỗi ngày."],["racket","/ˈrækɪt/","Cây vợt","My racket is new.","Cây vợt của tôi mới."]],"Technology - Công nghệ":[["computer","/kəmˈpjuːtər/","Máy tính","I use a computer at work.","Tôi dùng máy tính ở chỗ làm."],["phone","/foʊn/","Điện thoại","My phone is charging.","Điện thoại của tôi đang sạc."],["keyboard","/ˈkiːbɔːrd/","Bàn phím","The keyboard is black.","Bàn phím màu đen."],["mouse","/maʊs/","Chuột máy tính","I use a wireless mouse.","Tôi dùng chuột không dây."],["screen","/skriːn/","Màn hình","The screen is bright.","Màn hình sáng."],["internet","/ˈɪntərnet/","Mạng Internet","The internet is slow today.","Hôm nay mạng Internet chậm."],["website","/ˈwebsaɪt/","Trang web","I open the website.","Tôi mở trang web."],["password","/ˈpæswɜːrd/","Mật khẩu","Keep your password safe.","Hãy giữ mật khẩu an toàn."],["software","/ˈsɔːftwer/","Phần mềm","This software is useful.","Phần mềm này hữu ích."],["download","/ˌdaʊnˈloʊd/","Tải xuống","I download a file.","Tôi tải một tệp xuống."]],"Animals - Động vật":[["dog","/dɔːɡ/","Con chó","The dog is friendly.","Con chó rất thân thiện."],["cat","/kæt/","Con mèo","The cat is sleeping.","Con mèo đang ngủ."],["bird","/bɜːrd/","Con chim","A bird is singing.","Một con chim đang hót."],["rabbit","/ˈræbɪt/","Con thỏ","The rabbit is white.","Con thỏ màu trắng."],["cow","/kaʊ/","Con bò","The cow eats grass.","Con bò ăn cỏ."],["pig","/pɪɡ/","Con lợn / heo","The pig is small.","Con heo nhỏ."],["horse","/hɔːrs/","Con ngựa","The horse runs fast.","Con ngựa chạy nhanh."],["chicken","/ˈtʃɪkɪn/","Con gà","The chicken is in the yard.","Con gà ở trong sân."],["elephant","/ˈelɪfənt/","Con voi","The elephant is big.","Con voi to lớn."],["monkey","/ˈmʌŋki/","Con khỉ","The monkey climbs a tree.","Con khỉ leo lên cây."]],"Nature - Thiên nhiên":[["tree","/triː/","Cây","The tree is tall.","Cây rất cao."],["flower","/ˈflaʊər/","Bông hoa","This flower smells nice.","Bông hoa này thơm."],["river","/ˈrɪvər/","Con sông","The river is wide.","Con sông rộng."],["mountain","/ˈmaʊntən/","Ngọn núi","We climb a mountain.","Chúng tôi leo núi."],["lake","/leɪk/","Hồ","The lake is beautiful.","Hồ rất đẹp."],["forest","/ˈfɔːrɪst/","Rừng","Many animals live in the forest.","Nhiều loài vật sống trong rừng."],["ocean","/ˈoʊʃən/","Đại dương","The ocean is deep.","Đại dương rất sâu."],["cloud","/klaʊd/","Đám mây","A cloud covers the sun.","Một đám mây che mặt trời."],["moon","/muːn/","Mặt trăng","The moon is bright tonight.","Tối nay mặt trăng sáng."],["star","/stɑːr/","Ngôi sao","I see a star in the sky.","Tôi thấy một ngôi sao trên trời."]],"Verbs - Động từ":[["come","/kʌm/","Đến","Come here, please.","Làm ơn đến đây."],["go","/ɡoʊ/","Đi","I go to work at eight.","Tôi đi làm lúc tám giờ."],["make","/meɪk/","Làm / tạo ra","I make breakfast.","Tôi làm bữa sáng."],["take","/teɪk/","Lấy / mang","Take your bag with you.","Hãy mang túi theo."],["give","/ɡɪv/","Đưa / cho","Please give me the book.","Làm ơn đưa tôi quyển sách."],["get","/ɡet/","Nhận / lấy","I get a message.","Tôi nhận được một tin nhắn."],["find","/faɪnd/","Tìm thấy","I cannot find my keys.","Tôi không tìm thấy chìa khóa."],["think","/θɪŋk/","Nghĩ","I think this is good.","Tôi nghĩ điều này tốt."],["know","/noʊ/","Biết","I know the answer.","Tôi biết câu trả lời."],["need","/niːd/","Cần","I need some water.","Tôi cần một ít nước."]],"Adjectives - Tính từ":[["big","/bɪɡ/","To, lớn","This house is big.","Ngôi nhà này lớn."],["small","/smɔːl/","Nhỏ","The room is small.","Căn phòng nhỏ."],["long","/lɔːŋ/","Dài","The road is long.","Con đường dài."],["short","/ʃɔːrt/","Ngắn / thấp","This story is short.","Câu chuyện này ngắn."],["fast","/fæst/","Nhanh","This train is fast.","Chuyến tàu này nhanh."],["slow","/sloʊ/","Chậm","My computer is slow.","Máy tính của tôi chậm."],["easy","/ˈiːzi/","Dễ","This question is easy.","Câu hỏi này dễ."],["difficult","/ˈdɪfɪkəlt/","Khó","English is not always difficult.","Tiếng Anh không phải lúc nào cũng khó."],["new","/nuː/","Mới","I have a new book.","Tôi có một quyển sách mới."],["old","/oʊld/","Cũ / già","This table is old.","Cái bàn này cũ."]],"Restaurant - Nhà hàng":[["menu","/ˈmenjuː/","Thực đơn","Can I see the menu?","Tôi xem thực đơn được không?"],["order","/ˈɔːrdər/","Gọi món","I want to order lunch.","Tôi muốn gọi bữa trưa."],["waiter","/ˈweɪtər/","Nam phục vụ bàn","The waiter brings our food.","Người phục vụ mang đồ ăn đến."],["waitress","/ˈweɪtrəs/","Nữ phục vụ bàn","The waitress is friendly.","Nữ phục vụ rất thân thiện."],["bill","/bɪl/","Hóa đơn","Can we have the bill?","Cho chúng tôi xin hóa đơn được không?"],["fork","/fɔːrk/","Nĩa","I use a fork to eat.","Tôi dùng nĩa để ăn."],["spoon","/spuːn/","Thìa / muỗng","I need a spoon for soup.","Tôi cần muỗng để ăn súp."],["knife","/naɪf/","Dao","Be careful with the knife.","Hãy cẩn thận với con dao."],["delicious","/dɪˈlɪʃəs/","Ngon","The food is delicious.","Món ăn rất ngon."],["hungry","/ˈhʌŋɡri/","Đói","I am hungry now.","Bây giờ tôi đói."]],"Directions - Chỉ đường":[["left","/left/","Bên trái","Turn left at the corner.","Rẽ trái ở góc đường."],["right","/raɪt/","Bên phải","Turn right here.","Rẽ phải ở đây."],["straight","/streɪt/","Thẳng","Go straight ahead.","Đi thẳng về phía trước."],["near","/nɪr/","Gần","The bank is near my house.","Ngân hàng gần nhà tôi."],["far","/fɑːr/","Xa","The hospital is far away.","Bệnh viện ở xa."],["behind","/bɪˈhaɪnd/","Phía sau","The shop is behind the school.","Cửa hàng ở sau trường học."],["between","/bɪˈtwiːn/","Ở giữa hai nơi","The cafe is between two shops.","Quán cà phê ở giữa hai cửa hàng."],["next to","/ˈnekst tuː/","Bên cạnh","The park is next to the school.","Công viên nằm cạnh trường học."],["opposite","/ˈɑːpəzɪt/","Đối diện","The bank is opposite the market.","Ngân hàng ở đối diện chợ."],["corner","/ˈkɔːrnər/","Góc đường","Wait for me at the corner.","Đợi tôi ở góc đường."]]
+};
+
+const EXTRA_TOPIC_NAMES=["Greetings - Chào hỏi", "Numbers - Số đếm", "Time & Dates - Thời gian", "Colors - Màu sắc", "Clothes - Quần áo", "Home - Nhà cửa", "School - Trường học", "Jobs - Nghề nghiệp", "Shopping - Mua sắm", "Transport - Di chuyển", "Travel - Du lịch", "Weather - Thời tiết", "Body & Health - Cơ thể", "Feelings - Cảm xúc", "Sports & Hobbies - Thể thao", "Technology - Công nghệ", "Animals - Động vật", "Nature - Thiên nhiên", "Verbs - Động từ", "Adjectives - Tính từ", "Restaurant - Nhà hàng", "Directions - Chỉ đường"];
+
+'use strict';
+const $=id=>document.getElementById(id);
+const STORE='wordsky_vocab_v2';
+const PROGRESS='wordsky_learned';
+const DAILY_LIFE_RECOVERY_FLAG='wordsky_daily_life_recovered_v3';
+const TOPIC_PACK_FLAG='wordsky_topic_pack_2026_10_v1';
+const MAX_TOPICS=60,MAX_WORDS_PER_TOPIC=500;
+const clone=x=>JSON.parse(JSON.stringify(x));
+const isObj=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+const safeStorage={
+  read(k){try{return localStorage.getItem(k)}catch{return null}},
+  write(k,v){try{localStorage.setItem(k,v);return true}catch{return false}}
+};
+function cleanCard(raw){
+  if(!Array.isArray(raw)||raw.length!==5||raw.some(x=>typeof x!=='string'))throw Error('Mỗi thẻ cần đủ 5 trường văn bản.');
+  const [word,ipa,meaning,example,translation]=raw.map(x=>x.trim());
+  if(!word||word.length>40||!/^[a-zA-Z][a-zA-Z '\-]*$/.test(word)||!/[a-zA-Z]/.test(word))throw Error('Từ tiếng Anh chỉ gồm chữ cái A–Z, khoảng trắng, dấu nháy hoặc gạch nối (tối đa 40 ký tự).');
+  if(!meaning||meaning.length>150)throw Error('Nghĩa tiếng Việt phải có và không quá 150 ký tự.');
+  if(ipa.length>100||example.length>250||translation.length>250)throw Error('Phiên âm / câu ví dụ quá dài.');
+  return [word,ipa,meaning,example,translation];
+}
+function cleanTopics(input){
+  if(!isObj(input))throw Error('Dữ liệu chủ đề không đúng định dạng.');
+  const entries=Object.entries(input);
+  if(!entries.length||entries.length>MAX_TOPICS)throw Error('Phải có từ 1 đến '+MAX_TOPICS+' chủ đề.');
+  const result=Object.create(null);
+  const topicNames=new Set();let total=0;
+  for(const [name,list] of entries){
+    const n=name.trim();
+    if(!n||n.length>45||/[<>\u0000-\u001f]/.test(n))throw Error('Tên chủ đề không hợp lệ (tối đa 45 ký tự).');
+    if(topicNames.has(n.toLowerCase()))throw Error('Trùng tên chủ đề: '+n);
+    topicNames.add(n.toLowerCase());
+    if(!Array.isArray(list)||list.length>MAX_WORDS_PER_TOPIC)throw Error('Chủ đề '+n+' có quá nhiều thẻ.');
+    const seen=new Set();result[n]=[];
+    for(const raw of list){
+      const c=cleanCard(raw),norm=c[0].toLowerCase();
+      if(seen.has(norm))throw Error('Từ bị trùng trong '+n+': '+c[0]);
+      seen.add(norm);result[n].push(c);total++;
+    }
+  }
+  if(total>5000)throw Error('Tối đa 5000 thẻ.');
+  return result;
+}
+let DATA=clone(DEFAULT_DATA),loaded=false;
+try{const saved=safeStorage.read(STORE);if(saved){const parsed=JSON.parse(saved);DATA=cleanTopics(parsed.topics||parsed);loaded=true}}catch(e){console.warn('Bộ từ lưu trước đó không hợp lệ; dùng dữ liệu mẫu.',e)}
+let learned={};try{const v=JSON.parse(safeStorage.read(PROGRESS)||'{}');if(isObj(v))learned=v}catch{}
+let topic=Object.keys(DATA)[0],cards=[...DATA[topic]],cardIndex=0;
+let managerTopic=topic,editingWord=null;
+let gameTopic='__all';
+const $notify=$('notice');let noteTimer;
+function note(message,error=false){$notify.textContent=message;$notify.classList.toggle('error',error);$notify.classList.add('show');clearTimeout(noteTimer);noteTimer=setTimeout(()=>$notify.classList.remove('show'),4000)}
+function saveTopics(){if(!safeStorage.write(STORE,JSON.stringify({version:2,topics:DATA}))){note('Không lưu được dữ liệu. Kiểm tra chế độ ẩn danh hoặc bộ nhớ trình duyệt.',true);return false}return true}
+function saveLearned(){safeStorage.write(PROGRESS,JSON.stringify(learned))}
+// Restore only Daily Life. Keep user-created topics and edited/learned cards intact.
+function restoreDailyLife({select=true,announce=true}={}){
+  const existing=Object.keys(DATA).find(t=>t.toLowerCase()==='daily life');
+  if(!existing && Object.keys(DATA).length>=MAX_TOPICS){
+    if(announce)note('Không thể khôi phục: đã đạt giới hạn chủ đề.',true);
+    return 0;
+  }
+  const name=existing||'Daily Life';
+  const list=existing?DATA[existing]:[];
+  const present=new Set(list.map(c=>c[0].toLowerCase()));
+  const missing=DEFAULT_DATA['Daily Life'].filter(c=>!present.has(c[0].toLowerCase()));
+  if(!missing.length){
+    if(select){topic=managerTopic=name;cardIndex=0;refresh()}
+    if(announce)note('Daily Life đã đầy đủ 10 từ mẫu; các từ bạn đã sửa được giữ nguyên.');
+    return 0;
+  }
+  if(!existing)DATA[name]=[];
+  DATA[name].push(...clone(missing));
+  if(select){topic=managerTopic=name;cardIndex=0;resetEditor()}
+  saveTopics();
+  if(select)refresh();
+  if(announce)note(`Đã khôi phục ${missing.length} từ Daily Life, giữ nguyên các chủ đề khác.`);
+  return missing.length;
+}
+// One-time recovery for users who deleted Daily Life on the previous release.
+// Flag persists so later intentional deletions are not silently undone.
+function recoverDeletedDailyLifeOnce(){
+  if(safeStorage.read(DAILY_LIFE_RECOVERY_FLAG)==='1')return;
+  const existing=Object.keys(DATA).find(t=>t.toLowerCase()==='daily life');
+  if(!existing||DATA[existing].length===0){
+    restoreDailyLife({select:true,announce:false});
+  }
+  safeStorage.write(DAILY_LIFE_RECOVERY_FLAG,'1');
+}
+
+// Import only missing NEW sample topics; never replace a user's existing or edited vocabulary.
+function addMissingSampleTopics({announce=true,render=true}={}){
+  const existing=new Set(Object.keys(DATA).map(name=>name.toLocaleLowerCase()));
+  let added=0;
+  for(const name of EXTRA_TOPIC_NAMES){
+    if(existing.has(name.toLocaleLowerCase()))continue;
+    if(Object.keys(DATA).length>=MAX_TOPICS)break;
+    DATA[name]=clone(DEFAULT_DATA[name]);existing.add(name.toLocaleLowerCase());added++;
+  }
+  const complete=EXTRA_TOPIC_NAMES.every(name=>existing.has(name.toLocaleLowerCase()));
+  const saved=added?saveTopics():true;
+  if(render&&added){resetEditor();refresh()}
+  if(announce){
+    if(added){note(`Đã thêm ${added} chủ đề mới với ${added*10} thẻ. Chủ đề cũ vẫn giữ nguyên.`)}
+    else if(complete){note('Bạn đã có đủ 22 chủ đề mới. Các từ tự sửa vẫn được giữ nguyên.')}
+    else{note('Đã đạt giới hạn 60 chủ đề. Hãy sao lưu trước khi dọn bớt chủ đề để thêm tiếp.',true)}
+  }
+  return {added,complete,saved};
+}
+function installTopicPackOnce(){
+  if(safeStorage.read(TOPIC_PACK_FLAG)==='1')return;
+  const {complete,saved}=addMissingSampleTopics({announce:false,render:false});
+  if(complete&&saved)safeStorage.write(TOPIC_PACK_FLAG,'1');
+}
+
+function key(t,w){return t+':'+w.toLowerCase()}
+function makeOption(value,label){const o=document.createElement('option');o.value=value;o.textContent=label;return o}
+function renderSelectors(){
+  const names=Object.keys(DATA);
+  if(!DATA[topic])topic=names[0];
+  if(!DATA[managerTopic])managerTopic=names[0];
+  if(gameTopic!=='__all'&&!DATA[gameTopic])gameTopic='__all';
+  $('topic').replaceChildren(...names.map(t=>makeOption(t,`${t} (${DATA[t].length})`)));
+  $('topic').value=topic;
+  $('managerTopic').replaceChildren(...names.map(t=>makeOption(t,`${t} (${DATA[t].length})`)));
+  $('managerTopic').value=managerTopic;
+  $('gameTopic').replaceChildren(makeOption('__all','Tất cả chủ đề'),...names.map(t=>makeOption(t,`${t} (${DATA[t].length})`)));
+  $('gameTopic').value=gameTopic;
+  $('topicCount').textContent=names.length;
+  $('wordCount').textContent=Object.values(DATA).reduce((sum,arr)=>sum+arr.length,0);
+}
+function renderCard(){
+  cards=DATA[topic]?[...DATA[topic]]:[];
+  if(cardIndex>=cards.length)cardIndex=0;
+  const c=cards[cardIndex];
+  $('flashCard').classList.remove('flipped');
+  $('word').textContent=c?.[0]||'Chưa có thẻ';$('ipa').textContent=c?.[1]||'';
+  $('meaning').textContent=c?.[2]||'Hãy vào Quản lý để thêm từ mới';
+  $('example').textContent=c?.[3]||'';$('translation').textContent=c?.[4]||'';
+  $('flashCount').textContent=`${c?cardIndex+1:0} / ${cards.length}`;
+  $('flashProgress').style.width=c?((cardIndex+1)/cards.length*100)+'%':'0%';
+  $('remembered').textContent=cards.filter(x=>learned[key(topic,x[0])]).length;
+  for(const id of ['prev','know','next','shuffle','resetProgress'])$(id).disabled=!c;
+}
+function advance(n){if(!cards.length)return;cardIndex=(cardIndex+n+cards.length)%cards.length;renderCard()}
+$('flashCard').addEventListener('click',()=>{if(cards.length)$('flashCard').classList.toggle('flipped')});
+$('flashCard').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('flashCard').click()}});
+$('prev').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);
+$('know').onclick=()=>{if(!cards.length)return;learned[key(topic,cards[cardIndex][0])]=true;saveLearned();advance(1)};
+$('resetProgress').onclick=()=>{cards.forEach(c=>delete learned[key(topic,c[0])]);saveLearned();cardIndex=0;renderCard()};
+$('shuffle').onclick=()=>{DATA[topic].sort(()=>Math.random()-.5);cardIndex=0;renderCard()};
+$('topic').onchange=e=>{topic=e.target.value;cardIndex=0;renderCard()};
+function showTab(which){
+  if(which!=='game'&&state.running&&!state.paused)pause(true);
+  for(const t of ['flash','game','manage']){
+    const selected=t===which;
+    $(t+'Panel').classList.toggle('hidden',!selected);
+    $(t+'Tab').classList.toggle('active',selected);
+    $(t+'Tab').setAttribute('aria-selected',String(selected));
+  }
+  if(which==='manage')renderManager();
+}
+$('flashTab').onclick=()=>showTab('flash');
+$('gameTab').onclick=()=>showTab('game');
+$('manageTab').onclick=()=>showTab('manage');
+function resetEditor(){editingWord=null;$('cardForm').reset();$('editorTitle').textContent='Thêm thẻ mới';$('saveCard').textContent='＋ Thêm thẻ';$('cancelEdit').classList.add('hidden')}
+function renderManager(){
+  renderSelectors();
+  $('managerTopic').value=managerTopic;
+  const list=DATA[managerTopic]||[];
+  $('manageCount').textContent=`${list.length} thẻ trong chủ đề`;
+  const needle=$('wordSearch').value.trim().toLowerCase();
+  const container=$('manageList');container.replaceChildren();
+  const subset=list.filter(c=>[c[0],c[2],c[3]].some(s=>s.toLowerCase().includes(needle)));
+  if(!subset.length){const p=document.createElement('p');p.className='empty-message';p.textContent='Không tìm thấy từ phù hợp. Thêm thẻ đầu tiên ở biểu mẫu phía trên nhé.';container.append(p);return}
+  for(const c of subset){
+    const item=document.createElement('div');item.className='vocab-row';
+    const info=document.createElement('div');info.className='vocab-info';
+    const name=document.createElement('strong');name.textContent=c[0];
+    const meaning=document.createElement('span');meaning.textContent=c[2];
+    const example=document.createElement('small');example.textContent=c[3]||c[1]||'Chưa có ví dụ';
+    info.append(name,meaning,example);
+    const controls=document.createElement('div');controls.className='vocab-actions';
+    const edit=document.createElement('button');edit.type='button';edit.className='smallbtn';edit.textContent='✏️ Sửa';edit.setAttribute('aria-label','Sửa '+c[0]);
+    edit.onclick=()=>{editingWord=c[0];['inputWord','inputIpa','inputMeaning','inputExample','inputTranslation'].forEach((id,i)=>$(id).value=c[i]);$('editorTitle').textContent='Sửa thẻ: '+c[0];$('saveCard').textContent='✓ Lưu thay đổi';$('cancelEdit').classList.remove('hidden');$('inputWord').focus();$('cardForm').scrollIntoView({behavior:'smooth',block:'center'})};
+    const del=document.createElement('button');del.type='button';del.className='smallbtn danger';del.textContent='🗑 Xóa';del.setAttribute('aria-label','Xóa '+c[0]);
+    del.onclick=()=>{if(!confirm(`Xóa thẻ “${c[0]}” khỏi chủ đề “${managerTopic}”?`))return;DATA[managerTopic]=DATA[managerTopic].filter(x=>x!==c);delete learned[key(managerTopic,c[0])];saveLearned();saveTopics();if(editingWord===c[0])resetEditor();refresh();note('Đã xóa thẻ '+c[0])};
+    controls.append(edit,del);item.append(info,controls);container.append(item);
+  }
+}
+function refresh(){renderSelectors();renderCard();renderManager()}
+$('managerTopic').onchange=e=>{managerTopic=e.target.value;resetEditor();renderManager()};
+$('wordSearch').oninput=()=>renderManager();
+$('addTopic').onclick=()=>{
+  let name=$('newTopic').value.trim().replace(/\s+/g,' ');
+  if(!name||name.length>45||/[<>\u0000-\u001f]/.test(name)){note('Tên chủ đề phải từ 1 đến 45 ký tự và không chứa dấu < >.',true);return}
+  if(Object.keys(DATA).length>=MAX_TOPICS){note('Đã đạt số chủ đề tối đa.',true);return}
+  if(Object.keys(DATA).some(t=>t.toLowerCase()===name.toLowerCase())){note('Tên chủ đề đã tồn tại.',true);return}
+  DATA[name]=[];managerTopic=topic=name;cardIndex=0;$('newTopic').value='';resetEditor();saveTopics();refresh();note('Đã tạo chủ đề '+name)
+};
+$('renameTopic').onclick=()=>{
+  const before=managerTopic;const raw=prompt('Nhập tên mới cho chủ đề:',before);if(raw===null)return;
+  const next=raw.trim().replace(/\s+/g,' ');
+  if(!next||next.length>45||/[<>\u0000-\u001f]/.test(next)){note('Tên chủ đề không hợp lệ.',true);return}
+  if(before===next)return;
+  if(Object.keys(DATA).some(t=>t!==before&&t.toLowerCase()===next.toLowerCase())){note('Chủ đề đã tồn tại.',true);return}
+  const renamed=Object.create(null);for(const [name,list] of Object.entries(DATA)){renamed[name===before?next:name]=list};DATA=renamed;
+  for(const c of DATA[next]){const old=key(before,c[0]),newKey=key(next,c[0]);if(learned[old])learned[newKey]=true;delete learned[old]};saveLearned();
+  if(topic===before)topic=next;if(gameTopic===before)gameTopic=next;managerTopic=next;saveTopics();refresh();note('Đã đổi tên chủ đề')
+};
+$('deleteTopic').onclick=()=>{
+  if(Object.keys(DATA).length<=1){note('Cần giữ lại ít nhất một chủ đề.',true);return}
+  if(!confirm(`Xóa chủ đề “${managerTopic}” cùng ${DATA[managerTopic].length} thẻ? Thao tác này không hoàn tác được.`))return;
+  const victim=managerTopic;for(const c of DATA[victim])delete learned[key(victim,c[0])];saveLearned();delete DATA[victim];
+  const first=Object.keys(DATA)[0];if(topic===victim)topic=first;if(gameTopic===victim)gameTopic='__all';managerTopic=first;cardIndex=0;resetEditor();saveTopics();refresh();note('Đã xóa chủ đề')
+};
+$('cardForm').onsubmit=e=>{
+  e.preventDefault();
+  let c;try{c=cleanCard(['inputWord','inputIpa','inputMeaning','inputExample','inputTranslation'].map(id=>$(id).value))}catch(e){note(e.message,true);return}
+  const list=DATA[managerTopic];
+  if(list.some(x=>x[0].toLowerCase()===c[0].toLowerCase()&&x[0]!==editingWord)){note('Từ này đã tồn tại trong chủ đề.',true);return}
+  if(editingWord){const idx=list.findIndex(x=>x[0]===editingWord);if(idx===-1){note('Không tìm thấy thẻ cần sửa.',true);return}list[idx]=c;
+    if(editingWord.toLowerCase()!==c[0].toLowerCase()){const old=key(managerTopic,editingWord),current=key(managerTopic,c[0]);if(learned[old])learned[current]=true;delete learned[old];saveLearned()}
+  }else{if(list.length>=MAX_WORDS_PER_TOPIC){note('Chủ đề đã đạt giới hạn số thẻ.',true);return}list.push(c)}
+  const wasEdit=!!editingWord;resetEditor();saveTopics();refresh();note(wasEdit?'Đã lưu thay đổi':'Đã thêm thẻ '+c[0]);
+};
+$('cancelEdit').onclick=resetEditor;
+$('exportData').onclick=()=>{
+  const data=JSON.stringify({version:2,app:'WordSky',exportedAt:new Date().toISOString(),topics:DATA},null,2);
+  const blob=new Blob([data],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='wordsky-vocabulary.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);note('Đã xuất bộ từ vựng — hãy gửi file JSON cho người kia.')
+};
+$('importData').onchange=async e=>{
+  const file=e.target.files?.[0];e.target.value='';if(!file)return;
+  if(file.size>1_500_000){note('File quá lớn (tối đa 1.5 MB).',true);return}
+  try{
+    const parsed=JSON.parse(await file.text());if(!isObj(parsed)||!isObj(parsed.topics))throw Error('Hãy chọn file JSON đã xuất từ WordSky.');
+    const incoming=cleanTopics(parsed.topics);
+    if(!confirm('Nhập bộ từ vựng này sẽ THAY THẾ tất cả chủ đề và thẻ hiện có trên trình duyệt này. Bạn đã xuất bản sao lưu chưa?'))return;
+    DATA=incoming;topic=managerTopic=Object.keys(DATA)[0];gameTopic='__all';cardIndex=0;learned={};saveLearned();saveTopics();resetEditor();$('wordSearch').value='';refresh();note('Đã nhập '+Object.values(DATA).flat().length+' thẻ!')
+  }catch(err){note('Không thể nhập file: '+err.message,true)}
+};
+$('addSampleTopics').onclick=()=>addMissingSampleTopics();
+$('restoreDailyLife').onclick=()=>restoreDailyLife();
+$('resetVocab').onclick=()=>{
+  if(!confirm('Khôi phục 260 thẻ mặc định (26 chủ đề)? Các chủ đề và từ đã chỉnh sửa trên thiết bị này sẽ bị thay thế.'))return;
+  DATA=clone(DEFAULT_DATA);safeStorage.write(TOPIC_PACK_FLAG,'1');learned={};saveLearned();topic=managerTopic=Object.keys(DATA)[0];gameTopic='__all';cardIndex=0;saveTopics();resetEditor();refresh();note('Đã khôi phục 260 thẻ thuộc 26 chủ đề mẫu.')
+};
+const speeds={easy:70,normal:100,hard:138};
+const SCORE_KEY='wordsky_scores_v1',PLAYER_KEY='wordsky_player_name_v1';
+const state={running:false,paused:false,score:0,lives:3,round:0,correct:0,index:0,answer:'',pool:[],letters:[],last:0,spawnElapsed:0,spawnId:0,raf:0,locked:false,mode:'letters',player:'',fallEl:null,fallY:6,fallFloor:0,fallSpeed:0};
+const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+let scoreHistory=[];
+try{const raw=JSON.parse(safeStorage.read(SCORE_KEY)||'[]');if(Array.isArray(raw))scoreHistory=raw.filter(isScoreRecord).slice(-500)}catch(e){console.warn('Điểm cũ không hợp lệ',e)}
+$('playerName').value=safeStorage.read(PLAYER_KEY)||'';
+function randomize(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function normalizeWord(s){return String(s).normalize('NFKC').trim().toLocaleLowerCase('en').replace(/[’‘]/g,"'").replace(/\s+/g,' ')}
+function validatePlayer(s){const name=String(s).trim().replace(/\s+/g,' ');return name.length>=1&&name.length<=24&&!/[<>\u0000-\u001f]/.test(name)?name:null}
+function isScoreRecord(x){return isObj(x)&&typeof x.id==='string'&&x.id.length>0&&x.id.length<120&&!!validatePlayer(x.name)&&['letters','typing'].includes(x.mode)&&['easy','normal','hard'].includes(x.difficulty)&&typeof x.topic==='string'&&x.topic.length<=50&&Number.isSafeInteger(x.score)&&x.score>=0&&x.score<=100000&&Number.isSafeInteger(x.correct)&&x.correct>=0&&x.correct<=10&&Number.isSafeInteger(x.total)&&x.total>=1&&x.total<=10&&typeof x.date==='number'&&Number.isFinite(x.date)}
+function saveScores(){if(!safeStorage.write(SCORE_KEY,JSON.stringify(scoreHistory.slice(-500))))note('Bảng điểm chưa lưu được vào trình duyệt.',true)}
+function personalBest(){const name=validatePlayer($('playerName').value);if(!name)return 0;const mode=$('gameMode').value;return scoreHistory.filter(x=>x.name.toLowerCase()===name.toLowerCase()&&x.mode===mode).reduce((max,x)=>Math.max(max,x.score),0)}
+function renderScores(){
+  $('best').textContent=personalBest();
+  const mode=$('rankingMode').value, current=(validatePlayer($('playerName').value)||'').toLowerCase();
+  const grouped=new Map();
+  for(const record of scoreHistory){if(record.mode!==mode)continue;const key=record.name.toLowerCase(),prev=grouped.get(key);if(!prev){grouped.set(key,{name:record.name,best:record.score,plays:1,difficulty:record.difficulty,date:record.date,topic:record.topic})}else{prev.plays++;if(record.score>prev.best||(record.score===prev.best&&record.date>prev.date)){prev.name=record.name;prev.best=record.score;prev.difficulty=record.difficulty;prev.topic=record.topic;prev.date=record.date}}}
+  const top=[...grouped.values()].sort((a,b)=>b.best-a.best||b.date-a.date).slice(0,8);
+  const list=$('scoreboardList');list.replaceChildren();
+  if(!top.length){const p=document.createElement('p');p.className='empty-message';p.textContent='Chưa có điểm ở chế độ này. Nhập tên và hoàn thành một lượt để lên bảng xếp hạng!';list.append(p);return}
+  top.forEach((entry,i)=>{
+    const row=document.createElement('div');row.className='scoreboard-entry'+(entry.name.toLowerCase()===current?' is-you':'');
+    const rank=document.createElement('div');rank.className='scoreboard-rank';rank.textContent=i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+    const info=document.createElement('div');const n=document.createElement('div');n.className='scoreboard-name';n.textContent=entry.name;
+    const sub=document.createElement('div');sub.className='scoreboard-sub';sub.textContent=`${entry.plays} lượt · ${({'easy':'Dễ','normal':'Vừa','hard':'Khó'})[entry.difficulty]} · ${entry.topic==='__all'?'Mọi chủ đề':entry.topic}`;
+    const points=document.createElement('div');points.className='scoreboard-points';points.textContent=entry.best+' ';
+    const unit=document.createElement('small');unit.textContent='điểm';points.append(unit);info.append(n,sub);row.append(rank,info,points);list.append(row)
+  });
+}
+function recordScore(){
+  const entry={id:(globalThis.crypto?.randomUUID?.()||('run-'+Date.now()+'-'+Math.random().toString(36).slice(2))),name:state.player,mode:state.mode,difficulty:$('difficulty').value,topic:gameTopic,score:state.score,correct:state.correct,total:state.pool.length,date:Date.now()};
+  if(!isScoreRecord(entry))return;
+  scoreHistory.push(entry);scoreHistory=scoreHistory.slice(-500);saveScores();renderScores()
+}
+function setupPool(){const all=gameTopic==='__all'?Object.values(DATA).flat():DATA[gameTopic]||[];state.pool=randomize(all).filter(x=>/[a-z]/i.test(x[0])).slice(0,10)}
+function clearLetters(){state.letters.forEach(x=>x.el.remove());state.letters=[]}
+function clearFallingWord(){if(state.fallEl){state.fallEl.remove();state.fallEl=null}}
+function clearScene(){clearLetters();clearFallingWord()}
+function updateHUD(){
+  $('score').textContent=state.score;$('hearts').textContent='❤️'.repeat(state.lives)+'🖤'.repeat(3-state.lives);
+  $('round').textContent=`${Math.min(state.round+1,state.pool.length)} / ${state.pool.length}`
+}
+function advanceSymbols(){while(state.index<state.answer.length&&!/[A-Z]/.test(state.answer[state.index]))state.index++}
+function drawBlanks(){
+  const out=document.createDocumentFragment();for(let i=0;i<state.answer.length;i++){
+    const c=state.answer[i],span=document.createElement('span');span.className=i<state.index?'filled':'empty';span.textContent=/[A-Z]/.test(c)?(i<state.index?c:'_'):(c===' '?'　':c);out.append(span,' ')
+  }$('blanks').replaceChildren(out)
+}
+function setTypingEnabled(enabled){$('typingAnswer').disabled=!enabled;$('submitTyping').disabled=!enabled}
+function createFallingWord(){
+  const el=document.createElement('div');el.className='falling-word';el.setAttribute('aria-hidden','true');
+  const meaning=document.createElement('strong');meaning.textContent=state.pool[state.round][2];
+  const hint=document.createElement('span');hint.textContent='⚡ Gõ từ tiếng Anh trước khi chạm đất';el.append(meaning,hint);
+  $('gameArea').append(el);state.fallEl=el;state.fallY=6;state.fallFloor=Math.max(115,$('gameArea').clientHeight-el.offsetHeight-8);
+  const length=normalizeWord(state.answer).length;
+  const seconds={easy:16,normal:12,hard:9}[$('difficulty').value]+Math.min(4,length*.3);
+  state.fallSpeed=(state.fallFloor-6)/seconds;
+  el.style.transform=`translate(-50%,${state.fallY}px)`;
+  $('typingTime').textContent='⏱ '+Math.ceil(seconds)+' giây · Gõ cả từ và nhấn Enter'
+}
+function nextWord(){
+  clearScene();state.spawnElapsed=850;state.round++;state.index=0;state.locked=false;
+  if(state.round>=state.pool.length){endGame(true);return}
+  state.answer=state.pool[state.round][0].toUpperCase();advanceSymbols();$('clue').textContent='Nghĩa: '+state.pool[state.round][2];drawBlanks();updateHUD();
+  if(state.mode==='typing'){
+    $('feedback').textContent='⚡ Gõ toàn bộ từ tiếng Anh và bấm Enter!';$('typingAnswer').value='';createFallingWord();setTypingEnabled(true);$('typingAnswer').focus({preventScroll:true})
+  }else{$('feedback').textContent='Bắt chữ cái tiếp theo để ghép từ!'}
+}
+function showOverlay(title,body,button){$('overlayTitle').textContent=title;$('overlayText').textContent=body;$('startGame').textContent=button;$('gameOverlay').classList.remove('hidden')}
+function displayGameMode(){
+  const typing=$('gameMode').value==='typing';
+  $('typingForm').classList.toggle('hidden',!typing);$('typingTime').classList.toggle('hidden',!typing);
+  $('gameRules').textContent=typing?'⚡ GÕ CẢ TỪ: Nhìn nghĩa tiếng Việt. Gõ nguyên từ tiếng Anh một lần rồi nhấn Enter trước khi thẻ chạm đất. Đúng được 100 điểm + thưởng tốc độ, sai hoặc hết giờ mất 1 tim.':'🎯 BẮT CHỮ CÁI: Nhìn nghĩa tiếng Việt. Chạm chữ cái đang rơi hoặc nhấn phím A–Z để ghép thành từ. Sai hoặc để chữ đúng rơi xuống đất mất 1 tim.';
+  $('gameHint').textContent=typing?'Mẹo: Gõ cả từ, kể cả dấu cách (ví dụ: living room). Đúng càng nhanh được càng nhiều điểm. Trên điện thoại dùng bàn phím để nhập.':'Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab.';
+  if(!typing)$('typingTime').textContent='';
+  setTypingEnabled(state.running&&!state.paused&&typing)
+}
+function start(){
+  const name=validatePlayer($('playerName').value);
+  if(!name){note('Vui lòng nhập tên người chơi (1–24 ký tự) trước khi bắt đầu.',true);$('playerName').focus();return}
+  if(state.raf)cancelAnimationFrame(state.raf);clearScene();setupPool();
+  if(!state.pool.length){state.running=false;$('pauseGame').disabled=true;showOverlay('Chưa có thẻ 🃏','Chủ đề này chưa có từ vựng. Vào Quản lý để thêm thẻ rồi quay lại chơi.','Thử lại');return}
+  state.player=name;state.mode=$('gameMode').value;safeStorage.write(PLAYER_KEY,name);
+  state.score=0;state.correct=0;state.lives=3;state.round=-1;state.running=true;state.paused=false;state.locked=false;state.last=0;state.spawnId=0;state.spawnElapsed=0;
+  $('playerName').value=name;$('playerName').disabled=true;$('gameMode').disabled=true;$('difficulty').disabled=true;
+  $('gameOverlay').classList.add('hidden');$('pauseGame').disabled=false;$('pauseGame').textContent='⏸ Tạm dừng';displayGameMode();nextWord();state.raf=requestAnimationFrame(tick)
+}
+function endGame(won){
+  state.running=false;state.paused=false;cancelAnimationFrame(state.raf);state.raf=0;clearScene();setTypingEnabled(false);
+  $('pauseGame').disabled=true;$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false;
+  updateHUD();recordScore();
+  const total=state.pool.length;showOverlay(won?'🎉 Hoàn thành!':'💫 Hết lượt rồi!',`${state.player} đạt ${state.score} điểm · đúng ${state.correct}/${total} từ. Điểm đã được lưu vào bảng xếp hạng của chế độ ${state.mode==='typing'?'Gõ cả từ':'Bắt chữ cái'}.`,'↻ Chơi lại')
+}
+function pause(auto=false){
+  if(!state.running)return;state.paused=!state.paused;
+  if(state.paused){cancelAnimationFrame(state.raf);state.raf=0;setTypingEnabled(false);showOverlay('⏸ Đang tạm dừng',auto?'Game tự tạm dừng khi chuyển màn hình.':'Chơi tiếp khi bạn sẵn sàng.','▶ Tiếp tục');$('pauseGame').textContent='▶ Tiếp tục'}
+  else{$('gameOverlay').classList.add('hidden');$('pauseGame').textContent='⏸ Tạm dừng';state.last=0;setTypingEnabled(state.mode==='typing');state.raf=requestAnimationFrame(tick);if(state.mode==='typing')$('typingAnswer').focus({preventScroll:true})}
+}
+function resetGameSettings(){
+  if(state.running){state.running=false;state.paused=false;cancelAnimationFrame(state.raf);state.raf=0;clearScene();$('pauseGame').disabled=true;setTypingEnabled(false);$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false}
+  displayGameMode();$('score').textContent='0';$('hearts').textContent='❤️❤️❤️';$('round').textContent='0 / 10';$('feedback').textContent='';$('clue').textContent='Bắt đầu để nhận câu hỏi';$('blanks').textContent='_ _ _ _ _';renderScores();
+  showOverlay('🌠 Sẵn sàng chưa?',state.mode==='typing'?'Nhập tên và gõ cả từ tiếng Anh trước khi thẻ chạm đất.':'Nhập tên, chọn chủ đề và sẵn sàng bắt chữ!','▶ Bắt đầu chơi')
+}
+$('startGame').onclick=()=>{if(state.running&&state.paused)pause();else start()};
+$('pauseGame').onclick=()=>pause();$('restartGame').onclick=()=>start();
+$('gameTopic').onchange=e=>{gameTopic=e.target.value;resetGameSettings()};
+$('gameMode').onchange=()=>{state.mode=$('gameMode').value;$('rankingMode').value=state.mode;resetGameSettings()};
+$('playerName').addEventListener('input',()=>{safeStorage.write(PLAYER_KEY,$('playerName').value);renderScores()});
+$('rankingMode').onchange=()=>renderScores();
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.running&&!state.paused)pause(true)});
+function spawn(){
+  if(!state.running||state.paused||state.locked||state.mode!=='letters')return;
+  const area=$('gameArea'),aw=area.clientWidth,speed=speeds[$('difficulty').value],expected=state.answer[state.index];
+  const offerNeeded=!state.letters.some(x=>x.char===expected);
+  const char=offerNeeded||Math.random()<.47?expected:alphabet[Math.floor(Math.random()*alphabet.length)];
+  const el=document.createElement('button');el.type='button';el.className='letter';el.textContent=char;el.setAttribute('aria-label','Chữ '+char);
+  const size=aw<500?49:55,x=Math.random()*Math.max(1,aw-size-10)+5;
+  const item={id:++state.spawnId,char,x,y:-55,vy:speed*(.77+Math.random()*.40),el};
+  el.style.left=x+'px';el.style.transform='translateY(-55px)';el.onclick=()=>pick(item);area.append(el);state.letters.push(item)
+}
+function remove(item){item.el.remove();state.letters=state.letters.filter(x=>x!==item)}
+function hit(){state.lives--;updateHUD();if(state.lives<=0){endGame(false);return true}return false}
+function pick(item){
+  if(!state.running||state.paused||state.locked||state.mode!=='letters')return;
+  const expected=state.answer[state.index];remove(item);
+  if(item.char===expected){state.index++;advanceSymbols();state.score+=10;$('feedback').textContent='✅ Chính xác! +10 điểm';drawBlanks();updateHUD();
+    if(state.index>=state.answer.length){state.locked=true;state.score+=30;state.correct++;updateHUD();$('feedback').textContent='🌟 Hoàn thành từ! +30 điểm';nextWord()}
+  }else{$('feedback').textContent=`❌ Cần chữ ${expected}, không phải ${item.char}`;hit()}
+}
+function submitWholeWord(e){
+  if(e)e.preventDefault();
+  if(!state.running||state.paused||state.locked||state.mode!=='typing')return;
+  const answer=normalizeWord($('typingAnswer').value);
+  if(!answer)return;
+  if(answer===normalizeWord(state.answer)){
+    state.locked=true;const remaining=Math.max(0,(state.fallFloor-state.fallY)/(state.fallFloor-6));
+    const bonus=Math.max(0,Math.min(100,Math.floor(remaining*100)));const earned=100+bonus;
+    state.score+=earned;state.correct++;$('feedback').textContent=`✅ Chính xác! +${earned} điểm (${bonus} điểm tốc độ)`;nextWord();return
+  }
+  $('feedback').textContent='❌ Chưa đúng, mất 1 tim! Gợi ý: '+state.pool[state.round][2];
+  $('typingAnswer').select();hit();if(state.running)$('typingAnswer').focus({preventScroll:true})
+}
+$('typingForm').addEventListener('submit',submitWholeWord);
+function tick(t){
+  if(!state.running||state.paused)return;
+  if(!state.last)state.last=t;const dt=Math.min((t-state.last)/1000,.06);state.last=t;
+  if(state.mode==='typing'){
+    state.fallY+=state.fallSpeed*dt;
+    if(state.fallEl)state.fallEl.style.transform=`translate(-50%,${state.fallY}px)`;
+    const remaining=Math.max(0,(state.fallFloor-state.fallY)/state.fallSpeed);
+    $('typingTime').textContent=`⏱ Còn ${remaining.toFixed(1)} giây · ${state.correct} từ đúng`;
+    if(state.fallY>=state.fallFloor){$('feedback').textContent='⌛ Hết giờ! Mất 1 tim.';if(hit())return;nextWord()}
+  }else{
+    state.spawnElapsed+=dt*1000;
+    const interval={easy:1150,normal:850,hard:680}[$('difficulty').value];
+    if(state.spawnElapsed>=interval){state.spawnElapsed=0;spawn()}
+    const floor=$('gameArea').clientHeight;
+    for(const item of [...state.letters]){item.y+=item.vy*dt;item.el.style.transform=`translateY(${item.y}px)`;
+      if(item.y>floor){const missed=item.char===state.answer[state.index];remove(item);if(missed&&!state.letters.some(x=>x.char===item.char)){$('feedback').textContent='💔 Chữ đúng đã rơi mất!';if(hit())return}}
+    }
+  }
+  state.raf=requestAnimationFrame(tick)
+}
+document.addEventListener('keydown',e=>{
+  if($('gamePanel').classList.contains('hidden')||!state.running||state.paused||state.mode!=='letters'||e.altKey||e.ctrlKey||e.metaKey)return;
+  if(e.target instanceof Element&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+  if(!/^[a-z]$/i.test(e.key))return;
+  const char=e.key.toUpperCase(),matches=state.letters.filter(x=>x.char===char);
+  if(matches.length){matches.sort((a,b)=>b.y-a.y);pick(matches[0])}
+});
+$('exportScores').onclick=()=>{
+  const data=JSON.stringify({format:'wordsky-scores',version:1,records:scoreHistory},null,2);
+  const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='wordsky-scores.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);note('Đã xuất bảng điểm. Hãy gửi file cho người kia để nhập và so sánh!')
+};
+$('importScores').onchange=async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+    if(file.size>500000)throw Error('File quá lớn (tối đa 500 KB).');
+    const input=JSON.parse(await file.text());
+    if(!isObj(input)||input.format!=='wordsky-scores'||input.version!==1||!Array.isArray(input.records)||input.records.length>500)throw Error('Đây không phải file bảng điểm WordSky hợp lệ.');
+    if(!input.records.every(isScoreRecord))throw Error('File có lượt chơi không hợp lệ.');
+    const old=scoreHistory.length,seen=new Set(scoreHistory.map(x=>x.id));
+    for(const record of input.records){if(!seen.has(record.id)){scoreHistory.push(record);seen.add(record.id)}}
+    scoreHistory=scoreHistory.slice(-500);saveScores();renderScores();note(`Đã hợp nhất ${scoreHistory.length-old} lượt chơi mới, giữ nguyên điểm hiện có.`)
+  }catch(err){note('Không thể nhập bảng điểm: '+err.message,true)}
+  finally{e.target.value=''}
+};
+displayGameMode();renderScores();
+for(let i=0;i<35;i++){const star=document.createElement('i');star.className='star';star.style.left=Math.random()*100+'%';star.style.top=Math.random()*100+'%';star.style.width=star.style.height=(Math.random()*2+1)+'px';$('gameArea').append(star)}
+recoverDeletedDailyLifeOnce();
+installTopicPackOnce();
+renderSelectors();renderCard();renderManager();
+
+</script></body></html>
