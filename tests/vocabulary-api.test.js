@@ -20,6 +20,7 @@ process.env.ADMIN_PASSWORD_HASH = 'scrypt:01234567890123456789012345678901:' + '
 const cookie = 'ws_auth=' + issueSession({ role: 'admin', id: 'owner' }, secret);
 let log = [];
 let available = 10;
+let carStock={a2:30,bonus:30,double:30};
 let eventStatus = 'DRAFT';
 let openedRounds = [];
 let topicUsedByActiveEvent = false;
@@ -29,6 +30,7 @@ pg.Pool.prototype.connect = async function () {
   return {
     async query(sql) {
       log.push(sql);
+      if (sql.includes("count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level")) return { rows: [carStock] };
       if (sql.startsWith('SELECT count(*)::int AS n FROM ws_words')) return { rows: [{ n: available }] };
       if (sql.startsWith('SELECT e.id FROM ws_events e JOIN ws_rounds')) return { rows: topicUsedByActiveEvent ? [{ id: eventId }] : [] };
       if (sql.startsWith('SELECT topic_id FROM ws_words WHERE id=$1 FOR UPDATE')) return { rows: [{ topic_id: topicId }] };
@@ -141,4 +143,21 @@ test.after(() => {
   ]) {
     if (value === undefined) delete process.env[key]; else process.env[key] = value;
   }
+});
+
+const carRound=(difficulty='NORMAL',count=8)=>({mode:'CAR',difficulty,topic_id:null,
+ duration_seconds:120,question_count:count,points_per_correct:100,penalty:25,weight:1});
+test('CAR: server refuses creating a room without enough approved C1/C2 words',async()=>{
+ log=[];carStock={a2:30,bonus:30,double:4};
+ const out=await req('POST','admin/events',bodyFor(carRound('NORMAL',8)));
+ assert.equal(out.status,400);
+ assert.match(out.data.error,/C1/);
+ assert.equal(log.some(x=>x.startsWith('INSERT INTO ws_events')),false);
+ carStock={a2:30,bonus:30,double:30};
+});
+test('CAR: server checks approved per-tier stock before creating a room',async()=>{
+ log=[];carStock={a2:30,bonus:30,double:30};
+ const out=await req('POST','admin/events',bodyFor(carRound('EASY',8)));
+ assert.equal(out.status,201);
+ assert.equal(log.some(x=>x.includes('cefr_review_status=\'APPROVED\'')),true);
 });
