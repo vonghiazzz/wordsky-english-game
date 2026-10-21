@@ -40,6 +40,41 @@ input{font:inherit}input:focus-visible{outline:3px solid var(--sky);outline-offs
 .scoreboard-actions label{cursor:pointer;display:flex;align-items:center;justify-content:center}
 @media(max-width:620px){.typing-form{flex-direction:row}.typing-form button{padding:11px 12px}.game-profile{gap:8px}.game-profile .name-field{flex:1;min-width:200px}.game-profile input{width:100%}.scoreboard{padding:12px}.game-area{min-height:300px}}
 
+
+/* Mobile immersive multi-word typing mode: scoped to learn.html only */
+.game-area.typing-active{height:min(78dvh,710px);min-height:465px;isolation:isolate;touch-action:manipulation}
+.game-area.typing-active .falling-word{width:min(30%,155px);padding:7px 6px;border-radius:11px;border-width:2px;box-shadow:0 6px 15px #0005;line-height:1.18}
+.game-area.typing-active .falling-word strong{font-size:clamp(12px,2.7vw,16px);line-height:1.22}
+.game-area.typing-active .falling-word span{font-size:9px;line-height:1.18;margin-top:4px}
+.typing-hud{position:absolute;z-index:5;left:9px;right:56px;top:8px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;pointer-events:none}
+.typing-hud span{display:inline-block;border:1px solid #4f7090;border-radius:99px;background:#061832df;color:#e7faff;font-size:clamp(11px,2.8vw,14px);font-weight:850;padding:5px 8px}
+.game-fullscreen{position:absolute;z-index:8;top:8px;right:8px;border:1px solid #75b4cc;border-radius:10px;background:#12365fe8;color:#fff;padding:7px 9px;font-size:17px;line-height:1;min-width:36px;min-height:33px}
+.typing-dock{position:absolute;z-index:6;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px}
+.typing-dock .typing-form{display:block;margin:0;max-width:none;width:100%}
+.typing-dock .typing-form input{width:100%;min-height:42px;font-size:18px;padding:8px 12px;background:#05162cf5;border:2px solid #71c8e5;border-radius:12px}
+.typing-dock .typing-form input[readonly]{cursor:default;caret-color:transparent}
+.typing-board{display:none;flex-direction:column;gap:5px;padding:7px 5px;border:1px solid #66809d77;border-radius:11px;background:rgba(37,55,83,.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.typing-row{display:flex;gap:4px;justify-content:center}
+.typing-key{appearance:none;flex:1;min-width:0;min-height:36px;border-radius:6px;border:1px solid #b6c7df65;background:rgba(200,220,244,.66);color:#14243c;font-size:clamp(12px,3vw,17px);font-weight:800;padding:5px 0;touch-action:manipulation}
+.typing-key:active{background:#83dcff}
+.typing-key.action{flex:1.5;background:rgba(153,204,230,.76)}
+.typing-key.space{flex:4}
+.game-area.typing-active:fullscreen,.game-area.typing-active.fullscreen-fallback{position:fixed;inset:0;width:100vw;height:100dvh;max-height:none;min-height:0;margin:0;border-radius:0;z-index:1000;background:#0c1e3b}
+.game-area:fullscreen,.game-area.fullscreen-fallback{position:fixed;inset:0;width:100vw;height:100dvh;max-height:none;min-height:0;margin:0;border-radius:0;z-index:1000;background:#0c1e3b}
+body:has(.game-area.fullscreen-fallback){overflow:hidden}
+@media (pointer:coarse) and (max-width:760px){
+ .game-area.typing-active{height:clamp(430px,76dvh,650px);min-height:430px}
+ .game-area.typing-active .typing-board{display:flex}
+ .game-area.typing-active .falling-word{width:min(30%,145px)}
+ .game-area.typing-active .falling-word strong{font-size:clamp(12px,3vw,15px)}
+ .typing-board{opacity:.83}
+}
+@media (max-height:540px) and (orientation:landscape){
+ .game-area.typing-active:fullscreen,.game-area.typing-active.fullscreen-fallback{height:100dvh}
+ .game-area.typing-active .typing-key{min-height:27px;padding:2px 0}
+ .game-area.typing-active .typing-board{gap:3px;padding:4px}
+ .game-area.typing-active .typing-dock{gap:4px}
+}
 </style>
 </head>
 <body><main class="container">
@@ -47,8 +82,8 @@ input{font:inherit}input:focus-visible{outline:3px solid var(--sky);outline-offs
 <section class="hero"><div class="kicker">HỌC VUI • NHỚ LÂU</div><h1>Học từ vựng.<br><em>Bắt chữ trên mây.</em></h1><p>Lật thẻ để nhớ từ mới, chơi bắt chữ rơi hoặc gõ nhanh cả từ trước khi chạm đất. Nhập tên để ghi điểm và so tài với bạn học!</p></section>
 <nav class="tabs" aria-label="Chế độ học"><button class="tab active" id="flashTab" aria-selected="true">🃏 Flashcard</button><button class="tab" id="gameTab" aria-selected="false">🌠 Game chữ rơi</button><button class="tab" id="manageTab" aria-selected="false">⚙️ Quản lý từ vựng</button></nav>
 <section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng.</p><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny">Tiến độ được lưu trên trình duyệt này.</p></div><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
-<section class="panel hidden" id="gamePanel"><div class="toolbar"><h2>🌠 Bắt chữ rơi</h2><div class="controls"><label for="gameTopic">Chủ đề:</label><select id="gameTopic"></select><label for="gameMode">Chế độ:</label><select id="gameMode"><option value="letters">🔠 Bắt chữ cái</option><option value="typing">⚡ Gõ cả từ</option></select><label for="difficulty">Tốc độ:</label><select id="difficulty"><option value="easy">Dễ</option><option value="normal">Vừa</option><option value="hard">Khó</option></select></div></div><div class="game-profile"><div class="name-field"><label for="playerName">👤 Tên người chơi</label><input id="playerName" type="text" maxlength="24" placeholder="Ví dụ: Nghĩa" autocomplete="nickname" aria-describedby="playerHelp"></div><p class="profile-help" id="playerHelp">Nhập tên trước khi bắt đầu. Điểm được ghi theo tên để hai người so tài trên cùng trình duyệt.</p></div>
-<div id="gameRules" class="rule">🎯 <b>Bắt chữ cái:</b> Nhìn nghĩa tiếng Việt, chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z. Chọn sai hoặc bỏ lỡ chữ đúng mất 1 tim.</div><div class="game-header"><div class="metric"><strong id="score">0</strong><span>Điểm</span></div><div class="metric"><strong id="hearts">❤️❤️❤️</strong><span>Máu</span></div><div class="metric"><strong id="round">0 / 10</strong><span>Số từ</span></div><div class="metric"><strong id="best">0</strong><span>Kỷ lục của bạn</span></div></div><div class="prompt" aria-live="polite"><div class="translation" id="clue">Bắt đầu trò chơi để nhận câu hỏi</div><div class="blanks" id="blanks">_ _ _ _ _</div></div><form class="typing-form hidden" id="typingForm" autocomplete="off"><input id="typingAnswer" type="text" maxlength="45" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Gõ cả từ tiếng Anh rồi Enter…" aria-label="Nhập cả từ tiếng Anh" disabled><button type="submit" class="primary" id="submitTyping" disabled>↵ Trả lời</button></form><p id="typingTime" class="typing-time hidden" aria-live="off"></p><div class="game-area" id="gameArea" aria-label="Khu vực chữ cái rơi"><div class="cloud" style="left:10%;top:14%">☁</div><div class="cloud" style="right:10%;top:60%">☁</div><div id="gameOverlay" class="game-overlay"><div class="overlay-box"><h3 id="overlayTitle">Sẵn sàng chưa? 🚀</h3><p id="overlayText">10 từ vựng ngẫu nhiên đang chờ. Chạm vào chữ cái đang rơi hoặc dùng bàn phím để điền từ!</p><button class="primary" id="startGame">▶ Bắt đầu chơi</button></div></div></div><div class="game-footer"><div class="feedback" id="feedback" aria-live="polite"></div><div class="controls"><button class="secondary" id="pauseGame" disabled>⏸ Tạm dừng</button><button class="secondary" id="restartGame">↻ Chơi lại</button></div></div><p class="key-hint" id="gameHint">Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab trình duyệt.</p>
+<section class="panel hidden" id="gamePanel"><div class="toolbar"><h2>🌠 Bắt chữ rơi</h2><div class="controls"><label for="gameTopic">Chủ đề:</label><select id="gameTopic"></select><label for="gameMode">Chế độ:</label><select id="gameMode"><option value="letters">🔠 Bắt chữ cái</option><option value="typing">⚡ Gõ cả từ</option></select><label for="difficulty">Tốc độ:</label><select id="difficulty"><option value="easy">Dễ</option><option value="normal">Vừa</option><option value="hard">Khó</option></select><label for="wordLimit">Số từ:</label><input id="wordLimit" type="number" min="1" max="50" step="1" value="10" inputmode="numeric" aria-label="Số từ mỗi lượt chơi" style="width:77px"></div></div><div class="game-profile"><div class="name-field"><label for="playerName">👤 Tên người chơi</label><input id="playerName" type="text" maxlength="24" placeholder="Ví dụ: Nghĩa" autocomplete="nickname" aria-describedby="playerHelp"></div><p class="profile-help" id="playerHelp">Nhập tên trước khi bắt đầu. Điểm được ghi theo tên để hai người so tài trên cùng trình duyệt.</p></div>
+<div id="gameRules" class="rule">🎯 <b>Bắt chữ cái:</b> Nhìn nghĩa tiếng Việt, chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z. Chọn sai hoặc bỏ lỡ chữ đúng mất 1 tim.</div><div class="game-header"><div class="metric"><strong id="score">0</strong><span>Điểm</span></div><div class="metric"><strong id="hearts">❤️❤️❤️</strong><span>Máu</span></div><div class="metric"><strong id="round">0 / 10</strong><span>Số từ</span></div><div class="metric"><strong id="best">0</strong><span>Kỷ lục của bạn</span></div></div><div class="prompt" aria-live="polite"><div class="translation" id="clue">Bắt đầu trò chơi để nhận câu hỏi</div><div class="blanks" id="blanks">_ _ _ _ _</div></div><div class="game-area" id="gameArea" aria-label="Khu vực chữ rơi"><div class="typing-hud hidden" id="typingHud" aria-live="off"><span id="typingTime">⏱ --</span><span id="typingCount">✅ 0 từ đúng</span></div><button type="button" class="game-fullscreen" id="fullscreenGame" aria-label="Phóng to toàn màn hình game" title="Toàn màn hình">⛶</button><div class="typing-dock hidden" id="typingDock"><form class="typing-form" id="typingForm" autocomplete="off"><input id="typingAnswer" type="text" maxlength="45" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Nhập tiếng Anh rồi nhấn Enter…" aria-label="Nhập cả từ tiếng Anh" disabled></form><div id="virtualKeyboard" class="typing-board" role="group" aria-label="Bàn phím tiếng Anh trong trò chơi"></div></div><div class="cloud" style="left:10%;top:14%">☁</div><div class="cloud" style="right:10%;top:60%">☁</div><div id="gameOverlay" class="game-overlay"><div class="overlay-box"><h3 id="overlayTitle">Sẵn sàng chưa? 🚀</h3><p id="overlayText">Các từ vựng ngẫu nhiên đang chờ. Chạm vào chữ cái đang rơi hoặc dùng bàn phím để điền từ!</p><button class="primary" id="startGame">▶ Bắt đầu chơi</button></div></div></div><div class="game-footer"><div class="feedback" id="feedback" aria-live="polite"></div><div class="controls"><button class="secondary" id="pauseGame" disabled>⏸ Tạm dừng</button><button class="secondary" id="restartGame">↻ Chơi lại</button></div></div><p class="key-hint" id="gameHint">Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab trình duyệt.</p>
 <section class="scoreboard" aria-labelledby="scoresTitle"><div class="scoreboard-top"><h3 id="scoresTitle">🏆 Bảng điểm người chơi</h3><div class="controls"><label for="rankingMode">Xem điểm:</label><select id="rankingMode"><option value="letters">Bắt chữ cái</option><option value="typing">Gõ cả từ</option></select></div></div><div id="scoreboardList" class="scoreboard-list"><p class="empty-message">Chưa có lượt chơi nào.</p></div><p class="scoreboard-note">Điểm theo tên được lưu trên <b>trình duyệt này</b>, không tự đồng bộ giữa hai thiết bị. Để so điểm giữa hai máy, xuất và nhập file bảng điểm (chỉ hợp nhất điểm, không xóa thẻ).</p><div class="scoreboard-actions"><button type="button" id="exportScores" class="secondary">⬇ Xuất bảng điểm</button><label for="importScores" class="secondary">⬆ Nhập bảng điểm<input id="importScores" class="hidden" type="file" accept=".json,application/json" aria-label="Nhập JSON bảng điểm"></label></div></section></section>
 <section class="panel hidden" id="managePanel">
   <div class="toolbar"><h2>⚙️ Quản lý từ vựng</h2><div class="controls"><span class="pill tiny"><b id="topicCount">26</b> chủ đề</span><span class="pill tiny"><b id="wordCount">260</b> thẻ</span></div></div>
@@ -353,7 +388,7 @@ $('resetVocab').onclick=()=>{
 };
 const speeds={easy:70,normal:100,hard:138};
 const SCORE_KEY='wordsky_scores_v1',PLAYER_KEY='wordsky_player_name_v1';
-const state={running:false,paused:false,score:0,lives:3,round:0,correct:0,index:0,answer:'',pool:[],letters:[],last:0,spawnElapsed:0,spawnId:0,raf:0,locked:false,mode:'letters',player:'',fallEl:null,fallY:6,fallFloor:0,fallSpeed:0};
+const state={running:false,paused:false,score:0,lives:3,round:0,correct:0,index:0,answer:'',pool:[],letters:[],last:0,spawnElapsed:0,spawnId:0,raf:0,locked:false,mode:'letters',player:'',fallWords:[],nextSpawn:0,resolved:0,typingElapsed:0};
 const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 let scoreHistory=[];
 try{const raw=JSON.parse(safeStorage.read(SCORE_KEY)||'[]');if(Array.isArray(raw))scoreHistory=raw.filter(isScoreRecord).slice(-500)}catch(e){console.warn('Điểm cũ không hợp lệ',e)}
@@ -361,7 +396,7 @@ $('playerName').value=safeStorage.read(PLAYER_KEY)||'';
 function randomize(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function normalizeWord(s){return String(s).normalize('NFKC').trim().toLocaleLowerCase('en').replace(/[’‘]/g,"'").replace(/\s+/g,' ')}
 function validatePlayer(s){const name=String(s).trim().replace(/\s+/g,' ');return name.length>=1&&name.length<=24&&!/[<>\u0000-\u001f]/.test(name)?name:null}
-function isScoreRecord(x){return isObj(x)&&typeof x.id==='string'&&x.id.length>0&&x.id.length<120&&!!validatePlayer(x.name)&&['letters','typing'].includes(x.mode)&&['easy','normal','hard'].includes(x.difficulty)&&typeof x.topic==='string'&&x.topic.length<=50&&Number.isSafeInteger(x.score)&&x.score>=0&&x.score<=100000&&Number.isSafeInteger(x.correct)&&x.correct>=0&&x.correct<=10&&Number.isSafeInteger(x.total)&&x.total>=1&&x.total<=10&&typeof x.date==='number'&&Number.isFinite(x.date)}
+function isScoreRecord(x){return isObj(x)&&typeof x.id==='string'&&x.id.length>0&&x.id.length<120&&!!validatePlayer(x.name)&&['letters','typing'].includes(x.mode)&&['easy','normal','hard'].includes(x.difficulty)&&typeof x.topic==='string'&&x.topic.length<=50&&Number.isSafeInteger(x.score)&&x.score>=0&&x.score<=100000&&Number.isSafeInteger(x.correct)&&x.correct>=0&&x.correct<=50&&Number.isSafeInteger(x.total)&&x.total>=1&&x.total<=50&&typeof x.date==='number'&&Number.isFinite(x.date)}
 function saveScores(){if(!safeStorage.write(SCORE_KEY,JSON.stringify(scoreHistory.slice(-500))))note('Bảng điểm chưa lưu được vào trình duyệt.',true)}
 function personalBest(){const name=validatePlayer($('playerName').value);if(!name)return 0;const mode=$('gameMode').value;return scoreHistory.filter(x=>x.name.toLowerCase()===name.toLowerCase()&&x.mode===mode).reduce((max,x)=>Math.max(max,x.score),0)}
 function renderScores(){
@@ -386,13 +421,23 @@ function recordScore(){
   if(!isScoreRecord(entry))return;
   scoreHistory.push(entry);scoreHistory=scoreHistory.slice(-500);saveScores();renderScores()
 }
-function setupPool(){const all=gameTopic==='__all'?Object.values(DATA).flat():DATA[gameTopic]||[];state.pool=randomize(all).filter(x=>/[a-z]/i.test(x[0])).slice(0,10)}
+function setupPool(){
+ const all=gameTopic==='__all'?Object.values(DATA).flat():DATA[gameTopic]||[];
+ const requested=Math.min(50,Math.max(1,Math.floor(Number($('wordLimit').value)||10)));
+ $('wordLimit').value=requested;
+ const used=new Set();
+ state.pool=randomize(all).filter(card=>{
+   const key=normalizeWord(card[0]);if(!/[a-z]/i.test(key)||used.has(key))return false;
+   used.add(key);return true
+ }).slice(0,requested)
+}
 function clearLetters(){state.letters.forEach(x=>x.el.remove());state.letters=[]}
-function clearFallingWord(){if(state.fallEl){state.fallEl.remove();state.fallEl=null}}
+function clearFallingWord(){for(const item of state.fallWords)item.el.remove();state.fallWords=[]}
 function clearScene(){clearLetters();clearFallingWord()}
 function updateHUD(){
-  $('score').textContent=state.score;$('hearts').textContent='❤️'.repeat(state.lives)+'🖤'.repeat(3-state.lives);
-  $('round').textContent=`${Math.min(state.round+1,state.pool.length)} / ${state.pool.length}`
+ $('score').textContent=state.score;$('hearts').textContent='❤️'.repeat(state.lives)+'🖤'.repeat(3-state.lives);
+ $('round').textContent=(state.mode==='typing'?state.resolved:Math.min(state.round+1,state.pool.length))+' / '+state.pool.length;
+ const label=$('typingCount');if(label)label.textContent='✅ '+state.correct+' / '+state.pool.length+' từ đúng'
 }
 function advanceSymbols(){while(state.index<state.answer.length&&!/[A-Z]/.test(state.answer[state.index]))state.index++}
 function drawBlanks(){
@@ -400,65 +445,84 @@ function drawBlanks(){
     const c=state.answer[i],span=document.createElement('span');span.className=i<state.index?'filled':'empty';span.textContent=/[A-Z]/.test(c)?(i<state.index?c:'_'):(c===' '?'　':c);out.append(span,' ')
   }$('blanks').replaceChildren(out)
 }
-function setTypingEnabled(enabled){$('typingAnswer').disabled=!enabled;$('submitTyping').disabled=!enabled}
-function createFallingWord(){
-  const el=document.createElement('div');el.className='falling-word';el.setAttribute('aria-hidden','true');
-  const meaning=document.createElement('strong');meaning.textContent=state.pool[state.round][2];
-  const hint=document.createElement('span');hint.textContent='⚡ Gõ từ tiếng Anh trước khi chạm đất';el.append(meaning,hint);
-  $('gameArea').append(el);state.fallEl=el;state.fallY=6;state.fallFloor=Math.max(115,$('gameArea').clientHeight-el.offsetHeight-8);
-  const length=normalizeWord(state.answer).length;
-  const seconds={easy:16,normal:12,hard:9}[$('difficulty').value]+Math.min(4,length*.3);
-  state.fallSpeed=(state.fallFloor-6)/seconds;
-  el.style.transform=`translate(-50%,${state.fallY}px)`;
-  $('typingTime').textContent='⏱ '+Math.ceil(seconds)+' giây · Gõ cả từ và nhấn Enter'
+function isMobileTyping(){return matchMedia('(pointer:coarse) and (max-width:760px)').matches}
+function focusTypingInput(){if(!isMobileTyping()&&!$('typingAnswer').disabled)$('typingAnswer').focus({preventScroll:true})}
+function setTypingEnabled(enabled){$('typingAnswer').disabled=!enabled;$('typingAnswer').readOnly=isMobileTyping()}
+function removeFallingWord(item){item.el.remove();state.fallWords=state.fallWords.filter(x=>x!==item)}
+function spawnFallingWord(){
+ if(state.nextSpawn>=state.pool.length||state.fallWords.length>=3)return;
+ const card=state.pool[state.nextSpawn++],area=$('gameArea');
+ const el=document.createElement('div');el.className='falling-word';
+ el.setAttribute('aria-label','Dịch từ '+card[2]);
+ const meaning=document.createElement('strong');meaning.textContent=card[2];
+ const hint=document.createElement('span');hint.textContent='Gõ tiếng Anh';el.append(meaning,hint);
+ area.append(el);
+ const lane=(state.nextSpawn-1)%3;
+ el.style.left=(16+lane*34)+'%';
+ const start=44, dockHeight=$('typingDock').getBoundingClientRect().height;
+ const floor=Math.max(start+60,area.clientHeight-dockHeight-el.offsetHeight-20);
+ const seconds={easy:17,normal:13,hard:10}[$('difficulty').value]+Math.min(4,normalizeWord(card[0]).length*.30);
+ const item={card,el,y:start,floor,vy:(floor-start)/seconds};
+ el.style.transform='translate(-50%,'+start+'px)';state.fallWords.push(item)
+}
+function updateTypingHUD(){
+ const nearest=state.fallWords.length?Math.min(...state.fallWords.map(x=>Math.max(0,(x.floor-x.y)/x.vy))):0;
+ $('typingTime').textContent=state.fallWords.length?'⏱ '+nearest.toFixed(1)+' giây':'⏱ Chờ từ tiếp theo';
+ $('typingCount').textContent='✅ '+state.correct+' / '+state.pool.length+' từ đúng'
 }
 function nextWord(){
-  clearScene();state.spawnElapsed=850;state.round++;state.index=0;state.locked=false;
-  if(state.round>=state.pool.length){endGame(true);return}
-  state.answer=state.pool[state.round][0].toUpperCase();advanceSymbols();$('clue').textContent='Nghĩa: '+state.pool[state.round][2];drawBlanks();updateHUD();
-  if(state.mode==='typing'){
-    $('feedback').textContent='⚡ Gõ toàn bộ từ tiếng Anh và bấm Enter!';$('typingAnswer').value='';createFallingWord();setTypingEnabled(true);$('typingAnswer').focus({preventScroll:true})
-  }else{$('feedback').textContent='Bắt chữ cái tiếp theo để ghép từ!'}
+ clearScene();state.spawnElapsed=850;state.round++;state.index=0;state.locked=false;
+ if(state.round>=state.pool.length){endGame(true);return}
+ state.answer=state.pool[state.round][0].toUpperCase();advanceSymbols();$('clue').textContent='Nghĩa: '+state.pool[state.round][2];drawBlanks();updateHUD();
+ $('feedback').textContent='Bắt chữ cái tiếp theo để ghép từ!'
 }
 function showOverlay(title,body,button){$('overlayTitle').textContent=title;$('overlayText').textContent=body;$('startGame').textContent=button;$('gameOverlay').classList.remove('hidden')}
 function displayGameMode(){
-  const typing=$('gameMode').value==='typing';
-  $('typingForm').classList.toggle('hidden',!typing);$('typingTime').classList.toggle('hidden',!typing);
-  $('gameRules').textContent=typing?'⚡ GÕ CẢ TỪ: Nhìn nghĩa tiếng Việt. Gõ nguyên từ tiếng Anh một lần rồi nhấn Enter trước khi thẻ chạm đất. Đúng được 100 điểm + thưởng tốc độ, sai hoặc hết giờ mất 1 tim.':'🎯 BẮT CHỮ CÁI: Nhìn nghĩa tiếng Việt. Chạm chữ cái đang rơi hoặc nhấn phím A–Z để ghép thành từ. Sai hoặc để chữ đúng rơi xuống đất mất 1 tim.';
-  $('gameHint').textContent=typing?'Mẹo: Gõ cả từ, kể cả dấu cách (ví dụ: living room). Đúng càng nhanh được càng nhiều điểm. Trên điện thoại dùng bàn phím để nhập.':'Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab.';
-  if(!typing)$('typingTime').textContent='';
-  setTypingEnabled(state.running&&!state.paused&&typing)
+ const typing=$('gameMode').value==='typing';
+ $('gameArea').classList.toggle('typing-active',typing);
+ $('typingDock').classList.toggle('hidden',!typing);$('typingHud').classList.toggle('hidden',!typing);
+ $('gameRules').textContent=typing?'⚡ GÕ CẢ TỪ: Có tối đa 3 thẻ rơi cùng lúc. Nhập từ tiếng Anh phù hợp với một thẻ và nhấn Enter. Đúng: thẻ biến mất và cộng điểm. Sai: không trừ tim, thẻ vẫn rơi. Thẻ chạm đất: mất 1 tim.':'🎯 BẮT CHỮ CÁI: Nhìn nghĩa tiếng Việt. Chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z để ghép thành từ. Sai hoặc để chữ đúng rơi xuống đất mất 1 tim.';
+ $('gameHint').textContent=typing?'Điện thoại: dùng bàn phím nhỏ ngay trong game; Enter gửi đáp án. Nhấn ⛶ để phóng to. Máy tính: gõ bàn phím thông thường.':'Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab.';
+ setTypingEnabled(state.running&&!state.paused&&typing)
 }
 function start(){
-  const name=validatePlayer($('playerName').value);
-  if(!name){note('Vui lòng nhập tên người chơi (1–24 ký tự) trước khi bắt đầu.',true);$('playerName').focus();return}
-  if(state.raf)cancelAnimationFrame(state.raf);clearScene();setupPool();
-  if(!state.pool.length){state.running=false;$('pauseGame').disabled=true;showOverlay('Chưa có thẻ 🃏','Chủ đề này chưa có từ vựng. Vào Quản lý để thêm thẻ rồi quay lại chơi.','Thử lại');return}
-  state.player=name;state.mode=$('gameMode').value;safeStorage.write(PLAYER_KEY,name);
-  state.score=0;state.correct=0;state.lives=3;state.round=-1;state.running=true;state.paused=false;state.locked=false;state.last=0;state.spawnId=0;state.spawnElapsed=0;
-  $('playerName').value=name;$('playerName').disabled=true;$('gameMode').disabled=true;$('difficulty').disabled=true;
-  $('gameOverlay').classList.add('hidden');$('pauseGame').disabled=false;$('pauseGame').textContent='⏸ Tạm dừng';displayGameMode();nextWord();state.raf=requestAnimationFrame(tick)
+ const name=validatePlayer($('playerName').value);
+ if(!name){note('Vui lòng nhập tên người chơi (1–24 ký tự) trước khi bắt đầu.',true);$('playerName').focus();return}
+ if(state.raf)cancelAnimationFrame(state.raf);clearScene();setupPool();
+ if(!state.pool.length){state.running=false;$('pauseGame').disabled=true;showOverlay('Chưa có thẻ 🃏','Chủ đề này chưa có từ vựng. Vào Quản lý để thêm thẻ rồi quay lại chơi.','Thử lại');return}
+ state.player=name;state.mode=$('gameMode').value;safeStorage.write(PLAYER_KEY,name);
+ state.score=0;state.correct=0;state.lives=3;state.round=-1;state.running=true;state.paused=false;state.locked=false;state.last=0;state.spawnId=0;state.spawnElapsed=0;state.nextSpawn=0;state.resolved=0;state.typingElapsed=0;
+ $('playerName').value=name;$('playerName').disabled=true;$('gameMode').disabled=true;$('difficulty').disabled=true;$('wordLimit').disabled=true;
+ $('gameOverlay').classList.add('hidden');$('pauseGame').disabled=false;$('pauseGame').textContent='⏸ Tạm dừng';displayGameMode();
+ if(state.mode==='typing'){
+   $('clue').textContent='Dịch các thẻ đang rơi';$('blanks').textContent='';$('typingAnswer').value='';
+   $('feedback').textContent='⚡ Nhập một từ đúng và nhấn Enter!';
+   spawnFallingWord();if(state.pool.length>1)spawnFallingWord();
+   updateHUD();updateTypingHUD();focusTypingInput()
+ }else nextWord();
+ state.raf=requestAnimationFrame(tick)
 }
 function endGame(won){
   state.running=false;state.paused=false;cancelAnimationFrame(state.raf);state.raf=0;clearScene();setTypingEnabled(false);
-  $('pauseGame').disabled=true;$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false;
+  $('pauseGame').disabled=true;$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false;$('wordLimit').disabled=false;
   updateHUD();recordScore();
   const total=state.pool.length;showOverlay(won?'🎉 Hoàn thành!':'💫 Hết lượt rồi!',`${state.player} đạt ${state.score} điểm · đúng ${state.correct}/${total} từ. Điểm đã được lưu vào bảng xếp hạng của chế độ ${state.mode==='typing'?'Gõ cả từ':'Bắt chữ cái'}.`,'↻ Chơi lại')
 }
 function pause(auto=false){
   if(!state.running)return;state.paused=!state.paused;
   if(state.paused){cancelAnimationFrame(state.raf);state.raf=0;setTypingEnabled(false);showOverlay('⏸ Đang tạm dừng',auto?'Game tự tạm dừng khi chuyển màn hình.':'Chơi tiếp khi bạn sẵn sàng.','▶ Tiếp tục');$('pauseGame').textContent='▶ Tiếp tục'}
-  else{$('gameOverlay').classList.add('hidden');$('pauseGame').textContent='⏸ Tạm dừng';state.last=0;setTypingEnabled(state.mode==='typing');state.raf=requestAnimationFrame(tick);if(state.mode==='typing')$('typingAnswer').focus({preventScroll:true})}
+  else{$('gameOverlay').classList.add('hidden');$('pauseGame').textContent='⏸ Tạm dừng';state.last=0;setTypingEnabled(state.mode==='typing');state.raf=requestAnimationFrame(tick);if(state.mode==='typing')focusTypingInput()}
 }
 function resetGameSettings(){
-  if(state.running){state.running=false;state.paused=false;cancelAnimationFrame(state.raf);state.raf=0;clearScene();$('pauseGame').disabled=true;setTypingEnabled(false);$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false}
-  displayGameMode();$('score').textContent='0';$('hearts').textContent='❤️❤️❤️';$('round').textContent='0 / 10';$('feedback').textContent='';$('clue').textContent='Bắt đầu để nhận câu hỏi';$('blanks').textContent='_ _ _ _ _';renderScores();
-  showOverlay('🌠 Sẵn sàng chưa?',state.mode==='typing'?'Nhập tên và gõ cả từ tiếng Anh trước khi thẻ chạm đất.':'Nhập tên, chọn chủ đề và sẵn sàng bắt chữ!','▶ Bắt đầu chơi')
+ if(state.running){state.running=false;state.paused=false;cancelAnimationFrame(state.raf);state.raf=0;clearScene();$('pauseGame').disabled=true;setTypingEnabled(false);$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false;$('wordLimit').disabled=false}
+ displayGameMode();$('score').textContent='0';$('hearts').textContent='❤️❤️❤️';$('round').textContent='0 / '+(Number($('wordLimit').value)||10);$('feedback').textContent='';$('clue').textContent='Bắt đầu để nhận câu hỏi';$('blanks').textContent='_ _ _ _ _';$('typingTime').textContent='⏱ --';$('typingCount').textContent='✅ 0 từ đúng';renderScores();
+ showOverlay('🌠 Sẵn sàng chưa?',state.mode==='typing'?'Nhập tên rồi gõ tiếng Anh của các thẻ đang rơi.':'Nhập tên, chọn chủ đề và sẵn sàng bắt chữ!','▶ Bắt đầu chơi')
 }
 $('startGame').onclick=()=>{if(state.running&&state.paused)pause();else start()};
 $('pauseGame').onclick=()=>pause();$('restartGame').onclick=()=>start();
 $('gameTopic').onchange=e=>{gameTopic=e.target.value;resetGameSettings()};
 $('gameMode').onchange=()=>{state.mode=$('gameMode').value;$('rankingMode').value=state.mode;resetGameSettings()};
+$('wordLimit').onchange=()=>{const n=Math.floor(Number($('wordLimit').value)||10);$('wordLimit').value=Math.min(50,Math.max(1,n));resetGameSettings()};
 $('playerName').addEventListener('input',()=>{safeStorage.write(PLAYER_KEY,$('playerName').value);renderScores()});
 $('rankingMode').onchange=()=>renderScores();
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.running&&!state.paused)pause(true)});
@@ -482,28 +546,38 @@ function pick(item){
   }else{$('feedback').textContent=`❌ Cần chữ ${expected}, không phải ${item.char}`;hit()}
 }
 function submitWholeWord(e){
-  if(e)e.preventDefault();
-  if(!state.running||state.paused||state.locked||state.mode!=='typing')return;
-  const answer=normalizeWord($('typingAnswer').value);
-  if(!answer)return;
-  if(answer===normalizeWord(state.answer)){
-    state.locked=true;const remaining=Math.max(0,(state.fallFloor-state.fallY)/(state.fallFloor-6));
-    const bonus=Math.max(0,Math.min(100,Math.floor(remaining*100)));const earned=100+bonus;
-    state.score+=earned;state.correct++;$('feedback').textContent=`✅ Chính xác! +${earned} điểm (${bonus} điểm tốc độ)`;nextWord();return
-  }
-  $('feedback').textContent='❌ Chưa đúng, mất 1 tim! Gợi ý: '+state.pool[state.round][2];
-  $('typingAnswer').select();hit();if(state.running)$('typingAnswer').focus({preventScroll:true})
+ if(e)e.preventDefault();
+ if(!state.running||state.paused||state.mode!=='typing')return;
+ const answer=normalizeWord($('typingAnswer').value);if(!answer)return;
+ const matches=state.fallWords.filter(x=>normalizeWord(x.card[0])===answer);
+ if(matches.length){
+   const item=matches.sort((a,b)=>b.y-a.y)[0];
+   const remaining=Math.max(0,(item.floor-item.y)/(item.floor-44));
+   const bonus=Math.max(0,Math.min(100,Math.floor(remaining*100))),earned=100+bonus;
+   removeFallingWord(item);state.resolved++;state.correct++;state.score+=earned;
+   $('typingAnswer').value='';$('feedback').textContent='✅ Chính xác! +'+earned+' điểm';updateHUD();
+   if(state.resolved>=state.pool.length){endGame(true);return}
+   if(state.fallWords.length===0&&state.nextSpawn<state.pool.length){spawnFallingWord();state.typingElapsed=0}
+   updateTypingHUD();focusTypingInput();return
+ }
+ $('feedback').textContent='❌ Chưa khớp thẻ nào đang rơi. Thử lại nhé!';
+ if(!isMobileTyping()){$('typingAnswer').select();focusTypingInput()}
 }
 $('typingForm').addEventListener('submit',submitWholeWord);
 function tick(t){
   if(!state.running||state.paused)return;
   if(!state.last)state.last=t;const dt=Math.min((t-state.last)/1000,.06);state.last=t;
   if(state.mode==='typing'){
-    state.fallY+=state.fallSpeed*dt;
-    if(state.fallEl)state.fallEl.style.transform=`translate(-50%,${state.fallY}px)`;
-    const remaining=Math.max(0,(state.fallFloor-state.fallY)/state.fallSpeed);
-    $('typingTime').textContent=`⏱ Còn ${remaining.toFixed(1)} giây · ${state.correct} từ đúng`;
-    if(state.fallY>=state.fallFloor){$('feedback').textContent='⌛ Hết giờ! Mất 1 tim.';if(hit())return;nextWord()}
+    state.typingElapsed+=dt*1000;
+    const interval={easy:2600,normal:1900,hard:1400}[$('difficulty').value];
+    if(state.nextSpawn<state.pool.length&&state.fallWords.length<3&&state.typingElapsed>=interval){state.typingElapsed=0;spawnFallingWord()}
+    for(const item of [...state.fallWords]){
+      item.y+=item.vy*dt;item.el.style.transform='translate(-50%,'+item.y+'px)';
+      if(item.y>=item.floor){removeFallingWord(item);state.resolved++;$('feedback').textContent='⌛ Một thẻ đã chạm đất! Mất 1 tim.';if(hit())return}
+    }
+    if(state.resolved>=state.pool.length){endGame(true);return}
+    if(state.fallWords.length===0&&state.nextSpawn<state.pool.length){spawnFallingWord();state.typingElapsed=0}
+    updateTypingHUD();updateHUD();
   }else{
     state.spawnElapsed+=dt*1000;
     const interval={easy:1150,normal:850,hard:680}[$('difficulty').value];
@@ -522,6 +596,56 @@ document.addEventListener('keydown',e=>{
   const char=e.key.toUpperCase(),matches=state.letters.filter(x=>x.char===char);
   if(matches.length){matches.sort((a,b)=>b.y-a.y);pick(matches[0])}
 });
+// In-game keyboard prevents Android/iOS system keyboard from covering falling words.
+const keyboard=$('virtualKeyboard');
+function addTypingKey(parent,label,value,klass=''){
+ const btn=document.createElement('button');btn.type='button';btn.className='typing-key '+klass;btn.textContent=label;
+ btn.setAttribute('aria-label',value==='BACKSPACE'?'Xóa ký tự':value==='ENTER'?'Gửi câu trả lời':value==='SPACE'?'Dấu cách':'Chữ '+label);
+ btn.addEventListener('pointerdown',e=>e.preventDefault());
+ btn.addEventListener('click',()=>{
+   if(!state.running||state.paused||state.mode!=='typing')return;
+   const input=$('typingAnswer');
+   if(value==='ENTER'){submitWholeWord();return}
+   if(value==='BACKSPACE')input.value=input.value.slice(0,-1);
+   else if(value==='SPACE'){if(input.value.length<input.maxLength)input.value+=' '}
+   else if(input.value.length<input.maxLength)input.value+=value;
+ });parent.append(btn)
+}
+for(const letters of ['qwertyuiop','asdfghjkl','zxcvbnm']){
+ const row=document.createElement('div');row.className='typing-row';
+ for(const char of letters)addTypingKey(row,char.toUpperCase(),char);
+ keyboard.append(row)
+}
+const actions=document.createElement('div');actions.className='typing-row';
+addTypingKey(actions,'⌫','BACKSPACE','action');addTypingKey(actions,'Dấu cách','SPACE','space');addTypingKey(actions,'↵ Enter','ENTER','action');keyboard.append(actions);
+function syncFallingGeometry(){
+ const area=$('gameArea'),dock=$('typingDock');
+ for(const item of state.fallWords){
+   const timeLeft=Math.max(.5,(item.floor-item.y)/item.vy),part=Math.min(.98,Math.max(0,(item.y-44)/(item.floor-44)));
+   const floor=Math.max(104,area.clientHeight-dock.getBoundingClientRect().height-item.el.offsetHeight-20);
+   item.floor=floor;item.y=44+part*(floor-44);item.vy=Math.max(1,(floor-item.y)/timeLeft);
+   item.el.style.transform='translate(-50%,'+item.y+'px)';
+ }
+}
+function setFullscreenVisual(){
+ const active=document.fullscreenElement===$('gameArea')||$('gameArea').classList.contains('fullscreen-fallback');
+ $('fullscreenGame').textContent=active?'⤢':'⛶';
+ $('fullscreenGame').setAttribute('aria-label',active?'Thoát toàn màn hình':'Phóng to toàn màn hình game');
+ requestAnimationFrame(syncFallingGeometry);
+}
+async function toggleGameFullscreen(){
+ const area=$('gameArea');
+ if(document.fullscreenElement===area){try{await document.exitFullscreen()}catch{}setFullscreenVisual();return}
+ if(area.classList.contains('fullscreen-fallback')){area.classList.remove('fullscreen-fallback');setFullscreenVisual();return}
+ try{if(!area.requestFullscreen)throw Error('not supported');await area.requestFullscreen()}
+ catch{area.classList.add('fullscreen-fallback')}
+ setFullscreenVisual()
+}
+$('fullscreenGame').addEventListener('click',toggleGameFullscreen);
+document.addEventListener('fullscreenchange',setFullscreenVisual);
+window.addEventListener('resize',()=>requestAnimationFrame(syncFallingGeometry));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('gameArea').classList.contains('fullscreen-fallback')){$('gameArea').classList.remove('fullscreen-fallback');setFullscreenVisual()}});
+$('typingAnswer').addEventListener('focus',()=>{if(isMobileTyping())$('typingAnswer').blur()});
 $('exportScores').onclick=()=>{
   const data=JSON.stringify({format:'wordsky-scores',version:1,records:scoreHistory},null,2);
   const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob);
