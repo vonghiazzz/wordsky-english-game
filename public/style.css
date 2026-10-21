@@ -7,3 +7,50 @@
 .car-stage .lane{animation:asphaltMove .45s linear infinite}
 .car-stage .lane .item{animation:roadHazardApproach 1.4s ease-in infinite alternate}
 @media(prefers-reduced-motion:reduce){.gamecard,.btn,.car-stage .lane,.car-stage .lane .item,.bomb-item{animation:none!important;transition:none!important}}
+
+/* WordSky mobile game and accessibility hardening */
+.password-field{display:flex;position:relative;min-width:0;width:100%}
+.password-field input{padding-right:54px;min-width:0}
+.password-toggle{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:white;min-width:44px;min-height:44px;border-radius:8px}
+.bomb-arena{position:relative;min-height:285px;height:min(48vh,390px);border:1px solid #3e597c;border-radius:17px;background:radial-gradient(ellipse at 50% 0%,#243d68,#0d1b37);overflow:hidden;isolation:isolate}
+.bomb-topline{position:absolute;z-index:3;top:7px;left:10px;right:10px;text-align:center;background:#0c1c37b8;border-radius:7px;padding:5px 4px;font-size:12px;color:#d6ebff;pointer-events:none}
+.bomb-falling{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;gap:2px;justify-content:center;width:29%;max-width:145px;min-height:62px;padding:7px 4px;border-radius:12px;border:2px solid #ffc5ad;background:linear-gradient(135deg,#79405b,#40223e);color:#fff;box-shadow:0 8px 22px #0008;transition:transform .46s linear;touch-action:manipulation;overflow-wrap:anywhere;text-align:center;font-size:12px;line-height:1.2;z-index:2}
+.bomb-falling.selected{border:2px solid #ffe998;box-shadow:0 0 0 2px #ffc74980,0 8px 25px #000a}
+.bomb-falling strong{max-width:100%;font-size:clamp(11px,2.3vw,15px);line-height:1.25;overflow-wrap:anywhere}
+.bomb-falling .bomb-emoji{font-size:22px}
+.bomb-falling small{font-size:11px;color:#ffe0ac}
+.bomb-answer-form,.car-answer-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 0 4px;max-width:680px;margin:0 auto}
+.bomb-answer-form label,.car-answer-form label{width:100%;font-size:13px;color:#dbeaff}
+.bomb-answer-form input,.car-answer-form input{flex:1;min-width:0;font-size:16px}
+.car-steering{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px auto;max-width:660px;font-size:12px;color:#c4e3fa}.car-steering .btn{min-height:44px;padding:8px 12px}
+.car-clue{display:grid;gap:5px;text-align:center;padding:13px;background:#26365a;border-radius:13px;line-height:1.35}
+.car-clue span{font-size:11px;color:#b3d1f3;letter-spacing:.35px}
+.car-clue strong{font-size:clamp(20px,4vw,27px);overflow-wrap:anywhere}
+.car-clue small{font-size:12px;color:#c6d4ed}
+.game-shell,.room-card,.dashboard-card,.editor-item,.round-line,.board,.modal{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.round-line label{white-space:normal;min-width:0}
+.round-line select,.round-line input{min-width:0;max-width:100%}
+.form-grid label,.form-stack label{min-width:0}
+@media(max-width:730px){
+ .wrap{width:calc(100% - 24px)}
+ .game-shell{padding:12px}.bomb-arena{min-height:275px;height:min(42vh,350px)}
+ .game-bar{gap:6px;font-size:12px}.game-bar strong{width:100%;font-size:16px}
+ .bomb-answer-form button,.car-answer-form button{font-size:13px;padding:12px 10px}
+ .lane{min-height:145px}.lane .item{font-size:23px}
+ .car-stage{padding:6px}
+ .editor-item{flex-wrap:wrap}.editor-item>div:first-child{min-width:0}
+ .dashboard-card,.room-card{padding:14px}
+ .round-line{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:9px}
+}
+@media(max-width:370px){.bomb-falling strong{font-size:11px}.password-toggle{min-width:40px}.game-bar .counter{font-size:12px}.car-answer-form button{width:100%}}
+@media(max-height:650px) and (max-width:760px){.bomb-arena{height:35dvh;min-height:180px}.game-keyboard-row button{min-height:28px}.lane{min-height:110px}}
+@media(prefers-reduced-motion:reduce){.bomb-falling{transition:none}}
+
+#liveGame{scroll-margin-top:125px}
+.game-keyboard{display:none;max-width:570px;margin:8px auto 0;padding:9px 6px;border-radius:13px;background:#132347cf;border:1px solid #5a6f94}
+.game-keyboard-row{display:flex;align-items:center;justify-content:center;gap:4px;margin:3px 0}
+.game-keyboard-row button{flex:1;min-width:0;min-height:34px;max-width:47px;padding:4px 1px;background:#d2dbecdb;border:1px solid #c0d1ee;color:#13213e;border-radius:7px;font-size:clamp(11px,2vw,15px);font-weight:850;touch-action:manipulation}
+.game-keyboard-row button:active{background:#fff}
+.game-keyboard-row button.game-keyboard-wide{flex:2;max-width:128px}
+.game-keyboard-row button.game-keyboard-enter{flex:2;max-width:130px;background:#8fdfc5}
+@media(pointer:coarse) and (max-width:760px){.game-keyboard{display:block}.bomb-answer-form button[type=submit],.car-answer-form button[type=submit]{display:none}.bomb-answer-form input,.car-answer-form input{font-size:16px;min-height:44px}}

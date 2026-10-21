@@ -84,31 +84,31 @@ test('BOMB: correct word scores, missed bombs lose health, public data hides Eng
 test('CAR: reject early input on server, allow only when the stage is ready', () => {
   const round = { ...base, mode: 'CAR' };
   const now = 1000000;
-  const state = createState(round, [], now);
+  const state = createState(round, words, now);
   const first = [0, 1, 2, 3, 4].find(lane => !state.levels[0].blocked.includes(lane));
   assert.equal(publicState(state, now).nextAllowedAt, now + MIN_CAR_STEP_MS);
   for (const early of [now, now + 1, now + MIN_CAR_STEP_MS - 1]) {
-    assert.throws(() => answerQuestion(state, round, { lane: first }, early), e => e.status === 409);
+    assert.throws(() => answerQuestion(state, round, { lane: first, answer: state.levels[0].english }, early), e => e.status === 409);
     assert.equal(state.index, 0);
     assert.equal(state.score, 0);
   }
-  const accepted = answerQuestion(state, round, { lane: first }, now + MIN_CAR_STEP_MS);
+  const accepted = answerQuestion(state, round, { lane: first, answer: state.levels[0].english }, now + MIN_CAR_STEP_MS);
   assert.equal(accepted.result.correct, true);
   assert.ok(state.score >= 100);
   assert.equal(state.index, 1);
   const next = state.levels[1].blocked[0];
-  assert.throws(() => answerQuestion(state, round, { lane: next }, now + MIN_CAR_STEP_MS + 1), e => e.status === 409);
+  assert.throws(() => answerQuestion(state, round, { lane: next, answer: state.levels[1].english }, now + MIN_CAR_STEP_MS + 1), e => e.status === 409);
   assert.equal(state.index, 1);
-  answerQuestion(state, round, { lane: next }, now + MIN_CAR_STEP_MS * 2);
+  answerQuestion(state, round, { lane: next, answer: state.levels[1].english }, now + MIN_CAR_STEP_MS * 2);
   assert.equal(state.health, 2);
 });
 
 test('CAR: impossible to finish 8 stages within milliseconds and earn full score', () => {
   const round = { ...base, mode: 'CAR', question_count: 8 };
-  const state = createState(round, [], 1000000);
+  const state = createState(round, words, 1000000);
   for (let index = 0; index < 8; index++) {
     const lane = state.levels[state.index]?.double;
-    assert.throws(() => answerQuestion(state, round, { lane }, 1000000 + index + 1), e => e.status === 409);
+    assert.throws(() => answerQuestion(state, round, { lane, answer: state.levels[0].english }, 1000000 + index + 1), e => e.status === 409);
   }
   assert.equal(state.index, 0);
   assert.equal(state.score, 0);
@@ -116,10 +116,10 @@ test('CAR: impossible to finish 8 stages within milliseconds and earn full score
 
 test('CAR: multiplier lane still gives double points after the readiness period', () => {
   const round = { ...base, mode: 'CAR', difficulty: 'HARD' };
-  const state = createState(round, [], 2000);
+  const state = createState(round, words, 2000);
   const double = state.levels[0].double;
   assert.ok(!state.levels[0].blocked.includes(double));
-  const result = answerQuestion(state, round, { lane: double }, 2000 + MIN_CAR_STEP_MS);
+  const result = answerQuestion(state, round, { lane: double, answer: state.levels[0].english }, 2000 + MIN_CAR_STEP_MS);
   assert.equal(result.result.awarded, 200);
   assert.equal(result.result.multiplier, 2);
 });
@@ -132,7 +132,7 @@ test('MATCH and BOMB vocabulary capacity must cover all choices and distractors'
   assert.equal(requiredWords(hard), 12);
   assert.equal(requiredWords(easy), 8);
   assert.equal(requiredWords({ ...base, mode: 'BOMB', question_count: 10 }), 10);
-  assert.equal(requiredWords({ ...base, mode: 'CAR', question_count: 30 }), 0);
+  assert.equal(requiredWords({ ...base, mode: 'CAR', question_count: 30 }), 30);
   assert.throws(() => assertWordCapacity(hard, 10), e => e.status === 400);
   assert.throws(() => createState(hard, words.slice(0, 10), 1000), e => e.status === 400);
   assert.equal(createState(normal, words.slice(0, 10), 1000).distractors.length, 2);
@@ -145,4 +145,33 @@ test('normalization blocks excessive BOM input', () => {
   const round = { ...base, mode: 'BOMB' };
   const state = createState(round, words, 1000000);
   assert.throws(() => answerQuestion(state, round, { bombId: state.bombs[0].id, answer: 'x'.repeat(120) }, 1000010));
+});
+
+test('CAR: wrong English word does not move car to next lane', () => {
+ const round={...base,mode:'CAR'};
+ const state=createState(round,words,1000000);
+ const lane=state.levels[0].double;
+ const fail=answerQuestion(state,round,{lane,answer:'not the word'},1000000+MIN_CAR_STEP_MS);
+ assert.equal(fail.result.wordCorrect,false);
+ assert.equal(state.index,0);
+ assert.equal(state.health,3);
+ assert.ok(!('english' in publicState(state,1000000).level));
+ const ok=answerQuestion(state,round,{lane,answer:state.levels[0].english},1000000+MIN_CAR_STEP_MS);
+ assert.equal(ok.result.wordCorrect,true);
+ assert.equal(state.index,1);
+});
+test('CAR: rejects missing answer, even when lane is safe',()=>{
+ const round={...base,mode:'CAR'};
+ const state=createState(round,words,1000000);
+ const lane=state.levels[0].bonus;
+ assert.throws(()=>answerQuestion(state,round,{lane},1000000+MIN_CAR_STEP_MS),e=>e.status===400);
+ assert.equal(state.index,0);
+});
+test('BOMB public falling card has timing but never English answer',()=>{
+ const round={...base,mode:'BOMB'};
+ const st=createState(round,words,1000000);
+ const bomb=publicState(st,1000000).bombs[0];
+ assert.equal(typeof bomb.spawnAt,'number');
+ assert.equal(typeof bomb.deadline,'number');
+ assert.equal('english' in bomb,false);
 });

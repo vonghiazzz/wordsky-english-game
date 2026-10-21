@@ -87,7 +87,7 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
 <section class="scoreboard" aria-labelledby="scoresTitle"><div class="scoreboard-top"><h3 id="scoresTitle">🏆 Bảng điểm người chơi</h3><div class="controls"><label for="rankingMode">Xem điểm:</label><select id="rankingMode"><option value="letters">Bắt chữ cái</option><option value="typing">Gõ cả từ</option></select></div></div><div id="scoreboardList" class="scoreboard-list"><p class="empty-message">Chưa có lượt chơi nào.</p></div><p class="scoreboard-note">Điểm theo tên được lưu trên <b>trình duyệt này</b>, không tự đồng bộ giữa hai thiết bị. Để so điểm giữa hai máy, xuất và nhập file bảng điểm (chỉ hợp nhất điểm, không xóa thẻ).</p><div class="scoreboard-actions"><button type="button" id="exportScores" class="secondary">⬇ Xuất bảng điểm</button><label for="importScores" class="secondary">⬆ Nhập bảng điểm<input id="importScores" class="hidden" type="file" accept=".json,application/json" aria-label="Nhập JSON bảng điểm"></label></div></section></section>
 <section class="panel hidden" id="managePanel">
   <div class="toolbar"><h2>⚙️ Quản lý từ vựng</h2><div class="controls"><span class="pill tiny"><b id="topicCount">26</b> chủ đề</span><span class="pill tiny"><b id="wordCount">260</b> thẻ</span></div></div>
-  <p class="section-sub">Tự tạo chủ đề và thêm, sửa, xóa từ. <b>Flashcard và game chữ rơi sẽ cập nhật theo bộ từ mới.</b></p>
+  <p class="section-sub">Tự tạo chủ đề và thêm từ cá nhân. <b>Flashcard và game chữ rơi sẽ cập nhật theo bộ từ mới.</b></p>
   <div class="storage-info">🔒 Thay đổi được lưu <b>trên trình duyệt này</b>, không tự đồng bộ với người học thứ hai. Dùng <b>Xuất JSON</b> và <b>Nhập JSON</b> để chia sẻ bộ thẻ.</div>
   <div class="manager-layout">
     <section class="manager-block" aria-labelledby="topicAdminTitle">
@@ -96,15 +96,15 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
       <select id="managerTopic" class="full"></select>
       <label class="field-label" for="newTopic">Tạo chủ đề mới</label>
       <div class="inline-field"><input id="newTopic" maxlength="45" placeholder="VD: Sports, School, Công việc" aria-label="Tên chủ đề mới"/><button type="button" class="primary" id="addTopic">＋ Tạo</button></div>
-      <div class="rowbtn"><button type="button" class="secondary" id="renameTopic">✏️ Đổi tên</button><button type="button" class="secondary danger" id="deleteTopic">🗑 Xóa chủ đề</button></div>
+      <div class="rowbtn"><button type="button" class="secondary hidden" id="renameTopic">✏️ Đổi tên</button><button type="button" class="secondary danger hidden" id="deleteTopic">🗑 Xóa chủ đề</button></div>
       <h3 class="section-sep">📦 Sao lưu / chia sẻ</h3>
       <p class="tiny">Xuất file rồi gửi cho người kia; bên kia chọn Nhập JSON để nhận toàn bộ chủ đề.</p>
-      <div class="backup-grid"><button class="secondary" type="button" id="exportData">⬇ Xuất JSON</button><label class="secondary upload-btn" for="importData">⬆ Nhập JSON<input type="file" id="importData" accept="application/json,.json" hidden/></label></div>
+      <div class="backup-grid"><button class="secondary" type="button" id="exportData">⬇ Xuất JSON</button><label class="secondary upload-btn hidden" for="importData">⬆ Nhập JSON<input type="file" id="importData" accept="application/json,.json" hidden/></label></div>
       <button class="secondary restore-btn full" type="button" id="addSampleTopics">＋ Thêm lại 22 chủ đề mới (220 từ)</button>
       <p class="tiny">Chỉ bổ sung các chủ đề mẫu đang thiếu. Không ghi đè thẻ bạn đã sửa hay chủ đề tự tạo.</p>
-      <button class="secondary restore-btn full" type="button" id="restoreDailyLife">↻ Khôi phục riêng Daily Life (10 từ)</button>
+      <button class="secondary restore-btn full hidden" type="button" id="restoreDailyLife">↻ Khôi phục riêng Daily Life (10 từ)</button>
       <p class="tiny">Chỉ thêm những từ mẫu đang thiếu trong Daily Life, không xóa từ hay chủ đề khác.</p>
-      <button class="smallbtn danger restore-btn" type="button" id="resetVocab">↻ Khôi phục bộ từ mặc định</button>
+      <button class="smallbtn danger restore-btn hidden" type="button" id="resetVocab">↻ Khôi phục bộ từ mặc định</button>
     </section>
     <section class="manager-block" aria-labelledby="wordsAdminTitle">
       <h3 id="editorTitle">Thêm thẻ mới</h3>
@@ -325,7 +325,8 @@ function renderManager(){
     edit.onclick=()=>{editingWord=c[0];['inputWord','inputIpa','inputMeaning','inputExample','inputTranslation'].forEach((id,i)=>$(id).value=c[i]);$('editorTitle').textContent='Sửa thẻ: '+c[0];$('saveCard').textContent='✓ Lưu thay đổi';$('cancelEdit').classList.remove('hidden');$('inputWord').focus();$('cardForm').scrollIntoView({behavior:'smooth',block:'center'})};
     const del=document.createElement('button');del.type='button';del.className='smallbtn danger';del.textContent='🗑 Xóa';del.setAttribute('aria-label','Xóa '+c[0]);
     del.onclick=()=>{if(!confirm(`Xóa thẻ “${c[0]}” khỏi chủ đề “${managerTopic}”?`))return;DATA[managerTopic]=DATA[managerTopic].filter(x=>x!==c);delete learned[key(managerTopic,c[0])];saveLearned();saveTopics();if(editingWord===c[0])resetEditor();refresh();note('Đã xóa thẻ '+c[0])};
-    controls.append(edit,del);item.append(info,controls);container.append(item);
+    /* Người học chỉ được thêm thẻ: không hiển thị Sửa/Xóa. */
+    item.append(info);container.append(item);
   }
 }
 function refresh(){renderSelectors();renderCard();renderManager()}

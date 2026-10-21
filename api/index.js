@@ -1,7 +1,7 @@
 // WordSky V4 server-side API. Vercel Node Function, PostgreSQL as durable source of truth.
 import {sql,transaction} from '../lib/db.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
-import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,fail} from '../lib/game.js';
+import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 
 const AUTH_COOKIE='ws_auth';
@@ -83,10 +83,16 @@ async function ensureVocabulary(db,rounds){
  for(const round of rounds){
   const needed=requiredWords(round);
   if(!needed)continue;
-  if(!round.topic_id)throw fail('Vòng từ vựng phải chọn chủ đề');
-  const count=await db.query('SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id WHERE w.topic_id=$1 AND w.enabled=true AND t.enabled=true',[round.topic_id]);
+  // CAR with no selected topic uses the common vocabulary pool.
+  let count;
+  if(round.mode==='CAR'&&!round.topic_id){
+   count=await db.query('SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id WHERE w.enabled=true AND t.enabled=true');
+  }else{
+   if(!round.topic_id)throw fail('Vòng từ vựng phải chọn chủ đề');
+   count=await db.query('SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id WHERE w.topic_id=$1 AND w.enabled=true AND t.enabled=true',[round.topic_id]);
+  }
   const available=count.rows[0]?.n||0;
-  if(available<needed)throw fail(`Chủ đề cần ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ.`);
+  if(available<needed)throw fail(`Cần ít nhất ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ.`,400);
  }
 }
 // Lock referenced events while checking the state to avoid live vocabulary edits.
@@ -181,11 +187,18 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
  return transaction(async db=>{
   const existed=await db.query('SELECT * FROM ws_runs WHERE round_id=$1 AND participant_id=$2 FOR UPDATE',[roundId,p.id]);
   if(existed.rows.length){const run=existed.rows[0];return {runId:run.id,round,game:publicState(run.state,now)}};
-  let words=[];
-  if(round.mode!=='CAR'){
-   if(!round.topic_id)throw fail('Vòng học từ vựng chưa chọn chủ đề',400);
-   const wordLimit=requiredWords(round);const data=await db.query('SELECT id,english,meaning FROM ws_words WHERE topic_id=$1 AND enabled=true ORDER BY random() LIMIT $2',[round.topic_id,wordLimit]);words=data.rows;
-  }
+   let words=[];
+   const wordLimit=requiredWords(round);
+   if(wordLimit){
+    if(round.topic_id){
+     const data=await db.query('SELECT id,english,meaning FROM ws_words WHERE topic_id=$1 AND enabled=true ORDER BY random() LIMIT $2',[round.topic_id,wordLimit]);
+     words=data.rows;
+    }else if(round.mode==='CAR'){
+     const data=await db.query('SELECT w.id,w.english,w.meaning FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id WHERE w.enabled=true AND t.enabled=true ORDER BY random() LIMIT $1',[wordLimit]);
+     words=data.rows;
+    }else throw fail('Vòng từ vựng chưa chọn chủ đề',400);
+    assertWordCapacity(round,words.length);
+   }
   const st=createState(round,words,now,ends);
   const saved=await db.query('INSERT INTO ws_runs(participant_id,round_id,state) VALUES($1,$2,$3::jsonb) ON CONFLICT(participant_id,round_id) DO NOTHING RETURNING id,state',[p.id,roundId,JSON.stringify(st)]);
   if(!saved.rows.length){const retry=await db.query('SELECT * FROM ws_runs WHERE participant_id=$1 AND round_id=$2',[p.id,roundId]);return {runId:retry.rows[0].id,round,game:publicState(retry.rows[0].state,now)}};
