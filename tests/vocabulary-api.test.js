@@ -160,4 +160,5 @@ test('CAR: server checks approved per-tier stock before creating a room',async()
  const out=await req('POST','admin/events',bodyFor(carRound('EASY',8)));
  assert.equal(out.status,201);
  assert.equal(log.some(x=>x.includes('cefr_review_status=\'APPROVED\'')),true);
+ assert.ok(log.some(x=>x.includes("w.cefr_level IN ('A1','A2')")),'CAR stock SQL must count both A1 and A2');
 });

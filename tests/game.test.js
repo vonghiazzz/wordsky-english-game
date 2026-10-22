@@ -106,6 +106,15 @@ test('CAR: each non-blocked lane gets independent meaning and approved CEFR tier
  assert.ok(['C1','C2'].includes(pub.find(x=>x.kind==='DOUBLE').cefr));
  assert.equal(new Set(lanes.filter(x=>x.english).map(x=>x.english)).size,3);
 });
+test('CAR: basic lane accepts approved A1 word',()=>{
+ const round={...base,mode:'CAR',difficulty:'NORMAL'};
+ const pools=carPools(round);
+ pools.A2=pools.A2.map(card=>({...card,cefr_level:'A1'}));
+ const state=createState(round,pools,1000000);
+ const basic=publicState(state,1000000).level.lanes.find(x=>x.kind==='NORMAL');
+ assert.equal(basic.cefr,'A1');
+});
+
 test('CAR: reject early input even with correct answer',()=>{
  const round={...base,mode:'CAR'};const now=1000000;
  const state=createState(round,carPools(round),now);

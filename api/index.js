@@ -82,7 +82,7 @@ function codeGen(){const letters='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array
 // All Lane Escape questions come ONLY from approved CEFR-labelled cards.
 async function approvedCarWordCounts(db,round){
  const q=await db.query(`SELECT
-   count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level='A2')::int AS a2,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level IN ('A1','A2'))::int AS a2,
    count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level IN ('B1','B2'))::int AS bonus,
    count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level IN ('C1','C2'))::int AS double
   FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
@@ -96,7 +96,7 @@ async function ensureVocabulary(db,rounds){
   if(round.mode==='CAR'){
    const r=carWordRequirements(round),got=await approvedCarWordCounts(db,round);
    const missing=Object.entries(r).filter(([name,n])=>got[name]<n)
-    .map(([name,n])=>`${name==='BONUS'?'B1–B2':name==='DOUBLE'?'C1–C2':'A2'} ${got[name]}/${n}`);
+    .map(([name,n])=>`${name==='BONUS'?'B1–B2':name==='DOUBLE'?'C1–C2':'A1–A2'} ${got[name]}/${n}`);
    if(missing.length)throw fail('Lane Escape thiếu từ CEFR đã duyệt: '+missing.join('; '),400);
    continue;
   }
@@ -206,13 +206,13 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
     const need=carWordRequirements(round);
     const cards=await db.query(`SELECT id,english,meaning,cefr_level,tier FROM (
      SELECT w.id,w.english,w.meaning,w.cefr_level,
-      CASE WHEN w.cefr_level='A2' THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END AS tier,
-      row_number() OVER (PARTITION BY CASE WHEN w.cefr_level='A2' THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END ORDER BY random()) AS rn
+      CASE WHEN w.cefr_level IN ('A1','A2') THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END AS tier,
+      row_number() OVER (PARTITION BY CASE WHEN w.cefr_level IN ('A1','A2') THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END ORDER BY random()) AS rn
      FROM (
       SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level
       FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
       WHERE w.enabled=true AND t.enabled=true AND w.cefr_review_status='APPROVED'
-        AND w.cefr_level IN ('A2','B1','B2','C1','C2')
+        AND w.cefr_level IN ('A1','A2','B1','B2','C1','C2')
         AND ($1::uuid IS NULL OR w.topic_id=$1)
       ORDER BY lower(w.english),w.id
      ) w

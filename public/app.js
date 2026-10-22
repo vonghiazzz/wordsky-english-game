@@ -175,7 +175,7 @@ function renderGame(){
   const symbol=k=>k==='BLOCKED'?'🧱':k==='BONUS'?'⭐':k==='DOUBLE'?'×2':'·';
   h+=`<p class="small-note">Mỗi làn có một thử thách riêng: · A2 (+100%), ⭐ B1–B2 (+150%), ×2 C1–C2 (+200%); 🧱 là vật cản, không cần từ nhưng mất 1 tim. Tất cả dùng từ CEFR đã duyệt.</p>
    <div class="car-stage"><div class="game-bar"><span>CHẶNG ${g.index+1}/${g.total} · ĐÃ VƯỢT ${g.index}</span><span>🏎️ LÀN ${(g.carLane??2)+1} · 🎯 CHỌN LÀN ${selectedLane+1}</span></div>
-   <div class="car-lanes">${(g.level?.lanes||[]).map((lane,i)=>`<button type="button" data-lane="${i}" class="lane car-v6-lane ${selectedLane===i?'selected':''} ${lane.kind==='BLOCKED'?'blocked':''}" aria-label="Làn ${i+1}: ${lane.kind==='BLOCKED'?'vật cản':escapeHtml(lane.meaning)}"><span class="item">${symbol(lane.kind)}</span><span class="car-cefr">${lane.kind==='NORMAL'?'A2':lane.kind==='BONUS'?'B1–B2':lane.kind==='DOUBLE'?'C1–C2':'CẢN'}</span><span class="car-lane-word">${lane.kind==='BLOCKED'?'Tránh':escapeHtml(lane.meaning)}</span><span class="you">${selectedLane===i?'🎯':'·'}</span><span class="car-lane-number">${i+1}</span></button>`).join('')}</div><div class="car-vehicle" id="carVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Trả lời đúng → xe chuyển làn → sang chặng tiếp theo</div></div>
+   <div class="car-lanes">${(g.level?.lanes||[]).map((lane,i)=>`<button type="button" data-lane="${i}" class="lane car-v6-lane ${selectedLane===i?'selected':''} ${lane.kind==='BLOCKED'?'blocked':''}" aria-label="Làn ${i+1}: ${lane.kind==='BLOCKED'?'vật cản':escapeHtml(lane.meaning)}"><span class="item">${symbol(lane.kind)}</span><span class="car-cefr">${lane.kind==='NORMAL'?(lane.cefr||'A1–A2'):lane.kind==='BONUS'?'B1–B2':lane.kind==='DOUBLE'?'C1–C2':'CẢN'}</span><span class="car-lane-word">${lane.kind==='BLOCKED'?'Tránh':escapeHtml(lane.meaning)}</span><span class="you">${selectedLane===i?'🎯':'·'}</span><span class="car-lane-number">${i+1}</span></button>`).join('')}</div><div class="car-vehicle" id="carVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Trả lời đúng → xe chuyển làn → sang chặng tiếp theo</div></div>
    <form id="carAnswerForm" class="car-answer-form" autocomplete="off">
     <label for="carAnswer">${isBlocked?'⚠️ Làn có vật cản, đổi sang làn an toàn!':current?'Dịch từ làn '+(selectedLane+1)+' ('+escapeHtml(current.cefr)+'): '+escapeHtml(current.meaning):'Chọn làn'}</label>
     <div class="car-answer-row"><input id="carAnswer" name="answer" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" maxlength="100" placeholder="${isBlocked?'Không cần nhập từ':'Nhập nguyên từ tiếng Anh rồi Enter'}" ${isBlocked?'disabled':''}><button id="carDrive" type="submit" class="btn primary" ${next?'disabled':''}>${isBlocked?'⚠️ Vượt cản':'↵ Trả lời & Lái xe'}</button></div>
@@ -230,15 +230,16 @@ async function loadAdmin(){const pane=$('adminContent');if(session?.role!=='admi
   renderAdminEvents();renderAdminVocab();renderAdminFeatures(features.features||[]);setupPasswordToggles(pane);
  }catch(e){pane.innerHTML=`<div class="empty">${escapeHtml(e.message)}<p class="small-note">Cần cấu hình PostgreSQL và khóa admin để mở bảng quản trị.</p></div>`}}
 function optionsTopics(value){return `<option value="">-- Chọn chủ đề --</option>`+topics.map(t=>`<option value="${t.id}" ${t.id===value?'selected':''}>${escapeHtml(t.title)} (${t.words?.length||0} từ)</option>`).join('')}
+function countUniqueCefr(words,levels){return new Set(words.filter(w=>levels.includes(w.cefr_level)).map(w=>String(w.english).trim().toLowerCase())).size}
 function renderRounds(){const host=$('roundsEditor');if(!host)return;host.innerHTML=draftRounds.map((r,i)=>{
  const available=r.mode==='CAR'&&!r.topic_id?topics.reduce((sum,t)=>sum+(t.words?.length||0),0):(topics.find(t=>t.id===r.topic_id)?.words?.length||0);
  const extra=r.mode==='MATCH'?({EASY:0,NORMAL:2,HARD:4}[r.difficulty]||0):0;
  const cap=Math.max(0,Math.min(30,available-extra));
  const approvedWords=r.topic_id?(topics.find(t=>t.id===r.topic_id)?.words||[]):topics.flatMap(t=>t.words||[]);
  const approved=approvedWords.filter(w=>w.cefr_review_status==='APPROVED');
- const a2=approved.filter(w=>w.cefr_level==='A2').length,bonus=approved.filter(w=>['B1','B2'].includes(w.cefr_level)).length,high=approved.filter(w=>['C1','C2'].includes(w.cefr_level)).length;
+ const a2=countUniqueCefr(approved,['A1','A2']),bonus=countUniqueCefr(approved,['B1','B2']),high=countUniqueCefr(approved,['C1','C2']);
  const neededA2=(5-(r.difficulty==='EASY'?1:2)-2)*r.question_count;
- const cefrHint=r.mode==='CAR'?`<small class="car-stock-note">Đã duyệt: A2 ${a2}/${neededA2}, B1–B2 ${bonus}/${r.question_count}, C1–C2 ${high}/${r.question_count}</small>`:'';
+ const cefrHint=r.mode==='CAR'?`<small class="car-stock-note">Đã duyệt: A1–A2 ${a2}/${neededA2}, B1–B2 ${bonus}/${r.question_count}, C1–C2 ${high}/${r.question_count}</small>`:'';
  return `<div class="round-line" data-round="${i}"><label>Kiểu chơi<select data-k="mode">${['MATCH','BOMB',...(carFeatureEnabled||r.mode==='CAR'?['CAR']:[])].map(m=>`<option ${m===r.mode?'selected':''} value="${m}">${MODE_SHORT[m]}</option>`).join('')}</select></label><label>Chủ đề<select data-k="topic_id">${r.mode==='CAR'?`<option value="" ${!r.topic_id?'selected':''}>Tất cả từ đang bật</option>`+topics.map(t=>`<option value="${t.id}" ${t.id===r.topic_id?'selected':''}>${escapeHtml(t.title)} (${t.words?.length||0} từ)</option>`).join(''):optionsTopics(r.topic_id)}</select></label><label>Độ khó<select data-k="difficulty">${['EASY','NORMAL','HARD'].map(d=>`<option value="${d}" ${d===r.difficulty?'selected':''}>${d}</option>`).join('')}</select></label><label>Thời gian (s)<input type="number" data-k="duration_seconds" min="20" max="600" value="${r.duration_seconds}"></label><label>Số lượt<input type="number" data-k="question_count" min="3" max="${r.mode==='MATCH'?Math.min(20,cap):cap}" value="${r.question_count}"></label><label>Điểm đúng<input type="number" data-k="points_per_correct" min="10" max="1000" value="${r.points_per_correct}"></label><label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="${r.weight}"></label><button class="btn warn" type="button" data-remove-round="${i}" aria-label="Xóa vòng ${i+1}">✕</button><div class="round-note"><small>Cho phép tối đa ${r.mode==='CAR'?30:cap} lượt${extra?' (gồm '+extra+' nghĩa nhiễu)':''}</small>${cefrHint}</div></div>`;}).join('')+`<p class="small-note">Mỗi câu đúng +điểm, câu sai trừ ${draftRounds[0]?.penalty||25} điểm (có thể chỉnh trong cấu hình). Tổng giải tính điểm vòng × hệ số.</p>`}
 function collectRounds(){document.querySelectorAll('[data-round]').forEach(e=>{const i=Number(e.dataset.round);const r=draftRounds[i];e.querySelectorAll('[data-k]').forEach(c=>{r[c.dataset.k]=['mode','topic_id','difficulty'].includes(c.dataset.k)?c.value:Number(c.value)});if(r.mode==='CAR')r.topic_id=r.topic_id||null;
  if(r.mode!=='CAR'&&!r.topic_id)r.topic_id=topics[0]?.id||null;
@@ -257,10 +258,10 @@ async function submitEventForm(event){event.preventDefault();collectRounds();con
     if(!carFeatureEnabled){toast('CAR đang tắt; hãy xóa vòng CAR hoặc bật tính năng khi dữ liệu CEFR đã sẵn sàng.',true);return;}
     const vocab=round.topic_id?topic?.words||[]:topics.flatMap(t=>t.words||[]);
    const approved=vocab.filter(w=>w.cefr_review_status==='APPROVED');
-   const counts={A2:approved.filter(w=>w.cefr_level==='A2').length,BONUS:approved.filter(w=>['B1','B2'].includes(w.cefr_level)).length,DOUBLE:approved.filter(w=>['C1','C2'].includes(w.cefr_level)).length};
+   const counts={A2:countUniqueCefr(approved,['A1','A2']),BONUS:countUniqueCefr(approved,['B1','B2']),DOUBLE:countUniqueCefr(approved,['C1','C2'])};
    const need={A2:(5-(round.difficulty==='EASY'?1:2)-2)*round.question_count,BONUS:round.question_count,DOUBLE:round.question_count};
    const missing=Object.keys(need).filter(k=>counts[k]<need[k]);
-   if(missing.length){toast('Lane Escape cần từ CEFR ĐÃ DUYỆT: '+missing.map(k=>`${k} ${counts[k]}/${need[k]}`).join(', '),true);return;}
+   if(missing.length){toast('Lane Escape cần từ CEFR ĐÃ DUYỆT: '+missing.map(k=>`${k==='A2'?'A1–A2':k} ${counts[k]}/${need[k]}`).join(', '),true);return;}
    continue;
   }
   const available=topic?.words?.length||0;
@@ -272,13 +273,13 @@ async function submitEventForm(event){event.preventDefault();collectRounds();con
 }
 function renderAdminVocab(){const host=$('adminPanelVocab');if(!host)return;
  const allWords=topics.flatMap(t=>t.words||[]),approvedWords=allWords.filter(w=>w.cefr_review_status==='APPROVED');
- const a2Stock=approvedWords.filter(w=>w.cefr_level==='A2').length;
- const bonusStock=approvedWords.filter(w=>['B1','B2'].includes(w.cefr_level)).length;
- const doubleStock=approvedWords.filter(w=>['C1','C2'].includes(w.cefr_level)).length;
+ const a2Stock=countUniqueCefr(approvedWords,['A1','A2']);
+ const bonusStock=countUniqueCefr(approvedWords,['B1','B2']);
+ const doubleStock=countUniqueCefr(approvedWords,['C1','C2']);
  host.innerHTML=`<div class="twocol" style="margin:0 0 16px"><div class="dashboard-card"><h2>Thêm chủ đề</h2><form id="topicForm" class="form-stack"><label>Tên chủ đề<input name="title" placeholder="VD: Sports - Thể thao" maxlength="80" required></label><button type="submit" class="btn primary">+ Thêm chủ đề</button></form></div><div class="dashboard-card"><h2>Thêm thẻ từ</h2><form id="wordForm" class="form-stack"><label>Chủ đề<select name="topic_id" required>${optionsTopics(topics[0]?.id)}</select></label><label>English<input name="english" maxlength="80" required placeholder="apple"></label><label>Nghĩa tiếng Việt<input name="meaning" maxlength="180" required placeholder="Quả táo"></label><label>Phiên âm<input name="ipa" placeholder="/ˈæpəl/"></label><label>Ví dụ<input name="example" placeholder="I eat an apple."></label><label>Dịch ví dụ<input name="translation" placeholder="Tôi ăn một quả táo."></label><button type="submit" class="btn primary">+ Thêm thẻ từ</button></form></div></div><div class="dashboard-card"><h2>🎓 Quản lý cấp độ CEFR</h2>
-<p class="small-note">A1/A2, B1/B2, C1/C2 là 6 cấp độ riêng. CAR sử dụng A2, B1/B2 và C1/C2; A1 không thuộc bộ từ CAR.</p>
+<p class="small-note">A1/A2, B1/B2, C1/C2 là 6 cấp độ riêng. CAR sử dụng A1/A2, B1/B2 và C1/C2.</p>
 <p class="small-note">Tổng: ${allWords.length} · APPROVED: ${approvedWords.length} · PROVISIONAL: ${allWords.filter(w=>w.cefr_review_status==='PROVISIONAL').length} · UNREVIEWED: ${allWords.filter(w=>!w.cefr_review_status||w.cefr_review_status==='UNREVIEWED').length}</p>
-<p class="small-note">CAR Normal 3 chặng (toàn bộ chủ đề): A2 ${a2Stock}/3 · B1/B2 ${bonusStock}/3 · C1/C2 ${doubleStock}/3 — ${a2Stock>=3&&bonusStock>=3&&doubleStock>=3?'Đủ tồn kho cơ bản':'Chưa đủ tồn kho'}. CAR vẫn phải được Admin bật riêng.</p>
+<p class="small-note">CAR Normal 3 chặng (toàn bộ chủ đề): A1/A2 ${a2Stock}/3 · B1/B2 ${bonusStock}/3 · C1/C2 ${doubleStock}/3 — ${a2Stock>=3&&bonusStock>=3&&doubleStock>=3?'Đủ tồn kho cơ bản':'Chưa đủ tồn kho'}. CAR vẫn phải được Admin bật riêng.</p>
 <div class="form-actions" style="gap:10px;flex-wrap:wrap;align-items:end;margin:12px 0">
 <label>CEFR<select id="cefrLevelFilter"><option value="ALL">Tất cả</option><option value="NONE">Chưa gắn</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select></label>
 <label>Trạng thái<select id="cefrStatusFilter"><option value="ALL">Tất cả</option><option>UNREVIEWED</option><option>PROVISIONAL</option><option>APPROVED</option></select></label>
