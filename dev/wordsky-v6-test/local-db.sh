@@ -40,6 +40,13 @@ smoke(){
  node dev/wordsky-v6-test/make-fixture.mjs "$fixture"
  echo 'Importing SIMULATED approvals into LOCAL test database only...'
  WORDSKY_TEST_DATABASE_URL="$LOCAL_URL" node scripts/import-cefr-approved.js "--file=$fixture" --write-local-test
+ echo 'Asserting that every LOCAL fixture approval has an import audit record...'
+ audit_count="$(dc exec -T db psql -X -A -t -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test -c "SELECT count(*) FROM ws_audit WHERE action='word_cefr_review' AND payload->>'importer'='scripts/import-cefr-approved.js' AND payload->>'test_only'='true';")"
+ if [ "$audit_count" -ne 12 ]; then
+   echo "ERROR: expected 12 audited fake local approvals, found $audit_count" >&2
+   exit 1
+ fi
+ echo 'LOCAL audit records PASS: 12/12 (TEST_ONLY_FIXTURE). '
  echo 'Running API+PostgreSQL integration smoke against LOCAL DB...'
  DATABASE_URL="$LOCAL_URL" WORDSKY_TEST_DATABASE_URL="$LOCAL_URL" node dev/wordsky-v6-test/smoke-local.mjs
  status
