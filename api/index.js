@@ -275,6 +275,42 @@ export default async function handler(req,res){
    await transaction(async db=>{await ensureTopicNotLive(db,r[2]);await db.query('UPDATE ws_topics SET enabled=false WHERE id=$1',[r[2]])});
    return output(res,200,{ok:true});
   }
+   if(method==='GET'&&key==='admin/cefr/reviews'){
+    mustAdmin(req);
+    const q=await sql(`SELECT DISTINCT ON (entity_id) entity_id AS word_id,
+      payload->>'source_url' AS source_url,created_at
+      FROM ws_audit WHERE action='word_cefr_review'
+      ORDER BY entity_id,created_at DESC,id DESC`);
+    return output(res,200,{reviews:q.rows});
+   }
+   if(method==='PATCH'&&r[0]==='admin'&&r[1]==='words'&&r[3]==='cefr'&&r.length===4){
+    mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ',400);
+    const b=body(req),level=b.cefr_level===''||b.cefr_level===null?null:b.cefr_level;
+    const status=b.cefr_review_status;
+    if(level!==null&&!['A1','A2','B1','B2','C1','C2'].includes(level))throw fail('Cấp CEFR không hợp lệ',400);
+    if(!['UNREVIEWED','PROVISIONAL','APPROVED'].includes(status))throw fail('Trạng thái duyệt không hợp lệ',400);
+    if(status==='UNREVIEWED'&&level!==null)throw fail('UNREVIEWED phải để CEFR trống',400);
+    if(status!=='UNREVIEWED'&&!level)throw fail('Cần chọn cấp CEFR',400);
+    const sourceUrl=String(b.source_url||'').trim();
+    if(sourceUrl.length>500)throw fail('Link nguồn quá dài',400);
+    if(status==='APPROVED'){
+     let source;try{source=new URL(sourceUrl)}catch{throw fail('APPROVED cần link nguồn HTTPS',400)}
+     if(source.protocol!=='https:'||!source.hostname)throw fail('APPROVED cần link nguồn HTTPS',400);
+    }
+    const updated=await transaction(async db=>{
+     const prev=await db.query('SELECT id,topic_id,english,meaning,cefr_level,cefr_review_status FROM ws_words WHERE id=$1 AND enabled=true FOR UPDATE',[r[2]]);
+     if(!prev.rows.length)throw fail('Không tìm thấy từ',404);
+     await ensureTopicNotLive(db,prev.rows[0].topic_id);
+     const q=await db.query('UPDATE ws_words SET cefr_level=$1,cefr_review_status=$2 WHERE id=$3 RETURNING id,cefr_level,cefr_review_status',[level,status,r[2]]);
+     await audit(db,'word_cefr_review',r[2],{
+      english:prev.rows[0].english,meaning:prev.rows[0].meaning,
+      previous_level:prev.rows[0].cefr_level,previous_status:prev.rows[0].cefr_review_status,
+      cefr_level:level,cefr_review_status:status,source_url:sourceUrl,reviewed_by:'owner'
+     });
+     return q.rows[0];
+    });
+    return output(res,200,updated);
+   }
   if(method==='POST'&&key==='admin/words'){
    mustAdmin(req);const b=body(req);if(badId(b.topic_id))throw fail('Chủ đề không hợp lệ');const english=normalizeName(b.english,80),meaning=normalizeName(b.meaning,180);
    if(!english||!meaning)throw fail('Thiếu từ tiếng Anh hoặc nghĩa');const q=await transaction(async db=>{await ensureTopicNotLive(db,b.topic_id);return db.query('INSERT INTO ws_words(topic_id,english,meaning,ipa,example,translation) VALUES($1,$2,$3,$4,$5,$6) RETURNING id',[b.topic_id,english,meaning,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250)])});return output(res,201,q.rows[0]);
@@ -282,7 +318,10 @@ export default async function handler(req,res){
   if(method==='PATCH'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');const b=body(req);const en=normalizeName(b.english,80),vi=normalizeName(b.meaning,180);if(!en||!vi)throw fail('Thiếu từ hoặc nghĩa');const q=await transaction(async db=>{
     const current=await db.query('SELECT topic_id FROM ws_words WHERE id=$1 FOR UPDATE',[r[2]]);if(!current.rows.length)throw fail('Không tìm thấy',404);
     await ensureTopicNotLive(db,current.rows[0].topic_id);
-    return db.query('UPDATE ws_words SET english=$1,meaning=$2,ipa=$3,example=$4,translation=$5 WHERE id=$6 RETURNING id',[en,vi,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250),r[2]]);
+    return db.query(`UPDATE ws_words SET english=$1,meaning=$2,ipa=$3,example=$4,translation=$5,
+       cefr_level=CASE WHEN english IS DISTINCT FROM $1 OR meaning IS DISTINCT FROM $2 OR ipa IS DISTINCT FROM $3 OR example IS DISTINCT FROM $4 OR translation IS DISTINCT FROM $5 THEN NULL ELSE cefr_level END,
+       cefr_review_status=CASE WHEN english IS DISTINCT FROM $1 OR meaning IS DISTINCT FROM $2 OR ipa IS DISTINCT FROM $3 OR example IS DISTINCT FROM $4 OR translation IS DISTINCT FROM $5 THEN 'UNREVIEWED' ELSE cefr_review_status END
+       WHERE id=$6 RETURNING id`,[en,vi,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250),r[2]]);
    });return output(res,200,q.rows[0]);
   }
   if(method==='DELETE'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){
