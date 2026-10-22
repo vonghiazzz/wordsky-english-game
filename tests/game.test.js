@@ -224,3 +224,33 @@ test('CAR: selected lane is not real car position until server validates answer'
  assert.equal(boom.result.laneFrom,destination);assert.equal(boom.result.laneTo,destination);
  assert.equal(publicState(st,start+2*MIN_CAR_STEP_MS).carLane,destination);
 });
+
+
+test('BOMB: automatic full-word answer resolves the correct active bomb without choosing bombId',()=>{
+ const round=normalizeRound({...base,mode:'BOMB',question_count:4,duration_seconds:120,
+  bomb_batch_size:2,bomb_fall_seconds:20,bomb_spawn_interval_seconds:10});
+ const st=createState(round,words,1000000);
+ const first=st.bombs[0],other=st.bombs[1];
+ const out=answerQuestion(st,round,{answer:other.english,auto:true},1000300);
+ assert.equal(out.result.correct,true);
+ assert.equal(st.bombs[0].status,'WAITING');
+ assert.equal(st.bombs[1].status,'DEFUSED');
+ assert.equal(out.result.awarded,round.points_per_correct);
+ assert.ok(publicState(st,1000300).bombs.every(b=>!('english' in b)));
+});
+
+test('BOMB: typing incomplete words never loses hearts or points, cannot solve future bombs',()=>{
+ const round=normalizeRound({...base,mode:'BOMB',question_count:4,duration_seconds:120,
+  bomb_batch_size:2,bomb_fall_seconds:20,bomb_spawn_interval_seconds:10});
+ const st=createState(round,words,1000000);
+ const future=st.bombs[2];
+ let out=answerQuestion(st,round,{answer:'partial',auto:true},1000200);
+ assert.equal(out.result.correct,false);
+ assert.equal(st.score,0);assert.equal(st.health,3);assert.equal(st.mistakes,0);
+ assert.throws(()=>answerQuestion(st,round,{answer:future.english,auto:true},1000250),e=>e.status===429);
+ out=answerQuestion(st,round,{answer:future.english,auto:true},1000600);
+ assert.equal(out.result.correct,false);
+ assert.equal(future.status,'WAITING');
+ assert.equal(st.health,3);
+ assert.equal(st.score,0);
+});

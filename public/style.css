@@ -53,7 +53,7 @@
 .game-keyboard-row button:active{background:#fff}
 .game-keyboard-row button.game-keyboard-wide{flex:2;max-width:128px}
 .game-keyboard-row button.game-keyboard-enter{flex:2;max-width:130px;background:#8fdfc5}
-@media(pointer:coarse) and (max-width:760px){.game-keyboard{display:block}.bomb-answer-form button[type=submit],.car-answer-form button[type=submit]{display:none}.bomb-answer-form input,.car-answer-form input{font-size:16px;min-height:44px}}
+@media(pointer:coarse) and (max-width:760px){.game-keyboard{display:none}.bomb-answer-form input,.car-answer-form input{font-size:16px;min-height:44px}}
 
 /* V6: readable full-text Bomb cards without horizontal overflow; five responsive CEFR lanes. */
 .bomb-arena{overflow:hidden;max-width:100%;min-width:0}
@@ -142,3 +142,30 @@
 #liveGame .game-keyboard{position:relative;z-index:1;clear:both;max-width:650px;margin:12px auto 0}
 #liveGame .game-keyboard-row button{min-height:40px}
 @media(max-width:520px){.game-answer-row{flex-wrap:wrap}.game-answer-row button{width:100%}}
+
+/* WordSky: compact in-room standings, scores aligned with the name columns. */
+.room-leaderboard-heading{max-width:720px;margin:10px auto 6px;gap:8px}
+#eventBoard{max-width:720px;width:100%;margin:0 auto 14px;overflow-x:hidden}
+#eventBoard .board-row{grid-template-columns:38px minmax(0,1fr) minmax(62px,90px) minmax(78px,100px);gap:8px;min-width:0;padding:10px 8px}
+#eventBoard .board-row span{min-width:0;overflow-wrap:anywhere}
+#eventBoard .board-row .score{text-align:right;font-size:15px;font-variant-numeric:tabular-nums}
+#eventBoard .board-row .rank{text-align:center}
+#liveGame .game-shell{margin-bottom:6px}
+@media(max-width:520px){
+ .room-leaderboard-heading{margin-top:8px}
+ #eventBoard .board-row{grid-template-columns:28px minmax(0,1fr) 57px 72px;gap:5px;padding:9px 3px;font-size:12px}
+ #eventBoard .board-row .rank{font-size:11px}
+ #eventBoard .board-row .score{font-size:13px}
+}
+/* Full-word input for BOMB and CAR: use native touch keyboards, not tiny letter keys. */
+#liveGame .bomb-answer-form,#liveGame .car-answer-form{max-width:700px;width:100%;margin:8px auto 0}
+#liveGame .bomb-answer-form input,#liveGame .car-answer-form input{min-height:50px;font-size:17px;width:100%;min-width:0}
+#liveGame .bomb-answer-form .game-answer-row{width:100%}
+#liveGame .car-answer-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;width:100%}
+#liveGame .car-answer-row .btn{min-height:50px;min-width:120px;display:inline-flex;align-items:center;justify-content:center}
+#liveGame .bomb-falling{pointer-events:none}
+@media(pointer:coarse) and (max-width:760px){
+ #liveGame .bomb-answer-form,#liveGame .car-answer-form{position:relative;padding:10px 8px;border:1px solid #455b7e;border-radius:12px;background:#132347}
+ #liveGame .car-answer-row .btn{display:inline-flex;min-width:106px;padding:10px}
+}
+@media(max-width:390px){#liveGame .car-answer-row{grid-template-columns:1fr}#liveGame .car-answer-row .btn{width:100%}}
