@@ -21,3 +21,17 @@ test('gameplay configuration is selected by server from round database rows',()=
  assert.match(ui,/carStepTimer/);
  assert.match(ui,/Mất 1 tim/);
 });
+
+
+test('all-topics choice is offered only for round configuration, never for adding vocabulary',()=>{
+ const helper=ui.match(/^function optionsTopics\(value,allowAll=false\)\{[^\n]+\}/m)?.[0];
+ assert.ok(helper,'topic dropdown helper must exist');
+ const optionsTopics=new Function('topics','escapeHtml',`${helper};return optionsTopics;`)(
+  [{id:'animals',title:'Animals',words:[{english:'cat'}]}],value=>String(value)
+ );
+ assert.match(optionsTopics(null,true),/>Tất cả chủ đề<\/option>/);
+ assert.doesNotMatch(optionsTopics(null),/>Tất cả chủ đề<\/option>/);
+ assert.match(optionsTopics(null),/value="" disabled selected/);
+ assert.match(ui,/optionsTopics\(r\.topic_id,true\)/);
+ assert.match(ui,/optionsTopics\(topics\[0\]\?\.id\)/);
+});

@@ -31,7 +31,9 @@ test('rank and attendance', () => {
 
 test('round config and time windows', () => {
   assert.throws(() => normalizeRound({ ...base, mode: 'MATCH', weight: 200 }));
-  assert.throws(() => normalizeRound({ ...base, mode: 'MATCH', topic_id: null }));
+   assert.equal(normalizeRound({ ...base, mode: 'MATCH', topic_id: null }).topic_id, null);
+   assert.equal(normalizeRound({ ...base, mode: 'BOMB', topic_id: null }).topic_id, null);
+  assert.throws(() => normalizeRound({ ...base, mode: 'MATCH', topic_id: 'invalid' }), /ID chủ đề/);
   const windows = roundWindows('2026-10-20T00:00:00Z', [{ duration_seconds: 50 }, { duration_seconds: 90 }]);
   assert.equal(new Date(windows[1].ends_at) - new Date(windows[0].starts_at), 140000);
 });

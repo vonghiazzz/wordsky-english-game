@@ -31,7 +31,7 @@ pg.Pool.prototype.connect = async function () {
     async query(sql) {
       log.push(sql);
       if (sql.includes("count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level")) return { rows: [carStock] };
-      if (sql.startsWith('SELECT count(*)::int AS n FROM ws_words')) return { rows: [{ n: available }] };
+      if (sql.startsWith('SELECT count(DISTINCT lower(w.english))::int AS n FROM ws_words')) return { rows: [{ n: available }] };
       if (sql.startsWith('SELECT e.id FROM ws_events e JOIN ws_rounds')) return { rows: topicUsedByActiveEvent ? [{ id: eventId }] : [] };
       if (sql.startsWith('SELECT topic_id FROM ws_words WHERE id=$1 FOR UPDATE')) return { rows: [{ topic_id: topicId }] };
       if (sql.startsWith('SELECT * FROM ws_events WHERE id=$1 FOR UPDATE')) return { rows: [{ id: eventId, status: eventStatus }] };
@@ -71,7 +71,7 @@ test('API creates a NORMAL MATCH only after vocabulary has been checked', async 
   log = []; available = 10;
   const result = await req('POST', 'admin/events', bodyFor(sample('NORMAL', 8)));
   assert.equal(result.status, 201);
-  const countIndex = log.findIndex(x => x.startsWith('SELECT count(*)::int AS n FROM ws_words'));
+  const countIndex = log.findIndex(x => x.startsWith('SELECT count(DISTINCT lower(w.english))::int AS n FROM ws_words'));
   const insertIndex = log.findIndex(x => x.startsWith('INSERT INTO ws_events'));
   assert.ok(countIndex >= 0 && insertIndex > countIndex);
   assert.ok(log.includes('COMMIT'));
@@ -94,13 +94,26 @@ test('API permits opening an event only when its rounds are feasible', async () 
   assert.ok(log.some(x => x.startsWith('UPDATE ws_events SET status=')));
 });
 
-test('API rejects an event using a missing topic even when word stock is large', async () => {
-  log = []; available = 50;
-  const invalid = sample('NORMAL', 8);
-  invalid.topic_id = null;
-  const result = await req('POST', 'admin/events', bodyFor(invalid));
-  assert.equal(result.status, 400);
-  assert.ok(!log.some(x => x.startsWith('INSERT INTO ws_events')));
+test('API supports MATCH and BOMB with all enabled topics (null topic_id)', async () => {
+   for (const mode of ['MATCH','BOMB']) {
+     log = []; available = 50;
+     const round = { ...sample('NORMAL',8), mode, topic_id: null };
+     const result = await req('POST','admin/events',bodyFor(round));
+     assert.equal(result.status,201);
+     assert.ok(log.some(x=>x.includes('($1::uuid IS NULL OR w.topic_id=$1)')));
+   }
+});
+test('API reports a numeric shortage for all topics', async()=>{
+   log=[];available=3;
+   const result=await req('POST','admin/events',bodyFor({...sample('HARD',8),topic_id:null}));
+   assert.equal(result.status,400);
+   assert.match(result.data.error,/thiếu 9 từ/);
+   assert.ok(!log.some(x=>x.startsWith('INSERT INTO ws_events')));
+});
+test('API rejects invalid non-null topic IDs',async()=>{
+   log=[];available=50;
+   const result=await req('POST','admin/events',bodyFor({...sample('NORMAL',8),topic_id:'invalid'}));
+   assert.equal(result.status,400);
 });
 
 
@@ -161,4 +174,15 @@ test('CAR: server checks approved per-tier stock before creating a room',async()
  assert.equal(out.status,201);
  assert.equal(log.some(x=>x.includes('cefr_review_status=\'APPROVED\'')),true);
  assert.ok(log.some(x=>x.includes("w.cefr_level IN ('A1','A2')")),'CAR stock SQL must count both A1 and A2');
+});
+
+
+test('all-topic OPEN or LIVE rounds protect vocabulary mutations',async()=>{
+ log=[];topicUsedByActiveEvent=true;
+ try{
+  const result=await req('DELETE','admin/words/'+wordId);
+  assert.equal(result.status,409);
+  assert.ok(log.some(query=>query.includes('(r.topic_id=$1 OR r.topic_id IS NULL)')),
+   'active-event guard must include all-topic MATCH, BOMB and CAR rounds');
+ }finally{topicUsedByActiveEvent=false;}
 });
