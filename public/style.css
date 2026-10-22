@@ -132,3 +132,13 @@
 .cefr-result-table .btn{padding:9px 11px;white-space:nowrap;}
 #cefrResultPager{align-items:center;margin-top:12px;}
 @media(max-width:730px){.cefr-result-table{min-width:590px}.cefr-result-table th,.cefr-result-table td{padding:9px 10px;}}
+
+/* wordsky-gameplay-settings-v1: keyboard stays below answer row, never overlays Start button. */
+.game-answer-row{display:flex;gap:8px;align-items:center;width:100%;min-width:0}
+.game-answer-row input{flex:1;min-width:0}
+.game-answer-row button{flex-shrink:0}
+#startRoundButton{position:relative;z-index:2}
+#liveGame:empty{display:none}
+#liveGame .game-keyboard{position:relative;z-index:1;clear:both;max-width:650px;margin:12px auto 0}
+#liveGame .game-keyboard-row button{min-height:40px}
+@media(max-width:520px){.game-answer-row{flex-wrap:wrap}.game-answer-row button{width:100%}}
