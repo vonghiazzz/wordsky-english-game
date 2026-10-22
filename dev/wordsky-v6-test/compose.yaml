@@ -1,0 +1,20 @@
+name: wordsky-v6-localtest
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wordsky_test
+      POSTGRES_PASSWORD: wordsky_local_only
+      POSTGRES_DB: wordsky_v6_test
+    ports:
+      - "127.0.0.1:5547:5432"
+    volumes:
+      - wordsky_v6_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wordsky_test -d wordsky_v6_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  wordsky_v6_test_data:

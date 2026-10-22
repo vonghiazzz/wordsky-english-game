@@ -1,7 +1,7 @@
 // WordSky V4 server-side API. Vercel Node Function, PostgreSQL as durable source of truth.
 import {sql,transaction} from '../lib/db.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
-import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,fail} from '../lib/game.js';
+import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 
 const AUTH_COOKIE='ws_auth';
@@ -66,7 +66,7 @@ async function checkin(req){
 async function fetchTopics(includeWords=false){
  const r=await sql('SELECT id,title,enabled FROM ws_topics WHERE enabled=true ORDER BY title');
  if(!includeWords)return r.rows;
- const words=await sql('SELECT id,topic_id,english,meaning,ipa,example,translation FROM ws_words WHERE enabled=true ORDER BY english');
+ const words=await sql('SELECT id,topic_id,english,meaning,ipa,example,translation,cefr_level,cefr_review_status FROM ws_words WHERE enabled=true ORDER BY english');
  return r.rows.map(t=>({...t,words:words.rows.filter(w=>w.topic_id===t.id)}));
 }
 async function audit(db,action,entityId,payload={}){await db.query('INSERT INTO ws_audit(actor,action,entity_id,payload) VALUES($1,$2,$3,$4::jsonb)',['owner',action,entityId,JSON.stringify(payload)])}
@@ -79,19 +79,38 @@ function adminInputEvent(b){
 }
 function codeGen(){const letters='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:7},()=>letters[randomInt(letters.length)]).join('')}
 // Check the active vocabulary in the same DB transaction as event creation/update.
+// All Lane Escape questions come ONLY from approved CEFR-labelled cards.
+async function approvedCarWordCounts(db,round){
+ const q=await db.query(`SELECT
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level='A2')::int AS a2,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level IN ('B1','B2'))::int AS bonus,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level IN ('C1','C2'))::int AS double
+  FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
+  WHERE w.enabled=true AND t.enabled=true AND w.cefr_review_status='APPROVED'
+    AND ($1::uuid IS NULL OR w.topic_id=$1)`,[round.topic_id||null]);
+ const row=q.rows[0]||{};
+ return {A2:Number(row.a2||0),BONUS:Number(row.bonus||0),DOUBLE:Number(row.double||0)};
+}
 async function ensureVocabulary(db,rounds){
  for(const round of rounds){
+  if(round.mode==='CAR'){
+   const r=carWordRequirements(round),got=await approvedCarWordCounts(db,round);
+   const missing=Object.entries(r).filter(([name,n])=>got[name]<n)
+    .map(([name,n])=>`${name==='BONUS'?'B1–B2':name==='DOUBLE'?'C1–C2':'A2'} ${got[name]}/${n}`);
+   if(missing.length)throw fail('Lane Escape thiếu từ CEFR đã duyệt: '+missing.join('; '),400);
+   continue;
+  }
   const needed=requiredWords(round);
   if(!needed)continue;
   if(!round.topic_id)throw fail('Vòng từ vựng phải chọn chủ đề');
   const count=await db.query('SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id WHERE w.topic_id=$1 AND w.enabled=true AND t.enabled=true',[round.topic_id]);
   const available=count.rows[0]?.n||0;
-  if(available<needed)throw fail(`Chủ đề cần ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ.`);
+  if(available<needed)throw fail(`Cần ít nhất ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ.`,400);
  }
 }
 // Lock referenced events while checking the state to avoid live vocabulary edits.
 async function ensureTopicNotLive(db,topicId){
- const active=await db.query("SELECT e.id FROM ws_events e JOIN ws_rounds r ON r.event_id=e.id WHERE r.topic_id=$1 AND e.status IN ('OPEN','LIVE') FOR SHARE OF e",[topicId]);
+ const active=await db.query("SELECT e.id FROM ws_events e JOIN ws_rounds r ON r.event_id=e.id WHERE (r.topic_id=$1 OR (r.mode='CAR' AND r.topic_id IS NULL)) AND e.status IN ('OPEN','LIVE') FOR SHARE OF e",[topicId]);
  if(active.rows.length)throw fail('Không thể sửa hoặc ẩn từ vựng trong chủ đề của cuộc thi đang mở.',409);
 }
 async function adminCreateEvent(req){mustAdmin(req);const b=adminInputEvent(body(req));return transaction(async db=>{
@@ -181,11 +200,36 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
  return transaction(async db=>{
   const existed=await db.query('SELECT * FROM ws_runs WHERE round_id=$1 AND participant_id=$2 FOR UPDATE',[roundId,p.id]);
   if(existed.rows.length){const run=existed.rows[0];return {runId:run.id,round,game:publicState(run.state,now)}};
-  let words=[];
-  if(round.mode!=='CAR'){
-   if(!round.topic_id)throw fail('Vòng học từ vựng chưa chọn chủ đề',400);
-   const wordLimit=requiredWords(round);const data=await db.query('SELECT id,english,meaning FROM ws_words WHERE topic_id=$1 AND enabled=true ORDER BY random() LIMIT $2',[round.topic_id,wordLimit]);words=data.rows;
-  }
+   let words=[];
+   if(round.mode==='CAR'){
+    // Select unique randomized cards per CEFR tier in one bounded SQL query.
+    const need=carWordRequirements(round);
+    const cards=await db.query(`SELECT id,english,meaning,cefr_level,tier FROM (
+     SELECT w.id,w.english,w.meaning,w.cefr_level,
+      CASE WHEN w.cefr_level='A2' THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END AS tier,
+      row_number() OVER (PARTITION BY CASE WHEN w.cefr_level='A2' THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END ORDER BY random()) AS rn
+     FROM (
+      SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level
+      FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
+      WHERE w.enabled=true AND t.enabled=true AND w.cefr_review_status='APPROVED'
+        AND w.cefr_level IN ('A2','B1','B2','C1','C2')
+        AND ($1::uuid IS NULL OR w.topic_id=$1)
+      ORDER BY lower(w.english),w.id
+     ) w
+    ) pool
+    WHERE (tier='A2' AND rn<=$2) OR (tier='BONUS' AND rn<=$3) OR (tier='DOUBLE' AND rn<=$4)`,[round.topic_id||null,need.A2,need.BONUS,need.DOUBLE]);
+    words={A2:[],BONUS:[],DOUBLE:[]};
+    for(const card of cards.rows)words[card.tier].push(card);
+    const missing=carMissingWords(round,words);
+    if(missing.length)throw fail('Không đủ từ đã duyệt để mở vòng: '+missing.join('; '),409);
+   }else{
+    const wordLimit=requiredWords(round);
+    if(wordLimit){
+     if(!round.topic_id)throw fail('Vòng từ vựng chưa chọn chủ đề',400);
+     const data=await db.query('SELECT id,english,meaning FROM ws_words WHERE topic_id=$1 AND enabled=true ORDER BY random() LIMIT $2',[round.topic_id,wordLimit]);
+     words=data.rows;assertWordCapacity(round,words.length);
+    }
+   }
   const st=createState(round,words,now,ends);
   const saved=await db.query('INSERT INTO ws_runs(participant_id,round_id,state) VALUES($1,$2,$3::jsonb) ON CONFLICT(participant_id,round_id) DO NOTHING RETURNING id,state',[p.id,roundId,JSON.stringify(st)]);
   if(!saved.rows.length){const retry=await db.query('SELECT * FROM ws_runs WHERE participant_id=$1 AND round_id=$2',[p.id,roundId]);return {runId:retry.rows[0].id,round,game:publicState(retry.rows[0].state,now)}};
@@ -231,6 +275,42 @@ export default async function handler(req,res){
    await transaction(async db=>{await ensureTopicNotLive(db,r[2]);await db.query('UPDATE ws_topics SET enabled=false WHERE id=$1',[r[2]])});
    return output(res,200,{ok:true});
   }
+   if(method==='GET'&&key==='admin/cefr/reviews'){
+    mustAdmin(req);
+    const q=await sql(`SELECT DISTINCT ON (entity_id) entity_id AS word_id,
+      payload->>'source_url' AS source_url,created_at
+      FROM ws_audit WHERE action='word_cefr_review'
+      ORDER BY entity_id,created_at DESC,id DESC`);
+    return output(res,200,{reviews:q.rows});
+   }
+   if(method==='PATCH'&&r[0]==='admin'&&r[1]==='words'&&r[3]==='cefr'&&r.length===4){
+    mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ',400);
+    const b=body(req),level=b.cefr_level===''||b.cefr_level===null?null:b.cefr_level;
+    const status=b.cefr_review_status;
+    if(level!==null&&!['A1','A2','B1','B2','C1','C2'].includes(level))throw fail('Cấp CEFR không hợp lệ',400);
+    if(!['UNREVIEWED','PROVISIONAL','APPROVED'].includes(status))throw fail('Trạng thái duyệt không hợp lệ',400);
+    if(status==='UNREVIEWED'&&level!==null)throw fail('UNREVIEWED phải để CEFR trống',400);
+    if(status!=='UNREVIEWED'&&!level)throw fail('Cần chọn cấp CEFR',400);
+    const sourceUrl=String(b.source_url||'').trim();
+    if(sourceUrl.length>500)throw fail('Link nguồn quá dài',400);
+    if(status==='APPROVED'){
+     let source;try{source=new URL(sourceUrl)}catch{throw fail('APPROVED cần link nguồn HTTPS',400)}
+     if(source.protocol!=='https:'||!source.hostname)throw fail('APPROVED cần link nguồn HTTPS',400);
+    }
+    const updated=await transaction(async db=>{
+     const prev=await db.query('SELECT id,topic_id,english,meaning,cefr_level,cefr_review_status FROM ws_words WHERE id=$1 AND enabled=true FOR UPDATE',[r[2]]);
+     if(!prev.rows.length)throw fail('Không tìm thấy từ',404);
+     await ensureTopicNotLive(db,prev.rows[0].topic_id);
+     const q=await db.query('UPDATE ws_words SET cefr_level=$1,cefr_review_status=$2 WHERE id=$3 RETURNING id,cefr_level,cefr_review_status',[level,status,r[2]]);
+     await audit(db,'word_cefr_review',r[2],{
+      english:prev.rows[0].english,meaning:prev.rows[0].meaning,
+      previous_level:prev.rows[0].cefr_level,previous_status:prev.rows[0].cefr_review_status,
+      cefr_level:level,cefr_review_status:status,source_url:sourceUrl,reviewed_by:'owner'
+     });
+     return q.rows[0];
+    });
+    return output(res,200,updated);
+   }
   if(method==='POST'&&key==='admin/words'){
    mustAdmin(req);const b=body(req);if(badId(b.topic_id))throw fail('Chủ đề không hợp lệ');const english=normalizeName(b.english,80),meaning=normalizeName(b.meaning,180);
    if(!english||!meaning)throw fail('Thiếu từ tiếng Anh hoặc nghĩa');const q=await transaction(async db=>{await ensureTopicNotLive(db,b.topic_id);return db.query('INSERT INTO ws_words(topic_id,english,meaning,ipa,example,translation) VALUES($1,$2,$3,$4,$5,$6) RETURNING id',[b.topic_id,english,meaning,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250)])});return output(res,201,q.rows[0]);
@@ -238,7 +318,10 @@ export default async function handler(req,res){
   if(method==='PATCH'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){mustAdmin(req);if(badId(r[2]))throw fail('ID không hợp lệ');const b=body(req);const en=normalizeName(b.english,80),vi=normalizeName(b.meaning,180);if(!en||!vi)throw fail('Thiếu từ hoặc nghĩa');const q=await transaction(async db=>{
     const current=await db.query('SELECT topic_id FROM ws_words WHERE id=$1 FOR UPDATE',[r[2]]);if(!current.rows.length)throw fail('Không tìm thấy',404);
     await ensureTopicNotLive(db,current.rows[0].topic_id);
-    return db.query('UPDATE ws_words SET english=$1,meaning=$2,ipa=$3,example=$4,translation=$5 WHERE id=$6 RETURNING id',[en,vi,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250),r[2]]);
+    return db.query(`UPDATE ws_words SET english=$1,meaning=$2,ipa=$3,example=$4,translation=$5,
+       cefr_level=CASE WHEN english IS DISTINCT FROM $1 OR meaning IS DISTINCT FROM $2 OR ipa IS DISTINCT FROM $3 OR example IS DISTINCT FROM $4 OR translation IS DISTINCT FROM $5 THEN NULL ELSE cefr_level END,
+       cefr_review_status=CASE WHEN english IS DISTINCT FROM $1 OR meaning IS DISTINCT FROM $2 OR ipa IS DISTINCT FROM $3 OR example IS DISTINCT FROM $4 OR translation IS DISTINCT FROM $5 THEN 'UNREVIEWED' ELSE cefr_review_status END
+       WHERE id=$6 RETURNING id`,[en,vi,normalizeName(b.ipa,80),normalizeName(b.example,250),normalizeName(b.translation,250),r[2]]);
    });return output(res,200,q.rows[0]);
   }
   if(method==='DELETE'&&r[0]==='admin'&&r[1]==='words'&&r.length===3){
