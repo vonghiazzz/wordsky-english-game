@@ -102,15 +102,16 @@ async function ensureVocabulary(db,rounds){
   }
   const needed=requiredWords(round);
   if(!needed)continue;
-  if(!round.topic_id)throw fail('Vòng từ vựng phải chọn chủ đề');
-  const count=await db.query('SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id WHERE w.topic_id=$1 AND w.enabled=true AND t.enabled=true',[round.topic_id]);
-  const available=count.rows[0]?.n||0;
-  if(available<needed)throw fail(`Cần ít nhất ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ.`,400);
+  const count=await db.query(`SELECT count(DISTINCT lower(w.english))::int AS n FROM ws_words w
+    JOIN ws_topics t ON t.id=w.topic_id WHERE w.enabled=true AND t.enabled=true
+    AND ($1::uuid IS NULL OR w.topic_id=$1)`,[round.topic_id||null]);
+   const available=Number(count.rows[0]?.n||0);
+   if(available<needed)throw fail(`Cần ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ (thiếu ${needed-available} từ).`,400);
  }
 }
 // Lock referenced events while checking the state to avoid live vocabulary edits.
 async function ensureTopicNotLive(db,topicId){
- const active=await db.query("SELECT e.id FROM ws_events e JOIN ws_rounds r ON r.event_id=e.id WHERE (r.topic_id=$1 OR (r.mode='CAR' AND r.topic_id IS NULL)) AND e.status IN ('OPEN','LIVE') FOR SHARE OF e",[topicId]);
+ const active=await db.query("SELECT e.id FROM ws_events e JOIN ws_rounds r ON r.event_id=e.id WHERE (r.topic_id=$1 OR r.topic_id IS NULL) AND e.status IN ('OPEN','LIVE') FOR SHARE OF e",[topicId]);
  if(active.rows.length)throw fail('Không thể sửa hoặc ẩn từ vựng trong chủ đề của cuộc thi đang mở.',409);
 }
 async function adminCreateEvent(req){mustAdmin(req);const b=adminInputEvent(body(req));return transaction(async db=>{
@@ -225,8 +226,13 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
    }else{
     const wordLimit=requiredWords(round);
     if(wordLimit){
-     if(!round.topic_id)throw fail('Vòng từ vựng chưa chọn chủ đề',400);
-     const data=await db.query('SELECT id,english,meaning FROM ws_words WHERE topic_id=$1 AND enabled=true ORDER BY random() LIMIT $2',[round.topic_id,wordLimit]);
+     const data=await db.query(`SELECT id,english,meaning FROM (
+       SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning
+       FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
+       WHERE w.enabled=true AND t.enabled=true
+         AND ($1::uuid IS NULL OR w.topic_id=$1)
+       ORDER BY lower(w.english),w.id
+      ) unique_words ORDER BY random() LIMIT $2`,[round.topic_id||null,wordLimit]);
      words=data.rows;assertWordCapacity(round,words.length);
     }
    }
