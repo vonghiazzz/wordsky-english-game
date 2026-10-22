@@ -227,7 +227,7 @@ async function loadAdmin(){const pane=$('adminContent');if(session?.role!=='admi
  carFeatureEnabled=(features.features||[]).some(f=>f.feature_key==='CAR'&&f.enabled===true);
   await loadTopics();if(!editingEvent&&!carFeatureEnabled)draftRounds=draftRounds.filter(r=>r.mode!=='CAR');if(!draftRounds.length)draftRounds=initialRounds();
  pane.innerHTML=`<div class="panel-tabs"><button data-admin-tab="events" class="${adminTab==='events'?'on':''}">🏆 Cuộc thi</button><button data-admin-tab="vocab" class="${adminTab==='vocab'?'on':''}">📚 Từ vựng</button><button data-admin-tab="features" class="${adminTab==='features'?'on':''}">⚙️ Tính năng</button></div><div id="adminPanelEvents" class="admin-panel ${adminTab==='events'?'active':''}"></div><div id="adminPanelVocab" class="admin-panel ${adminTab==='vocab'?'active':''}"></div><div id="adminPanelFeatures" class="admin-panel ${adminTab==='features'?'active':''}"></div>`;
-  renderAdminEvents();renderAdminVocab();renderAdminFeatures(features.features||[]);setupPasswordToggles(pane);
+  renderAdminEvents();renderAdminVocab();filterAdminCefr();renderAdminFeatures(features.features||[]);setupPasswordToggles(pane);
  }catch(e){pane.innerHTML=`<div class="empty">${escapeHtml(e.message)}<p class="small-note">Cần cấu hình PostgreSQL và khóa admin để mở bảng quản trị.</p></div>`}}
 function optionsTopics(value){return `<option value="">-- Chọn chủ đề --</option>`+topics.map(t=>`<option value="${t.id}" ${t.id===value?'selected':''}>${escapeHtml(t.title)} (${t.words?.length||0} từ)</option>`).join('')}
 function countUniqueCefr(words,levels){return new Set(words.filter(w=>levels.includes(w.cefr_level)).map(w=>String(w.english).trim().toLowerCase())).size}
@@ -283,7 +283,14 @@ function renderAdminVocab(){const host=$('adminPanelVocab');if(!host)return;
 <div class="form-actions" style="gap:10px;flex-wrap:wrap;align-items:end;margin:12px 0">
 <label>CEFR<select id="cefrLevelFilter"><option value="ALL">Tất cả</option><option value="NONE">Chưa gắn</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select></label>
 <label>Trạng thái<select id="cefrStatusFilter"><option value="ALL">Tất cả</option><option>UNREVIEWED</option><option>PROVISIONAL</option><option>APPROVED</option></select></label>
-<label>Tìm kiếm<input id="cefrSearchFilter" placeholder="Từ hoặc nghĩa" autocomplete="off"></label>
+<label>Tìm kiếm<input id="cefrSearchFilter" placeholder="Từ, nghĩa hoặc chủ đề" autocomplete="off"></label>
+<button type="button" class="btn" id="cefrClearFilters">Bỏ lọc CEFR/trạng thái</button>
+</div>
+<p class="small-note">Lọc theo cấp độ, trạng thái và từ khóa cùng lúc. Kết quả nằm ngay bên dưới; bấm <b>Sửa CEFR</b> để chỉnh từng từ. Nếu không thấy từ, chọn <b>Tất cả</b> ở hai bộ lọc.</p>
+<div class="cefr-quick-result" data-cefr-results="wordsky-cefr-quick-results-v1" aria-live="polite">
+ <p id="cefrResultSummary" class="small-note"></p>
+ <div id="cefrResultList"></div>
+ <div id="cefrResultPager" class="form-actions"></div>
 </div>
 <div id="cefrEditor" class="hidden" style="padding:15px;border:1px solid #496291;border-radius:12px;margin:12px 0">
 <h3 id="cefrWordLabel">Đánh giá CEFR</h3>
@@ -296,7 +303,7 @@ function renderAdminVocab(){const host=$('adminPanelVocab');if(!host)return;
 <div class="form-actions"><button class="btn primary" type="submit">Lưu CEFR</button><button type="button" class="btn" id="cefrCancel">Hủy</button></div>
 </form>
 </div></div>
-<div class="dashboard-card"><h2>Danh sách chủ đề & từ</h2>${topics.map(t=>`<details class="room-card"><summary class="dashboard-row"><strong>${escapeHtml(t.title)} (${t.words.length})</strong><span><button class="btn" data-edit-topic="${t.id}">Sửa tên</button> <button class="btn warn" data-del-topic="${t.id}">Ẩn chủ đề</button></span></summary><div style="margin-top:15px">${t.words.map(w=>`<div class="editor-item"><div><strong>${escapeHtml(w.english)}</strong> <small>${escapeHtml(w.meaning)}</small><small>CEFR: ${escapeHtml(w.cefr_level||'—')} · ${escapeHtml(w.cefr_review_status||'UNREVIEWED')}</small></div><span class="form-actions"><button class="btn" data-edit-cefr="${w.id}">CEFR</button><button class="btn" data-edit-word="${w.id}">Sửa</button><button class="btn warn" data-del-word="${w.id}">Ẩn</button></span></div>`).join('')}</div></details>`).join('')}</div>`}
+<div class="dashboard-card"><h2>Quản lý chủ đề và nội dung từ</h2><p class="small-note">Mở chủ đề để sửa nghĩa, ví dụ hoặc ẩn từ. Để tìm và đổi CEFR nhanh, dùng bảng kết quả ngay phía trên.</p>${topics.map(t=>`<details class="room-card"><summary class="dashboard-row"><strong>${escapeHtml(t.title)} (${t.words.length})</strong><span><button class="btn" data-edit-topic="${t.id}">Sửa tên</button> <button class="btn warn" data-del-topic="${t.id}">Ẩn chủ đề</button></span></summary><div style="margin-top:15px">${t.words.map(w=>`<div class="editor-item"><div><strong>${escapeHtml(w.english)}</strong> <small>${escapeHtml(w.meaning)}</small><small>CEFR: ${escapeHtml(w.cefr_level||'—')} · ${escapeHtml(w.cefr_review_status||'UNREVIEWED')}</small></div><span class="form-actions"><button class="btn" data-edit-cefr="${w.id}">CEFR</button><button class="btn" data-edit-word="${w.id}">Sửa</button><button class="btn warn" data-del-word="${w.id}">Ẩn</button></span></div>`).join('')}</div></details>`).join('')}</div>`}
 function openCefrEditor(id){
  const w=topics.flatMap(t=>t.words||[]).find(x=>x.id===id);
  if(!w)return toast('Không tìm thấy từ vựng',true);
@@ -316,21 +323,57 @@ async function saveCefrReview(e){
  if(data.cefr_review_status==='APPROVED'&&!confirm('Xác nhận cấp độ CEFR phù hợp với nghĩa và nguồn đã kiểm tra?'))return;
  try{
   await api('admin/words/'+encodeURIComponent(d.word_id)+'/cefr',{method:'PATCH',body:data});
+  const keepCefrFilters={level:$('cefrLevelFilter')?.value||'ALL',status:$('cefrStatusFilter')?.value||'ALL',search:$('cefrSearchFilter')?.value||'',page:cefrResultPage};
   toast('Đã cập nhật CEFR và ghi lịch sử');await loadAdmin();
+  if($('cefrLevelFilter'))$('cefrLevelFilter').value=keepCefrFilters.level;
+  if($('cefrStatusFilter'))$('cefrStatusFilter').value=keepCefrFilters.status;
+  if($('cefrSearchFilter'))$('cefrSearchFilter').value=keepCefrFilters.search;
+  cefrResultPage=keepCefrFilters.page;filterAdminCefr(false);
  }catch(error){toast(error.message,true)}
 }
-function filterAdminCefr(){
- const level=$('cefrLevelFilter')?.value||'ALL',status=$('cefrStatusFilter')?.value||'ALL';
- const search=($('cefrSearchFilter')?.value||'').toLocaleLowerCase('vi').trim();
- const byId=new Map(topics.flatMap(t=>t.words||[]).map(w=>[w.id,w]));
- document.querySelectorAll('[data-edit-cefr]').forEach(button=>{
-  const w=byId.get(button.dataset.editCefr),row=button.closest('.editor-item');if(!w||!row)return;
+// wordsky-cefr-quick-results-v1: matching also searches collapsed topic groups.
+let cefrResultPage=1;
+const CEFR_RESULT_PAGE_SIZE=30;
+function cefrSearchMatches(rows,level,status,search){
+ const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('vi').replace(/đ/g,'d');
+ const needle=fold(search).trim();
+ return rows.filter(({w,topic})=>{
   const okLevel=level==='ALL'||(level==='NONE'?!w.cefr_level:w.cefr_level===level);
   const okStatus=status==='ALL'||(w.cefr_review_status||'UNREVIEWED')===status;
-  const okText=!search||(w.english+' '+w.meaning).toLocaleLowerCase('vi').includes(search);
-  row.classList.toggle('hidden',!(okLevel&&okStatus&&okText));
+  const okText=!needle||fold(w.english+' '+w.meaning+' '+topic).includes(needle);
+  return okLevel&&okStatus&&okText;
  });
 }
+function filterAdminCefr(resetPage=true){
+ const level=$('cefrLevelFilter')?.value||'ALL',status=$('cefrStatusFilter')?.value||'ALL';
+ const search=$('cefrSearchFilter')?.value||'';
+ const all=topics.flatMap(t=>(t.words||[]).map(w=>({w,topic:t.title})));
+ const filtered=cefrSearchMatches(all,level,status,search);
+ if(resetPage)cefrResultPage=1;
+ const pages=Math.max(1,Math.ceil(filtered.length/CEFR_RESULT_PAGE_SIZE));
+ cefrResultPage=Math.min(pages,Math.max(1,cefrResultPage));
+ const from=(cefrResultPage-1)*CEFR_RESULT_PAGE_SIZE;
+ const showing=filtered.slice(from,from+CEFR_RESULT_PAGE_SIZE);
+ const summary=$('cefrResultSummary'),list=$('cefrResultList'),pager=$('cefrResultPager');
+ if(!summary||!list||!pager)return;
+ summary.textContent=filtered.length?
+   'Tìm thấy '+filtered.length+' / '+all.length+' từ · Hiển thị '+(from+1)+'–'+(from+showing.length)+' · Trang '+cefrResultPage+'/'+pages:
+   'Không có từ khớp bộ lọc ('+all.length+' từ trong kho).';
+ if(!showing.length){
+   const other=cefrSearchMatches(all,'ALL','ALL',search);
+   list.innerHTML='<div class="empty">'+(search.trim()&&other.length?
+     'Có '+other.length+' từ khớp tìm kiếm nhưng bị ẩn bởi bộ lọc CEFR hoặc trạng thái. Hãy bấm <b>Bỏ lọc CEFR/trạng thái</b>.':
+     'Không tìm thấy từ phù hợp. Thử từ khóa khác hoặc bấm <b>Bỏ lọc CEFR/trạng thái</b>.')+'</div>';
+ }else{
+   list.innerHTML='<div class="cefr-result-scroll"><table class="cefr-result-table"><thead><tr><th>Từ tiếng Anh</th><th>Nghĩa</th><th>Chủ đề</th><th>CEFR</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>'+
+     showing.map(({w,topic})=>'<tr><td><strong>'+escapeHtml(w.english)+'</strong></td><td>'+escapeHtml(w.meaning)+'</td><td>'+escapeHtml(topic)+'</td><td><strong>'+escapeHtml(w.cefr_level||'—')+'</strong></td><td>'+escapeHtml(w.cefr_review_status||'UNREVIEWED')+'</td><td><button class="btn" type="button" data-cefr-open="'+escapeHtml(w.id)+'">Sửa CEFR</button></td></tr>').join('')+
+     '</tbody></table></div>';
+ }
+ pager.innerHTML=(cefrResultPage>1?'<button type="button" class="btn" data-cefr-page="prev">← Trước</button>':'')+
+   (pages>1?'<span class="small-note" style="align-self:center">Trang '+cefrResultPage+'/'+pages+'</span>':'')+
+   (cefrResultPage<pages?'<button type="button" class="btn" data-cefr-page="next">Tiếp →</button>':'');
+}
+
 function renderAdminFeatures(data){const labels={ATTENDANCE:'📅 Điểm chuyên cần',SIGNUP:'👥 Đăng ký học viên',MATCH:'🔗 Game nối từ',BOMB:'💣 Game giải bom',CAR:'🏎️ Game xe 5 làn'};$('adminPanelFeatures').innerHTML=`<div class="dashboard-card"><h2>Quản lý tính năng hệ thống</h2><p class="small-note">Bật / tắt chức năng ngay trên backend. Trận đang diễn ra có thể bị gián đoạn khi tắt chế độ thi đấu, hãy thay đổi ngoài giờ thi.</p>${data.map(x=>`<div class="editor-item"><strong>${labels[x.feature_key]||x.feature_key}</strong><label style="flex-direction:row;align-items:center"><input type="checkbox" data-feature="${x.feature_key}" ${x.enabled?'checked':''}> ${x.enabled?'Đang bật':'Đang tắt'}</label></div>`).join('')}</div>`}
 async function manageAction(action,id){
  const existing=adminEvents.find(x=>x.id===id);
@@ -392,6 +435,9 @@ window.addEventListener('click',async event=>{
  if(button.dataset.editEvent){editEvent(button.dataset.editEvent);return}
  if(button.id==='cancelEditEvent'){editingEvent=null;draftRounds=[];renderAdminEvents();return}
  if(button.dataset.eventAction){await manageAction(button.dataset.eventAction,button.dataset.eventId);return}
+ if(button.id==='cefrClearFilters'){if($('cefrLevelFilter'))$('cefrLevelFilter').value='ALL';if($('cefrStatusFilter'))$('cefrStatusFilter').value='ALL';filterAdminCefr();return}
+ if(button.dataset.cefrPage){cefrResultPage+=button.dataset.cefrPage==='next'?1:-1;filterAdminCefr(false);return}
+ if(button.dataset.cefrOpen){openCefrEditor(button.dataset.cefrOpen);return}
  if(button.dataset.editCefr){openCefrEditor(button.dataset.editCefr);return}
  if(button.id==='cefrCancel'){const el=$('cefrEditor');if(el)el.classList.add('hidden');return}
  if(button.dataset.copyCode){await navigator.clipboard?.writeText(button.dataset.copyCode);toast('Đã sao chép mã phòng');return}
