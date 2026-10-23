@@ -1,4 +1,5 @@
 import test from 'node:test';
+import * as priorityFs from 'node:fs';
 import assert from 'node:assert/strict';
 import pg from 'pg';
 import handler from '../api/index.js';
@@ -186,3 +187,22 @@ test('all-topic OPEN or LIVE rounds protect vocabulary mutations',async()=>{
    'active-event guard must include all-topic MATCH, BOMB and CAR rounds');
  }finally{topicUsedByActiveEvent=false;}
 });
+
+
+test('MATCH/BOMB vocabulary query prioritizes CEFR level by round difficulty',()=>{
+ const source=requireRuntimeApiTextForCefrPriority();
+ assert.match(source,/w\.cefr_review_status/);
+ assert.match(source,/\$3='EASY' AND cefr_level IN \('A1','A2'\)/);
+ assert.match(source,/\$3='NORMAL' AND cefr_level IN \('B1','B2'\)/);
+ assert.match(source,/\$3='HARD' AND cefr_level IN \('C1','C2'\)/);
+ assert.match(source,/wordLimit,round\.difficulty/);
+});
+function requireRuntimeApiTextForCefrPriority(){
+ return new TextDecoder().decode(requireApiSourceBytes());
+}
+function requireApiSourceBytes(){
+ return requireNodeFsForPriority().readFileSync(new URL('../api/index.js',import.meta.url));
+}
+function requireNodeFsForPriority(){
+ return priorityFs;
+}

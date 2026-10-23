@@ -226,13 +226,30 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
    }else{
     const wordLimit=requiredWords(round);
     if(wordLimit){
+     // Server-side CEFR ordering: choose the requested difficulty first.
+     // Preserve existing vocabulary behavior as a fallback if the requested
+     // group is too small. Only reviewed APPROVED labels are trusted as levels.
      const data=await db.query(`SELECT id,english,meaning FROM (
-       SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning
+       SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level,w.cefr_review_status
        FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
        WHERE w.enabled=true AND t.enabled=true
          AND ($1::uuid IS NULL OR w.topic_id=$1)
-       ORDER BY lower(w.english),w.id
-      ) unique_words ORDER BY random() LIMIT $2`,[round.topic_id||null,wordLimit]);
+       ORDER BY lower(w.english),
+         CASE WHEN w.cefr_review_status='APPROVED' THEN 0 ELSE 1 END,w.id
+      ) unique_words
+      ORDER BY CASE
+       WHEN cefr_review_status='APPROVED' AND (
+        ($3='EASY' AND cefr_level IN ('A1','A2')) OR
+        ($3='NORMAL' AND cefr_level IN ('B1','B2')) OR
+        ($3='HARD' AND cefr_level IN ('C1','C2'))
+       ) THEN 0
+       WHEN cefr_review_status='APPROVED' AND (
+        ($3='EASY' AND cefr_level IN ('B1','B2')) OR
+        ($3='NORMAL' AND cefr_level IN ('A1','A2')) OR
+        ($3='HARD' AND cefr_level IN ('B1','B2'))
+       ) THEN 1
+       WHEN cefr_review_status='APPROVED' AND cefr_level IN ('A1','A2','B1','B2','C1','C2') THEN 2
+       ELSE 3 END,random() LIMIT $2`,[round.topic_id||null,wordLimit,round.difficulty]);
      words=data.rows;assertWordCapacity(round,words.length);
     }
    }

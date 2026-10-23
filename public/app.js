@@ -98,7 +98,7 @@ async function startRound(){
  finally{gameBusy=false}
 }
 async function refreshGame(){if(!game||!roomCode)return;
- const revision=gameRevision;try{const before=game.game;const answer=await api(`rooms/${roomCode}/runs/${game.runId}`);if(!game||gameBusy||revision!==gameRevision)return;game.game=answer.game;
+ const revision=gameRevision;try{const before=game.game;const answer=await api(`rooms/${roomCode}/runs/${game.runId}`);if(!game||gameBusy||revision!==gameRevision)return;if(before.mode==='BOMB'&&answer.game.health<before.health)feedback='💥 Bom nổ! -1 tim';if(before.mode==='CAR'&&answer.game.health<before.health)feedback='⌛ Trễ chặng! -1 tim';game.game=answer.game;
   const fingerprint=g=>JSON.stringify([g.mode,g.status,g.score,g.health,g.correct,g.mistakes,g.index,g.bombs?.map(b=>b.id)]);
   if(fingerprint(before)!==fingerprint(game.game)){if(!(game.game.mode==='BOMB'&&before.mode==='BOMB'&&before.status==='PLAYING'&&game.game.status==='PLAYING'&&syncBombArena()))renderGame();}else animateBombs();
   if(game.game.status!=='PLAYING'){setTimeout(()=>loadRoom(),1100)}}catch(e){if(screen==='rooms')toast(e.message,true)}
@@ -131,29 +131,28 @@ async function submitGameAnswer(payload){
   }
   game.game=answer.game;
   if(game.game.mode==='CAR'){
-   if(answer.result?.wordCorrect===false){feedback='Sai từ tiếng Anh, chưa vượt chặng. Hãy thử lại!'}
-   else if(answer.result?.laneSafe===false){feedback='Xe đâm vào vật cản! Mất 1 tim.'}
-   else feedback='✅ Chính xác! Qua làn an toàn, +'+fmt(answer.result.awarded)+' điểm.';
+   if(answer.result?.wordCorrect===false){feedback='❌ Sai từ!'}
+   else if(answer.result?.laneSafe===false){feedback='💔 Đâm vật cản! -1 tim'}
+   else feedback='✅ +'+fmt(answer.result.awarded)+' điểm';
   }else{
    feedback=answer.result?.correct?'Đúng rồi! +'+fmt(answer.result.awarded)+' điểm.':game.game.mode==='MATCH'?'Sai cặp! Mất 1 tim, còn '+game.game.health+'/3 tim.':'Chưa chính xác — cố gắng nhé!';
   }
   if(game.game.mode==='BOMB'&&answer.result?.correct){const input=$('bombAnswer');if(input)input.value='';}
   if(game.game.mode==='CAR'&&answer.result?.wordCorrect){const input=$('carAnswer');if(input)input.value='';}
   renderGame();if(answer.game.status!=='PLAYING')setTimeout(()=>loadRoom(),700);
- }catch(e){feedback=e.message;renderGame()}
+ }catch(e){feedback=before.mode==='CAR'?(e.status===429?'⏳ Chờ chút':'⚠️ '+String(e.message).slice(0,54)):e.message;renderGame()}
  finally{gameBusy=false}
 }
 function compactKeyboard(target,autoSubmit=false){
  const rows=['qwertyuiop','asdfghjkl','zxcvbnm'];
- const key=(label,value,klass='')=>`<button type="button" class="${klass}" data-game-key="${value}" data-keyboard-target="${target}" aria-label="${value==='DEL_WORD'?'X\u00f3a t\u1eeb cu\u1ed1i':value==='SPACE'?'D\u1ea5u c\u00e1ch':value==='CLEAR'?'X\u00f3a h\u1ebft':value==='ENTER'?'Tr\u1ea3 l\u1eddi':'Ch\u1eef '+label}">${label}</button>`;
+ const key=(label,value,klass='')=>`<button type="button" class="${klass}" data-game-key="${value}" data-keyboard-target="${target}" aria-label="${value==='DEL'?'X\u00f3a k\u00fd t\u1ef1 cu\u1ed1i':value==='SPACE'?'D\u1ea5u c\u00e1ch':value==='CLEAR'?'X\u00f3a h\u1ebft':value==='ENTER'?'Tr\u1ea3 l\u1eddi':'Ch\u1eef '+label}">${label}</button>`;
  return `<div class="game-keyboard" role="group" aria-label="B\u00e0n ph\u00edm ti\u1ebfng Anh trong game" data-keyboard-target="${target}">
   ${rows.map(row=>`<div class="game-keyboard-row">${[...row].map(c=>key(c.toUpperCase(),c.toUpperCase())).join('')}</div>`).join('')}
-  <div class="game-keyboard-row">${key('X\u00f3a h\u1ebft','CLEAR','game-keyboard-clear')}${key('D\u1ea5u c\u00e1ch','SPACE','game-keyboard-wide')}${autoSubmit?'':key('\u21b5 Enter','ENTER','game-keyboard-enter')}${key('X\u00f3a t\u1eebng t\u1eeb','DEL_WORD','game-keyboard-delete-word')}</div>
+  <div class="game-keyboard-row">${key('X\u00f3a h\u1ebft','CLEAR','game-keyboard-clear')}${key('D\u1ea5u c\u00e1ch','SPACE','game-keyboard-wide')}${autoSubmit?'':key('\u21b5 Enter','ENTER','game-keyboard-enter')}${key('\u232b X\u00f3a ch\u1eef','DEL','game-keyboard-delete-word')}</div>
  </div>`;
 }
-function removeLastGameWord(text){
- const trimmed=String(text).replace(/\s+$/u,'');
- return trimmed.replace(/\S+$/u,'');
+function removeLastGameCharacter(text){
+ return Array.from(String(text)).slice(0,-1).join('');
 }
 function mobileGameKeyboard(){return matchMedia('(pointer:coarse) and (max-width:760px)').matches}
 function prepareGameInput(input){
@@ -164,11 +163,15 @@ function prepareGameInput(input){
 }
 // BOMB: automatically resolve a full English word against all active bombs.
 // Keep the native mobile input mounted while the 1.2s server poll redraws bombs.
-let bombCheckTimer=null, bombLastAttempt='';
+let bombCheckTimer=null, bombLastAttempt='',gameExpanded=false;
+function arenaFeedbackMarkup(){
+ return `<div id="gameFeedback" role="status" aria-live="polite" ${feedback?'':'hidden'} class="game-inline-feedback ${feedback.startsWith('✅')?'good':'bad'}">${escapeHtml(feedback)}</div>`;
+}
 function bombArenaMarkup(g,rd){
  const bombs=g.bombs||[];
  return `<div class="bomb-topline">💣 ${bombs.length} bom đang rơi · Còn ${g.left} bom chưa gỡ</div>
- ${bombs.map(b=>`<div class="bomb-falling" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/Math.max(1,Number(rd.bomb_batch_size||2)))}%"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div>`).join('')}`;
+ ${bombs.map(b=>`<div class="bomb-falling" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/Math.max(1,Number(rd.bomb_batch_size||2)))}%"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div>`).join('')}
+ ${arenaFeedbackMarkup()}`;
 }
 function syncBombArena(){
  const g=game?.game,rd=game?.round,arena=$('bombArena');
@@ -177,7 +180,7 @@ function syncBombArena(){
  const score=$('gameScore'),health=$('gameHealth'),message=$('gameFeedback');
  if(score)score.textContent=fmt(g.score)+' ĐIỂM';
  if(health)health.textContent='❤️ '+g.health+'/3';
- if(message){message.textContent=feedback;message.hidden=!feedback;message.className='game-status '+(feedback.startsWith('Đúng')?'good':'');}
+ if(message){message.textContent=feedback;message.hidden=!feedback;message.className='game-inline-feedback '+(feedback.startsWith('✅')?'good':'bad');}
  animateBombs();
  return true;
 }
@@ -198,7 +201,7 @@ async function checkBombAnswer(){
   if(game?.runId!==runId)return;
   game.game=answer.game;
   if(answer.result?.correct){
-   feedback='Đúng rồi! Bom đã được gỡ. +'+fmt(answer.result.awarded)+' điểm.';
+   feedback='✅ Gỡ bom! +'+fmt(answer.result.awarded)+' điểm';
    if(field?.value.trim()===typed)field.value='';
    bombLastAttempt='';
   }
@@ -216,13 +219,13 @@ async function checkBombAnswer(){
  }
 }
 function renderGame(){
- const host=$('liveGame');if(!host||!game)return;
+ const host=$('liveGame');if(!host||!game)return;host.classList.toggle('game-expanded',gameExpanded&&['BOMB','CAR'].includes(game.game.mode));
  const existingBombAnswer=host.querySelector('#bombAnswer')?.value||'';
  const existingCarAnswer=host.querySelector('#carAnswer')?.value||'';
  const oldFocus=document.activeElement?.id;
  const g=game.game,rd=game.round;
  const names={MATCH:'Nối từ cùng nghĩa',BOMB:'Gỡ bom từ vựng',CAR:'Dịch từ và lách xe 5 làn'};
- let h=`<div class="game-shell"><div class="game-bar"><strong>${MODE_LABEL[g.mode]} — ${names[g.mode]}</strong><span class="counter" id="gameScore">${fmt(g.score)} ĐIỂM</span><span id="gameHealth">❤️ ${g.health}/3</span><span>⏱ <span id="gameCountdown">${formatCountdown(secLeft(g.endsAt))}</span></span></div>`;
+ let h=`<div class="game-shell"><div class="game-bar"><strong>${MODE_LABEL[g.mode]} — ${names[g.mode]}</strong><span class="counter" id="gameScore">${fmt(g.score)} ĐIỂM</span><span id="gameHealth">❤️ ${g.health}/3</span><span>⏱ <span id="gameCountdown">${formatCountdown(secLeft(g.endsAt))}</span></span>${['BOMB','CAR'].includes(g.mode)?`<button type="button" id="gameSizeToggle" class="game-size-toggle" aria-label="${gameExpanded?'Thu nhỏ game':'Phóng to game'}">${gameExpanded?'⤢':'⛶'}</button>`:''}</div>`;
  if(g.status!=='PLAYING')h+=`<div class="game-status good">${g.status==='COMPLETED'?'🎉 Hoàn thành vòng thi!':g.status==='FAILED'?'💔 Đã mất 3 tim!':'⌛ Hết thời gian'} · ${fmt(g.score)} điểm · ${g.correct} lượt đúng</div>`;
  else if(g.mode==='MATCH'){
   const right=g.rightOptions||[];
@@ -237,21 +240,22 @@ function renderGame(){
      </div>${g.status==='PLAYING'?compactKeyboard('bombAnswer',true):''}`;
  }else if(g.mode==='CAR'){
   const next=Math.max(0,Math.ceil((g.nextAllowedAt-Date.now()-localTimeOffset)/1000));
+  if(g.level?.lanes?.[selectedLane]?.kind==='BLOCKED')selectedLane=g.level.lanes.findIndex(l=>l.kind!=='BLOCKED');
   const current=g.level?.lanes?.[selectedLane];
   const isBlocked=current?.kind==='BLOCKED';
   const symbol=k=>k==='BLOCKED'?'🧱':k==='BONUS'?'⭐':k==='DOUBLE'?'×2':'·';
-  h+=`<p class="small-note">Mỗi làn có một thử thách riêng: · A2 (+100%), ⭐ B1–B2 (+150%), ×2 C1–C2 (+200%); 🧱 là vật cản, không cần từ nhưng mất 1 tim. Tất cả dùng từ CEFR đã duyệt.</p>
+  h+=`<p class="small-note game-rules">EASY ưu tiên A1–A2 · NORMAL cân bằng các cấp · HARD ưu tiên C1–C2. ⭐ thưởng 1.5×; ×2 thưởng 2×. Tránh vật cản 🧱.</p>
    <div class="car-stage"><div class="game-bar"><span>CHẶNG ${g.index+1}/${g.total} · ĐÃ VƯỢT ${g.index}</span><span>🏎️ LÀN ${(g.carLane??2)+1} · 🎯 CHỌN LÀN ${selectedLane+1}</span></div>
-   <div class="car-lanes">${(g.level?.lanes||[]).map((lane,i)=>`<button type="button" data-lane="${i}" class="lane car-v6-lane ${selectedLane===i?'selected':''} ${lane.kind==='BLOCKED'?'blocked':''}" aria-label="Làn ${i+1}: ${lane.kind==='BLOCKED'?'vật cản':escapeHtml(lane.meaning)}"><span class="item">${symbol(lane.kind)}</span><span class="car-cefr">${lane.kind==='NORMAL'?(lane.cefr||'A1–A2'):lane.kind==='BONUS'?'B1–B2':lane.kind==='DOUBLE'?'C1–C2':'CẢN'}</span><span class="car-lane-word">${lane.kind==='BLOCKED'?'Tránh':escapeHtml(lane.meaning)}</span><span class="you">${selectedLane===i?'🎯':'·'}</span><span class="car-lane-number">${i+1}</span></button>`).join('')}</div><div class="car-vehicle" id="carVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Trả lời đúng → xe chuyển làn → sang chặng tiếp theo</div></div>
+   <div class="car-lanes">${(g.level?.lanes||[]).map((lane,i)=>`<button type="button" data-lane="${i}" class="lane car-v6-lane ${selectedLane===i?'selected':''} ${lane.kind==='BLOCKED'?'blocked':''}" aria-label="Làn ${i+1}: ${lane.kind==='BLOCKED'?'vật cản':escapeHtml(lane.meaning)}"><span class="item">${symbol(lane.kind)}</span><span class="car-cefr">${lane.kind==='NORMAL'?(lane.cefr||'A1–A2'):lane.kind==='BONUS'?'B1–B2':lane.kind==='DOUBLE'?'C1–C2':'CẢN'}</span><span class="car-lane-word">${lane.kind==='BLOCKED'?'Tránh':escapeHtml(lane.meaning)}</span><span class="you">${selectedLane===i?'🎯':'·'}</span><span class="car-lane-number">${i+1}</span></button>`).join('')}</div><div class="car-vehicle" id="carVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Gõ từ và Enter để vượt chặng</div>${arenaFeedbackMarkup()}</div>
    <form id="carAnswerForm" class="car-answer-form" autocomplete="off">
     <label for="carAnswer">${isBlocked?'⚠️ Làn có vật cản, đổi sang làn an toàn!':current?'Dịch từ làn '+(selectedLane+1)+' ('+escapeHtml(current.cefr)+'): '+escapeHtml(current.meaning):'Chọn làn'}</label>
-    <div class="car-answer-row"><input id="carAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="100" placeholder="${isBlocked?'Không cần nhập từ':'Nhập nguyên từ tiếng Anh rồi Enter'}" ${isBlocked?'disabled':''}><button id="carDrive" type="submit" class="btn primary" ${next?'disabled':''}>${isBlocked?'⚠️ Vượt cản':'↵ Trả lời & Lái xe'}</button></div>
+    <div class="car-answer-row"><input id="carAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="100" placeholder="${isBlocked?'Không cần nhập từ':'Nhập nguyên từ tiếng Anh rồi Enter'}" ${isBlocked?'disabled':''}></div>
     <span id="carReadyHint" class="small-note">${next?'Chờ '+next+' giây':'Sẵn sàng'}</span><span id="carStepTimer" class="small-note">⏱ Còn ${Math.max(0,Math.ceil(((g.stepDeadlineAt||g.endsAt)-Date.now()-localTimeOffset)/1000))}s để qua chặng</span>
    </form>${g.status==='PLAYING'&&!isBlocked?compactKeyboard('carAnswer'):''}
-   <p class="small-note">Chạm làn để xem đủ nghĩa tiếng Việt. Từ sai không qua chặng; vật cản sẽ mất 1 tim.</p>`;
+   <p class="small-note game-rules">Chạm làn an toàn rồi nhấn Enter trên bàn phím trong game để vượt chặng.</p>`;
 
  }
- if(feedback||g.mode==='BOMB')h+=`<div id="gameFeedback" ${feedback?'':'hidden'} class="game-status ${feedback.startsWith('Đúng')||feedback.startsWith('✅')?'good':feedback.startsWith('Chưa')||feedback.startsWith('Sai')?'bad':''}">${escapeHtml(feedback)}</div>`;
+ if(g.mode==='MATCH'&&feedback)h+=`<div class="game-status ${feedback.startsWith('Đúng')?'good':'bad'}">${escapeHtml(feedback)}</div>`;
  h+='</div>';host.innerHTML=h;
  if(g.mode==='BOMB'&&g.status==='PLAYING'){
   const el=$('bombAnswer');if(el){el.value=existingBombAnswer;prepareGameInput(el);}
@@ -278,11 +282,11 @@ function animateBombs(){
 function updateCountdowns(){if(screen!=='rooms')return;animateBombs();const c=$('roundCountdown');const gc=$('gameCountdown');if(c&&room){let rd=currentRoundFromEvent(room.event);if(rd)c.textContent=formatCountdown(secLeft(rd.ends_at))}if(gc&&game)gc.textContent=formatCountdown(secLeft(game.game.endsAt));
  if(game?.game.mode==='CAR'&&game.game.status==='PLAYING'){
   const remaining=Math.max(0,Math.ceil((game.game.nextAllowedAt-Date.now()-localTimeOffset)/1000));
-  const go=$('carDrive');if(go)go.disabled=remaining>0;
+
   const hint=$('carReadyHint');if(hint)hint.textContent=remaining?'Chờ '+remaining+'s trước chặng tiếp theo':'Sẵn sàng';const clock=$('carStepTimer');if(clock)clock.textContent='⏱ Còn '+Math.max(0,Math.ceil(((game.game.stepDeadlineAt||game.game.endsAt)-Date.now()-localTimeOffset)/1000))+'s để qua chặng';
  }
 }
-function leaveRoom(){roomCode='';sessionStore.removeItem('wordsky_room_code');room=null;game=null;$('roomPane').classList.add('hidden');$('joinRoomPane').classList.remove('hidden');}
+function leaveRoom(){gameExpanded=false;roomCode='';sessionStore.removeItem('wordsky_room_code');room=null;game=null;$('roomPane').classList.add('hidden');$('joinRoomPane').classList.remove('hidden');}
 // Admin
 let carFeatureEnabled=false;
 const initialRounds=()=>['MATCH','BOMB',...(carFeatureEnabled?['CAR']:[])].map((mode,i)=>({mode,difficulty:'NORMAL',duration_seconds:mode==='BOMB'?120:90,question_count:mode==='CAR'?12:8,points_per_correct:100,penalty:25,weight:1,topic_id:mode==='CAR'?null:topics[0]?.id||null,bomb_fall_seconds:16,bomb_batch_size:2,bomb_spawn_interval_seconds:9,car_step_seconds:8}));
@@ -339,6 +343,10 @@ async function loadAdmin({preserveView=true}={}){const pane=$('adminContent');co
  }catch(e){pane.innerHTML=`<div class="empty">${escapeHtml(e.message)}<p class="small-note">Cần cấu hình PostgreSQL và khóa admin để mở bảng quản trị.</p></div>`}}
 function optionsTopics(value,allowAll=false){return `<option value="" ${allowAll?'':'disabled'} ${!value?'selected':''}>${allowAll?'Tất cả chủ đề':'-- Chọn chủ đề --'}</option>`+topics.map(t=>`<option value="${t.id}" ${t.id===value?'selected':''}>${escapeHtml(t.title)} (${t.words?.length||0} từ)</option>`).join('')}
 function countUniqueCefr(words,levels){return new Set(words.filter(w=>levels.includes(w.cefr_level)).map(w=>String(w.english).trim().toLowerCase())).size}
+function carVocabularyNeeds(difficulty,count){
+ const plan={EASY:[3,1,0],NORMAL:[1,1,1],HARD:[0,1,2]}[difficulty]||[1,1,1];
+ return {A2:plan[0]*count,BONUS:plan[1]*count,DOUBLE:plan[2]*count};
+}
 function renderRounds(){const host=$('roundsEditor');if(!host)return;host.innerHTML=draftRounds.map((r,i)=>{
  const selectedWords=r.topic_id?(topics.find(t=>t.id===r.topic_id)?.words||[]):topics.flatMap(t=>t.words||[]);
   const available=new Set(selectedWords.map(w=>String(w.english).trim().toLowerCase())).size;
@@ -347,8 +355,8 @@ function renderRounds(){const host=$('roundsEditor');if(!host)return;host.innerH
  const approvedWords=selectedWords;
  const approved=approvedWords.filter(w=>w.cefr_review_status==='APPROVED');
  const a2=countUniqueCefr(approved,['A1','A2']),bonus=countUniqueCefr(approved,['B1','B2']),high=countUniqueCefr(approved,['C1','C2']);
- const neededA2=(5-(r.difficulty==='EASY'?1:2)-2)*r.question_count;
- const cefrHint=r.mode==='CAR'?`<small class="car-stock-note">Đã duyệt: A1–A2 ${a2}/${neededA2}, B1–B2 ${bonus}/${r.question_count}, C1–C2 ${high}/${r.question_count}</small>`:'';
+ const neededCar=carVocabularyNeeds(r.difficulty,r.question_count);
+ const cefrHint=r.mode==='CAR'?`<small class="car-stock-note">Đã duyệt: A1–A2 ${a2}/${neededCar.A2}, B1–B2 ${bonus}/${neededCar.BONUS}, C1–C2 ${high}/${neededCar.DOUBLE}</small>`:'';
  return `<div class="round-line" data-round="${i}"><label>Kiểu chơi<select data-k="mode">${['MATCH','BOMB',...(carFeatureEnabled||r.mode==='CAR'?['CAR']:[])].map(m=>`<option ${m===r.mode?'selected':''} value="${m}">${MODE_SHORT[m]}</option>`).join('')}</select></label><label>Chủ đề<select data-k="topic_id">${optionsTopics(r.topic_id,true)}</select></label><label>Độ khó<select data-k="difficulty">${['EASY','NORMAL','HARD'].map(d=>`<option value="${d}" ${d===r.difficulty?'selected':''}>${d}</option>`).join('')}</select></label><label>Thời gian (s)<input type="number" data-k="duration_seconds" min="20" max="600" value="${r.duration_seconds}"></label><label>Số lượt<input type="number" data-k="question_count" min="3" max="${r.mode==='MATCH'?Math.min(20,cap):cap}" value="${r.question_count}"></label>${r.mode==='BOMB'?`<label>Bom rơi trong (s)<input type="number" data-k="bomb_fall_seconds" min="5" max="60" value="${r.bomb_fall_seconds??16}"></label><label>Số bom mỗi đợt<input type="number" data-k="bomb_batch_size" min="1" max="3" value="${r.bomb_batch_size??2}"></label><label>Khoảng cách giữa đợt (s)<input type="number" data-k="bomb_spawn_interval_seconds" min="3" max="45" value="${r.bomb_spawn_interval_seconds??9}"></label>`:''}${r.mode==='CAR'?`<label>Thời gian mỗi chặng (s)<input type="number" data-k="car_step_seconds" min="2" max="45" value="${r.car_step_seconds??8}"></label>`:''}<label>Điểm đúng<input type="number" data-k="points_per_correct" min="10" max="1000" value="${r.points_per_correct}"></label><label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="${r.weight}"></label><button class="btn warn" type="button" data-remove-round="${i}" aria-label="Xóa vòng ${i+1}">✕</button><div class="round-note"><small>Cho phép tối đa ${r.mode==='CAR'?30:cap} lượt${extra?' (gồm '+extra+' nghĩa nhiễu)':''}</small>${cefrHint}</div></div>`;}).join('')+`<p class="small-note">Mỗi câu đúng +điểm, câu sai trừ ${draftRounds[0]?.penalty||25} điểm (có thể chỉnh trong cấu hình). Tổng giải tính điểm vòng × hệ số.</p>`}
 function collectRounds(){document.querySelectorAll('[data-round]').forEach(e=>{const i=Number(e.dataset.round);const r=draftRounds[i];e.querySelectorAll('[data-k]').forEach(c=>{r[c.dataset.k]=['mode','topic_id','difficulty'].includes(c.dataset.k)?c.value:Number(c.value)});r.topic_id=r.topic_id||null;
  if(r.mode==='MATCH')r.question_count=Math.min(20,r.question_count);});return draftRounds}
@@ -369,7 +377,7 @@ async function submitEventForm(event){event.preventDefault();collectRounds();con
     if(!carFeatureEnabled){toast('CAR đang tắt; hãy xóa vòng CAR hoặc bật tính năng khi dữ liệu CEFR đã sẵn sàng.',true);return;}
    const approved=vocab.filter(w=>w.cefr_review_status==='APPROVED');
    const counts={A2:countUniqueCefr(approved,['A1','A2']),BONUS:countUniqueCefr(approved,['B1','B2']),DOUBLE:countUniqueCefr(approved,['C1','C2'])};
-   const need={A2:(5-(round.difficulty==='EASY'?1:2)-2)*round.question_count,BONUS:round.question_count,DOUBLE:round.question_count};
+   const need=carVocabularyNeeds(round.difficulty,round.question_count);
    const missing=Object.keys(need).filter(k=>counts[k]<need[k]);
    if(missing.length){toast('Lane Escape cần từ CEFR ĐÃ DUYỆT: '+missing.map(k=>`${k==='A2'?'A1–A2':k} ${counts[k]}/${need[k]}`).join(', '),true);return;}
    continue;
@@ -518,14 +526,15 @@ async function manageVocabulary(type,id){
  if(button.id==='signupTab'){setLoginMode('signup');return}
  if(button.id==='attendanceLogin'||button.id==='adminLoginBtn'){setLoginMode('login');openAuth();return}
  if(button.id==='checkinBtn'){try{const r=await api('attendance/checkin',{method:'POST',body:{}});toast(r.already?'Hôm nay bạn đã điểm danh rồi!':`Điểm danh thành công! +${r.earned} XP`);loadAttendance()}catch(e){toast(e.message,true)}return}
- if(button.id==='startRoundButton'){await startRound();return}
+ if(button.id==='gameSizeToggle'){gameExpanded=!gameExpanded;renderGame();return}
+  if(button.id==='startRoundButton'){await startRound();return}
  if(button.id==='refreshRoom'){loadRoom();return}
  if(button.id==='leaveRoom'){leaveRoom();return}
   if(button.dataset.gameKey!==undefined){
    const input=$(button.dataset.keyboardTarget);if(!input||input.disabled||gameBusy)return;
    const key=button.dataset.gameKey;
-   if(key==='ENTER'){if(button.dataset.keyboardTarget==='carAnswer'&&$('carDrive')?.disabled){toast('Chờ chặng tiếp theo sẵn sàng');return}input.closest('form')?.requestSubmit();return}
-   if(key==='DEL_WORD')input.value=removeLastGameWord(input.value);
+   if(key==='ENTER'){if(button.dataset.keyboardTarget==='carAnswer'&&Date.now()+localTimeOffset<Number(game?.game?.nextAllowedAt||0)){feedback='⏳ Chờ chút';renderGame();return}input.closest('form')?.requestSubmit();return}
+   if(key==='DEL')input.value=removeLastGameCharacter(input.value);
    else if(key==='CLEAR')input.value='';
    else if(key==='SPACE'&&input.value.length<input.maxLength)input.value+=' ';
    else if(input.value.length<input.maxLength)input.value+=key.toLowerCase();
@@ -534,7 +543,7 @@ async function manageVocabulary(type,id){
   if(button.dataset.selectBomb){return}
   if(button.dataset.pairLeft){if(game?.game.status!=='PLAYING')return;selectedEnglish=button.dataset.pairLeft;renderGame();return}
  if(button.dataset.pairRight){if(game?.game.status!=='PLAYING')return;if(!selectedEnglish){toast('Chọn từ tiếng Anh ở cột trái trước');return}const leftId=selectedEnglish;selectedEnglish=null;await submitGameAnswer({leftId,rightId:button.dataset.pairRight});return}
- if(button.dataset.lane!==undefined){if(gameBusy)return;const input=$('carAnswer');if(input)input.value='';selectedLane=Number(button.dataset.lane);renderGame();return}
+ if(button.dataset.lane!==undefined){if(gameBusy)return;const lane=Number(button.dataset.lane);if(game?.game?.level?.lanes?.[lane]?.kind==='BLOCKED'){feedback='🧱 Làn có vật cản';renderGame();return}feedback='';const input=$('carAnswer');if(input)input.value='';selectedLane=lane;renderGame();return}
  if(button.hasAttribute('data-car-left')){if(gameBusy)return;const input=$('carAnswer');if(input)input.value='';selectedLane=Math.max(0,selectedLane-1);renderGame();return}
  if(button.hasAttribute('data-car-right')){if(gameBusy)return;const input=$('carAnswer');if(input)input.value='';selectedLane=Math.min(4,selectedLane+1);renderGame();return}
   if(button.hasAttribute('data-car-go')){const value=$('carAnswer')?.value||'';const lane=game?.game.level?.lanes?.[selectedLane];if(lane?.kind==='BLOCKED'||value.trim())await submitGameAnswer({lane:selectedLane,answer:value});return}
@@ -560,7 +569,7 @@ window.addEventListener('submit',async e=>{
  if(e.target.id==='cefrReviewForm'){await saveCefrReview(e);return}
  if(e.target.id==='wordForm'){e.preventDefault();const f=Object.fromEntries(new FormData(e.target));try{await api('admin/words',{method:'POST',body:f});toast('Đã thêm từ mới');loadAdmin()}catch(x){toast(x.message,true)}return}
   if(e.target.id==='bombAnswerForm'){e.preventDefault();queueBombCheck(0);return}
-  if(e.target.id==='carAnswerForm'){e.preventDefault();const ans=e.target.elements.answer.value;const lane=game?.game.level?.lanes?.[selectedLane];if(lane?.kind!=='BLOCKED'&&!ans.trim())return;await submitGameAnswer({lane:selectedLane,answer:ans});return}
+  if(e.target.id==='carAnswerForm'){e.preventDefault();if(Date.now()+localTimeOffset<Number(game?.game?.nextAllowedAt||0)){feedback='⏳ Chờ chút';renderGame();return}const ans=e.target.elements.answer.value;const lane=game?.game.level?.lanes?.[selectedLane];if(lane?.kind==='BLOCKED'){feedback='🧱 Đổi làn!';renderGame();return}if(!ans.trim()){feedback='⌨️ Nhập từ đã';renderGame();return}await submitGameAnswer({lane:selectedLane,answer:ans});return}
 });
 window.addEventListener('input',e=>{if(e.target.id==='cefrSearchFilter')filterAdminCefr();if(e.target.id==='bombAnswer'){feedback='';const note=$('gameFeedback');if(note)note.hidden=true;queueBombCheck();}});
 window.addEventListener('change',async e=>{

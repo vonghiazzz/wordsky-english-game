@@ -80,26 +80,26 @@ test('BOMB and CAR custom keyboards reproduce the falling-word QWERTY rows and a
  }
  assert.match(bomb,/data-game-key="CLEAR"/);
  assert.match(bomb,/data-game-key="SPACE"/);
- assert.match(bomb,/data-game-key="DEL_WORD"/);
+ assert.match(bomb,/data-game-key="DEL"/);
  assert.doesNotMatch(bomb,/data-game-key="ENTER"/);
- assert.doesNotMatch(bomb,/data-game-key="DEL"/);
+ assert.doesNotMatch(bomb,/data-game-key="DEL_WORD"/);
  assert.match(car,/data-game-key="CLEAR"/);
  assert.match(car,/data-game-key="SPACE"/);
  assert.match(car,/data-game-key="ENTER"/);
- assert.match(car,/data-game-key="DEL_WORD"/);
- assert.ok(bomb.indexOf('data-game-key="CLEAR"')<bomb.indexOf('data-game-key="DEL_WORD"'));
- assert.ok(car.indexOf('data-game-key="CLEAR"')<car.indexOf('data-game-key="DEL_WORD"'));
+ assert.match(car,/data-game-key="DEL"/);
+ assert.ok(bomb.indexOf('data-game-key="CLEAR"')<bomb.indexOf('data-game-key="DEL"'));
+ assert.ok(car.indexOf('data-game-key="CLEAR"')<car.indexOf('data-game-key="DEL"'));
 });
 
-test('delete-last-word removes only the final English word, clear-all empties the input',()=>{
- const helper=ui.match(/function removeLastGameWord\(text\)\{[\s\S]*?\n\}/)?.[0];
+test('right keyboard action removes one character, left clears all',()=>{
+ const helper=ui.match(/function removeLastGameCharacter\(text\)\{[\s\S]*?\n\}/)?.[0];
  assert.ok(helper);
- const remove=new Function(`${helper};return removeLastGameWord`)();
- assert.equal(remove('apple'),'');
- assert.equal(remove('green apple'),'green ');
- assert.equal(remove('green apple   '),'green ');
+ const remove=new Function(`${helper};return removeLastGameCharacter`)();
+ assert.equal(remove('apple'),'appl');
+ assert.equal(remove('green apple'),'green appl');
+ assert.equal(remove(''), '');
  assert.match(ui,/key==='CLEAR'\)input\.value=''/);
- assert.match(ui,/key==='DEL_WORD'\)input\.value=removeLastGameWord/);
+ assert.match(ui,/key==='DEL'\)input\.value=removeLastGameCharacter/);
 });
 
 test('touch typing uses embedded keyboards and does not open the system keyboard',()=>{
@@ -112,4 +112,33 @@ test('touch typing uses embedded keyboards and does not open the system keyboard
  assert.match(css,/#liveGame \.bomb-arena\{height:clamp\(/);
  assert.match(ui,/input\.dispatchEvent\(new Event\('input',\{bubbles:true\}\)\)/);
  assert.match(ui,/queueBombCheck\(\)/);
+});
+
+
+test('Admin CEFR requirements match CAR difficulty lane plans',()=>{
+ const fn=ui.match(/function carVocabularyNeeds\(difficulty,count\)\{[\s\S]*?\n\}/)?.[0];
+ assert.ok(fn);
+ const required=new Function(`${fn};return carVocabularyNeeds`)();
+ assert.deepEqual(required('EASY',8),{A2:24,BONUS:8,DOUBLE:0});
+ assert.deepEqual(required('NORMAL',8),{A2:8,BONUS:8,DOUBLE:8});
+ assert.deepEqual(required('HARD',8),{A2:0,BONUS:8,DOUBLE:16});
+ assert.match(ui,/const need=carVocabularyNeeds\(round\.difficulty,round\.question_count\)/);
+});
+
+test('CAR submits by in-game Enter with no extra submit button',()=>{
+ assert.doesNotMatch(ui, /<button id="carDrive"/);
+ assert.match(ui,/if\(key==='ENTER'\)/);
+ assert.match(ui,/id="carAnswerForm"/);
+ assert.match(ui,/game\?\.game\?\.nextAllowedAt/);
+ assert.match(ui,/e\.target\.id==='carAnswerForm'/);
+});
+
+test('BOMB and CAR show short on-arena feedback and expand the game viewport',()=>{
+ assert.match(ui,/function arenaFeedbackMarkup\(\)/);
+ assert.match(ui,/\$\{arenaFeedbackMarkup\(\)\}/);
+ assert.match(ui,/id="gameSizeToggle"/);
+ assert.match(ui,/gameExpanded=!gameExpanded/);
+ assert.match(css,/#liveGame\.game-expanded \.game-shell/);
+ assert.match(css,/#liveGame \.game-inline-feedback/);
+ assert.match(css,/#liveGame \.car-stage \.car-v6-lane/);
 });

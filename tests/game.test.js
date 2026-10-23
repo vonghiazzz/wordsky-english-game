@@ -156,7 +156,7 @@ test('CAR: every stage has unique words within each CEFR tier',()=>{
  const state=createState(round,carPools(round),1000000);
  const en=state.levels.flatMap(level=>level.lanes.map(x=>x.english).filter(Boolean));
  assert.equal(en.length,8*4);assert.equal(new Set(en).size,en.length);
- assert.equal(carWordRequirements(round).A2,16);
+ assert.deepEqual(carWordRequirements(round),{A2:24,BONUS:8,DOUBLE:0});
 });
 test('CAR: cannot speedrun 8 stages with early input',()=>{
  const round={...base,mode:'CAR',question_count:8};const state=createState(round,carPools(round),1000000);
@@ -253,4 +253,21 @@ test('BOMB: typing incomplete words never loses hearts or points, cannot solve f
  assert.equal(future.status,'WAITING');
  assert.equal(st.health,3);
  assert.equal(st.score,0);
+});
+
+
+test('CAR difficulty allocates mostly easier words in EASY and high words in HARD',()=>{
+ const expected={EASY:{NORMAL:3,BONUS:1,DOUBLE:0,BLOCKED:1},NORMAL:{NORMAL:1,BONUS:1,DOUBLE:1,BLOCKED:2},HARD:{NORMAL:0,BONUS:1,DOUBLE:2,BLOCKED:2}};
+ for(const [difficulty,counts] of Object.entries(expected)){
+  const round={...base,mode:'CAR',difficulty};
+  const requirements=carWordRequirements(round);
+  assert.equal(requirements.A2,counts.NORMAL*round.question_count);
+  assert.equal(requirements.BONUS,counts.BONUS*round.question_count);
+  assert.equal(requirements.DOUBLE,counts.DOUBLE*round.question_count);
+  const state=createState(round,carPools(round),1000000);
+  for(const stage of state.levels){
+   for(const [kind,n] of Object.entries(counts))assert.equal(stage.lanes.filter(l=>l.kind===kind).length,n);
+   assert.equal(new Set(stage.lanes.filter(l=>l.english).map(l=>l.english)).size,5-counts.BLOCKED);
+  }
+ }
 });
