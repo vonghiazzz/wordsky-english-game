@@ -11,7 +11,7 @@ async function request(method, path, {body, origin} = {}) {
 }
 
 test('unauthenticated admin routes refuse access without touching DB',async()=>{
-  for(const [method,path] of [['GET','admin/features'],['GET','admin/events'],['POST','admin/topics'],['PATCH','admin/features/CAR']]){
+  for(const [method,path] of [['GET','admin/features'],['GET','admin/events'],['GET','admin/topics'],['POST','admin/topics'],['PATCH','admin/features/CAR']]){
     const out=await request(method,path,{body: { title:'Test',enabled:false }});
     assert.equal(out.status,401,method+' '+path);
   }

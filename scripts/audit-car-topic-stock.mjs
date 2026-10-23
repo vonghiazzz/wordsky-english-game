@@ -8,9 +8,8 @@ const response=await fetch(new URL('/api/topics',base));if(!response.ok)throw Er
 const {topics}=await response.json();
 const basicNeeded=(difficulty==='EASY'?2:1)*steps;
 const needed=[basicNeeded,steps,steps];
-const tiers=[['A1','A2'],['B1','B2'],['C1','C2']];
 const rows=topics.filter(t=>t.enabled!==false).map(t=>{
- const available=tiers.map(levels=>new Set((t.words||[]).filter(w=>w.cefr_review_status==='APPROVED'&&levels.includes(w.cefr_level)).map(w=>String(w.english).trim().toLowerCase())).size);
+ const available=[Number(t.approved_a2||0),Number(t.approved_bonus||0),Number(t.approved_double||0)];
  const missing=needed.map((n,i)=>Math.max(0,n-available[i]));
  return {topic:t.title,approved_basic:available[0],approved_bonus:available[1],approved_double:available[2],missing_basic:missing[0],missing_bonus:missing[1],missing_double:missing[2],ready:missing.every(n=>n===0)};
 });

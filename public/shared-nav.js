@@ -8,6 +8,7 @@
   {key:'home',label:'Trang chủ',url:'/#home',arena:'home'},
   {key:'flash',label:'Flashcard',url:'/learn.html#flash'},
   {key:'game',label:'Chữ rơi',url:'/learn.html#game'},
+  {key:'solo',label:'Chơi Solo',url:'/#solo',arena:'solo'},
   {key:'rooms',label:'Phòng thi',url:'/#rooms',arena:'rooms'},
   {key:'attendance',label:'Chuyên cần',url:'/#attendance',arena:'attendance'},
   {key:'rank',label:'Xếp hạng',url:'/#rank',arena:'rank'},
@@ -27,7 +28,7 @@
  function activeKey(){
   const hash=window.location.hash.replace(/^#/,'').toLowerCase();
   if(isLearn)return hash==='game'?'game':'flash';
-  return ['home','rooms','attendance','rank','admin'].includes(hash)?hash:'home';
+  return ['home','solo','rooms','attendance','rank','admin'].includes(hash)?hash:'home';
  }
  function updateActive(){
   const active=activeKey();

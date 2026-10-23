@@ -5,6 +5,8 @@ import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reco
 import {randomInt} from 'node:crypto';
 
 const AUTH_COOKIE='ws_auth';
+const SOLO_COOKIE='ws_solo';
+const SOLO_COOKIE_MAX_AGE=30*24*3600;
 const REQ_MAX=16000;
 const secret=()=>process.env.SESSION_SECRET;
 const guestCookie=code=>'ws_room_'+code;
@@ -64,8 +66,17 @@ async function checkin(req){
  });
 }
 async function fetchTopics(includeWords=false){
+ if(!includeWords){
+  const r=await sql(`SELECT t.id,t.title,t.enabled,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true)::int AS word_count,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('A1','A2'))::int AS approved_a2,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('B1','B2'))::int AS approved_bonus,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('C1','C2'))::int AS approved_double
+   FROM ws_topics t LEFT JOIN ws_words w ON w.topic_id=t.id
+   WHERE t.enabled=true GROUP BY t.id,t.title,t.enabled ORDER BY t.title`);
+  return r.rows;
+ }
  const r=await sql('SELECT id,title,enabled FROM ws_topics WHERE enabled=true ORDER BY title');
- if(!includeWords)return r.rows;
  const words=await sql('SELECT id,topic_id,english,meaning,ipa,example,translation,cefr_level,cefr_review_status FROM ws_words WHERE enabled=true ORDER BY english');
  return r.rows.map(t=>({...t,words:words.rows.filter(w=>w.topic_id===t.id)}));
 }
@@ -90,6 +101,32 @@ async function approvedCarWordCounts(db,round){
     AND ($1::uuid IS NULL OR w.topic_id=$1)`,[round.topic_id||null]);
  const row=q.rows[0]||{};
  return {A2:Number(row.a2||0),BONUS:Number(row.bonus||0),DOUBLE:Number(row.double||0)};
+}
+async function selectMatchWords(db,round){
+ const wordLimit=requiredWords(round);
+ const data=await db.query(`SELECT id,english,meaning FROM (
+   SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level,w.cefr_review_status
+   FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
+   WHERE w.enabled=true AND t.enabled=true
+     AND ($1::uuid IS NULL OR w.topic_id=$1)
+   ORDER BY lower(w.english),
+     CASE WHEN w.cefr_review_status='APPROVED' THEN 0 ELSE 1 END,w.id
+  ) unique_words
+  ORDER BY CASE
+   WHEN cefr_review_status='APPROVED' AND (
+    ($3='EASY' AND cefr_level IN ('A1','A2')) OR
+    ($3='NORMAL' AND cefr_level IN ('B1','B2')) OR
+    ($3='HARD' AND cefr_level IN ('C1','C2'))
+   ) THEN 0
+   WHEN cefr_review_status='APPROVED' AND (
+    ($3='EASY' AND cefr_level IN ('B1','B2')) OR
+    ($3='NORMAL' AND cefr_level IN ('A1','A2')) OR
+    ($3='HARD' AND cefr_level IN ('B1','B2'))
+   ) THEN 1
+   WHEN cefr_review_status='APPROVED' AND cefr_level IN ('A1','A2','B1','B2','C1','C2') THEN 2
+   ELSE 3 END,random() LIMIT $2`,[round.topic_id||null,wordLimit,round.difficulty]);
+ assertWordCapacity(round,data.rows.length);
+ return data.rows;
 }
 async function ensureVocabulary(db,rounds){
  for(const round of rounds){
@@ -224,34 +261,7 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
     const missing=carMissingWords(round,words);
     if(missing.length)throw fail('Không đủ từ đã duyệt để mở vòng: '+missing.join('; '),409);
    }else{
-    const wordLimit=requiredWords(round);
-    if(wordLimit){
-     // Server-side CEFR ordering: choose the requested difficulty first.
-     // Preserve existing vocabulary behavior as a fallback if the requested
-     // group is too small. Only reviewed APPROVED labels are trusted as levels.
-     const data=await db.query(`SELECT id,english,meaning FROM (
-       SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level,w.cefr_review_status
-       FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
-       WHERE w.enabled=true AND t.enabled=true
-         AND ($1::uuid IS NULL OR w.topic_id=$1)
-       ORDER BY lower(w.english),
-         CASE WHEN w.cefr_review_status='APPROVED' THEN 0 ELSE 1 END,w.id
-      ) unique_words
-      ORDER BY CASE
-       WHEN cefr_review_status='APPROVED' AND (
-        ($3='EASY' AND cefr_level IN ('A1','A2')) OR
-        ($3='NORMAL' AND cefr_level IN ('B1','B2')) OR
-        ($3='HARD' AND cefr_level IN ('C1','C2'))
-       ) THEN 0
-       WHEN cefr_review_status='APPROVED' AND (
-        ($3='EASY' AND cefr_level IN ('B1','B2')) OR
-        ($3='NORMAL' AND cefr_level IN ('A1','A2')) OR
-        ($3='HARD' AND cefr_level IN ('B1','B2'))
-       ) THEN 1
-       WHEN cefr_review_status='APPROVED' AND cefr_level IN ('A1','A2','B1','B2','C1','C2') THEN 2
-       ELSE 3 END,random() LIMIT $2`,[round.topic_id||null,wordLimit,round.difficulty]);
-     words=data.rows;assertWordCapacity(round,words.length);
-    }
+    words=await selectMatchWords(db,round);
    }
   const st=createState(round,words,now,ends);
   const saved=await db.query('INSERT INTO ws_runs(participant_id,round_id,state) VALUES($1,$2,$3::jsonb) ON CONFLICT(participant_id,round_id) DO NOTHING RETURNING id,state',[p.id,roundId,JSON.stringify(st)]);
@@ -273,6 +283,104 @@ async function playRound(req,code,runId,answer){const e=await eventInfo(code.toU
 async function playerStats(req){const user=await playerRow(mustPlayer(req).id);const today=new Date().toISOString().slice(0,10);return {...user,rank:rankForXp(user.xp),today};}
 async function globalRank(){const r=await sql('SELECT id,display_name,xp,streak FROM ws_users ORDER BY xp DESC,created_at ASC LIMIT 100');return r.rows.map((u,i)=>({...u,rank:rankForXp(u.xp),position:i+1}))}
 
+function soloRound(input){
+ const b=input||{};
+ return normalizeRound({
+  mode:'MATCH',difficulty:b.difficulty||'EASY',topic_id:b.topic_id||null,
+  duration_seconds:b.duration_seconds??90,question_count:b.question_count??6,
+  points_per_correct:100,penalty:25,weight:1
+ });
+}
+function soloPublicRound(round){
+ return {mode:'MATCH',topic_id:round.topic_id,difficulty:round.difficulty,duration_seconds:round.duration_seconds,
+  question_count:round.question_count,points_per_correct:round.points_per_correct,penalty:round.penalty};
+}
+function soloGuestIdentity(req,signingSecret){
+ const existing=parseSession(parseCookie(req.headers.cookie,SOLO_COOKIE),signingSecret);
+ if(existing?.role==='guest'&&existing.scope==='solo'&&/^[0-9a-f]{64}$/i.test(String(existing.token||'')))return {token:existing.token};
+ return {token:randomToken()};
+}
+async function startSoloMatch(req,res){
+ const round=soloRound(body(req));
+ const signingSecret=secret();if(!signingSecret||signingSecret.length<32)throw fail('Máy chủ chưa cấu hình SESSION_SECRET an toàn',503);
+ const owner=actor(req);const identity=soloGuestIdentity(req,signingSecret);const accessHash=hashToken(identity.token);const now=Date.now();
+ const fingerprintHash=hashToken(signingSecret+':'+ipOf(req));
+ const created=await transaction(async db=>{
+  const feature=await db.query("SELECT enabled FROM ws_features WHERE feature_key='MATCH'");
+  if(feature.rows[0]?.enabled===false)throw fail('Chế độ MATCH hiện đang tạm dừng',403);
+  // Serialize the rate-limit check per fingerprint across all serverless instances.
+  await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[fingerprintHash]);
+  const recent=await db.query("SELECT count(*)::int AS n FROM ws_solo_runs WHERE client_fingerprint_hash=$1 AND started_at>now()-interval '15 minutes'",[fingerprintHash]);
+  if(Number(recent.rows[0]?.n||0)>=30)throw fail('Bạn đã tạo quá nhiều lượt Solo. Thử lại sau 15 phút.',429);
+  if(round.topic_id){
+   const topic=await db.query('SELECT id FROM ws_topics WHERE id=$1 AND enabled=true',[round.topic_id]);
+   if(!topic.rows.length)throw fail('Chủ đề không tồn tại hoặc đang bị tắt',404);
+  }
+  const words=await selectMatchWords(db,round);
+  const state=createState(round,words,now,now+round.duration_seconds*1000);
+  state.answerReceipts={};
+  const q=await db.query(`INSERT INTO ws_solo_runs(user_id,access_token_hash,client_fingerprint_hash,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,status,score,health,correct,mistakes,state)
+   VALUES($1,$2,$3,'MATCH',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb)
+   RETURNING id`,[owner?.role==='player'?owner.id:null,accessHash,fingerprintHash,round.topic_id,round.difficulty,round.duration_seconds,round.question_count,round.points_per_correct,round.penalty,state.status,state.score,state.health,state.correct,state.mistakes,JSON.stringify(state)]);
+  return {id:q.rows[0].id,state};
+ });
+ // This cookie identifies one browser, not one run, so creating a new run never
+ // removes access to older runs owned by the same guest identity.
+ res.setHeader('set-cookie',cookie(SOLO_COOKIE,issueSession({role:'guest',scope:'solo',token:identity.token},signingSecret,SOLO_COOKIE_MAX_AGE),SOLO_COOKIE_MAX_AGE));
+ return {runId:created.id,round:soloPublicRound(round),game:publicState(created.state,now)};
+}
+function authorizeSolo(req,run){
+ const a=actor(req);
+ if(run.user_id){
+  if(a?.role==='player'&&a.id===run.user_id)return;
+  throw fail('Phiên chơi Solo không thuộc tài khoản hiện tại',401);
+ }
+ const access=parseSession(parseCookie(req.headers.cookie,SOLO_COOKIE),secret());
+ if(!access||access.role!=='guest'||access.scope!=='solo'||hashToken(access.token||'')!==run.access_token_hash)
+  throw fail('Phiên chơi Solo không hợp lệ hoặc đã hết hạn',401);
+}
+const receiptResult=receipt=>receipt?.result??receipt??{};
+async function playSoloMatch(req,runId,answer,lookupAttemptId){
+ if(badId(runId))throw fail('ID lượt chơi không hợp lệ');
+ return transaction(async db=>{
+  const q=await db.query(`SELECT id,user_id,access_token_hash,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,state
+   FROM ws_solo_runs WHERE id=$1 FOR UPDATE`,[runId]);
+  if(!q.rows.length)throw fail('Không tìm thấy lượt chơi Solo',404);
+  const rec=q.rows[0];authorizeSolo(req,rec);
+  if(answer){
+   const feature=await db.query("SELECT enabled FROM ws_features WHERE feature_key='MATCH'");
+   if(feature.rows[0]?.enabled===false)throw fail('Chế độ MATCH hiện đang tạm dừng',403);
+  }
+  const now=Date.now();let state=rec.state;const before=JSON.stringify(state);let result={};let duplicate=false;let attempt;
+  reconcile(state,rec,now);
+  if(lookupAttemptId!==undefined){
+   const attemptId=String(lookupAttemptId||'');
+   if(!idRegexp.test(attemptId))throw fail('Mã lần trả lời không hợp lệ');
+   const receipt=state.answerReceipts?.[attemptId];
+   result=receiptResult(receipt);attempt={id:attemptId,applied:!!receipt};
+  }
+  if(answer){
+   const attemptId=String(answer.attemptId||'');
+   if(!idRegexp.test(attemptId))throw fail('Mã lần trả lời không hợp lệ');
+   const receipt=state.answerReceipts?.[attemptId];
+   if(receipt){
+    if(receipt.leftId&&(receipt.leftId!==String(answer.leftId||'')||receipt.rightId!==String(answer.rightId||'')))
+     throw fail('Mã lần trả lời đã được dùng cho một thao tác khác',409);
+    result=receiptResult(receipt);duplicate=true;
+   }
+   else{
+    ({state,result}=answerQuestion(state,rec,answer,now));
+    if(!state.answerReceipts||typeof state.answerReceipts!=='object')state.answerReceipts={};
+    state.answerReceipts[attemptId]={leftId:String(answer.leftId||''),rightId:String(answer.rightId||''),result};
+   }
+  }
+  if(JSON.stringify(state)!==before)await db.query(`UPDATE ws_solo_runs SET state=$1::jsonb,status=$2,score=$3,health=$4,correct=$5,mistakes=$6,
+   finished_at=CASE WHEN $2='PLAYING' THEN finished_at ELSE coalesce(finished_at,now()) END WHERE id=$7`,
+   [JSON.stringify(state),state.status,state.score,state.health,state.correct,state.mistakes,runId]);
+  return {runId,round:soloPublicRound(rec),game:publicState(state,now),result,duplicate,...(attempt?{attempt}:{})};
+ });
+}
+
 export default async function handler(req,res){
  try{
   res.setHeader('x-content-type-options','nosniff');
@@ -287,7 +395,12 @@ export default async function handler(req,res){
   if(method==='POST'&&key==='attendance/checkin')return output(res,200,await checkin(req));
   if(method==='GET'&&key==='attendance/me')return output(res,200,await playerStats(req));
   if(method==='GET'&&key==='rankings')return output(res,200,{players:await globalRank()});
-  if(method==='GET'&&key==='topics')return output(res,200,{topics:await fetchTopics(true)});
+  if(method==='GET'&&key==='topics')return output(res,200,{topics:await fetchTopics(false)});
+  if(method==='POST'&&key==='solo/match/start')return output(res,201,await startSoloMatch(req,res));
+  if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSoloMatch(req,r[2]));
+  if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='attempts'&&r[4]&&r.length===5)return output(res,200,await playSoloMatch(req,r[2],undefined,r[4]));
+  if(method==='POST'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='answer'&&r.length===4)return output(res,200,await playSoloMatch(req,r[2],body(req)));
+  if(method==='GET'&&key==='admin/topics'){mustAdmin(req);return output(res,200,{topics:await fetchTopics(true)})}
   if(method==='POST'&&key==='admin/topics'){
    mustAdmin(req);const b=body(req),title=normalizeName(b.title,80);if(title.length<2)throw fail('Tên chủ đề tối thiểu 2 ký tự');
    const d=await sql('INSERT INTO ws_topics(title) VALUES($1) RETURNING id,title',[title]);return output(res,201,d.rows[0]);
