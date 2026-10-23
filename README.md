@@ -9,6 +9,7 @@
   - **Match Master**: chọn từ tiếng Anh và nghĩa Việt để nối cặp. Mức Normal/Hard thêm nghĩa nhiễu.
   - **Bomb Defuser**: đồng thời có nhiều bom chứa nghĩa Việt; gõ tiếng Anh trước hạn, bỏ lỡ 3 quả mất 3 tim và thua.
   - **Lane Escape**: xe 5 làn, né `🧱`, `⭐` cộng 50% điểm, `×2` nhân đôi điểm; phím ←/→, A/D, Enter/Space hoặc chạm màn hình.
+- **Phase 2.1 — MATCH Solo** tại `/#solo`: tự chọn chủ đề, độ khó, 3–20 cặp và thời gian; không cần phòng thi. Lượt được backend chấm và lưu riêng, không cộng XP/leaderboard.
 - Học viên: tự đăng ký / đăng nhập (username, mật khẩu >=8 ký tự), điểm danh tối đa 1 lần/ngày theo `Asia/Ho_Chi_Minh`, nhận XP, chuỗi ngày và rank theo XP.
 - Admin riêng: đăng nhập qua credential phía server, quản lý chủ đề/thẻ, bật/tắt MATCH/BOMB/CAR/SIGNUP/ATTENDANCE; tạo/sửa/mở/bắt đầu/kết thúc cuộc thi.
 - Giải đấu: mã phòng ngẫu nhiên, mật khẩu riêng được hash, tên hiển thị, giới hạn người chơi (2–500), 1–12 vòng; mỗi vòng cấu hình chế độ, topic, độ khó, thời lượng, số lượt, điểm đúng, điểm trừ, hệ số.

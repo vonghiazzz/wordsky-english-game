@@ -27,7 +27,7 @@ bash dev/wordsky-v6-test/local-db.sh test
 3. Seeds **26 original topics + 260 original words** into local DB.
 4. Creates 12 temporary **FAKE-approved test-only** CEFR cards (from draft terms); this is NOT vocabulary approval.
 5. Adds 12 fake-approved words to existing topics without creating any new topics.
-6. Runs real HTTP API + PostgreSQL smoke: `/api/topics`, admin login, reject insufficient C1 stock, room create/open, player join, start, Car x2 answer wrong vs correct, +200 scoring.
+6. Runs real HTTP API + PostgreSQL smoke: MATCH Solo guest start/ownership/answer, `/api/topics`, admin login, reject insufficient C1 stock, room create/open, player join, start, Car x2 answer wrong vs correct, +200 scoring.
 7. Removes temporary test fixture and the test room (keeps local DB & test-only words).
 
 Expected after first test: 26 topics, 272 words (260 + 12 temporary test words), 12 simulated APPROVED **in LOCAL DB only**.
