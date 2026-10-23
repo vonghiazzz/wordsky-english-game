@@ -11,8 +11,8 @@ test('admin displays persisted bomb and per-stage CAR options',()=>{
  }
 });
 test('bomb and CAR keyboards only appear in active playing runs and never overlay Start',()=>{
- assert.match(ui,/g\.status==='PLAYING'\?compactKeyboard\('bombAnswer'\)/);
- assert.match(ui,/g\.status==='PLAYING'&&!isBlocked\?compactKeyboard\('carAnswer'\)/);
+ assert.match(ui,/bombArenaMarkup\(g,rd\)/);
+ assert.match(ui,/id="carAnswer"[^>]*inputmode="text"/);
  assert.match(css,/#startRoundButton\{position:relative;z-index:2\}/);
  assert.match(css,/\.game-answer-row\{display:flex/);
 });
@@ -34,4 +34,31 @@ test('all-topics choice is offered only for round configuration, never for addin
  assert.match(optionsTopics(null),/value="" disabled selected/);
  assert.match(ui,/optionsTopics\(r\.topic_id,true\)/);
  assert.match(ui,/optionsTopics\(topics\[0\]\?\.id\)/);
+});
+
+
+test('BOMB auto-defuses without selecting a bomb or submitting the form',()=>{
+ const bomb=ui.split(" }else if(g.mode==='BOMB'){")[1]?.split(" }else if(g.mode==='CAR'){")[0];
+ assert.ok(bomb);
+ assert.match(bomb,/bombArenaMarkup\(g,rd\)/);
+ assert.match(bomb,/id="bombAnswer"[^>]*inputmode="text"/);
+ assert.doesNotMatch(bomb,/data-select-bomb|compactKeyboard/);
+ assert.match(ui,/body:\{answer:typed,auto:true\}/);
+ assert.match(ui,/queueBombCheck\(\)/);
+ assert.match(ui,/function syncBombArena\(\)/);
+});
+
+test('CAR uses native full-word input and still requires server-validated lane answer',()=>{
+ const car=ui.split(" }else if(g.mode==='CAR'){")[1]?.split(' if(feedback')[0];
+ assert.ok(car);
+ assert.match(car,/id="carAnswer"[^>]*inputmode="text"/);
+ assert.doesNotMatch(car,/compactKeyboard\('carAnswer'\)/);
+ assert.doesNotMatch(ui,/el\.readOnly=true/);
+ assert.match(ui,/submitGameAnswer\(\{lane:selectedLane,answer:ans\}\)/);
+});
+
+test('leaderboard has mobile-friendly score columns and compact spacing',()=>{
+ assert.match(ui,/room-leaderboard-heading/);
+ assert.match(css,/#eventBoard \.board-row\{grid-template-columns:/);
+ assert.match(css,/#liveGame \.game-shell\{margin-bottom:6px\}/);
 });
