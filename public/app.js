@@ -143,11 +143,24 @@ async function submitGameAnswer(payload){
  }catch(e){feedback=e.message;renderGame()}
  finally{gameBusy=false}
 }
-function compactKeyboard(target){
- const rows=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
- return `<div class="game-keyboard" aria-label="Bàn phím tiếng Anh trong game" data-keyboard-target="${target}">
- ${rows.map(row=>`<div class="game-keyboard-row">${[...row].map(c=>`<button type="button" data-game-key="${c}" data-keyboard-target="${target}">${c}</button>`).join('')}</div>`).join('')}
- <div class="game-keyboard-row"><button type="button" class="game-keyboard-wide" data-game-key="SPACE" data-keyboard-target="${target}">SPACE</button><button type="button" data-game-key="DEL" data-keyboard-target="${target}">DEL</button><button type="button" class="game-keyboard-enter" data-game-key="ENTER" data-keyboard-target="${target}">ENTER</button></div></div>`;
+function compactKeyboard(target,autoSubmit=false){
+ const rows=['qwertyuiop','asdfghjkl','zxcvbnm'];
+ const key=(label,value,klass='')=>`<button type="button" class="${klass}" data-game-key="${value}" data-keyboard-target="${target}" aria-label="${value==='DEL_WORD'?'X\u00f3a t\u1eeb cu\u1ed1i':value==='SPACE'?'D\u1ea5u c\u00e1ch':value==='CLEAR'?'X\u00f3a h\u1ebft':value==='ENTER'?'Tr\u1ea3 l\u1eddi':'Ch\u1eef '+label}">${label}</button>`;
+ return `<div class="game-keyboard" role="group" aria-label="B\u00e0n ph\u00edm ti\u1ebfng Anh trong game" data-keyboard-target="${target}">
+  ${rows.map(row=>`<div class="game-keyboard-row">${[...row].map(c=>key(c.toUpperCase(),c.toUpperCase())).join('')}</div>`).join('')}
+  <div class="game-keyboard-row">${key('X\u00f3a h\u1ebft','CLEAR','game-keyboard-clear')}${key('D\u1ea5u c\u00e1ch','SPACE','game-keyboard-wide')}${autoSubmit?'':key('\u21b5 Enter','ENTER','game-keyboard-enter')}${key('X\u00f3a t\u1eebng t\u1eeb','DEL_WORD','game-keyboard-delete-word')}</div>
+ </div>`;
+}
+function removeLastGameWord(text){
+ const trimmed=String(text).replace(/\s+$/u,'');
+ return trimmed.replace(/\S+$/u,'');
+}
+function mobileGameKeyboard(){return matchMedia('(pointer:coarse) and (max-width:760px)').matches}
+function prepareGameInput(input){
+ if(!input)return;
+ const mobile=mobileGameKeyboard();
+ input.readOnly=mobile;
+ input.inputMode=mobile?'none':'text';
 }
 // BOMB: automatically resolve a full English word against all active bombs.
 // Keep the native mobile input mounted while the 1.2s server poll redraws bombs.
@@ -221,7 +234,7 @@ function renderGame(){
       <label for="bombAnswer">Nhập đáp án tiếng Anh</label>
       <div class="game-answer-row"><input id="bombAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Gõ từ tiếng Anh — bom tự được giải" maxlength="100" aria-label="Từ tiếng Anh để giải bom"></div>
       <small class="small-note">Tự kiểm tra khi bạn ngừng gõ một chút. Chưa gõ đủ từ không bị trừ điểm.</small>
-    </div>`;
+     </div>${g.status==='PLAYING'?compactKeyboard('bombAnswer',true):''}`;
  }else if(g.mode==='CAR'){
   const next=Math.max(0,Math.ceil((g.nextAllowedAt-Date.now()-localTimeOffset)/1000));
   const current=g.level?.lanes?.[selectedLane];
@@ -234,21 +247,21 @@ function renderGame(){
     <label for="carAnswer">${isBlocked?'⚠️ Làn có vật cản, đổi sang làn an toàn!':current?'Dịch từ làn '+(selectedLane+1)+' ('+escapeHtml(current.cefr)+'): '+escapeHtml(current.meaning):'Chọn làn'}</label>
     <div class="car-answer-row"><input id="carAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="100" placeholder="${isBlocked?'Không cần nhập từ':'Nhập nguyên từ tiếng Anh rồi Enter'}" ${isBlocked?'disabled':''}><button id="carDrive" type="submit" class="btn primary" ${next?'disabled':''}>${isBlocked?'⚠️ Vượt cản':'↵ Trả lời & Lái xe'}</button></div>
     <span id="carReadyHint" class="small-note">${next?'Chờ '+next+' giây':'Sẵn sàng'}</span><span id="carStepTimer" class="small-note">⏱ Còn ${Math.max(0,Math.ceil(((g.stepDeadlineAt||g.endsAt)-Date.now()-localTimeOffset)/1000))}s để qua chặng</span>
-   </form>
+   </form>${g.status==='PLAYING'&&!isBlocked?compactKeyboard('carAnswer'):''}
    <p class="small-note">Chạm làn để xem đủ nghĩa tiếng Việt. Từ sai không qua chặng; vật cản sẽ mất 1 tim.</p>`;
 
  }
  if(feedback||g.mode==='BOMB')h+=`<div id="gameFeedback" ${feedback?'':'hidden'} class="game-status ${feedback.startsWith('Đúng')||feedback.startsWith('✅')?'good':feedback.startsWith('Chưa')||feedback.startsWith('Sai')?'bad':''}">${escapeHtml(feedback)}</div>`;
  h+='</div>';host.innerHTML=h;
  if(g.mode==='BOMB'&&g.status==='PLAYING'){
-  const el=$('bombAnswer');if(el)el.value=existingBombAnswer;
+  const el=$('bombAnswer');if(el){el.value=existingBombAnswer;prepareGameInput(el);}
   for(const bomb of $('bombArena').querySelectorAll('.bomb-falling'))bomb.style.transition='none';
   animateBombs();requestAnimationFrame(()=>{for(const bomb of $('bombArena')?.querySelectorAll('.bomb-falling')||[])bomb.style.transition='';});
-  if(oldFocus==='bombAnswer'&&el)el.focus({preventScroll:true});
+  if(oldFocus==='bombAnswer'&&el&&!mobileGameKeyboard())el.focus({preventScroll:true});
  }
  if(g.mode==='CAR'&&g.status==='PLAYING'){
-  const el=$('carAnswer');if(el)el.value=existingCarAnswer;
-  if(oldFocus==='carAnswer'&&el)el.focus({preventScroll:true});
+  const el=$('carAnswer');if(el){el.value=existingCarAnswer;prepareGameInput(el);}
+  if(oldFocus==='carAnswer'&&el&&!mobileGameKeyboard())el.focus({preventScroll:true});
  }
 }
 function animateBombs(){
@@ -492,8 +505,11 @@ async function manageVocabulary(type,id){
   }
  }
 }
-// Delegated user interactions
-window.addEventListener('click',async event=>{
+ // Prevent tapping virtual keys from opening the mobile OS keyboard.
+ window.addEventListener('pointerdown',event=>{if(event.target.closest('[data-game-key]'))event.preventDefault()},{passive:false});
+ window.addEventListener('resize',()=>{prepareGameInput($('bombAnswer'));prepareGameInput($('carAnswer'));});
+ // Delegated user interactions
+ window.addEventListener('click',async event=>{
  const button=event.target.closest('button,[data-screen],[data-close]');if(!button)return;
  if(button.dataset.screen){event.preventDefault();navigate(button.dataset.screen);return}
  if(button.dataset.close==='auth'){closeAuth();return}
@@ -509,8 +525,9 @@ window.addEventListener('click',async event=>{
    const input=$(button.dataset.keyboardTarget);if(!input||input.disabled||gameBusy)return;
    const key=button.dataset.gameKey;
    if(key==='ENTER'){if(button.dataset.keyboardTarget==='carAnswer'&&$('carDrive')?.disabled){toast('Chờ chặng tiếp theo sẵn sàng');return}input.closest('form')?.requestSubmit();return}
-   if(key==='DEL')input.value=input.value.slice(0,-1);
-   else if(key==='SPACE')input.value+=' ';
+   if(key==='DEL_WORD')input.value=removeLastGameWord(input.value);
+   else if(key==='CLEAR')input.value='';
+   else if(key==='SPACE'&&input.value.length<input.maxLength)input.value+=' ';
    else if(input.value.length<input.maxLength)input.value+=key.toLowerCase();
    input.dispatchEvent(new Event('input',{bubbles:true}));return;
   }

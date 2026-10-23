@@ -10,9 +10,11 @@ test('admin displays persisted bomb and per-stage CAR options',()=>{
   assert.match(api,new RegExp('r\\.'+k+'|r\\.mode'));
  }
 });
-test('bomb and CAR keyboards only appear in active playing runs and never overlay Start',()=>{
+test('BOMB and CAR render custom keyboards only for active rounds and keep Start unobstructed',()=>{
  assert.match(ui,/bombArenaMarkup\(g,rd\)/);
  assert.match(ui,/id="carAnswer"[^>]*inputmode="text"/);
+ assert.match(ui,/g\.status==='PLAYING'\?compactKeyboard\('bombAnswer',true\)/);
+ assert.match(ui,/g\.status==='PLAYING'&&!isBlocked\?compactKeyboard\('carAnswer'\)/);
  assert.match(css,/#startRoundButton\{position:relative;z-index:2\}/);
  assert.match(css,/\.game-answer-row\{display:flex/);
 });
@@ -42,18 +44,20 @@ test('BOMB auto-defuses without selecting a bomb or submitting the form',()=>{
  assert.ok(bomb);
  assert.match(bomb,/bombArenaMarkup\(g,rd\)/);
  assert.match(bomb,/id="bombAnswer"[^>]*inputmode="text"/);
- assert.doesNotMatch(bomb,/data-select-bomb|compactKeyboard/);
+ assert.doesNotMatch(bomb,/data-select-bomb/);
+ assert.match(bomb,/compactKeyboard\('bombAnswer',true\)/);
  assert.match(ui,/body:\{answer:typed,auto:true\}/);
  assert.match(ui,/queueBombCheck\(\)/);
  assert.match(ui,/function syncBombArena\(\)/);
 });
 
-test('CAR uses native full-word input and still requires server-validated lane answer',()=>{
+test('CAR uses an in-game full-word keyboard and keeps server-validated lane answers',()=>{
  const car=ui.split(" }else if(g.mode==='CAR'){")[1]?.split(' if(feedback')[0];
  assert.ok(car);
  assert.match(car,/id="carAnswer"[^>]*inputmode="text"/);
- assert.doesNotMatch(car,/compactKeyboard\('carAnswer'\)/);
- assert.doesNotMatch(ui,/el\.readOnly=true/);
+ assert.match(car,/compactKeyboard\('carAnswer'\)/);
+ assert.match(ui,/input\.readOnly=mobile/);
+ assert.match(ui,/input\.inputMode=mobile\?'none':'text'/);
  assert.match(ui,/submitGameAnswer\(\{lane:selectedLane,answer:ans\}\)/);
 });
 
@@ -61,4 +65,51 @@ test('leaderboard has mobile-friendly score columns and compact spacing',()=>{
  assert.match(ui,/room-leaderboard-heading/);
  assert.match(css,/#eventBoard \.board-row\{grid-template-columns:/);
  assert.match(css,/#liveGame \.game-shell\{margin-bottom:6px\}/);
+});
+
+
+test('BOMB and CAR custom keyboards reproduce the falling-word QWERTY rows and actions',()=>{
+ const section=ui.split('function compactKeyboard(target,autoSubmit=false){')[1]?.split('function mobileGameKeyboard()')[0];
+ assert.ok(section,'custom keyboard helper exists');
+ const render=new Function(`function compactKeyboard(target,autoSubmit=false){${section}return compactKeyboard;`)();
+ const bomb=render('bombAnswer',true);
+ const car=render('carAnswer');
+ for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){
+  assert.match(bomb,new RegExp(`data-game-key="${c}"`));
+  assert.match(car,new RegExp(`data-game-key="${c}"`));
+ }
+ assert.match(bomb,/data-game-key="CLEAR"/);
+ assert.match(bomb,/data-game-key="SPACE"/);
+ assert.match(bomb,/data-game-key="DEL_WORD"/);
+ assert.doesNotMatch(bomb,/data-game-key="ENTER"/);
+ assert.doesNotMatch(bomb,/data-game-key="DEL"/);
+ assert.match(car,/data-game-key="CLEAR"/);
+ assert.match(car,/data-game-key="SPACE"/);
+ assert.match(car,/data-game-key="ENTER"/);
+ assert.match(car,/data-game-key="DEL_WORD"/);
+ assert.ok(bomb.indexOf('data-game-key="CLEAR"')<bomb.indexOf('data-game-key="DEL_WORD"'));
+ assert.ok(car.indexOf('data-game-key="CLEAR"')<car.indexOf('data-game-key="DEL_WORD"'));
+});
+
+test('delete-last-word removes only the final English word, clear-all empties the input',()=>{
+ const helper=ui.match(/function removeLastGameWord\(text\)\{[\s\S]*?\n\}/)?.[0];
+ assert.ok(helper);
+ const remove=new Function(`${helper};return removeLastGameWord`)();
+ assert.equal(remove('apple'),'');
+ assert.equal(remove('green apple'),'green ');
+ assert.equal(remove('green apple   '),'green ');
+ assert.match(ui,/key==='CLEAR'\)input\.value=''/);
+ assert.match(ui,/key==='DEL_WORD'\)input\.value=removeLastGameWord/);
+});
+
+test('touch typing uses embedded keyboards and does not open the system keyboard',()=>{
+ assert.match(ui,/function mobileGameKeyboard\(\)\{return matchMedia/);
+ assert.match(ui,/input\.readOnly=mobile/);
+ assert.match(ui,/input\.inputMode=mobile\?'none':'text'/);
+ assert.match(ui,/event\.target\.closest\('\[data-game-key\]'\)/);
+ assert.match(css,/@media \(pointer:coarse\) and \(max-width:760px\)/);
+ assert.match(css,/#liveGame \.game-keyboard\{display:flex/);
+ assert.match(css,/#liveGame \.bomb-arena\{height:clamp\(/);
+ assert.match(ui,/input\.dispatchEvent\(new Event\('input',\{bubbles:true\}\)\)/);
+ assert.match(ui,/queueBombCheck\(\)/);
 });
