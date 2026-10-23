@@ -1,0 +1,18 @@
+/* WordSky shared header: used by Arena and Learn, scoped to ws-* selectors. */
+#wsSharedNav{position:sticky;top:0;z-index:80;width:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.ws-site-header{background:rgba(12,22,43,.96);border-bottom:1px solid rgba(173,195,241,.19);color:#f2f6ff;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.ws-site-bar{min-height:72px;max-width:1200px;width:calc(100% - 32px);margin:auto;display:flex;align-items:center;gap:20px}
+.ws-site-logo{color:#f2f6ff;text-decoration:none;display:inline-flex;align-items:center;gap:9px;font-size:23px;font-weight:900;letter-spacing:-1px;white-space:nowrap;flex-shrink:0}
+.ws-logo-sky{color:#a9a2ff}.ws-site-logo small{font-size:8px;letter-spacing:1.7px;color:#a6f0c2;display:block;margin-top:-3px}
+.ws-logo-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#a39cff;color:#10182e;font-size:24px;line-height:1}
+.ws-site-links{display:flex;align-items:center;justify-content:center;gap:3px;flex:1;min-width:0}
+.ws-nav-link{color:#b5c5e3!important;text-decoration:none!important;font-weight:750;font-size:12px;line-height:1.2;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 11px;border-radius:10px}
+.ws-nav-link:hover,.ws-nav-link.is-active{background:#2a395d;color:#fff!important}
+.ws-nav-link:focus-visible,.ws-site-logo:focus-visible,.ws-nav-toggle:focus-visible,.ws-site-account:focus-visible{outline:2px solid #a6f0c2;outline-offset:3px}
+.ws-nav-link[hidden]{display:none!important}
+.ws-nav-toggle{display:none;background:#1d2f50;color:#fff;border:1px solid #526684;border-radius:10px;min-height:44px;min-width:44px;font-size:22px;cursor:pointer}
+.ws-site-account{flex-shrink:0}.ws-guest-note{font-size:11px;font-weight:750;white-space:nowrap;color:#b0e3c7;background:#1b3b3a;border-radius:30px;padding:9px 11px}
+@media(max-width:1100px){.ws-site-bar{flex-wrap:wrap;gap:9px;padding:10px 0}.ws-site-links{order:3;flex:0 0 100%;justify-content:flex-start;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}.ws-site-account,.ws-guest-note{margin-left:auto}}
+@media(max-width:680px){.ws-site-bar{min-height:62px;flex-wrap:nowrap;padding:8px 0;width:calc(100% - 24px)}.ws-site-logo{font-size:21px}.ws-site-logo small{font-size:7px}.ws-nav-toggle{display:block;margin-left:auto;order:3}.ws-site-account{margin-left:auto;font-size:11px;padding:10px 11px}.ws-guest-note{display:none}.ws-site-links{display:none;position:absolute;top:100%;left:0;right:0;max-height:calc(100dvh - 62px);overflow-y:auto;padding:12px;flex-direction:column;align-items:stretch;background:#101c35;border-bottom:1px solid #425879;box-shadow:0 16px 35px #0008}.ws-site-links.is-open{display:flex}.ws-nav-link{justify-content:flex-start;font-size:14px;min-height:46px;padding:13px 15px}.ws-site-links{order:initial;flex:initial}.ws-site-account{max-width:108px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}}
+@media(max-width:360px){.ws-site-bar{gap:6px}.ws-site-logo{font-size:18px}.ws-logo-mark{width:31px;height:31px}.ws-site-account{max-width:96px;font-size:10px;padding:9px 7px}}
+@media(prefers-reduced-motion:reduce){.ws-site-header{scroll-behavior:auto}}

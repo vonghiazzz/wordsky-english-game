@@ -79,9 +79,10 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
 /* Official Cambridge search: opens Cambridge, does not republish its dictionary content. */
 .cambridge-form{margin:0;display:flex}.cambridge-form .secondary{white-space:nowrap}.cambridge-form input[type=hidden]{display:none}
 </style>
+<link rel="stylesheet" href="/shared-nav.css" />
+<script src="/shared-nav.js" defer></script>
 </head>
-<body><main class="container">
-<header class="top"><div class="brand">☁️ Word<b>Sky</b></div><div class="pill tiny">English for beginners · A1</div></header>
+<body><div id="wsSharedNav" data-ws-page="learn"></div><main class="container">
 <section class="hero"><div class="kicker">HỌC VUI • NHỚ LÂU</div><h1>Học từ vựng.<br><em>Bắt chữ trên mây.</em></h1><p>Lật thẻ để nhớ từ mới, chơi bắt chữ rơi hoặc gõ nhanh cả từ trước khi chạm đất. Nhập tên để ghi điểm và so tài với bạn học!</p></section>
 <nav class="tabs" aria-label="Chế độ học"><button class="tab active" id="flashTab" aria-selected="true">🃏 Flashcard</button><button class="tab" id="gameTab" aria-selected="false">🌠 Game chữ rơi</button><button class="tab" id="manageTab" aria-selected="false">⚙️ Quản lý từ vựng</button></nav>
 <section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng.</p><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button><form id="cambridgeLookupForm" class="cambridge-form" action="https://dictionary.cambridge.org/search/english/direct/" method="get" target="_blank" rel="noopener noreferrer" aria-label="Tra từ hiện tại trên Cambridge Dictionary"><input type="hidden" name="q" id="cambridgeTerm"><input type="hidden" name="utm_source" value="widget_searchbox_source"><input type="hidden" name="utm_medium" value="widget_searchbox"><input type="hidden" name="utm_campaign" value="widget_tracking"><button type="submit" class="secondary" id="cambridgeLookupSubmit" disabled>📖 Tra Cambridge ↗</button></form></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny">Tiến độ được lưu trên trình duyệt này.</p></div><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
@@ -294,7 +295,8 @@ $('know').onclick=()=>{if(!cards.length)return;learned[key(topic,cards[cardIndex
 $('resetProgress').onclick=()=>{cards.forEach(c=>delete learned[key(topic,c[0])]);saveLearned();cardIndex=0;renderCard()};
 $('shuffle').onclick=()=>{DATA[topic].sort(()=>Math.random()-.5);cardIndex=0;renderCard()};
 $('topic').onchange=e=>{topic=e.target.value;cardIndex=0;renderCard()};
-function showTab(which){
+function showTab(which,{fromRoute=false}={}){
+  if(!['flash','game','manage'].includes(which))return;
   if(which!=='game'&&state.running&&!state.paused)pause(true);
   for(const t of ['flash','game','manage']){
     const selected=t===which;
@@ -303,6 +305,9 @@ function showTab(which){
     $(t+'Tab').setAttribute('aria-selected',String(selected));
   }
   if(which==='manage')renderManager();
+  const hash='#'+which;
+  if(!fromRoute&&location.hash!==hash)history.pushState(null,'',hash);
+  window.dispatchEvent(new Event('wordsky:route'));
 }
 $('flashTab').onclick=()=>showTab('flash');
 $('gameTab').onclick=()=>showTab('game');

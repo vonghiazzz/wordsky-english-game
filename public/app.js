@@ -16,9 +16,14 @@ async function api(path,{method='GET',body}={}){
  if(!resp.ok)throw Error(json.error||'Có lỗi máy chủ');return json;
 }
 const $screen=n=>$('screen-'+n);
-function navigate(name){if(!['home','rooms','attendance','rank','admin'].includes(name)||name===screen)return;screen=name;
+function navigate(name,{fromHistory=false}={}){
+ if(!['home','rooms','attendance','rank','admin'].includes(name))return;
+ if(!fromHistory&&location.hash!=='#'+name)history.pushState(null,'','#'+name);
+ if(name===screen){window.dispatchEvent(new Event('wordsky:route'));return}
+ screen=name;
  document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id==='screen-'+name));
  document.querySelectorAll('[data-screen]').forEach(e=>e.classList.toggle('active',e.dataset.screen===name));
+ window.dispatchEvent(new Event('wordsky:route'));
  // Only intentional screen navigation scrolls to the top, never a same-screen click.
  window.scrollTo({top:0,behavior:'auto'});
  if(name==='attendance')loadAttendance();if(name==='rank')loadRank();if(name==='admin')loadAdmin({preserveView:false});if(name==='rooms'&&roomCode)loadRoom();
@@ -42,6 +47,7 @@ function closeAuth(){$('authModal').classList.add('hidden')}
 function setLoginMode(m){loginMode=m;$('loginTab').classList.toggle('on',m==='login');$('signupTab').classList.toggle('on',m==='signup');$('authTitle').textContent=m==='login'?'Đăng nhập':'Tạo tài khoản';$('displayNameLabel').classList.toggle('hidden',m!=='signup');$('authForm').elements.password.autocomplete=m==='login'?'current-password':'new-password';}
 async function refreshSession(){try{const x=await api('auth/me');session=x.actor}catch{session=null}
  $('accountButton').innerHTML=session?`${escapeHtml(session.role==='admin'?'⚙ Quản trị viên':session.profile?.display_name||session.id)} <span>↗</span>`:'Đăng nhập <span>↗</span>';
+ window.WordSkyNav?.setAdmin(session?.role==='admin');
  if(session?.role==='player'&&$('joinForm'))$('joinForm').elements.name.value=session.profile?.display_name||'';
 }
 async function handleAuth(evt){evt.preventDefault();let f=new FormData(evt.target);const payload=Object.fromEntries(f.entries());
@@ -584,6 +590,13 @@ window.addEventListener('keydown',e=>{
  if(['ArrowRight','d','D'].includes(e.key)){e.preventDefault();selectedLane=Math.min(4,selectedLane+1);renderGame()}
   if([' ','Enter'].includes(e.key)&&!['BUTTON'].includes(e.target.tagName)){e.preventDefault();$('carAnswer')?.focus()}
 });
+// Keep same-page navigation in sync with browser Back / Forward.
+function restoreArenaRoute(){
+ const hash=location.hash.slice(1);
+ navigate(['home','rooms','attendance','rank','admin'].includes(hash)?hash:'home',{fromHistory:true});
+}
+window.addEventListener('popstate',restoreArenaRoute);
+window.addEventListener('hashchange',restoreArenaRoute);
 let polling=false;setInterval(async()=>{
  if(polling)return;polling=true;updateCountdowns();try{if(screen==='rooms'&&roomCode){
   if(game?.game.status==='PLAYING'){await refreshGame()}
@@ -597,6 +610,6 @@ setInterval(updateCountdowns,500);
   await refreshSession();
  await loadTopics(true);
  const saved=sessionStore.getItem('wordsky_room_code');if(saved&&/^[A-Z0-9]{5,12}$/.test(saved)){roomCode=saved;}
- // SPA tabs can be addressed by hash, without losing server-issued session cookies.
- const hash=location.hash.slice(1);if(['home','attendance','rank','rooms','admin'].includes(hash))navigate(hash);
+ // Restore Arena route without rewriting browser history.
+ const hash=location.hash.slice(1);if(['home','attendance','rank','rooms','admin'].includes(hash))navigate(hash,{fromHistory:true});
 })();

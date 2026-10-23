@@ -56,9 +56,11 @@ test('restores CEFR state and scroll after Admin rendering without editor auto s
 });
 
 test('initial Admin navigation keeps intentional scroll reset; in-place refresh does not',()=>{
- const nav=fragment('function navigate(name){','\nfunction setupPasswordToggles(');
+ const nav=fragment('function navigate(name,{fromHistory=false}={}){','\nfunction setupPasswordToggles(');
  const loader=fragment('async function loadAdmin({preserveView=true}={}){','\nfunction optionsTopics(');
- assert.match(nav,/name===screen\)return/);
+ assert.match(nav,/if\(name===screen\)\{[^\n]*return\}/);
+ assert.match(nav,/history\.pushState/);
+ assert.match(nav,/window\.scrollTo\(\{top:0,behavior:'auto'\}\)/);
  assert.match(nav,/loadAdmin\(\{preserveView:false\}\)/);
  assert.match(loader,/const view=preserveView\?captureAdminView\(\):null/);
  assert.match(loader,/if\(!view\)pane\.innerHTML='<div class="loading">/);
