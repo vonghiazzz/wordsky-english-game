@@ -27,7 +27,7 @@ test('falling BOMB play keeps its input mounted during polling and auto submits 
  assert.match(app,/syncSoloBombArena\(\)/);assert.match(app,/queueSoloBombCheck/);assert.match(app,/answer:typed,auto:true/);
  assert.match(app,/existingBombAnswer/);assert.match(app,/oldFocus==='soloBombAnswer'/);
  assert.match(app,/animateBombs\(\$\('soloBombArena'\)\)/);
- assert.match(app,/batch===3\?'29%':'43%'/);
+ assert.match(app,/function bombLaneCount\(rd\)/);
  assert.match(app,/bombCardsMarkup/);assert.match(app,/!Object\.hasOwn|escapeHtml\(b\.meaning\)/);
 });
 

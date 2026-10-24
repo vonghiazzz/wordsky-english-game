@@ -5,76 +5,128 @@ import fs from 'node:fs';
 const app=fs.readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../public/style.css',import.meta.url),'utf8');
 
-function extractFunction(name,next){
- const begin=app.indexOf('function '+name+'(');
- const end=app.indexOf('\nfunction '+next+'(',begin);
- assert.ok(begin!==-1&&end>begin,name+' must be present');
- return app.slice(begin,end);
+function extract(from,to){
+ const start=app.indexOf('function '+from+'(');
+ const end=app.indexOf('\nfunction '+to+'(',start);
+ assert.ok(start!==-1&&end>start,`${from} -> ${to} block must exist`);
+ return app.slice(start,end);
 }
+const escapeHtml=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;');
+const bombModule=new Function('escapeHtml','localTimeOffset',
+ extract('bombLaneCount','bombArenaMarkup')+'\nreturn {bombLaneCount,bombLaneIndex,bombCardMarkup,bombCardsMarkup};'
+)(escapeHtml,0);
 
-test('both BOMB modes use independent falling lanes, not a static queue',()=>{
- assert.match(app,/class="bomb-arena bomb-falling-lanes solo-bomb-arena"/);
- assert.match(app,/class="bomb-arena bomb-falling-lanes" id="bombArena"/);
- assert.doesNotMatch(app,/bomb-queue-layout/);
- assert.match(css,/\.bomb-arena\.bomb-falling-lanes\{[\s\S]*?display:flex;[\s\S]*?flex-wrap:nowrap/);
- assert.match(css,/\.bomb-fall-track\{\s*position:relative/);
- assert.match(css,/\.bomb-arena\.bomb-falling-lanes \.bomb-falling\{\s*position:absolute/);
- assert.doesNotMatch(css,/\.bomb-arena\.bomb-falling-lanes \.bomb-falling\{[^}]*transform:none!important/);
+function bomb(id,slot,spawnAt,deadline){return{id,meaning:'Nghĩa '+id,slot,spawnAt,deadline}}
+
+// Structural checks: a fixed number of columns must be created ONCE, not one new track for every bomb.
+test('Solo and Multiplayer render 1-3 fixed columns, not one track per bomb',()=>{
+ assert.match(app,/class="bomb-arena bomb-fixed-columns solo-bomb-arena"/);
+ assert.match(app,/class="bomb-arena bomb-fixed-columns" id="bombArena"/);
+ assert.match(app,/style="--bomb-lanes:\$\{bombLaneCount\(rd\)\}"/);
+ assert.match(css,/grid-template-columns:repeat\(var\(--bomb-lanes,2\),minmax\(0,1fr\)\)/);
+ assert.match(css,/\.bomb-fixed-lane\{[\s\S]*?position:relative/);
+ assert.match(css,/\.bomb-fixed-columns \.bomb-falling\{[\s\S]*?position:absolute;top:0;left:50%!important/);
+ assert.doesNotMatch(css,/\.bomb-arena\.bomb-fixed-columns\{[^}]*overflow-x:auto/);
+ assert.doesNotMatch(app,/bomb-fall-track|bomb-falling-lanes/);
 });
 
-test('each active bomb receives its own track, including bombs from a later wave',()=>{
- const render=new Function('escapeHtml','localTimeOffset',extractFunction('bombCardMarkup','bombCardsMarkup')+'\nreturn bombCardMarkup;')(
-  v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;'),0);
- const now=Date.now();
- const words=[{id:'old-a',meaning:'Con mèo',slot:0},{id:'old-b',meaning:'Con chó',slot:1},{id:'new-a',meaning:'Xe đạp',slot:0},{id:'new-b',meaning:'Đi học',slot:1}];
- const cards=words.map((b,i)=>render({...b,spawnAt:now+i*1000,deadline:now+15000+i*1000},{bomb_batch_size:2})).join('');
- assert.equal((cards.match(/class="bomb-fall-track"/g)||[]).length,4);
- assert.equal((cards.match(/class="bomb-falling"/g)||[]).length,4);
- for(const b of words){assert.ok(cards.includes(`data-bomb-track="${b.id}"`));assert.ok(cards.includes(b.meaning))}
+test('each later-wave bomb is rendered within its ORIGINAL server slot',()=>{
+ const t=Date.now();
+ const words=[bomb('old-left',0,t-7000,t+13000),bomb('old-right',1,t-7000,t+13000),
+              bomb('new-left',0,t,t+20000),bomb('new-right',1,t,t+20000)];
+ const html=bombModule.bombCardsMarkup({bombs:words,left:4},{bomb_batch_size:2});
+ const lane0=html.slice(html.indexOf('data-lane="0"'),html.indexOf('data-lane="1"'));
+ const lane1=html.slice(html.indexOf('data-lane="1"'));
+ assert.equal((html.match(/class="bomb-fixed-lane"/g)||[]).length,2);
+ assert.equal((html.match(/class="bomb-falling"/g)||[]).length,4);
+ assert.match(lane0,/data-bomb-id="old-left"/);assert.match(lane0,/data-bomb-id="new-left"/);
+ assert.doesNotMatch(lane0,/data-bomb-id="old-right"|data-bomb-id="new-right"/);
+ assert.match(lane1,/data-bomb-id="old-right"/);assert.match(lane1,/data-bomb-id="new-right"/);
+ assert.doesNotMatch(lane1,/data-bomb-id="old-left"|data-bomb-id="new-left"/);
 });
 
-test('polling retains active nodes and deletes expired wrapper with card',()=>{
- const fn=extractFunction('reconcileBombCards','syncBombArena');
- assert.match(fn,/if\(!present\.has\(String\(bomb\.id\)\)\)arena\.insertAdjacentHTML/);
- assert.match(fn,/node\.closest\('\.bomb-fall-track'\)/);
- assert.doesNotMatch(fn,/arena\.innerHTML\s*=/);
+test('one, two and three column settings remain stable without horizontal overflow',()=>{
+ const t=Date.now();
+ for(const count of [1,2,3]){
+  const rd={bomb_batch_size:count};
+  const words=Array.from({length:count*3},(_,i)=>bomb('b'+i,i%count,t+i*1000,t+60000));
+  const html=bombModule.bombCardsMarkup({bombs:words,left:words.length},rd);
+  assert.equal((html.match(/class="bomb-fixed-lane"/g)||[]).length,count);
+  for(let lane=0;lane<count;lane++)assert.equal((html.match(new RegExp(`data-bomb-slot="${lane}"`,'g'))||[]).length,3);
+ }
+ assert.equal(bombModule.bombLaneCount({bomb_batch_size:99}),3);
+ assert.equal(bombModule.bombLaneIndex({slot:-1},{bomb_batch_size:2}),0);
+ assert.equal(bombModule.bombLaneIndex({slot:2},{bomb_batch_size:3}),2);
+});
+
+test('new bombs are inserted into their persistent lane, not into the arena flex/grid root',()=>{
+ const src=extract('reconcileBombCards','syncBombArena');
+ assert.doesNotMatch(src,/arena\.innerHTML\s*=/);
+ assert.doesNotMatch(src,/arena\.insertAdjacentHTML/);
+ assert.match(src,/arena\.querySelector\(`\.bomb-fixed-lane\[data-lane=/);
+ assert.match(src,/lane\.insertAdjacentHTML\('beforeend',bombCardMarkup\(bomb,rd\)\)/);
+ assert.match(src,/if\(!visible\.has\(node\.dataset\.bombId\)\)\{node\._fallMotion\?\.cancel\(\);node\.remove\(\)\}/);
+ assert.doesNotMatch(src,/\.bomb-fixed-lane.*\.remove\(/);
  assert.match(app,/function syncSoloBombArena\(\)/);
  assert.match(app,/function syncBombArena\(\)/);
- assert.match(css,/overflow-x:auto;overflow-y:hidden/);
 });
 
-test('falling animation uses server deadline and individual track distance',()=>{
- const source=extractFunction('animateBombs','updateCountdowns');
+test('polling adds the next wave without replacing existing nodes or shifting columns',()=>{
+ const code=extract('reconcileBombCards','syncBombArena');
+ const lanes=[{inserted:[]},{inserted:[]}],old=[{dataset:{bombId:'old-left'},removed:false},{dataset:{bombId:'old-right'},removed:false}];
+ let animateCount=0;
+ const reconcile=new Function('bombLaneIndex','bombCardMarkup','animateBombs',code+'\nreturn reconcileBombCards;')(
+  bombModule.bombLaneIndex,bombModule.bombCardMarkup,()=>{animateCount++});
+ const headline={textContent:''};
+ const arena={
+  querySelector(selector){if(selector==='.bomb-topline')return headline;
+   const matched=selector.match(/^\.bomb-fixed-lane\[data-lane="(\d+)"\]$/);
+   return matched?{insertAdjacentHTML:(position,html)=>lanes[Number(matched[1])].inserted.push(html)}:null;
+  },
+  querySelectorAll(selector){assert.equal(selector,'.bomb-falling');return old.filter(v=>!v.removed)}
+ };
+ const now=Date.now();
+ reconcile(arena,{left:4,bombs:[bomb('old-left',0,now-2000,now+8000),bomb('old-right',1,now-2000,now+8000),bomb('new-left',0,now,now+10000),bomb('new-right',1,now,now+10000)]},{bomb_batch_size:2});
+ assert.equal(lanes[0].inserted.length,1);assert.match(lanes[0].inserted[0],/new-left/);
+ assert.equal(lanes[1].inserted.length,1);assert.match(lanes[1].inserted[0],/new-right/);
+ assert.ok(old.every(x=>x.removed===false));
+ assert.equal(animateCount,1);
+});
+
+test('server-clock animation moves each bomb vertically without changing its X lane or resetting on poll',()=>{
+ const source=extract('animateBombs','updateCountdowns');
  const animate=new Function('window','localTimeOffset','$',source+'\nreturn animateBombs;')(
   {matchMedia:()=>({matches:false})},0,()=>null);
- const now=Date.now();
- let frames=null,animations=0;
- const bomb={dataset:{bombSpawn:String(now-2000),bombDeadline:String(now+8000)},offsetHeight:66,style:{},
-   closest:selector=>selector==='.bomb-fall-track'?{clientHeight:164}:null,
-   querySelector:selector=>selector==='small'?{textContent:''}:null,
-   animate:(input)=>{frames=input;animations++;return{currentTime:0,cancel(){}}}};
- const arena={clientHeight:340,querySelectorAll:selector=>selector==='.bomb-falling'?[bomb]:[]};
- animate(arena);
- assert.equal(animations,1);
+ const now=Date.now();let frames=null,number=0;
+ const card={
+  dataset:{bombSpawn:String(now-2000),bombDeadline:String(now+8000)},offsetHeight:66,style:{},
+  closest:selector=>selector==='.bomb-fixed-lane'?{clientHeight:164}:null,
+  querySelector:selector=>selector==='small'?{textContent:''}:null,
+  animate:(input)=>{frames=input;number++;return{currentTime:0,cancel(){}}}
+ };
+ const arena={clientHeight:340,querySelectorAll:()=>[card]};
+ animate(arena);const motion=card._fallMotion;
+ assert.equal(number,1);
  assert.equal(frames[0].transform,'translate(-50%,5px)');
  assert.equal(frames[1].transform,'translate(-50%,90px)');
- const active=bomb._fallMotion;
  animate(arena);
- assert.strictEqual(bomb._fallMotion,active,'server polling should not reset the fall animation');
- assert.equal(animations,1);
+ assert.equal(number,1);assert.strictEqual(card._fallMotion,motion);
+ assert.match(source,/const height=track\?track\.clientHeight:arena\.clientHeight/);
+ assert.match(source,/animation\.currentTime=elapsed/);
 });
-// Regression: the 4th bomb must not be sent to grid row 2, as in v2.
-test('later waves start at the SAME arena top edge and every track extends to the bottom',()=>{
- const board=css.slice(css.indexOf('/* WordSky BOMB shared sky v3'));
- assert.match(board,/display:flex;flex-direction:row;flex-wrap:nowrap/);
- assert.match(board,/\.bomb-fall-track\{[\s\S]*?align-self:stretch/);
- assert.match(board,/\.bomb-topline\{[\s\S]*?position:absolute;top:8px/);
- assert.doesNotMatch(board,/grid-template-columns:repeat\(3/);
- assert.doesNotMatch(board,/grid-template-columns:repeat\(2/);
- assert.match(board,/overflow-x:auto;overflow-y:hidden/);
- assert.doesNotMatch(board,/height:166px/);
- assert.doesNotMatch(board,/height:162px/);
- const fn=extractFunction('animateBombs','updateCountdowns');
- assert.match(fn,/const height=track\?track\.clientHeight:arena\.clientHeight/);
- assert.match(fn,/animation\.currentTime=elapsed/);
+
+test('a removed bomb cannot remove, resize or reorder the shared lane',()=>{
+ const source=extract('reconcileBombCards','syncBombArena');
+ let deleted=0,cancelled=0;
+ const oldNode={dataset:{bombId:'expired'},_fallMotion:{cancel(){cancelled++}},remove(){deleted++}};
+ let laneTouched=0;
+ const lane={insertAdjacentHTML(){laneTouched++}};
+ const arena={
+  querySelector:s=>s==='.bomb-topline'?{textContent:''}:lane,
+  querySelectorAll:()=>[oldNode]
+ };
+ const reconcile=new Function('bombLaneIndex','bombCardMarkup','animateBombs',source+'\nreturn reconcileBombCards;')(
+  bombModule.bombLaneIndex,bombModule.bombCardMarkup,()=>{});
+ reconcile(arena,{left:0,bombs:[]},{bomb_batch_size:2});
+ assert.equal(deleted,1);assert.equal(cancelled,1);assert.equal(laneTouched,0);
 });
