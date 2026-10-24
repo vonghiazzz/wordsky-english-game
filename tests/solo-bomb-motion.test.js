@@ -26,7 +26,7 @@ test('bombs use compositor animation with server timestamps and no polling-drive
  const body=js.slice(start,end);
  assert.match(body,/bomb\.animate\(\[/);
  assert.match(body,/animation\.currentTime=elapsed/);
- assert.match(body,/const key=`\$\{spawn\}:\$\{deadline\}:\$\{floor\}`/);
+ assert.match(body,/const key=`\$\{spawn\}:\$\{deadline\}:\$\{startY\}:\$\{floor\}`/);
  assert.match(body,/if\(bomb\._fallKey!==key\|\|!bomb\._fallMotion\)/);
  assert.match(body,/prefers-reduced-motion: reduce/);
  assert.match(css,/\.bomb-falling\{will-change:transform\}/);

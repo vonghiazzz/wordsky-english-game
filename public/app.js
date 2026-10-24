@@ -184,7 +184,7 @@ function renderSoloGame(){
  const resultLabel=g.status==='COMPLETED'?(bomb?'🎉 Đã gỡ toàn bộ bom!':'🎉 Hoàn thành tất cả cặp!'):g.status==='FAILED'?'💔 Bạn đã hết tim.':g.status==='TIMEOUT'?'⌛ Đã hết thời gian.':'';
  host.innerHTML=`<div class="game-shell solo-game-shell ${bomb?'solo-bomb-shell':''}"><div class="game-bar"><strong>${bomb?'💣 BOMB':'🔗 MATCH'} Solo</strong><span class="counter" id="${bomb?'soloBombScore':'soloScore'}">${fmt(g.score)} ĐIỂM</span><span id="${bomb?'soloBombHealth':'soloHealth'}">❤️ ${g.health}/3</span><span>⏱ <span id="${bomb?'soloBombCountdown':'soloCountdown'}">${formatCountdown(secLeft(g.endsAt))}</span></span></div>
  <div class="solo-progress" role="progressbar" aria-label="${bomb?'Tiến độ gỡ bom':'Tiến độ ghép cặp'}" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.correct}"><span style="width:${Math.round(100*g.correct/Math.max(1,rd.question_count))}%"></span></div>
- ${ended?`<div class="game-status good" tabindex="-1" id="${bomb?'soloBombResultTitle':'soloResultTitle'}"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} ${bomb?'bom đã gỡ':'cặp đúng'} · ${fmt(g.score)} điểm · ${g.mistakes} ${bomb?'bom quá hạn':'lần sai'}</div>`:bomb?`<p class="small-note">Gõ nguyên từ tiếng Anh ứng với bất kỳ bom đang rơi. Chưa đủ từ không mất tim hoặc điểm.</p><div class="bomb-arena solo-bomb-arena" id="soloBombArena" aria-label="Các quả bom Solo đang rơi">${bombCardsMarkup(g,rd)}</div><div class="bomb-answer-form"><label for="soloBombAnswer">Nhập đáp án tiếng Anh</label><div class="game-answer-row"><input id="soloBombAnswer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="100" placeholder="Gõ từ tiếng Anh — bom tự được giải"></div><small class="small-note">Tự kiểm tra sau khi bạn ngừng gõ một chút.</small></div>`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
+ ${ended?`<div class="game-status good" tabindex="-1" id="${bomb?'soloBombResultTitle':'soloResultTitle'}"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} ${bomb?'bom đã gỡ':'cặp đúng'} · ${fmt(g.score)} điểm · ${g.mistakes} ${bomb?'bom quá hạn':'lần sai'}</div>`:bomb?`<p class="small-note">Gõ nguyên từ tiếng Anh ứng với bất kỳ bom đang rơi. Chưa đủ từ không mất tim hoặc điểm.</p><div class="bomb-arena bomb-falling-lanes solo-bomb-arena" id="soloBombArena" aria-label="Các quả bom Solo đang rơi">${bombCardsMarkup(g,rd)}</div><div class="bomb-answer-form"><label for="soloBombAnswer">Nhập đáp án tiếng Anh</label><div class="game-answer-row"><input id="soloBombAnswer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="100" placeholder="Gõ từ tiếng Anh — bom tự được giải"></div><small class="small-note">Tự kiểm tra sau khi bạn ngừng gõ một chút.</small></div>`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
  ${bomb&&!ended?`<div id="soloBombFeedback" class="game-status ${soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite" ${soloPending||soloFeedback?'':'hidden'}><span class="solo-bomb-feedback-text">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')}</span> <button type="button" class="btn small ghost" id="soloBombPendingRetry" ${soloPending?'':'hidden'} ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloPending&&!ended?`<div id="soloFeedback" class="game-status bad" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')} <button type="button" class="btn small ghost" id="soloPendingRetry" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloFeedback&&!ended?`<div id="soloFeedback" class="game-status ${soloFeedback.startsWith('Đúng')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback)}</div>`:''}
  <div class="form-actions solo-actions">${ended?`<button type="button" class="btn primary" id="${bomb?'soloBombReplay':'soloReplay'}">Chơi lại</button><button type="button" class="btn ghost" id="${bomb?'soloBombHome':'soloHome'}">Về trang chủ</button>`:''}<button type="button" class="btn ghost" id="${bomb?'soloBombNewConfig':'soloNewConfig'}" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
  if(bomb&&!ended){const input=$('soloBombAnswer');if(input){input.value=existingBombAnswer;prepareGameInput(input)}animateBombs($('soloBombArena'));if(oldFocus==='soloBombAnswer'&&input)input.focus({preventScroll:true})}
@@ -378,7 +378,7 @@ function arenaFeedbackMarkup(){
 }
 function bombCardMarkup(b,rd){
  const batch=Math.max(1,Number(rd.bomb_batch_size||2)),cardWidth=batch===3?'29%':'43%';
- return `<div class="bomb-falling" data-bomb-id="${escapeHtml(b.id)}" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/batch)}%;width:${cardWidth};max-width:${cardWidth}"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div>`;
+ return `<div class="bomb-fall-track" data-bomb-track="${escapeHtml(b.id)}"><div class="bomb-falling" data-bomb-id="${escapeHtml(b.id)}" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/batch)}%;width:${cardWidth};max-width:${cardWidth}"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div></div>`;
 }
 function bombCardsMarkup(g,rd){
  const bombs=g.bombs||[];
@@ -391,7 +391,7 @@ function reconcileBombCards(arena,g,rd){
  const headline=arena.querySelector('.bomb-topline');
  if(headline)headline.textContent=`💣 ${bombs.length} bom đang rơi · Còn ${g.left} bom chưa gỡ`;
  for(const node of arena.querySelectorAll('.bomb-falling')){
-  if(!visible.has(node.dataset.bombId)){node._fallMotion?.cancel();node.remove()}
+  if(!visible.has(node.dataset.bombId)){node._fallMotion?.cancel();(node.closest('.bomb-fall-track')||node).remove()}
  }
  const present=new Set([...arena.querySelectorAll('.bomb-falling')].map(node=>node.dataset.bombId));
  for(const bomb of bombs){
@@ -484,7 +484,7 @@ function renderGame(){
   h+=`<p class="small-note">Chọn một từ tiếng Anh bên trái, sau đó chọn nghĩa tiếng Việt bên phải. Chọn sai mất 1 tim và trừ ${rd.penalty} điểm. Hết 3 tim sẽ kết thúc vòng.</p><div class="pair-grid"><div class="pair-col">${g.pairs.map(p=>`<button data-pair-left="${p.id}" class="pairbtn ${p.matched?'matched':''} ${selectedEnglish===p.id?'selected':''}" ${p.matched?'disabled':''}>${escapeHtml(p.english)}</button>`).join('')}</div><div class="pair-col">${right.map(p=>`<button data-pair-right="${p.id}" class="pairbtn ${p.matched?'matched':''}" ${p.matched?'disabled':''}>${escapeHtml(p.meaning)}</button>`).join('')}</div></div>`;
   }else if(g.mode==='BOMB'){
    h+=`<p class="small-note">Nhập nguyên từ tiếng Anh ứng với <b>bất kỳ quả bom đang rơi</b>. Gõ đúng thì bom tự biến mất, không cần chọn bom hay nhấn Enter. Bom chạm đáy sẽ mất 1 tim.</p>
-    <div class="bomb-arena" id="bombArena" aria-label="Các quả bom từ vựng đang rơi">${bombArenaMarkup(g,rd)}</div>
+    <div class="bomb-arena bomb-falling-lanes" id="bombArena" aria-label="Các quả bom từ vựng đang rơi">${bombArenaMarkup(g,rd)}</div>
     <div class="bomb-answer-form" id="bombAnswerForm">
       <label for="bombAnswer">Nhập đáp án tiếng Anh</label>
       <div class="game-answer-row"><input id="bombAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Gõ từ tiếng Anh — bom tự được giải" maxlength="100" aria-label="Từ tiếng Anh để giải bom"></div>
@@ -523,22 +523,25 @@ function animateBombs(arena=$('bombArena')){
  for(const bomb of arena.querySelectorAll('.bomb-falling')){
   const spawn=Number(bomb.dataset.bombSpawn),deadline=Number(bomb.dataset.bombDeadline);
   const duration=Math.max(1,deadline-spawn),elapsed=Math.max(0,Math.min(duration,now-spawn));
-  const height=arena.clientHeight,cardHeight=bomb._cardHeight??(bomb._cardHeight=bomb.offsetHeight);
-  const floor=Math.max(42,height-cardHeight-12);
-  const key=`${spawn}:${deadline}:${floor}`;
+  const track=bomb.closest('.bomb-fall-track');
+  const height=track?track.clientHeight:arena.clientHeight;
+  const cardHeight=bomb._cardHeight??(bomb._cardHeight=bomb.offsetHeight);
+  const startY=track?5:42;
+  const floor=Math.max(startY,height-cardHeight-(track?8:12));
+  const key=`${spawn}:${deadline}:${startY}:${floor}`;
   const small=bomb.querySelector('small');if(small)small.textContent=Math.max(0,Math.ceil((deadline-now)/1000))+'s';
   // Fallback deliberately follows real time; no cumulative per-poll motion.
   if(reduced||typeof bomb.animate!=='function'){
    bomb._fallMotion?.cancel();bomb._fallMotion=null;bomb._fallKey=null;
    bomb.style.transition='none';
-   bomb.style.transform=`translate(-50%,${Math.round(42+(floor-42)*elapsed/duration)}px)`;
+   bomb.style.transform=`translate(-50%,${Math.round(startY+(floor-startY)*elapsed/duration)}px)`;
    continue;
   }
   if(bomb._fallKey!==key||!bomb._fallMotion){
    bomb._fallMotion?.cancel();
    bomb.style.transition='none';
    const animation=bomb.animate([
-    {transform:'translate(-50%,42px)'},
+    {transform:`translate(-50%,${startY}px)`},
     {transform:`translate(-50%,${floor}px)`}
    ],{duration,easing:'linear',fill:'both'});
    animation.currentTime=elapsed;
