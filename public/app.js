@@ -544,6 +544,11 @@ let carFeatureEnabled=false;
 const initialRounds=()=>['MATCH','BOMB',...(carFeatureEnabled?['CAR']:[])].map((mode,i)=>({mode,difficulty:'NORMAL',duration_seconds:mode==='BOMB'?120:90,question_count:mode==='CAR'?12:8,points_per_correct:100,penalty:25,weight:1,topic_id:mode==='CAR'?null:topics[0]?.id||null,bomb_fall_seconds:16,bomb_batch_size:2,bomb_spawn_interval_seconds:9,car_step_seconds:8}));
 let draftRounds=[];
 let cefrReviewSources={};
+// Admin pagination is presentation-only; keep all records for selectors and edits.
+let adminTopicPage=1,adminEventPage=1,adminTopicQuery='';
+const ADMIN_TOPICS_PAGE_SIZE=6,ADMIN_EVENTS_PAGE_SIZE=8;
+const adminOpenTopicIds=new Set();
+function clampAdminPage(page,total,size){return Math.max(1,Math.min(Math.ceil(total/size)||1,page))}
 // wordsky-admin-scroll-preservation-v1: retain Admin location and in-progress CEFR work on refresh.
 function captureAdminView(){
  const pane=$('adminContent');
@@ -551,15 +556,17 @@ function captureAdminView(){
  const editor=$('cefrEditor');
  const active=document.activeElement;
  const focusId=['cefrLevelFilter','cefrStatusFilter','cefrSearchFilter','cefrSourceInput'].includes(active?.id)?active.id:null;
- const topicsOpen=Array.from(pane.querySelectorAll('#adminPanelVocab details.room-card'))
-   .flatMap((el,index)=>el.open?[index]:[]);
+ const topicsOpen=Array.from(pane.querySelectorAll('#adminTopicList details[data-admin-topic-id]'))
+   .flatMap(el=>el.open?[el.dataset.adminTopicId]:[]);
+ for(const id of topicsOpen)adminOpenTopicIds.add(id);
  return {
   scrollY:window.scrollY,
   level:$('cefrLevelFilter')?.value||'ALL',
   status:$('cefrStatusFilter')?.value||'ALL',
   search:$('cefrSearchFilter')?.value||'',
   page:cefrResultPage,
-  topicsOpen,
+  topicPage:adminTopicPage,eventPage:adminEventPage,topicQuery:adminTopicQuery,
+  topicsOpen:[...new Set([...adminOpenTopicIds,...topicsOpen])],
   editorWord:editor&&!editor.classList.contains('hidden')?$('cefrWordId')?.value:null,
   focusId,
   cursor:focusId==='cefrSearchFilter'?active.selectionStart:null
@@ -572,8 +579,11 @@ function restoreAdminView(view){
  if($('cefrSearchFilter'))$('cefrSearchFilter').value=view.search;
  cefrResultPage=view.page;
  filterAdminCefr(false);
- const details=Array.from($('adminContent')?.querySelectorAll('#adminPanelVocab details.room-card')||[]);
- for(const index of view.topicsOpen)if(details[index])details[index].open=true;
+ for(const id of view.topicsOpen){
+  adminOpenTopicIds.add(id);
+  const detail=Array.from($('adminTopicList')?.querySelectorAll('details[data-admin-topic-id]')||[]).find(el=>el.dataset.adminTopicId===id);
+  if(detail)detail.open=true;
+ }
  if(view.editorWord)openCefrEditor(view.editorWord,false);
  if(view.focusId){
   const input=$(view.focusId);
@@ -588,7 +598,7 @@ async function loadAdmin({preserveView=true}={}){const pane=$('adminContent');co
   if(!view)pane.innerHTML='<div class="loading">Đang tải quản trị…</div>';
  try{const [events,features,cefrAudit]=await Promise.all([api('admin/events'),api('admin/features'),api('admin/cefr/reviews')]);adminEvents=events.events||[];cefrReviewSources=Object.fromEntries((cefrAudit.reviews||[]).map(r=>[r.word_id,r.source_url||'']));
  carFeatureEnabled=(features.features||[]).some(f=>f.feature_key==='CAR'&&f.enabled===true);
-  await loadTopics(false,true);if(!editingEvent&&!carFeatureEnabled)draftRounds=draftRounds.filter(r=>r.mode!=='CAR');if(!draftRounds.length)draftRounds=initialRounds();
+  await loadTopics(false,true);if(view){adminTopicPage=view.topicPage;adminEventPage=view.eventPage;adminTopicQuery=view.topicQuery;}if(!editingEvent&&!carFeatureEnabled)draftRounds=draftRounds.filter(r=>r.mode!=='CAR');if(!draftRounds.length)draftRounds=initialRounds();
  pane.innerHTML=`<div class="panel-tabs"><button data-admin-tab="events" class="${adminTab==='events'?'on':''}">🏆 Cuộc thi</button><button data-admin-tab="vocab" class="${adminTab==='vocab'?'on':''}">📚 Từ vựng</button><button data-admin-tab="features" class="${adminTab==='features'?'on':''}">⚙️ Tính năng</button></div><div id="adminPanelEvents" class="admin-panel ${adminTab==='events'?'active':''}"></div><div id="adminPanelVocab" class="admin-panel ${adminTab==='vocab'?'active':''}"></div><div id="adminPanelFeatures" class="admin-panel ${adminTab==='features'?'active':''}"></div>`;
   renderAdminEvents();renderAdminVocab();filterAdminCefr();renderAdminFeatures(features.features||[]);setupPasswordToggles(pane);
    restoreAdminView(view);
@@ -609,7 +619,7 @@ function renderRounds(){const host=$('roundsEditor');if(!host)return;host.innerH
  const a2=countUniqueCefr(approved,['A1','A2']),bonus=countUniqueCefr(approved,['B1','B2']),high=countUniqueCefr(approved,['C1','C2']);
  const neededCar=carVocabularyNeeds(r.difficulty,r.question_count);
  const cefrHint=r.mode==='CAR'?`<small class="car-stock-note">Đã duyệt: A1–A2 ${a2}/${neededCar.A2}, B1–B2 ${bonus}/${neededCar.BONUS}, C1–C2 ${high}/${neededCar.DOUBLE}</small>`:'';
- return `<div class="round-line" data-round="${i}"><label>Kiểu chơi<select data-k="mode">${['MATCH','BOMB',...(carFeatureEnabled||r.mode==='CAR'?['CAR']:[])].map(m=>`<option ${m===r.mode?'selected':''} value="${m}">${MODE_SHORT[m]}</option>`).join('')}</select></label><label>Chủ đề<select data-k="topic_id">${optionsTopics(r.topic_id,true)}</select></label><label>Độ khó<select data-k="difficulty">${['EASY','NORMAL','HARD'].map(d=>`<option value="${d}" ${d===r.difficulty?'selected':''}>${d}</option>`).join('')}</select></label><label>Thời gian (s)<input type="number" data-k="duration_seconds" min="20" max="600" value="${r.duration_seconds}"></label><label>Số lượt<input type="number" data-k="question_count" min="3" max="${r.mode==='MATCH'?Math.min(20,cap):cap}" value="${r.question_count}"></label>${r.mode==='BOMB'?`<label>Bom rơi trong (s)<input type="number" data-k="bomb_fall_seconds" min="5" max="60" value="${r.bomb_fall_seconds??16}"></label><label>Số bom mỗi đợt<input type="number" data-k="bomb_batch_size" min="1" max="3" value="${r.bomb_batch_size??2}"></label><label>Khoảng cách giữa đợt (s)<input type="number" data-k="bomb_spawn_interval_seconds" min="3" max="45" value="${r.bomb_spawn_interval_seconds??9}"></label>`:''}${r.mode==='CAR'?`<label>Thời gian mỗi chặng (s)<input type="number" data-k="car_step_seconds" min="2" max="45" value="${r.car_step_seconds??8}"></label>`:''}<label>Điểm đúng<input type="number" data-k="points_per_correct" min="10" max="1000" value="${r.points_per_correct}"></label><label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="${r.weight}"></label><button class="btn warn" type="button" data-remove-round="${i}" aria-label="Xóa vòng ${i+1}">✕</button><div class="round-note"><small>Cho phép tối đa ${r.mode==='CAR'?30:cap} lượt${extra?' (gồm '+extra+' nghĩa nhiễu)':''}</small>${cefrHint}</div></div>`;}).join('')+`<p class="small-note">Mỗi câu đúng +điểm, câu sai trừ ${draftRounds[0]?.penalty||25} điểm (có thể chỉnh trong cấu hình). Tổng giải tính điểm vòng × hệ số.</p>`}
+ return `<div class="round-line" data-round="${i}"><label>Kiểu chơi<select data-k="mode">${['MATCH','BOMB',...(carFeatureEnabled||r.mode==='CAR'?['CAR']:[])].map(m=>`<option ${m===r.mode?'selected':''} value="${m}">${MODE_SHORT[m]}</option>`).join('')}</select></label><label>Chủ đề<select data-k="topic_id">${optionsTopics(r.topic_id,true)}</select></label><label>Độ khó<select data-k="difficulty">${['EASY','NORMAL','HARD'].map(d=>`<option value="${d}" ${d===r.difficulty?'selected':''}>${d}</option>`).join('')}</select></label><label>Thời gian (s)<input type="number" data-k="duration_seconds" min="20" max="600" value="${r.duration_seconds}"></label><label>Số lượt<input type="number" data-k="question_count" min="3" max="${r.mode==='MATCH'?Math.min(20,cap):cap}" value="${r.question_count}"></label>${r.mode==='BOMB'?`<label>Bom rơi trong (s)<input type="number" data-k="bomb_fall_seconds" min="5" max="60" value="${r.bomb_fall_seconds??16}"></label><label>Số bom mỗi đợt<input type="number" data-k="bomb_batch_size" min="1" max="3" value="${r.bomb_batch_size??2}"></label><label>Khoảng cách giữa đợt (s)<input type="number" data-k="bomb_spawn_interval_seconds" min="3" max="45" value="${r.bomb_spawn_interval_seconds??9}"></label>`:''}${r.mode==='CAR'?`<label>Thời gian mỗi chặng (s)<input type="number" data-k="car_step_seconds" min="2" max="45" value="${r.car_step_seconds??8}"></label>`:''}<label>Điểm đúng<input type="number" data-k="points_per_correct" min="10" max="1000" value="${r.points_per_correct}"></label><label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="${r.weight}"></label><div class="round-note"><small>Cho phép tối đa ${r.mode==='CAR'?30:cap} lượt${extra?' (gồm '+extra+' nghĩa nhiễu)':''}</small>${cefrHint}</div><div class="round-remove-row"><button class="btn warn" type="button" data-remove-round="${i}" aria-label="Xóa vòng ${i+1}">✕ Xóa vòng ${i+1}</button></div></div>`;}).join('')+`<p class="small-note">Mỗi câu đúng +điểm, câu sai trừ ${draftRounds[0]?.penalty||25} điểm (có thể chỉnh trong cấu hình). Tổng giải tính điểm vòng × hệ số.</p>`}
 function collectRounds(){document.querySelectorAll('[data-round]').forEach(e=>{const i=Number(e.dataset.round);const r=draftRounds[i];e.querySelectorAll('[data-k]').forEach(c=>{r[c.dataset.k]=['mode','topic_id','difficulty'].includes(c.dataset.k)?c.value:Number(c.value)});r.topic_id=r.topic_id||null;
  if(r.mode==='MATCH')r.question_count=Math.min(20,r.question_count);});return draftRounds}
 function renderAdminEvents(){const host=$('adminPanelEvents');if(!host)return;
@@ -617,8 +627,15 @@ function renderAdminEvents(){const host=$('adminPanelEvents');if(!host)return;
   renderRounds();setupPasswordToggles(host);renderAdminEventList();
 }
 function renderAdminEventList(){
- const list=$('eventsList');list.innerHTML=adminEvents.length?adminEvents.map(e=>`<div class="editor-item"><div><strong>${escapeHtml(e.title)}</strong> <span class="pill ${e.status==='LIVE'?'good':e.status==='FINISHED'?'red':'yellow'}">${e.status}</span><p class="small-note" style="margin:7px 0">Mã: <b>${escapeHtml(e.join_code)}</b> · ${e.participants}/${e.max_players} người · ${e.rounds.length} vòng</p></div><div class="form-actions">${['DRAFT','OPEN'].includes(e.status)?`<button class="btn" data-edit-event="${e.id}">Sửa</button>`:''}${e.status==='DRAFT'?`<button class="btn" data-event-action="open" data-event-id="${e.id}">Mở phòng</button>`:''}${e.status==='OPEN'?`<button class="btn primary" data-event-action="start" data-event-id="${e.id}">Bắt đầu</button>`:''}${['OPEN','LIVE','DRAFT'].includes(e.status)?`<button class="btn warn" data-event-action="finish" data-event-id="${e.id}">Kết thúc</button>`:''}<button class="btn" data-copy-code="${escapeHtml(e.join_code)}">Copy mã</button></div></div>`).join(''):'<div class="empty">Chưa có cuộc thi nào. Hãy tạo một cuộc thi đầu tiên.</div>';
+ const list=$('eventsList');if(!list)return;
+ adminEventPage=clampAdminPage(adminEventPage,adminEvents.length,ADMIN_EVENTS_PAGE_SIZE);
+ const pages=Math.max(1,Math.ceil(adminEvents.length/ADMIN_EVENTS_PAGE_SIZE));
+ const from=(adminEventPage-1)*ADMIN_EVENTS_PAGE_SIZE;
+ const shown=adminEvents.slice(from,from+ADMIN_EVENTS_PAGE_SIZE);
+ list.innerHTML=(shown.length?shown.map(e=>`<div class="editor-item"><div><strong>${escapeHtml(e.title)}</strong> <span class="pill ${e.status==='LIVE'?'good':e.status==='FINISHED'?'red':'yellow'}">${e.status}</span><p class="small-note" style="margin:7px 0">Mã: <b>${escapeHtml(e.join_code)}</b> · ${e.participants}/${e.max_players} người · ${e.rounds.length} vòng</p></div><div class="form-actions">${['DRAFT','OPEN'].includes(e.status)?`<button class="btn" data-edit-event="${e.id}">Sửa</button>`:''}${e.status==='DRAFT'?`<button class="btn" data-event-action="open" data-event-id="${e.id}">Mở phòng</button>`:''}${e.status==='OPEN'?`<button class="btn primary" data-event-action="start" data-event-id="${e.id}">Bắt đầu</button>`:''}${['OPEN','LIVE','DRAFT'].includes(e.status)?`<button class="btn warn" data-event-action="finish" data-event-id="${e.id}">Kết thúc</button>`:''}<button class="btn" data-copy-code="${escapeHtml(e.join_code)}">Copy mã</button></div></div>`).join(''):'<div class="empty">Chưa có cuộc thi nào. Hãy tạo một cuộc thi đầu tiên.</div>')+
+ (adminEvents.length?`<div class="admin-page-bar" role="navigation" aria-label="Phân trang danh sách giải đấu"><span class="small-note">Giải ${from+1}–${from+shown.length}/${adminEvents.length} · Trang ${adminEventPage}/${pages}</span><div class="form-actions"><button type="button" class="btn" data-admin-event-page="prev" ${adminEventPage===1?'disabled':''}>← Trước</button><button type="button" class="btn" data-admin-event-page="next" ${adminEventPage===pages?'disabled':''}>Tiếp →</button></div></div>`:'');
 }
+
 async function submitEventForm(event){event.preventDefault();collectRounds();const f=new FormData(event.target);const p=Object.fromEntries(f);const penalty=Number(p.penalty);const rounds=draftRounds.map(r=>({...r,penalty}));const payload={title:p.title,max_players:Number(p.max_players),rounds};if(p.password)payload.password=p.password;
  for(const round of rounds){
   if(round.mode==='BOMB'&&round.duration_seconds<(Math.ceil(round.question_count/Number(round.bomb_batch_size??2))-1)*Number(round.bomb_spawn_interval_seconds??9)+Number(round.bomb_fall_seconds??16)){toast('Tăng thời gian vòng: bom cuối chưa đủ thời gian để rơi.',true);return;}
@@ -673,7 +690,28 @@ function renderAdminVocab(){const host=$('adminPanelVocab');if(!host)return;
 <div class="form-actions"><button class="btn primary" type="submit">Lưu CEFR</button><button type="button" class="btn" id="cefrCancel">Hủy</button></div>
 </form>
 </div></div>
-<div class="dashboard-card"><h2>Quản lý chủ đề và nội dung từ</h2><p class="small-note">Mở chủ đề để sửa nghĩa, ví dụ hoặc ẩn từ. Để tìm và đổi CEFR nhanh, dùng bảng kết quả ngay phía trên.</p>${topics.map(t=>`<details class="room-card"><summary class="dashboard-row"><strong>${escapeHtml(t.title)} (${t.words.length})</strong><span><button class="btn" data-edit-topic="${t.id}">Sửa tên</button> <button class="btn warn" data-del-topic="${t.id}">Ẩn chủ đề</button></span></summary><div style="margin-top:15px">${t.words.map(w=>`<div class="editor-item"><div><strong>${escapeHtml(w.english)}</strong> <small>${escapeHtml(w.meaning)}</small><small>CEFR: ${escapeHtml(w.cefr_level||'—')} · ${escapeHtml(w.cefr_review_status||'UNREVIEWED')}</small></div><span class="form-actions"><button class="btn" data-edit-cefr="${w.id}">CEFR</button><button class="btn" data-edit-word="${w.id}">Sửa</button><button class="btn warn" data-del-word="${w.id}">Ẩn</button></span></div>`).join('')}</div></details>`).join('')}</div>`}
+<div class="dashboard-card"><h2>Quản lý chủ đề và nội dung từ</h2><p class="small-note">Mở chủ đề để sửa nghĩa, ví dụ hoặc ẩn từ. Để tìm và đổi CEFR nhanh, dùng bảng kết quả ngay phía trên.</p><div class="admin-topic-controls"><label for="adminTopicSearch">Tìm chủ đề<input id="adminTopicSearch" type="search" placeholder="Nhập tên chủ đề…" autocomplete="off" value="${escapeHtml(adminTopicQuery)}"></label></div><div id="adminTopicList"></div><div id="adminTopicPager"></div></div>`;
+ renderAdminTopicList();
+}
+function filterAdminTopics(query){
+ const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('vi').replace(/đ/g,'d');
+ const needle=fold(query).trim();
+ return needle?topics.filter(t=>fold(t.title).includes(needle)):topics;
+}
+function renderAdminTopicList(){
+ const list=$('adminTopicList'),pager=$('adminTopicPager');if(!list||!pager)return;
+ // Read the live disclosure state before replacing DOM: toggle events can be queued.
+ for(const item of list.querySelectorAll('details[data-admin-topic-id]')){
+  if(item.open)adminOpenTopicIds.add(item.dataset.adminTopicId);
+  else adminOpenTopicIds.delete(item.dataset.adminTopicId);
+ }
+ const filtered=filterAdminTopics(adminTopicQuery);
+ adminTopicPage=clampAdminPage(adminTopicPage,filtered.length,ADMIN_TOPICS_PAGE_SIZE);
+ const pages=Math.max(1,Math.ceil(filtered.length/ADMIN_TOPICS_PAGE_SIZE));
+ const from=(adminTopicPage-1)*ADMIN_TOPICS_PAGE_SIZE,shown=filtered.slice(from,from+ADMIN_TOPICS_PAGE_SIZE);
+ list.innerHTML=shown.length?shown.map(t=>`<details class="room-card admin-topic-item" data-admin-topic-id="${t.id}" ${adminOpenTopicIds.has(t.id)?'open':''}><summary><strong>${escapeHtml(t.title)} (${(t.words||[]).length} từ)</strong></summary><div class="form-actions admin-topic-actions"><button type="button" class="btn" data-edit-topic="${t.id}">Sửa tên</button><button type="button" class="btn warn" data-del-topic="${t.id}">Ẩn chủ đề</button></div><div class="admin-topic-words">${(t.words||[]).map(w=>`<div class="editor-item"><div><strong>${escapeHtml(w.english)}</strong> <small>${escapeHtml(w.meaning)}</small><small>CEFR: ${escapeHtml(w.cefr_level||'—')} · ${escapeHtml(w.cefr_review_status||'UNREVIEWED')}</small></div><span class="form-actions"><button type="button" class="btn" data-edit-cefr="${w.id}">CEFR</button><button type="button" class="btn" data-edit-word="${w.id}">Sửa</button><button type="button" class="btn warn" data-del-word="${w.id}">Ẩn</button></span></div>`).join('')}</div></details>`).join(''):'<div class="empty">Không tìm thấy chủ đề phù hợp.</div>';
+ pager.innerHTML=`<div class="admin-page-bar" role="navigation" aria-label="Phân trang chủ đề từ vựng"><span class="small-note">${filtered.length?`Chủ đề ${from+1}–${from+shown.length}/${filtered.length}`:'0 chủ đề'} · Trang ${adminTopicPage}/${pages}</span><div class="form-actions"><button type="button" class="btn" data-admin-topic-page="prev" ${adminTopicPage===1?'disabled':''}>← Trước</button><button type="button" class="btn" data-admin-topic-page="next" ${adminTopicPage===pages?'disabled':''}>Tiếp →</button></div></div>`;
+}
 function openCefrEditor(id,scroll=true){
  const w=topics.flatMap(t=>t.words||[]).find(x=>x.id===id);
  if(!w)return toast('Không tìm thấy từ vựng',true);
@@ -806,6 +844,8 @@ async function manageVocabulary(type,id){
  if(button.dataset.adminTab){adminTab=button.dataset.adminTab;document.querySelectorAll('[data-admin-tab]').forEach(b=>b.classList.toggle('on',b.dataset.adminTab===adminTab));document.querySelectorAll('.admin-panel').forEach(p=>p.classList.toggle('active',p.id==='adminPanel'+adminTab.charAt(0).toUpperCase()+adminTab.slice(1)));return}
  if(button.dataset.addRound){if(button.dataset.addRound==='CAR'&&!carFeatureEnabled)return toast('CAR đang tắt cho tới khi dữ liệu CEFR sẵn sàng.',true);collectRounds();if(draftRounds.length>=12)return toast('Tối đa 12 vòng',true);draftRounds.push({mode:button.dataset.addRound,difficulty:'NORMAL',duration_seconds:90,question_count:8,points_per_correct:100,penalty:25,weight:1,topic_id:button.dataset.addRound==='CAR'?null:topics[0]?.id||null,bomb_fall_seconds:16,bomb_batch_size:2,bomb_spawn_interval_seconds:9,car_step_seconds:8});renderRounds();return}
  if(button.dataset.removeRound!==undefined){collectRounds();if(draftRounds.length===1)return toast('Phải còn ít nhất một vòng',true);draftRounds.splice(Number(button.dataset.removeRound),1);renderRounds();return}
+ if(button.dataset.adminEventPage){adminEventPage+=button.dataset.adminEventPage==='next'?1:-1;renderAdminEventList();return}
+ if(button.dataset.adminTopicPage){adminTopicPage+=button.dataset.adminTopicPage==='next'?1:-1;renderAdminTopicList();return}
  if(button.dataset.editEvent){editEvent(button.dataset.editEvent);return}
  if(button.id==='cancelEditEvent'){editingEvent=null;draftRounds=[];renderAdminEvents();return}
  if(button.dataset.eventAction){await manageAction(button.dataset.eventAction,button.dataset.eventId);return}
@@ -829,7 +869,14 @@ window.addEventListener('submit',async e=>{
   if(e.target.id==='bombAnswerForm'){e.preventDefault();queueBombCheck(0);return}
   if(e.target.id==='carAnswerForm'){e.preventDefault();queueCarAutoCheck('room',0);return}
 });
-window.addEventListener('input',e=>{if(e.target.id==='cefrSearchFilter')filterAdminCefr();if(e.target.id==='bombAnswer'){feedback='';const note=$('gameFeedback');if(note)note.hidden=true;queueBombCheck();}if(e.target.id==='soloBombAnswer'){soloFeedback='';const note=$('soloBombFeedback');if(note)note.hidden=true;queueSoloBombCheck();}if(e.target.id==='soloCarAnswer')queueCarAutoCheck('solo');if(e.target.id==='carAnswer')queueCarAutoCheck('room');});
+window.addEventListener('input',e=>{if(e.target.id==='adminTopicSearch'){adminTopicQuery=e.target.value;adminTopicPage=1;renderAdminTopicList();return}if(e.target.id==='cefrSearchFilter')filterAdminCefr();if(e.target.id==='bombAnswer'){feedback='';const note=$('gameFeedback');if(note)note.hidden=true;queueBombCheck();}if(e.target.id==='soloBombAnswer'){soloFeedback='';const note=$('soloBombFeedback');if(note)note.hidden=true;queueSoloBombCheck();}if(e.target.id==='soloCarAnswer')queueCarAutoCheck('solo');if(e.target.id==='carAnswer')queueCarAutoCheck('room');});
+// Persist expanded topic identity across pages and Admin refreshes.
+window.addEventListener('toggle',e=>{
+ const item=e.target?.closest?.('#adminTopicList details[data-admin-topic-id]');
+ if(!item)return;
+ if(item.open)adminOpenTopicIds.add(item.dataset.adminTopicId);
+ else adminOpenTopicIds.delete(item.dataset.adminTopicId);
+},true);
 window.addEventListener('change',async e=>{
  if(['cefrLevelFilter','cefrStatusFilter'].includes(e.target.id)){filterAdminCefr();return}
  if(e.target.closest('#roundsEditor')&&e.target.dataset.k){collectRounds();if(e.target.dataset.k==='difficulty'){const r=draftRounds[Number(e.target.closest('[data-round]')?.dataset.round)];if(r?.mode==='BOMB'){const p={EASY:[20,2,10],NORMAL:[16,2,9],HARD:[10,3,6]}[r.difficulty];if(p)[r.bomb_fall_seconds,r.bomb_batch_size,r.bomb_spawn_interval_seconds]=p;}}renderRounds();return;}
