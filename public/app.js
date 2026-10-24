@@ -193,7 +193,7 @@ function renderSoloGame(){
 function renderSolo(){if(soloGame)renderSoloGame();else renderSoloSetup()}
 async function beginSolo(mode,config){
  if(soloBusy||soloPending)return;soloBusy=true;lastSoloConfig={mode,config};soloSetupError='';const button=soloHost(mode,'SetupPane')?.querySelector('form button[type="submit"]');if(button){button.disabled=true;button.textContent='⏳ Đang tạo lượt…'}
- try{soloGame=await api(`solo/${mode.toLowerCase()}/start`,{method:'POST',body:config});localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();sessionStore.setItem(soloRunKey(mode),soloGame.runId);selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';renderSoloGame();soloHost(mode,'GamePane')?.scrollIntoView({behavior:'smooth',block:'start'});}
+ try{soloGame=await api(`solo/${mode.toLowerCase()}/start`,{method:'POST',body:config});localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();sessionStore.setItem(soloRunKey(mode),soloGame.runId);selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';renderSoloGame();soloHost(mode,'GamePane')?.scrollIntoView({behavior:'auto',block:'start'});focusGameplayInput($('soloBombAnswer')||$('soloCarAnswer'));}
  catch(e){soloSetupError=e.message;toast(e.message,true);renderSoloSetup()}finally{soloBusy=false}
 }
 async function beginSoloMatch(config){return beginSolo('MATCH',config)}
@@ -273,7 +273,7 @@ async function loadRoom(){if(!roomCode)return;try{const data=await api('rooms/'+
   const next=currentRoundFromEvent(data.event);
   if(next&&game&&game.game.status!=='PLAYING'&&game.round.id!==next.id&&!gameBusy)await startRound();
  }catch(e){if(e.message.includes('chưa tham gia')||e.message.includes('đăng nhập')){roomCode='';sessionStore.removeItem('wordsky_room_code');$('roomPane').classList.add('hidden');$('joinRoomPane').classList.remove('hidden')}else toast(e.message,true)}}
-function renderRoom(){if(!room)return;const e=room.event,active=currentRoundFromEvent(e),live=e.status==='LIVE',ended=e.status==='FINISHED'||e.status==='CANCELLED'||(live&&!active&&Date.now()+localTimeOffset>=new Date(e.rounds.at(-1).ends_at).getTime());
+function renderRoom(){if(!room)return;$('roomPane').classList.remove('mobile-round-playing');const e=room.event,active=currentRoundFromEvent(e),live=e.status==='LIVE',ended=e.status==='FINISHED'||e.status==='CANCELLED'||(live&&!active&&Date.now()+localTimeOffset>=new Date(e.rounds.at(-1).ends_at).getTime());
  const statusLabel={DRAFT:'Đang chuẩn bị',OPEN:'Đang nhận người',LIVE:'Đang thi',FINISHED:'Đã kết thúc',CANCELLED:'Đã hủy'}[e.status];
  let head=`<div class="room-card"><div class="room-title"><div><span class="mini">PHÒNG #${escapeHtml(e.join_code)}</span><h2>${escapeHtml(e.title)}</h2></div><span class="pill ${live?'good':ended?'red':'yellow'}">${statusLabel}</span></div><p class="small-note">${fmt(e.participant_count)} / ${fmt(e.max_players)} người · ${e.rounds.length} vòng · ${room.me?`Bạn: ${escapeHtml(room.me.name)}`:'Admin'}</p><div class="round-list">${e.rounds.map(r=>`<div class="round-tile ${active?.id===r.id?'active':''}"><div class="number">ROUND ${r.position}</div><strong>${MODE_LABEL[r.mode]}</strong><small>${fmt(r.duration_seconds)} giây · ${escapeHtml(r.difficulty)} · x${r.weight} điểm</small>${r.starts_at?`<div class="small-note" style="margin-top:7px">${fmtDate(r.starts_at)}</div>`:''}</div>`).join('')}</div>`;
  if(e.status==='OPEN')head+=`<p class="game-status">⏳ Đang đợi quản trị viên bắt đầu. Có thể chia sẻ mã <strong>${escapeHtml(e.join_code)}</strong> và mật khẩu cho bạn bè.</p>`;
@@ -297,7 +297,8 @@ async function startRound(){
  try{
   game=await api(`rooms/${roomCode}/rounds/${active.id}/start`,{method:'POST',body:{}});
   selectedEnglish=null;carLastAuto='';selectedBombId=null;feedback='';renderRoom();
-  document.querySelector('#liveGame')?.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelector('#liveGame')?.scrollIntoView({behavior:'auto',block:'start'});
+  focusGameplayInput($('bombAnswer')||$('carAnswer'));
  }catch(e){toast(e.message,true);if(button){button.disabled=false;button.textContent='Thử vào vòng thi →'}}
  finally{gameBusy=false;if(game?.game?.mode==='CAR')queueCarAutoCheck('room',180)}
 }
@@ -359,6 +360,15 @@ function prepareGameInput(input){
  input.autocomplete='off';
  input.autocapitalize='none';
  input.spellcheck=false;
+}
+function focusGameplayInput(input){
+ if(!input||input.disabled||input.readOnly||!input.isConnected)return;
+ // Mobile browsers can require direct user activation to open the OS keyboard.
+ input.focus({preventScroll:true});
+ if(document.activeElement!==input)return;
+ requestAnimationFrame(()=>{
+  if(input.isConnected&&document.activeElement===input)input.scrollIntoView({behavior:'auto',block:'nearest'});
+ });
 }
 // BOMB: automatically resolve a full English word against all active bombs.
 // Keep the native mobile input mounted while the 1.2s server poll redraws bombs.
@@ -465,6 +475,7 @@ function renderGame(){
  const existingCarAnswer=host.querySelector('#carAnswer')?.value||'';
  const oldFocus=document.activeElement?.id;
  const g=game.game,rd=game.round;
+ host.closest('#roomPane')?.classList.toggle('mobile-round-playing',g.status==='PLAYING');
  const names={MATCH:'Nối từ cùng nghĩa',BOMB:'Gỡ bom từ vựng',CAR:'Dịch từ và lách xe 5 làn'};
  let h=`<div class="game-shell"><div class="game-bar"><strong>${MODE_LABEL[g.mode]} — ${names[g.mode]}</strong><span class="counter" id="gameScore">${fmt(g.score)} ĐIỂM</span><span id="gameHealth">❤️ ${g.health}/3</span><span>⏱ <span id="gameCountdown">${formatCountdown(secLeft(g.endsAt))}</span></span>${['BOMB','CAR'].includes(g.mode)?`<button type="button" id="gameSizeToggle" class="game-size-toggle" aria-label="${gameExpanded?'Thu nhỏ game':'Phóng to game'}">${gameExpanded?'⤢':'⛶'}</button>`:''}</div>`;
  if(g.status!=='PLAYING')h+=`<div class="game-status good">${g.status==='COMPLETED'?'🎉 Hoàn thành vòng thi!':g.status==='FAILED'?'💔 Đã mất 3 tim!':'⌛ Hết thời gian'} · ${fmt(g.score)} điểm · ${g.correct} lượt đúng</div>`;

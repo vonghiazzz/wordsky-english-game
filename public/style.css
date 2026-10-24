@@ -283,3 +283,73 @@ body:has(#liveGame.game-expanded){overflow:hidden}
 .game-keyboard{display:none!important}
 #liveGame .bomb-answer-form input,#liveGame .car-answer-form input,#soloBombGamePane .bomb-answer-form input,#soloCarGamePane .car-answer-form input{font-size:16px;min-height:48px;touch-action:auto;caret-color:auto}
 @media(pointer:coarse) and (max-width:760px){#liveGame .bomb-arena,#soloBombGamePane .solo-bomb-arena{height:clamp(170px,32dvh,270px);min-height:170px}#liveGame .game-shell,#soloBombGamePane .game-shell,#soloCarGamePane .game-shell{scroll-margin-bottom:24px}}
+
+/* WordSky shared MOBILE GAMEPLAY shell: MATCH/BOMB/CAR Solo+Multiplayer. */
+@media (pointer:coarse) and (max-width:760px){
+ /* Multiplayer waiting/config/result stays accessible; only hide room chrome while playing. */
+ #roomPane.mobile-round-playing > .room-card{display:none}
+ #liveGame .game-shell,#soloGamePane .game-shell,#soloBombGamePane .game-shell,#soloCarGamePane .game-shell{
+  min-height:0;padding:9px 10px 11px;margin:0 auto 10px;border-radius:13px;
+ }
+ #liveGame .game-shell > .game-bar,#soloGamePane .game-shell > .game-bar,
+ #soloBombGamePane .game-shell > .game-bar,#soloCarGamePane .game-shell > .game-bar{
+  display:flex;gap:4px 7px;margin-bottom:6px;flex-wrap:wrap;font-size:12px;align-items:center;
+ }
+ #liveGame .game-shell > .game-bar strong,#soloGamePane .game-shell > .game-bar strong,
+ #soloBombGamePane .game-shell > .game-bar strong,#soloCarGamePane .game-shell > .game-bar strong{
+  width:auto;flex:1 1 100%;font-size:14px;line-height:1.25;
+ }
+ #liveGame .game-shell > p.small-note,#soloGamePane .game-shell > p.small-note,
+ #soloBombGamePane .game-shell > p.small-note,#soloCarGamePane .game-shell > p.game-rules{display:none}
+ /* MATCH: preserve large touch targets; two columns fit without horizontal overflow. */
+ #liveGame .pair-grid,#soloGamePane .pair-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ #liveGame .pair-col,#soloGamePane .pair-col{gap:6px;min-width:0}
+ #liveGame .pairbtn,#soloGamePane .pairbtn{
+  min-height:clamp(44px,7dvh,56px);padding:7px 5px;font-size:clamp(12px,3.4vw,15px);
+  line-height:1.2;overflow-wrap:anywhere;
+ }
+ #soloGamePane .solo-progress,#soloBombGamePane .solo-progress,#soloCarGamePane .solo-progress{margin:3px 0 8px}
+ /* BOMB: fixed board size while native keyboard opens to avoid animation restarting. */
+ #liveGame .bomb-arena,#soloBombGamePane .solo-bomb-arena{
+  height:clamp(175px,26svh,240px);min-height:175px;max-height:240px;
+ }
+ #liveGame .bomb-falling,#soloBombGamePane .bomb-falling{min-height:62px;padding:5px 3px;gap:2px}
+ #liveGame .bomb-falling .bomb-emoji,#soloBombGamePane .bomb-falling .bomb-emoji{font-size:18px}
+ /* BOMB/CAR: show only the accessible text field, not repeat instructions. */
+ #liveGame .bomb-answer-form,#liveGame .car-answer-form,
+ #soloBombGamePane .bomb-answer-form,#soloCarGamePane .car-answer-form{
+  position:relative;max-width:100%;width:100%;padding:2px 0 0;margin:4px auto 0;
+  gap:4px;border:0;background:transparent;
+ }
+ #liveGame .bomb-answer-form label,#liveGame .car-answer-form label,
+ #soloBombGamePane .bomb-answer-form label,#soloCarGamePane .car-answer-form label{
+  position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;
+ }
+ #liveGame .bomb-answer-form > small,#soloBombGamePane .bomb-answer-form > small{display:none}
+ #liveGame #bombAnswer,#liveGame #carAnswer,#soloBombGamePane #soloBombAnswer,#soloCarGamePane #soloCarAnswer{
+  font-size:16px;min-height:46px;height:46px;padding:9px 11px;border-radius:10px;caret-color:auto;
+ }
+ /* CAR: compact lanes, keep translation and vehicle visible over keyboard. */
+ #liveGame .car-stage,#soloCarGamePane .solo-car-stage{margin:5px auto 4px;padding:5px}
+ #liveGame .car-stage .car-v6-lane,#soloCarGamePane .car-stage .car-v6-lane{
+  height:auto;min-height:clamp(136px,22svh,190px);padding:5px 2px;
+ }
+ #liveGame .car-stage .car-v6-lane .item,#soloCarGamePane .car-stage .car-v6-lane .item{
+  font-size:clamp(19px,4vw,28px);
+ }
+ /* Expanded mobile view must not stretch the arena behind the OS keyboard. */
+ #liveGame.game-expanded .bomb-arena{
+  flex:0 0 auto;height:clamp(175px,26svh,240px);min-height:175px;
+ }
+ #liveGame.game-expanded .car-stage{flex:0 0 auto;min-height:0}
+ #liveGame.game-expanded .car-stage .car-lanes{flex:0 0 auto}
+ #liveGame.game-expanded .car-stage .car-v6-lane{
+  height:auto;min-height:clamp(136px,22svh,190px);
+ }
+}
+@media (pointer:coarse) and (max-width:760px) and (max-height:650px){
+ #liveGame .bomb-arena,#soloBombGamePane .solo-bomb-arena,
+ #liveGame.game-expanded .bomb-arena{height:175px;min-height:175px}
+ #liveGame .car-stage .car-v6-lane,#soloCarGamePane .car-stage .car-v6-lane{min-height:126px}
+}
