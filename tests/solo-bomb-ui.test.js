@@ -11,7 +11,7 @@ test('BOMB Solo is reachable from its card, shared navigation and direct hash',(
  assert.match(html,/data-screen="solo-bomb"/);assert.match(html,/id="screen-solo-bomb"/);
  assert.match(html,/id="soloBombSetupPane"/);assert.match(html,/id="soloBombGamePane"/);
  assert.match(nav,/key:'solo-bomb'.*url:'\/#solo-bomb'.*arena:'solo-bomb'/);
- assert.match(app,/\['home','solo','solo-bomb','rooms','attendance','rank','admin'\]/);
+ assert.match(app,/\['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'\]/);
  assert.match(html,/aria-label="Chơi thử Bomb Defuser Solo"/);
 });
 
@@ -54,7 +54,7 @@ test('MATCH and BOMB use mode-specific HUD, form and action IDs so hidden screen
  for(const suffix of ['SetupForm','Score','Health','Countdown','Feedback','PendingRetry','Replay','Home','NewConfig','TopicsRetry','StartRetry','ResultTitle']){
   assert.match(app,new RegExp('soloBomb'+suffix),'BOMB needs independent '+suffix+' ID');
  }
- assert.match(app,/const clock=\$\(screen==='solo-bomb'\?'soloBombCountdown':'soloCountdown'\)/);
+ assert.match(app,/const clock=\$\(screen==='solo-car'\?'soloCarCountdown':screen==='solo-bomb'\?'soloBombCountdown':'soloCountdown'\)/);
  assert.match(app,/const score=\$\('soloBombScore'\),health=\$\('soloBombHealth'\)/);
  assert.match(app,/soloHost\(mode,'SetupPane'\)\?\.querySelector/);
 });

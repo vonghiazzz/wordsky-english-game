@@ -242,3 +242,39 @@ body:has(#liveGame.game-expanded){overflow:hidden}
 /* Falling BOMB cards stay mounted; compositor owns their full descent. */
 .bomb-falling{will-change:transform}
 #soloBombFeedback[hidden],#soloBombPendingRetry[hidden]{display:none!important}
+
+/* Phase 2.3: reuse multiplayer CAR stage and keyboard in independent Solo screen */
+.solo-car-shell .car-stage{margin-block:1rem}
+.solo-car-shell .car-lanes{min-width:0}
+.solo-car-shell .car-answer-form{max-width:100%}
+.solo-car-shell .game-keyboard{max-width:100%}
+@media(max-width:760px){
+ .solo-car-shell .car-v6-lane{min-width:0;padding-inline:2px}
+ .solo-car-shell .car-lane-word{overflow-wrap:anywhere}
+ .solo-car-shell .car-answer-form .form-actions{flex-wrap:wrap}
+}
+@media(pointer:coarse) and (max-width:760px){
+ #soloCarGamePane .game-keyboard{display:flex;flex-direction:column;gap:4px;width:100%;max-width:100%;margin:6px auto 0;padding:6px 5px;border:1px solid #66809d77;border-radius:11px;background:rgba(37,55,83,.78);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+ #soloCarGamePane .game-keyboard-row{display:flex;gap:4px;margin:0;justify-content:center}
+ #soloCarGamePane .game-keyboard-row button{flex:1 1 0;max-width:none;min-width:0;min-height:34px;padding:4px 1px;font-size:clamp(11px,3vw,16px)}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-clear{flex:1.4}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-wide{flex:3;max-width:none}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-enter{flex:1.5;max-width:none}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-delete-word{flex:1.65;max-width:none}
+ #soloCarAnswer{caret-color:transparent;min-height:48px;font-size:16px}
+}
+/* CAR Solo keeps an accessible in-game keyboard on desktop as well as touch screens. */
+#soloCarGamePane .game-keyboard{display:flex;flex-direction:column;gap:4px;width:100%;max-width:650px;margin:8px auto;padding:7px;border:1px solid #66809d77;border-radius:11px;background:rgba(37,55,83,.78)}
+
+/* Admin event and vocabulary topic pagination; round removal on a dedicated line. */
+.round-line > .round-remove-row{grid-column:1/-1;width:100%;display:flex;justify-content:flex-end;border-top:1px solid #ffffff16;padding:8px 0 3px;}
+.round-line > .round-remove-row .btn{grid-column:auto;min-width:124px;height:42px;}
+.admin-topic-controls{margin:16px 0;max-width:420px;}
+.admin-topic-controls label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;}
+.admin-topic-actions{margin:13px 0 10px;}
+.admin-topic-words{min-width:0;}
+.admin-topic-item summary{cursor:pointer;}
+.admin-page-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;margin-top:10px;border-top:1px solid #ffffff25;}
+.admin-page-bar .form-actions{align-items:center;}
+.admin-page-bar button:disabled{opacity:.42;cursor:not-allowed;}
+@media(max-width:730px){.round-line > .round-remove-row{justify-content:stretch;}.round-line > .round-remove-row .btn{width:100%;}.admin-page-bar{align-items:stretch;}.admin-page-bar .form-actions button{flex:1;}}

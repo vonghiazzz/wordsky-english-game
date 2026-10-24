@@ -65,3 +65,17 @@ test('shared nav supports mobile and keyboard access',()=>{
  assert.match(nav,/aria-expanded/);
  assert.match(nav,/event\.key==='Escape'/);
 });
+
+test('game links are grouped under one disclosure without changing routes',()=>{
+ for(const key of ["'game'","'solo'","'solo-bomb'","'solo-car'","'rooms'"])assert.ok(nav.includes('key:'+key),key);
+ assert.match(nav,/gameKeys=new Set\(\['game','solo','solo-bomb','solo-car','rooms'\]\)/);
+ assert.match(nav,/data-ws-games-group/);
+ assert.match(nav,/data-ws-games-toggle aria-expanded="false" aria-controls="wsNavGamesList"/);
+ assert.match(nav,/ws-nav-games-list" id="wsNavGamesList" hidden/);
+ assert.match(nav,/item\.key==='game'\?gamesMarkup:gameKeys\.has\(item\.key\)\?'':navLink\(item\)/);
+ assert.match(nav,/gamesToggle\.classList\.toggle\('is-active',gameKeys\.has\(active\)\)/);
+ assert.match(nav,/setGamesOpen\(false\)/);
+ assert.match(nav,/gamesList\.querySelectorAll\('a'\)/);
+ assert.match(style,/\.ws-nav-games-list\[hidden\]/);
+ assert.match(style,/@media \(max-width:680px\)/);
+});

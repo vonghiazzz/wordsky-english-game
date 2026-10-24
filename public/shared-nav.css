@@ -16,3 +16,24 @@
 @media(max-width:680px){.ws-site-bar{min-height:62px;flex-wrap:nowrap;padding:8px 0;width:calc(100% - 24px)}.ws-site-logo{font-size:21px}.ws-site-logo small{font-size:7px}.ws-nav-toggle{display:block;margin-left:auto;order:3}.ws-site-account{margin-left:auto;font-size:11px;padding:10px 11px}.ws-guest-note{display:none}.ws-site-links{display:none;position:absolute;top:100%;left:0;right:0;max-height:calc(100dvh - 62px);overflow-y:auto;padding:12px;flex-direction:column;align-items:stretch;background:#101c35;border-bottom:1px solid #425879;box-shadow:0 16px 35px #0008}.ws-site-links.is-open{display:flex}.ws-nav-link{justify-content:flex-start;font-size:14px;min-height:46px;padding:13px 15px}.ws-site-links{order:initial;flex:initial}.ws-site-account{max-width:108px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}}
 @media(max-width:360px){.ws-site-bar{gap:6px}.ws-site-logo{font-size:18px}.ws-logo-mark{width:31px;height:31px}.ws-site-account{max-width:96px;font-size:10px;padding:9px 7px}}
 @media(prefers-reduced-motion:reduce){.ws-site-header{scroll-behavior:auto}}
+
+/* Compact, accessible game navigation — Arena + Learn. */
+#wsSharedNav *,#wsSharedNav *::before,#wsSharedNav *::after{box-sizing:border-box}
+.ws-nav-games{position:relative;display:inline-flex;align-items:center;flex-shrink:0}
+.ws-nav-games-toggle{appearance:none;background:transparent;border:0;cursor:pointer;gap:7px;font-family:inherit;font-size:12px;font-weight:750;line-height:1.2}
+.ws-nav-chevron{font-size:15px;line-height:1;transition:transform .18s ease}
+.ws-nav-games.is-open .ws-nav-chevron{transform:rotate(180deg)}
+.ws-nav-games-list[hidden]{display:none!important}
+.ws-nav-games-list{position:absolute;top:calc(100% + 8px);left:0;z-index:90;width:224px;max-height:min(65dvh,430px);overflow-y:auto;display:flex;flex-direction:column;gap:2px;background:#15233f;border:1px solid #43567a;border-radius:14px;padding:10px;box-shadow:0 16px 36px #0009}
+.ws-nav-games-caption{font-size:10px;letter-spacing:1.3px;font-weight:850;color:#a9bfe0;padding:8px 10px 4px}
+.ws-nav-games-divider{border-top:1px solid #35496b;margin-top:5px;padding-top:12px}
+.ws-nav-game-link{display:flex;justify-content:flex-start;width:100%;font-size:13px;padding:12px 11px;min-height:44px}
+.ws-nav-games-toggle:focus-visible,.ws-nav-game-link:focus-visible{outline:2px solid #a6f0c2;outline-offset:2px}
+@media (min-width:681px) and (max-width:1100px){.ws-site-links{overflow:visible;flex-wrap:wrap;row-gap:3px}}
+@media (max-width:680px){
+ .ws-nav-games{display:flex;width:100%;flex-direction:column;align-items:stretch}
+ .ws-nav-games-toggle{width:100%;justify-content:space-between;text-align:left}
+ .ws-nav-games-list{position:static;display:flex;width:100%;max-height:none;overflow:visible;box-shadow:none;border:0;border-left:2px solid #5b75ac;border-radius:0 9px 9px 0;background:#172642;margin:2px 0 7px;padding:4px 4px 7px 10px}
+ .ws-nav-game-link{font-size:14px;min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){.ws-nav-chevron{transition:none}}

@@ -18,7 +18,10 @@ function mockAdmin(){
   cefrSearchFilter:{id:'cefrSearchFilter',value:'hello',selectionStart:3,focus(opts){this.wasFocused=opts},setSelectionRange(a,b){this.selection=[a,b]}},
   cefrEditor:{classList:{contains:()=>false}},
   cefrWordId:{value:'word-123'},
-  adminContent:{querySelector:s=>s==='.panel-tabs'?{}:null,querySelectorAll:()=>[{open:true},{open:false},{open:true}]} 
+  adminContent:{querySelector:s=>s==='.panel-tabs'?{}:null,querySelectorAll:()=>[
+   {open:true,dataset:{adminTopicId:'topic-a'}},{open:false,dataset:{adminTopicId:'topic-b'}},{open:true,dataset:{adminTopicId:'topic-c'}}
+  ]},
+  adminTopicList:{querySelectorAll:()=>[]}
  };
  const calls=[];
  const win={scrollY:930,requestAnimationFrame:callback=>callback(),scrollTo:(...args)=>calls.push(['scrollTo',...args])};
@@ -26,7 +29,7 @@ function mockAdmin(){
  const context={window:win,document:doc,screen:'admin', $:id=>elements[id]??null,
    filterAdminCefr:keep=>calls.push(['filterAdminCefr',keep]),
    openCefrEditor:(id,scroll)=>calls.push(['openCefrEditor',id,scroll])};
- vm.runInNewContext('let cefrResultPage=2;\n'+helperSource+'\n'+
+ vm.runInNewContext("let cefrResultPage=2,adminTopicPage=3,adminEventPage=2,adminTopicQuery='school'; const adminOpenTopicIds=new Set();\n"+helperSource+'\n'+
    'globalThis.capture = captureAdminView; globalThis.restore = restoreAdminView;',context);
  return {context,calls,elements};
 }
@@ -37,14 +40,15 @@ test('captures admin scroll position, CEFR filters, editor, and expanded topics'
  assert.equal(snap.search,'hello');assert.equal(snap.level,'B1');
  assert.equal(snap.status,'PROVISIONAL');assert.equal(snap.page,2);
  assert.equal(snap.editorWord,'word-123');
- assert.deepEqual(Array.from(snap.topicsOpen),[0,2]);
+ assert.deepEqual(Array.from(snap.topicsOpen),['topic-a','topic-c']);
+ assert.equal(snap.topicPage,3);assert.equal(snap.eventPage,2);assert.equal(snap.topicQuery,'school');
 });
 
 test('restores CEFR state and scroll after Admin rendering without editor auto scroll',()=>{
  const {context,calls,elements}=mockAdmin();const snap=context.capture();
  elements.cefrLevelFilter.value='ALL'; elements.cefrStatusFilter.value='ALL';elements.cefrSearchFilter.value='';
- const topics=[{open:false},{open:false},{open:false}];
- elements.adminContent.querySelectorAll=()=>topics;
+ const topics=[{open:false,dataset:{adminTopicId:'topic-a'}},{open:false,dataset:{adminTopicId:'topic-b'}},{open:false,dataset:{adminTopicId:'topic-c'}}];
+ elements.adminTopicList.querySelectorAll=()=>topics;
  context.restore(snap);
  assert.equal(elements.cefrSearchFilter.value,'hello');
  assert.equal(elements.cefrLevelFilter.value,'B1');

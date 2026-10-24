@@ -7,6 +7,7 @@ const MODE_LABEL={MATCH:'🔗 Nối từ',BOMB:'💣 Giải bom',CAR:'🏎️ Đ
 const MODE_SHORT={MATCH:'Matching',BOMB:'Bomb Defuser',CAR:'Lane Escape'};
 const rankThresholds=[{xp:0,label:'🥉 Đồng'},{xp:200,label:'🥈 Bạc'},{xp:600,label:'🥇 Vàng'},{xp:1400,label:'💎 Bạch kim'},{xp:3000,label:'👑 Kim cương'}];
 let session=null,topics=[],adminEvents=[],editingEvent=null,roomCode='',room=null,game=null,localTimeOffset=0,selectedEnglish=null,selectedLane=2,selectedBombId=null,feedback='',adminTab='events',loginMode='login',timer=null,screen='home';
+let carAutoTimer=null,soloCarAutoTimer=null,carLastAuto='',soloCarLastAuto='';
 let gameBusy=false,joinBusy=false,gameRevision=0,soloGame=null,soloBusy=false,soloPending=null,selectedSoloEnglish=null,soloFeedback='',soloPairFeedback=null,soloSetupError='',lastSoloConfig=null,soloBombCheckTimer=null,soloBombLastAttempt='',topicsLoading=true,topicsError='';
 function toast(message,error=false){const el=$('toast');el.textContent=message;el.className='toast'+(error?' error':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.add('hidden'),3800)}
 const apiError=(message,uncertain=false)=>Object.assign(new Error(message),{uncertain});
@@ -18,7 +19,7 @@ async function api(path,{method='GET',body}={}){
 }
 const $screen=n=>$('screen-'+n);
 function navigate(name,{fromHistory=false}={}){
- if(!['home','solo','solo-bomb','rooms','attendance','rank','admin'].includes(name))return;
+ if(!['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'].includes(name))return;
  if(!fromHistory&&location.hash!=='#'+name)history.pushState(null,'','#'+name);
  if(name===screen){window.dispatchEvent(new Event('wordsky:route'));return}
  screen=name;
@@ -28,7 +29,7 @@ function navigate(name,{fromHistory=false}={}){
  // Only intentional screen navigation scrolls to the top, never a same-screen click.
  window.scrollTo({top:0,behavior:'auto'});
  if(name==='attendance')loadAttendance();if(name==='rank')loadRank();if(name==='admin')loadAdmin({preserveView:false});if(name==='rooms'&&roomCode)loadRoom();
- if(name==='solo'||name==='solo-bomb')activateSoloScreen(name==='solo-bomb'?'BOMB':'MATCH');
+ if(['solo','solo-bomb','solo-car'].includes(name))activateSoloScreen(name==='solo-car'?'CAR':name==='solo-bomb'?'BOMB':'MATCH');
 }
 function setupPasswordToggles(root=document){
  for(const input of root.querySelectorAll('input[type="password"]')){
@@ -69,7 +70,7 @@ async function loadAttendance(){
 }
 async function loadRank(){try{let d=await api('rankings');$('rankLeaderboard').innerHTML=boardHtml(d.players)}catch(e){$('rankLeaderboard').innerHTML=`<div class="empty">${escapeHtml(e.message)}</div>`}}
 async function loadTopics(silent=false,includeWords=false){
- topicsLoading=true;topicsError='';if(['solo','solo-bomb'].includes(screen))renderSoloSetup();
+ topicsLoading=true;topicsError='';if(['solo','solo-bomb','solo-car'].includes(screen))renderSoloSetup();
  try{const data=await api(includeWords?'admin/topics':'topics');topics=data.topics||[];topicsLoading=false;renderSoloSetup();return topics}
  catch(e){topicsLoading=false;topicsError=e.message;renderSoloSetup();if(!silent)toast(e.message,true);return[]}
 }
@@ -79,16 +80,16 @@ function formatCountdown(sec){return `${String(Math.floor(sec/60)).padStart(2,'0
 function soloTopicOptions(value=''){
  return `<option value="" ${!value?'selected':''}>Tất cả chủ đề</option>`+topics.map(t=>`<option value="${t.id}" ${t.id===value?'selected':''}>${escapeHtml(t.title)} (${t.word_count??t.words?.length??0} từ)</option>`).join('');
 }
-const soloModeForScreen=()=>screen==='solo-bomb'?'BOMB':'MATCH';
-const soloRunKey=mode=>mode==='BOMB'?'wordsky_solo_bomb_run':'wordsky_solo_run';
-const soloPendingKey=mode=>mode==='BOMB'?'wordsky_solo_bomb_pending':'wordsky_solo_pending';
-const soloHost=(mode,kind)=>$(mode==='BOMB'?'soloBomb'+kind:'solo'+kind);
+const soloModeForScreen=()=>screen==='solo-car'?'CAR':screen==='solo-bomb'?'BOMB':'MATCH';
+const soloRunKey=mode=>mode==='CAR'?'wordsky_solo_car_run':mode==='BOMB'?'wordsky_solo_bomb_run':'wordsky_solo_run';
+const soloPendingKey=mode=>mode==='CAR'?'wordsky_solo_car_pending':mode==='BOMB'?'wordsky_solo_bomb_pending':'wordsky_solo_pending';
+const soloHost=(mode,kind)=>$(mode==='CAR'?'soloCar'+kind:mode==='BOMB'?'soloBomb'+kind:'solo'+kind);
 function activateSoloScreen(mode){
- if(soloGame?.game?.mode&&soloGame.game.mode!==mode){soloGame=null;soloPending=null;selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;soloSetupError=''}
+ if(soloGame?.game?.mode&&soloGame.game.mode!==mode){soloGame=null;soloPending=null;selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloSetupError=''}
  renderSolo();if(!soloGame)restoreSoloRun(mode);
 }
 function renderSoloSetup(){
- const mode=soloGame?.game?.mode||soloModeForScreen(),bomb=mode==='BOMB';const host=soloHost(mode,'SetupPane');if(!host||soloGame)return;
+ const mode=soloGame?.game?.mode||soloModeForScreen(),bomb=mode==='BOMB';if(mode==='CAR')return renderSoloCarSetup();const host=soloHost(mode,'SetupPane');if(!host||soloGame)return;
  soloHost(mode,'GamePane')?.classList.add('hidden');
  host.classList.remove('hidden');
  if(topicsLoading&&!topics.length){host.innerHTML='<div class="loading solo-setup" role="status" aria-live="polite" aria-busy="true">⏳ Đang tải kho từ vựng…</div>';return}
@@ -103,13 +104,80 @@ function renderSoloSetup(){
  ${soloSetupError?`<div class="game-status bad" role="alert">${escapeHtml(soloSetupError)} <button type="button" class="btn small ghost" id="${bomb?'soloBombStartRetry':'soloStartRetry'}">Thử lại</button></div>`:''}
  <p class="small-note solo-disclaimer">Lượt Solo không cộng XP và không ảnh hưởng bảng xếp hạng giải đấu.</p></div>`;
 }
+function renderSoloCarSetup(){
+ const host=soloHost('CAR','SetupPane');if(!host||soloGame)return;
+ soloHost('CAR','GamePane')?.classList.add('hidden');host.classList.remove('hidden');
+ if(topicsLoading&&!topics.length){host.innerHTML='<div class="loading solo-setup">Đang tải kho từ vựng…</div>';return}
+ if(!topics.length){host.innerHTML=`<div class="empty">${escapeHtml(topicsError||'Không có chủ đề để chơi.')} <button type="button" id="soloCarTopicsRetry" class="btn">Thử tải lại</button></div>`;return}
+ host.innerHTML=`<div class="auth-panel solo-setup solo-car-setup"><div class="panel-header"><span class="panelicon">🏎️</span><div><h2>Lane Escape · CAR Solo</h2><p>Chỉ cần gõ đúng từ của bất kỳ làn an toàn nào, xe tự chuyển qua làn đó.</p></div></div>
+ <form id="soloCarSetupForm" class="form-grid"><label class="span2">Chủ đề<select name="topic_id">${soloTopicOptions()}</select><small>Mặc định tất cả chủ đề để đảm bảo đủ từ CEFR.</small></label>
+ <label>Độ khó<select name="difficulty"><option value="EASY">EASY · 1 cản, chủ yếu A1–A2</option><option value="NORMAL">NORMAL · 2 cản, có làn x2</option><option value="HARD">HARD · 2 cản, nhiều C1–C2</option></select></label>
+ <label>Số chặng<input type="number" name="question_count" min="3" max="30" value="3" required></label>
+ <label>Tổng thời gian (giây)<input type="number" name="duration_seconds" min="24" max="600" value="90" required></label>
+ <div class="solo-rule-card"><strong>Luật chơi</strong><span>5 làn · mỗi chặng có 8 giây</span><span>Gõ từ của làn nào, xe tự sang làn đó</span><span>Làn thường +100 · ⭐ +150 · ×2 +200</span><span>Đang gõ hoặc gõ sai không bị trừ điểm</span><span>Hết giờ mỗi chặng mất 1 tim</span><span>3 tim hết hoặc hết giờ sẽ kết thúc</span></div>
+ <button class="btn primary span2" type="submit">🏁 Bắt đầu lái →</button></form>
+ ${soloSetupError?`<div role="alert" class="game-status bad">${escapeHtml(soloSetupError)} <button type="button" id="soloCarStartRetry" class="btn small ghost">Thử lại</button></div>`:''}
+ <p class="small-note">Máy chủ kiểm tra CEFR APPROVED theo từng cấp trước khi tạo lượt. Solo không cộng XP hay điểm giải đấu.</p></div>`;
+}
+function renderSoloCarGame(){
+ const host=soloHost('CAR','GamePane'),setup=soloHost('CAR','SetupPane');if(!host||!setup||!soloGame)return;
+ const g=soloGame.game,rd=soloGame.round,ended=g.status!=='PLAYING',answer=host.querySelector('#soloCarAnswer')?.value||'';
+ setup.classList.add('hidden');host.classList.remove('hidden');
+ const lanes=g.level?.lanes||[];
+ const symbol=kind=>kind==='BLOCKED'?'🧱':kind==='BONUS'?'⭐':kind==='DOUBLE'?'×2':'·';
+ const message=g.status==='COMPLETED'?'🏁 Hoàn thành đường đua!':g.status==='FAILED'?'💔 Bạn đã hết tim.':'⌛ Đã hết thời gian.';
+ host.innerHTML=`<div class="game-shell solo-game-shell solo-car-shell"><div class="game-bar"><strong>🏎️ CAR Solo</strong><span class="counter" id="soloCarScore">${fmt(g.score)} ĐIỂM</span><span id="soloCarHealth">❤️ ${g.health}/3</span><span>⏱ <span id="soloCarCountdown">${formatCountdown(secLeft(g.endsAt))}</span></span></div>
+ <div class="solo-progress" role="progressbar" aria-label="Tiến độ CAR Solo" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.index||0}"><span style="width:${Math.round(100*(g.index||0)/Math.max(1,rd.question_count))}%"></span></div>
+ ${ended?`<div id="soloCarResultTitle" tabindex="-1" class="game-status good"><strong>${message}</strong> · ${g.correct}/${rd.question_count} chặng đúng · ${fmt(g.score)} điểm</div>`:
+ `<p class="small-note game-rules">Gõ từ tiếng Anh của bất kỳ làn an toàn nào. Xe tự chuyển và vượt chặng khi đúng — không cần chọn làn hay Enter.</p>
+ <div class="car-stage solo-car-stage"><div class="game-bar"><span>CHẶNG ${g.index+1}/${g.total}</span><span>🏎️ LÀN ${(g.carLane??2)+1} · GÕ ĐỂ VƯỢT</span></div>
+ <div class="car-lanes" role="list">${lanes.map((lane,i)=>`<div role="listitem" class="lane car-v6-lane car-auto-lane ${Number(g.carLane??2)===i?'current':''} ${lane.kind==='BLOCKED'?'blocked':''}" aria-label="Làn ${i+1}: ${lane.kind==='BLOCKED'?'vật cản':escapeHtml(lane.meaning)}"><span class="item">${symbol(lane.kind)}</span><span class="car-cefr">${lane.kind==='NORMAL'?(lane.cefr||'A1–A2'):lane.kind==='BONUS'?'B1–B2':lane.kind==='DOUBLE'?'C1–C2':'CẢN'}</span><span class="car-lane-word">${lane.kind==='BLOCKED'?'Tránh':escapeHtml(lane.meaning)}</span><span class="you">${Number(g.carLane??2)===i?'🏎':'·'}</span><span class="car-lane-number">${i+1}</span></div>`).join('')}</div>
+ <div class="car-vehicle" id="soloCarVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Nhập đúng từ — xe tự vượt chặng</div></div>
+ <form id="soloCarAnswerForm" class="car-answer-form" autocomplete="off"><label for="soloCarAnswer">Nhập từ của một làn an toàn</label>
+ <div class="car-answer-row"><input id="soloCarAnswer" name="answer" type="text" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" maxlength="100" enterkeyhint="done" placeholder="Gõ từ tiếng Anh — tự chuyển làn" aria-label="Từ tiếng Anh để vượt chặng"></div>
+ <span id="soloCarReadyHint" class="small-note"></span><span id="soloCarStepTimer" class="small-note"></span></form>${compactKeyboard('soloCarAnswer',true)}`}
+ ${!ended&&(soloFeedback||soloPending)?`<div class="game-status ${soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả…')} ${soloPending?`<button id="soloCarPendingRetry" type="button" class="btn small ghost" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button>`:''}</div>`:''}
+ <div class="form-actions solo-actions">${ended?'<button id="soloCarReplay" type="button" class="btn primary">Chơi lại</button><button id="soloCarHome" type="button" class="btn ghost">Về trang chủ</button>':''}<button type="button" id="soloCarNewConfig" class="btn ghost" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
+ if(!ended){const input=$('soloCarAnswer');if(input){input.value=answer;prepareGameInput(input);if(screen==='solo-car'&&!document.getElementById('authModal')?.classList.contains('active'))input.focus({preventScroll:true})}updateSoloCarTimers()}
+ else setTimeout(()=>host.querySelector('#soloCarResultTitle')?.focus({preventScroll:true}),0);
+}
+function updateSoloCarTimers(){
+ if(soloGame?.game?.mode!=='CAR'||soloGame.game.status!=='PLAYING')return;
+ const g=soloGame.game,now=Date.now()+localTimeOffset;
+ const step=$('soloCarStepTimer'),ready=$('soloCarReadyHint');
+ if(step)step.textContent='⏱ Chặng còn '+Math.max(0,Math.ceil((g.stepDeadlineAt-now)/1000))+'s';
+ if(ready)ready.textContent=now<g.nextAllowedAt?'Chờ '+Math.ceil((g.nextAllowedAt-now)/1000)+'s':'Sẵn sàng vượt chặng';
+}
+// Keep this helper independent from the selected-lane UI: one answer fits any safe lane.
+function queueCarAutoCheck(mode,delay=270){
+ const solo=mode==='solo';
+ if(solo)clearTimeout(soloCarAutoTimer);else clearTimeout(carAutoTimer);
+ const g=solo?soloGame?.game:game?.game;
+ if(!g||g.mode!=='CAR'||g.status!=='PLAYING')return;
+ const wait=Math.max(delay,Number(g.nextAllowedAt||0)-(Date.now()+localTimeOffset)+25);
+ const callback=()=>void checkCarAutoAnswer(mode);
+ if(solo)soloCarAutoTimer=setTimeout(callback,wait);else carAutoTimer=setTimeout(callback,wait);
+}
+async function checkCarAutoAnswer(mode){
+ const solo=mode==='solo',current=solo?soloGame:game,g=current?.game;
+ if(!current||g?.mode!=='CAR'||g.status!=='PLAYING')return;
+ if(solo?(soloBusy||soloPending):gameBusy){queueCarAutoCheck(mode,220);return}
+ const typed=$(solo?'soloCarAnswer':'carAnswer')?.value.trim()||'';
+ if(!typed)return;
+ const stamp=`${current.runId}:${g.index}:${typed.normalize('NFKC').toLocaleLowerCase('en-US')}`;
+ if(stamp===(solo?soloCarLastAuto:carLastAuto))return;
+ if(Date.now()+localTimeOffset<g.nextAllowedAt){queueCarAutoCheck(mode,220);return}
+ if(solo){soloCarLastAuto=stamp;await submitSoloAnswer({auto:true,answer:typed})}
+ else{carLastAuto=stamp;await submitGameAnswer({auto:true,answer:typed})}
+}
+async function submitSoloCarAnswer(){queueCarAutoCheck('solo',0)}
 function soloPairsMarkup(g){
  const right=g.rightOptions||[];
  const stateClass=(side,id)=>soloPairFeedback?.[side]===id?(soloPairFeedback.correct?'correct':'wrong'):'';
  return `<div class="pair-grid"><div class="pair-col" role="group" aria-labelledby="soloEnglishHeading"><h3 id="soloEnglishHeading">English</h3>${g.pairs.map(p=>`<button type="button" data-solo-pair-left="${p.id}" aria-pressed="${selectedSoloEnglish===p.id}" class="pairbtn ${p.matched?'matched':''} ${selectedSoloEnglish===p.id?'selected':''} ${stateClass('leftId',p.id)}" ${(p.matched||soloPending)?'disabled aria-disabled="true"':''}>${escapeHtml(p.english)}</button>`).join('')}</div><div class="pair-col" role="group" aria-labelledby="soloMeaningHeading"><h3 id="soloMeaningHeading">Nghĩa tiếng Việt</h3>${right.map(p=>`<button type="button" data-solo-pair-right="${p.id}" class="pairbtn ${p.matched?'matched':''} ${stateClass('rightId',p.id)}" ${(p.matched||soloPending)?'disabled aria-disabled="true"':''}>${escapeHtml(p.meaning)}</button>`).join('')}</div></div>`;
 }
 function renderSoloGame(){
- const mode=soloGame?.game?.mode;if(!mode)return;const setup=soloHost(mode,'SetupPane'),host=soloHost(mode,'GamePane');if(!setup||!host)return;
+ const mode=soloGame?.game?.mode;if(!mode)return;if(mode==='CAR')return renderSoloCarGame();const setup=soloHost(mode,'SetupPane'),host=soloHost(mode,'GamePane');if(!setup||!host)return;
  const existingBombAnswer=host.querySelector('#soloBombAnswer')?.value||'',oldFocus=document.activeElement?.id;
  setup.classList.add('hidden');host.classList.remove('hidden');
  const g=soloGame.game,rd=soloGame.round,ended=g.status!=='PLAYING',bomb=mode==='BOMB';
@@ -125,19 +193,26 @@ function renderSoloGame(){
 function renderSolo(){if(soloGame)renderSoloGame();else renderSoloSetup()}
 async function beginSolo(mode,config){
  if(soloBusy||soloPending)return;soloBusy=true;lastSoloConfig={mode,config};soloSetupError='';const button=soloHost(mode,'SetupPane')?.querySelector('form button[type="submit"]');if(button){button.disabled=true;button.textContent='⏳ Đang tạo lượt…'}
- try{soloGame=await api(`solo/${mode.toLowerCase()}/start`,{method:'POST',body:config});localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();sessionStore.setItem(soloRunKey(mode),soloGame.runId);selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';renderSoloGame();soloHost(mode,'GamePane')?.scrollIntoView({behavior:'smooth',block:'start'});}
+ try{soloGame=await api(`solo/${mode.toLowerCase()}/start`,{method:'POST',body:config});localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();sessionStore.setItem(soloRunKey(mode),soloGame.runId);selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';renderSoloGame();soloHost(mode,'GamePane')?.scrollIntoView({behavior:'smooth',block:'start'});}
  catch(e){soloSetupError=e.message;toast(e.message,true);renderSoloSetup()}finally{soloBusy=false}
 }
 async function beginSoloMatch(config){return beginSolo('MATCH',config)}
 function rememberSoloPending(pending){soloPending=pending;sessionStore.setItem(soloPendingKey(pending.mode),JSON.stringify(pending))}
 function clearSoloPending(mode=soloPending?.mode||soloGame?.game?.mode||soloModeForScreen()){soloPending=null;sessionStore.removeItem(soloPendingKey(mode))}
 function restoreStoredSoloPending(runId,mode){
- try{const pending=JSON.parse(sessionStore.getItem(soloPendingKey(mode))||'null');const valid=mode==='BOMB'?typeof pending?.answer==='string'&&pending.answer.length<=100:pending?.leftId&&pending?.rightId;if(pending?.runId===runId&&pending.mode===mode&&/^[0-9a-f-]{36}$/i.test(pending.attemptId)&&valid){soloPending=pending;return}}catch{}
+ try{const pending=JSON.parse(sessionStore.getItem(soloPendingKey(mode))||'null');const valid=mode==='CAR'?(pending?.auto===true?pending?.lane===undefined: Number.isInteger(pending?.lane)&&pending.lane>=0&&pending.lane<=4)&&typeof pending?.answer==='string'&&pending.answer.length<=100:mode==='BOMB'?typeof pending?.answer==='string'&&pending.answer.length<=100:pending?.leftId&&pending?.rightId;if(pending?.runId===runId&&pending.mode===mode&&/^[0-9a-f-]{36}$/i.test(pending.attemptId)&&valid){soloPending=pending;return}}catch{}
  clearSoloPending(mode);
 }
-function acceptSoloAnswer(out,pending){
+async function acceptSoloAnswer(out,pending){
+ if(out.game?.mode==='CAR'&&out.result?.laneSafe&&out.result?.wordCorrect&&soloGame?.runId===out.runId){
+  await animateCarCrossing(out.result.laneFrom??soloGame.game.carLane??2,out.result.laneTo??pending.lane??2,{stageSelector:'.solo-car-stage',vehicleSelector:'#soloCarVehicle'});
+ }
  clearSoloPending();soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();selectedSoloEnglish=null;
- if(out.game.mode==='BOMB'){const input=$('soloBombAnswer');if(out.result?.correct&&input?.value.trim()===pending.answer)input.value='';if(out.result?.correct)soloBombLastAttempt='';soloFeedback=out.result?.correct?'✅ Gỡ bom! +'+fmt(out.result.awarded)+' điểm':'Chưa khớp bom đang rơi — tiếp tục gõ.'}
+ if(out.game.mode==='CAR'){
+  const input=$('soloCarAnswer');if(out.result?.wordCorrect&&input?.value.trim()===pending.answer)input.value='';
+  if(out.result?.laneSafe&&out.result?.wordCorrect)soloCarLastAuto='';
+  soloFeedback=out.result?.auto&&!out.result?.wordCorrect?'':out.result?.wordCorrect===false?'❌ Sai từ, chưa vượt chặng.':out.result?.laneSafe===false?'💥 Va chạm! Mất 1 tim.':'✅ +'+fmt(out.result?.awarded||0)+' điểm';
+ }else if(out.game.mode==='BOMB'){const input=$('soloBombAnswer');if(out.result?.correct&&input?.value.trim()===pending.answer)input.value='';if(out.result?.correct)soloBombLastAttempt='';soloFeedback=out.result?.correct?'✅ Gỡ bom! +'+fmt(out.result.awarded)+' điểm':'Chưa khớp bom đang rơi — tiếp tục gõ.'}
  else{soloPairFeedback={leftId:pending.leftId,rightId:pending.rightId,correct:!!out.result?.correct};soloFeedback=out.result?.correct?'Đúng rồi! +'+fmt(out.result.awarded)+' điểm.':'Sai cặp! Mất 1 tim, còn '+out.game.health+'/3 tim.'}
 }
 async function rejectSoloPending(error){
@@ -148,34 +223,35 @@ async function rejectSoloPending(error){
 async function resolveSoloPending({sendFirst=false}={}){
  if(!soloPending||soloBusy||!soloGame)return;
  const pending=soloPending;if(pending.runId!==soloGame.runId){clearSoloPending();return}
- const send=()=>api(`solo/runs/${pending.runId}/answer`,{method:'POST',body:pending.mode==='BOMB'?{attemptId:pending.attemptId,answer:pending.answer,auto:true}:{attemptId:pending.attemptId,leftId:pending.leftId,rightId:pending.rightId}});
+ const send=()=>api(`solo/runs/${pending.runId}/answer`,{method:'POST',body:pending.mode==='CAR'?(pending.auto?{attemptId:pending.attemptId,answer:pending.answer,auto:true}:{attemptId:pending.attemptId,lane:pending.lane,answer:pending.answer}):pending.mode==='BOMB'?{attemptId:pending.attemptId,answer:pending.answer,auto:true}:{attemptId:pending.attemptId,leftId:pending.leftId,rightId:pending.rightId}});
  const lookup=()=>api(`solo/runs/${pending.runId}/attempts/${pending.attemptId}`);
- soloBusy=true;soloFeedback='Đang xác nhận kết quả với máy chủ…';if(!(pending.mode==='BOMB'&&syncSoloBombArena()))renderSoloGame();
+ const silentCarAuto=pending.mode==='CAR'&&pending.auto===true;
+ soloBusy=true;if(!silentCarAuto)soloFeedback='Đang xác nhận kết quả với máy chủ…';if(!silentCarAuto&&!(pending.mode==='BOMB'&&syncSoloBombArena()))renderSoloGame();
  try{
   if(sendFirst){
-   try{acceptSoloAnswer(await send(),pending);return}catch(e){if(!e.uncertain){await rejectSoloPending(e);return}}
+   try{await acceptSoloAnswer(await send(),pending);return}catch(e){if(!e.uncertain){await rejectSoloPending(e);return}}
   }
   let state;
   try{state=await lookup()}catch{soloFeedback='Chưa thể xác nhận kết quả. Không chọn cặp mới; hãy thử đồng bộ lại.';return}
-  if(state.attempt?.applied){acceptSoloAnswer(state,pending);return}
-  try{acceptSoloAnswer(await send(),pending);return}catch(e){
+  if(state.attempt?.applied){await acceptSoloAnswer(state,pending);return}
+  try{await acceptSoloAnswer(await send(),pending);return}catch(e){
    if(!e.uncertain){await rejectSoloPending(e);return}
-   try{state=await lookup();if(state.attempt?.applied){acceptSoloAnswer(state,pending);return}}catch{}
+   try{state=await lookup();if(state.attempt?.applied){await acceptSoloAnswer(state,pending);return}}catch{}
    soloFeedback='Kết quả vẫn chưa rõ. Lượt chọn đang được giữ nguyên và chưa thể thao tác tiếp.';
   }
- }finally{soloBusy=false;if(!(soloGame?.game?.mode==='BOMB'&&soloGame.game.status==='PLAYING'&&syncSoloBombArena()))renderSoloGame()}
+ }finally{soloBusy=false;if(!silentCarAuto||soloFeedback||soloGame?.game?.status!=='PLAYING'||soloGame?.game?.index!==Number(pending.stageIndex??-1)){if(!(soloGame?.game?.mode==='BOMB'&&soloGame.game.status==='PLAYING'&&syncSoloBombArena()))renderSoloGame()}if(soloGame?.game?.mode==='CAR')queueCarAutoCheck('solo',180)}
 }
 async function submitSoloAnswer(payload){
  if(!soloGame||soloBusy||soloPending||soloGame.game.status!=='PLAYING')return;
- rememberSoloPending({runId:soloGame.runId,attemptId:crypto.randomUUID(),mode:soloGame.game.mode,...payload});
+ rememberSoloPending({runId:soloGame.runId,attemptId:crypto.randomUUID(),mode:soloGame.game.mode,...payload,stageIndex:soloGame.game.index});
  await resolveSoloPending({sendFirst:true});
 }
 async function refreshSoloGame(){
  if(!soloGame||soloBusy||soloPending||soloGame.game.status!=='PLAYING')return;
- try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game,lostHealth=out.game.health<before.health;soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(lostHealth)soloFeedback='💥 Bom quá hạn! Mất 1 tim.';if(out.game.mode==='BOMB'&&out.game.status==='PLAYING'&&syncSoloBombArena()){}else if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health)renderSoloGame();}
- catch(e){if(e.message.includes('Phiên chơi Solo')||e.message.includes('Không tìm thấy'))resetSolo(false);else if(['solo','solo-bomb'].includes(screen))toast(e.message,true)}
+ try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game,lostHealth=out.game.health<before.health;soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(lostHealth)soloFeedback=out.game.mode==='CAR'?'⌛ Trễ chặng! Mất 1 tim.':'💥 Bom quá hạn! Mất 1 tim.';if(out.game.mode==='BOMB'&&out.game.status==='PLAYING'&&syncSoloBombArena()){}else if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health||out.game.index!==before.index)renderSoloGame();}
+ catch(e){if(e.message.includes('Phiên chơi Solo')||e.message.includes('Không tìm thấy'))resetSolo(false);else if(['solo','solo-bomb','solo-car'].includes(screen))toast(e.message,true)}
 }
-function resetSolo(render=true){const mode=soloGame?.game?.mode||soloModeForScreen();soloGame=null;selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';clearSoloPending(mode);sessionStore.removeItem(soloRunKey(mode));soloHost(mode,'GamePane')?.classList.add('hidden');if(render)renderSoloSetup()}
+function resetSolo(render=true){const mode=soloGame?.game?.mode||soloModeForScreen();soloGame=null;selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';clearSoloPending(mode);sessionStore.removeItem(soloRunKey(mode));soloHost(mode,'GamePane')?.classList.add('hidden');if(render)renderSoloSetup()}
 async function restoreSoloRun(mode=soloModeForScreen()){
  const id=sessionStore.getItem(soloRunKey(mode));if(!/^[0-9a-f-]{36}$/i.test(id||''))return;
  restoreStoredSoloPending(id,mode);
@@ -209,10 +285,10 @@ async function startRound(){
  gameBusy=true;gameRevision++;const button=$('startRoundButton');if(button){button.disabled=true;button.textContent='⏳ Đang vào vòng thi...'}
  try{
   game=await api(`rooms/${roomCode}/rounds/${active.id}/start`,{method:'POST',body:{}});
-  selectedEnglish=null;selectedLane=2;selectedBombId=null;feedback='';renderRoom();
+  selectedEnglish=null;carLastAuto='';selectedBombId=null;feedback='';renderRoom();
   document.querySelector('#liveGame')?.scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){toast(e.message,true);if(button){button.disabled=false;button.textContent='Thử vào vòng thi →'}}
- finally{gameBusy=false}
+ finally{gameBusy=false;if(game?.game?.mode==='CAR')queueCarAutoCheck('room',180)}
 }
 async function refreshGame(){if(!game||!roomCode)return;
  const revision=gameRevision;try{const before=game.game;const answer=await api(`rooms/${roomCode}/runs/${game.runId}`);if(!game||gameBusy||revision!==gameRevision)return;if(before.mode==='BOMB'&&answer.game.health<before.health)feedback='💥 Bom nổ! -1 tim';if(before.mode==='CAR'&&answer.game.health<before.health)feedback='⌛ Trễ chặng! -1 tim';game.game=answer.game;
@@ -221,9 +297,9 @@ async function refreshGame(){if(!game||!roomCode)return;
   if(game.game.status!=='PLAYING'){setTimeout(()=>loadRoom(),1100)}}catch(e){if(screen==='rooms')toast(e.message,true)}
 }
 // Move the car only after server-authoritative acceptance, never while merely selecting a lane.
-async function animateCarCrossing(fromLane,toLane){
- const stage=document.querySelector('.car-stage');
- const vehicle=document.querySelector('#carVehicle');
+async function animateCarCrossing(fromLane,toLane,{stageSelector='.car-stage',vehicleSelector='#carVehicle'}={}){
+ const stage=document.querySelector(stageSelector);
+ const vehicle=document.querySelector(vehicleSelector);
  if(!stage||!vehicle)return;
  const clamp=n=>Math.max(0,Math.min(4,Number(n)||0));
  vehicle.style.left=(10+20*clamp(fromLane))+'%';
@@ -242,12 +318,13 @@ async function submitGameAnswer(payload){
   const answer=await api(`rooms/${roomCode}/runs/${runId}/answer`,{method:'POST',body:payload});
   if(game?.runId!==runId)return;
   if(before.mode==='CAR'&&answer.result?.wordCorrect===true&&answer.result?.laneSafe===true){
-   await animateCarCrossing(answer.result.laneFrom??before.carLane??2,answer.result.laneTo??payload.lane);
+   await animateCarCrossing(answer.result.laneFrom??before.carLane??2,answer.result.laneTo??payload.lane??2);
    if(game?.runId!==runId)return;
-   selectedLane=answer.game.carLane??payload.lane;
+   carLastAuto='';
   }
   game.game=answer.game;
   if(game.game.mode==='CAR'){
+   if(answer.result?.auto&&!answer.result?.wordCorrect){feedback='';return}
    if(answer.result?.wordCorrect===false){feedback='❌ Sai từ!'}
    else if(answer.result?.laneSafe===false){feedback='💔 Đâm vật cản! -1 tim'}
    else feedback='✅ +'+fmt(answer.result.awarded)+' điểm';
@@ -399,19 +476,16 @@ function renderGame(){
      </div>${g.status==='PLAYING'?compactKeyboard('bombAnswer',true):''}`;
  }else if(g.mode==='CAR'){
   const next=Math.max(0,Math.ceil((g.nextAllowedAt-Date.now()-localTimeOffset)/1000));
-  if(g.level?.lanes?.[selectedLane]?.kind==='BLOCKED')selectedLane=g.level.lanes.findIndex(l=>l.kind!=='BLOCKED');
-  const current=g.level?.lanes?.[selectedLane];
-  const isBlocked=current?.kind==='BLOCKED';
-  const symbol=k=>k==='BLOCKED'?'🧱':k==='BONUS'?'⭐':k==='DOUBLE'?'×2':'·';
+    const symbol=k=>k==='BLOCKED'?'🧱':k==='BONUS'?'⭐':k==='DOUBLE'?'×2':'·';
   h+=`<p class="small-note game-rules">EASY ưu tiên A1–A2 · NORMAL cân bằng các cấp · HARD ưu tiên C1–C2. ⭐ thưởng 1.5×; ×2 thưởng 2×. Tránh vật cản 🧱.</p>
-   <div class="car-stage"><div class="game-bar"><span>CHẶNG ${g.index+1}/${g.total} · ĐÃ VƯỢT ${g.index}</span><span>🏎️ LÀN ${(g.carLane??2)+1} · 🎯 CHỌN LÀN ${selectedLane+1}</span></div>
-   <div class="car-lanes">${(g.level?.lanes||[]).map((lane,i)=>`<button type="button" data-lane="${i}" class="lane car-v6-lane ${selectedLane===i?'selected':''} ${lane.kind==='BLOCKED'?'blocked':''}" aria-label="Làn ${i+1}: ${lane.kind==='BLOCKED'?'vật cản':escapeHtml(lane.meaning)}"><span class="item">${symbol(lane.kind)}</span><span class="car-cefr">${lane.kind==='NORMAL'?(lane.cefr||'A1–A2'):lane.kind==='BONUS'?'B1–B2':lane.kind==='DOUBLE'?'C1–C2':'CẢN'}</span><span class="car-lane-word">${lane.kind==='BLOCKED'?'Tránh':escapeHtml(lane.meaning)}</span><span class="you">${selectedLane===i?'🎯':'·'}</span><span class="car-lane-number">${i+1}</span></button>`).join('')}</div><div class="car-vehicle" id="carVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Gõ từ và Enter để vượt chặng</div>${arenaFeedbackMarkup()}</div>
+   <div class="car-stage"><div class="game-bar"><span>CHẶNG ${g.index+1}/${g.total} · ĐÃ VƯỢT ${g.index}</span><span>🏎️ LÀN ${(g.carLane??2)+1} · GÕ ĐỂ VƯỢT</span></div>
+   <div class="car-lanes" role="list">${(g.level?.lanes||[]).map((lane,i)=>`<div role="listitem" class="lane car-v6-lane car-auto-lane ${Number(g.carLane??2)===i?'current':''} ${lane.kind==='BLOCKED'?'blocked':''}" aria-label="Làn ${i+1}: ${lane.kind==='BLOCKED'?'vật cản':escapeHtml(lane.meaning)}"><span class="item">${symbol(lane.kind)}</span><span class="car-cefr">${lane.kind==='NORMAL'?(lane.cefr||'A1–A2'):lane.kind==='BONUS'?'B1–B2':lane.kind==='DOUBLE'?'C1–C2':'CẢN'}</span><span class="car-lane-word">${lane.kind==='BLOCKED'?'Tránh':escapeHtml(lane.meaning)}</span><span class="you">${Number(g.carLane??2)===i?'🏎':'·'}</span><span class="car-lane-number">${i+1}</span></div>`).join('')}</div><div class="car-vehicle" id="carVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Gõ đúng từ — xe tự vượt chặng</div>${arenaFeedbackMarkup()}</div>
    <form id="carAnswerForm" class="car-answer-form" autocomplete="off">
-    <label for="carAnswer">${isBlocked?'⚠️ Làn có vật cản, đổi sang làn an toàn!':current?'Dịch từ làn '+(selectedLane+1)+' ('+escapeHtml(current.cefr)+'): '+escapeHtml(current.meaning):'Chọn làn'}</label>
-    <div class="car-answer-row"><input id="carAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="100" placeholder="${isBlocked?'Không cần nhập từ':'Nhập nguyên từ tiếng Anh rồi Enter'}" ${isBlocked?'disabled':''}></div>
+    <label for="carAnswer">Nhập từ của bất kỳ làn an toàn nào</label>
+    <div class="car-answer-row"><input id="carAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="100" placeholder="Gõ từ đúng — xe tự chuyển làn"></div>
     <span id="carReadyHint" class="small-note">${next?'Chờ '+next+' giây':'Sẵn sàng'}</span><span id="carStepTimer" class="small-note">⏱ Còn ${Math.max(0,Math.ceil(((g.stepDeadlineAt||g.endsAt)-Date.now()-localTimeOffset)/1000))}s để qua chặng</span>
-   </form>${g.status==='PLAYING'&&!isBlocked?compactKeyboard('carAnswer'):''}
-   <p class="small-note game-rules">Chạm làn an toàn rồi nhấn Enter trên bàn phím trong game để vượt chặng.</p>`;
+   </form>${g.status==='PLAYING'?compactKeyboard('carAnswer',true):''}
+   <p class="small-note game-rules">Gõ đúng từ tiếng Anh ở bất kỳ làn an toàn nào. Xe tự chuyển làn, không cần nhấn Enter.</p>`;
 
  }
  if(g.mode==='MATCH'&&feedback)h+=`<div class="game-status ${feedback.startsWith('Đúng')?'good':'bad'}">${escapeHtml(feedback)}</div>`;
@@ -423,7 +497,7 @@ function renderGame(){
  }
  if(g.mode==='CAR'&&g.status==='PLAYING'){
   const el=$('carAnswer');if(el){el.value=existingCarAnswer;prepareGameInput(el);}
-  if(oldFocus==='carAnswer'&&el&&!mobileGameKeyboard())el.focus({preventScroll:true});
+  if(screen==='rooms'&&g.status==='PLAYING'&&el)el.focus({preventScroll:true});
  }
 }
 function animateBombs(arena=$('bombArena')){
@@ -456,7 +530,7 @@ function animateBombs(arena=$('bombArena')){
  }
 }
 function updateCountdowns(){
- if(['solo','solo-bomb'].includes(screen)){const clock=$(screen==='solo-bomb'?'soloBombCountdown':'soloCountdown');if(clock&&soloGame)clock.textContent=formatCountdown(secLeft(soloGame.game.endsAt));if(soloGame?.game.mode==='BOMB')animateBombs($('soloBombArena'));return}
+ if(['solo','solo-bomb','solo-car'].includes(screen)){const clock=$(screen==='solo-car'?'soloCarCountdown':screen==='solo-bomb'?'soloBombCountdown':'soloCountdown');if(clock&&soloGame)clock.textContent=formatCountdown(secLeft(soloGame.game.endsAt));if(soloGame?.game.mode==='BOMB')animateBombs($('soloBombArena'));if(soloGame?.game.mode==='CAR')updateSoloCarTimers();return}
  if(screen!=='rooms')return;animateBombs();const c=$('roundCountdown');const gc=$('gameCountdown');if(c&&room){let rd=currentRoundFromEvent(room.event);if(rd)c.textContent=formatCountdown(secLeft(rd.ends_at))}if(gc&&game)gc.textContent=formatCountdown(secLeft(game.game.endsAt));
  if(game?.game.mode==='CAR'&&game.game.status==='PLAYING'){
   const remaining=Math.max(0,Math.ceil((game.game.nextAllowedAt-Date.now()-localTimeOffset)/1000));
@@ -470,6 +544,11 @@ let carFeatureEnabled=false;
 const initialRounds=()=>['MATCH','BOMB',...(carFeatureEnabled?['CAR']:[])].map((mode,i)=>({mode,difficulty:'NORMAL',duration_seconds:mode==='BOMB'?120:90,question_count:mode==='CAR'?12:8,points_per_correct:100,penalty:25,weight:1,topic_id:mode==='CAR'?null:topics[0]?.id||null,bomb_fall_seconds:16,bomb_batch_size:2,bomb_spawn_interval_seconds:9,car_step_seconds:8}));
 let draftRounds=[];
 let cefrReviewSources={};
+// Admin pagination is presentation-only; keep all records for selectors and edits.
+let adminTopicPage=1,adminEventPage=1,adminTopicQuery='';
+const ADMIN_TOPICS_PAGE_SIZE=6,ADMIN_EVENTS_PAGE_SIZE=8;
+const adminOpenTopicIds=new Set();
+function clampAdminPage(page,total,size){return Math.max(1,Math.min(Math.ceil(total/size)||1,page))}
 // wordsky-admin-scroll-preservation-v1: retain Admin location and in-progress CEFR work on refresh.
 function captureAdminView(){
  const pane=$('adminContent');
@@ -477,15 +556,17 @@ function captureAdminView(){
  const editor=$('cefrEditor');
  const active=document.activeElement;
  const focusId=['cefrLevelFilter','cefrStatusFilter','cefrSearchFilter','cefrSourceInput'].includes(active?.id)?active.id:null;
- const topicsOpen=Array.from(pane.querySelectorAll('#adminPanelVocab details.room-card'))
-   .flatMap((el,index)=>el.open?[index]:[]);
+ const topicsOpen=Array.from(pane.querySelectorAll('#adminTopicList details[data-admin-topic-id]'))
+   .flatMap(el=>el.open?[el.dataset.adminTopicId]:[]);
+ for(const id of topicsOpen)adminOpenTopicIds.add(id);
  return {
   scrollY:window.scrollY,
   level:$('cefrLevelFilter')?.value||'ALL',
   status:$('cefrStatusFilter')?.value||'ALL',
   search:$('cefrSearchFilter')?.value||'',
   page:cefrResultPage,
-  topicsOpen,
+  topicPage:adminTopicPage,eventPage:adminEventPage,topicQuery:adminTopicQuery,
+  topicsOpen:[...new Set([...adminOpenTopicIds,...topicsOpen])],
   editorWord:editor&&!editor.classList.contains('hidden')?$('cefrWordId')?.value:null,
   focusId,
   cursor:focusId==='cefrSearchFilter'?active.selectionStart:null
@@ -498,8 +579,11 @@ function restoreAdminView(view){
  if($('cefrSearchFilter'))$('cefrSearchFilter').value=view.search;
  cefrResultPage=view.page;
  filterAdminCefr(false);
- const details=Array.from($('adminContent')?.querySelectorAll('#adminPanelVocab details.room-card')||[]);
- for(const index of view.topicsOpen)if(details[index])details[index].open=true;
+ for(const id of view.topicsOpen){
+  adminOpenTopicIds.add(id);
+  const detail=Array.from($('adminTopicList')?.querySelectorAll('details[data-admin-topic-id]')||[]).find(el=>el.dataset.adminTopicId===id);
+  if(detail)detail.open=true;
+ }
  if(view.editorWord)openCefrEditor(view.editorWord,false);
  if(view.focusId){
   const input=$(view.focusId);
@@ -514,7 +598,7 @@ async function loadAdmin({preserveView=true}={}){const pane=$('adminContent');co
   if(!view)pane.innerHTML='<div class="loading">Đang tải quản trị…</div>';
  try{const [events,features,cefrAudit]=await Promise.all([api('admin/events'),api('admin/features'),api('admin/cefr/reviews')]);adminEvents=events.events||[];cefrReviewSources=Object.fromEntries((cefrAudit.reviews||[]).map(r=>[r.word_id,r.source_url||'']));
  carFeatureEnabled=(features.features||[]).some(f=>f.feature_key==='CAR'&&f.enabled===true);
-  await loadTopics(false,true);if(!editingEvent&&!carFeatureEnabled)draftRounds=draftRounds.filter(r=>r.mode!=='CAR');if(!draftRounds.length)draftRounds=initialRounds();
+  await loadTopics(false,true);if(view){adminTopicPage=view.topicPage;adminEventPage=view.eventPage;adminTopicQuery=view.topicQuery;}if(!editingEvent&&!carFeatureEnabled)draftRounds=draftRounds.filter(r=>r.mode!=='CAR');if(!draftRounds.length)draftRounds=initialRounds();
  pane.innerHTML=`<div class="panel-tabs"><button data-admin-tab="events" class="${adminTab==='events'?'on':''}">🏆 Cuộc thi</button><button data-admin-tab="vocab" class="${adminTab==='vocab'?'on':''}">📚 Từ vựng</button><button data-admin-tab="features" class="${adminTab==='features'?'on':''}">⚙️ Tính năng</button></div><div id="adminPanelEvents" class="admin-panel ${adminTab==='events'?'active':''}"></div><div id="adminPanelVocab" class="admin-panel ${adminTab==='vocab'?'active':''}"></div><div id="adminPanelFeatures" class="admin-panel ${adminTab==='features'?'active':''}"></div>`;
   renderAdminEvents();renderAdminVocab();filterAdminCefr();renderAdminFeatures(features.features||[]);setupPasswordToggles(pane);
    restoreAdminView(view);
@@ -535,7 +619,7 @@ function renderRounds(){const host=$('roundsEditor');if(!host)return;host.innerH
  const a2=countUniqueCefr(approved,['A1','A2']),bonus=countUniqueCefr(approved,['B1','B2']),high=countUniqueCefr(approved,['C1','C2']);
  const neededCar=carVocabularyNeeds(r.difficulty,r.question_count);
  const cefrHint=r.mode==='CAR'?`<small class="car-stock-note">Đã duyệt: A1–A2 ${a2}/${neededCar.A2}, B1–B2 ${bonus}/${neededCar.BONUS}, C1–C2 ${high}/${neededCar.DOUBLE}</small>`:'';
- return `<div class="round-line" data-round="${i}"><label>Kiểu chơi<select data-k="mode">${['MATCH','BOMB',...(carFeatureEnabled||r.mode==='CAR'?['CAR']:[])].map(m=>`<option ${m===r.mode?'selected':''} value="${m}">${MODE_SHORT[m]}</option>`).join('')}</select></label><label>Chủ đề<select data-k="topic_id">${optionsTopics(r.topic_id,true)}</select></label><label>Độ khó<select data-k="difficulty">${['EASY','NORMAL','HARD'].map(d=>`<option value="${d}" ${d===r.difficulty?'selected':''}>${d}</option>`).join('')}</select></label><label>Thời gian (s)<input type="number" data-k="duration_seconds" min="20" max="600" value="${r.duration_seconds}"></label><label>Số lượt<input type="number" data-k="question_count" min="3" max="${r.mode==='MATCH'?Math.min(20,cap):cap}" value="${r.question_count}"></label>${r.mode==='BOMB'?`<label>Bom rơi trong (s)<input type="number" data-k="bomb_fall_seconds" min="5" max="60" value="${r.bomb_fall_seconds??16}"></label><label>Số bom mỗi đợt<input type="number" data-k="bomb_batch_size" min="1" max="3" value="${r.bomb_batch_size??2}"></label><label>Khoảng cách giữa đợt (s)<input type="number" data-k="bomb_spawn_interval_seconds" min="3" max="45" value="${r.bomb_spawn_interval_seconds??9}"></label>`:''}${r.mode==='CAR'?`<label>Thời gian mỗi chặng (s)<input type="number" data-k="car_step_seconds" min="2" max="45" value="${r.car_step_seconds??8}"></label>`:''}<label>Điểm đúng<input type="number" data-k="points_per_correct" min="10" max="1000" value="${r.points_per_correct}"></label><label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="${r.weight}"></label><button class="btn warn" type="button" data-remove-round="${i}" aria-label="Xóa vòng ${i+1}">✕</button><div class="round-note"><small>Cho phép tối đa ${r.mode==='CAR'?30:cap} lượt${extra?' (gồm '+extra+' nghĩa nhiễu)':''}</small>${cefrHint}</div></div>`;}).join('')+`<p class="small-note">Mỗi câu đúng +điểm, câu sai trừ ${draftRounds[0]?.penalty||25} điểm (có thể chỉnh trong cấu hình). Tổng giải tính điểm vòng × hệ số.</p>`}
+ return `<div class="round-line" data-round="${i}"><label>Kiểu chơi<select data-k="mode">${['MATCH','BOMB',...(carFeatureEnabled||r.mode==='CAR'?['CAR']:[])].map(m=>`<option ${m===r.mode?'selected':''} value="${m}">${MODE_SHORT[m]}</option>`).join('')}</select></label><label>Chủ đề<select data-k="topic_id">${optionsTopics(r.topic_id,true)}</select></label><label>Độ khó<select data-k="difficulty">${['EASY','NORMAL','HARD'].map(d=>`<option value="${d}" ${d===r.difficulty?'selected':''}>${d}</option>`).join('')}</select></label><label>Thời gian (s)<input type="number" data-k="duration_seconds" min="20" max="600" value="${r.duration_seconds}"></label><label>Số lượt<input type="number" data-k="question_count" min="3" max="${r.mode==='MATCH'?Math.min(20,cap):cap}" value="${r.question_count}"></label>${r.mode==='BOMB'?`<label>Bom rơi trong (s)<input type="number" data-k="bomb_fall_seconds" min="5" max="60" value="${r.bomb_fall_seconds??16}"></label><label>Số bom mỗi đợt<input type="number" data-k="bomb_batch_size" min="1" max="3" value="${r.bomb_batch_size??2}"></label><label>Khoảng cách giữa đợt (s)<input type="number" data-k="bomb_spawn_interval_seconds" min="3" max="45" value="${r.bomb_spawn_interval_seconds??9}"></label>`:''}${r.mode==='CAR'?`<label>Thời gian mỗi chặng (s)<input type="number" data-k="car_step_seconds" min="2" max="45" value="${r.car_step_seconds??8}"></label>`:''}<label>Điểm đúng<input type="number" data-k="points_per_correct" min="10" max="1000" value="${r.points_per_correct}"></label><label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="${r.weight}"></label><div class="round-note"><small>Cho phép tối đa ${r.mode==='CAR'?30:cap} lượt${extra?' (gồm '+extra+' nghĩa nhiễu)':''}</small>${cefrHint}</div><div class="round-remove-row"><button class="btn warn" type="button" data-remove-round="${i}" aria-label="Xóa vòng ${i+1}">✕ Xóa vòng ${i+1}</button></div></div>`;}).join('')+`<p class="small-note">Mỗi câu đúng +điểm, câu sai trừ ${draftRounds[0]?.penalty||25} điểm (có thể chỉnh trong cấu hình). Tổng giải tính điểm vòng × hệ số.</p>`}
 function collectRounds(){document.querySelectorAll('[data-round]').forEach(e=>{const i=Number(e.dataset.round);const r=draftRounds[i];e.querySelectorAll('[data-k]').forEach(c=>{r[c.dataset.k]=['mode','topic_id','difficulty'].includes(c.dataset.k)?c.value:Number(c.value)});r.topic_id=r.topic_id||null;
  if(r.mode==='MATCH')r.question_count=Math.min(20,r.question_count);});return draftRounds}
 function renderAdminEvents(){const host=$('adminPanelEvents');if(!host)return;
@@ -543,8 +627,15 @@ function renderAdminEvents(){const host=$('adminPanelEvents');if(!host)return;
   renderRounds();setupPasswordToggles(host);renderAdminEventList();
 }
 function renderAdminEventList(){
- const list=$('eventsList');list.innerHTML=adminEvents.length?adminEvents.map(e=>`<div class="editor-item"><div><strong>${escapeHtml(e.title)}</strong> <span class="pill ${e.status==='LIVE'?'good':e.status==='FINISHED'?'red':'yellow'}">${e.status}</span><p class="small-note" style="margin:7px 0">Mã: <b>${escapeHtml(e.join_code)}</b> · ${e.participants}/${e.max_players} người · ${e.rounds.length} vòng</p></div><div class="form-actions">${['DRAFT','OPEN'].includes(e.status)?`<button class="btn" data-edit-event="${e.id}">Sửa</button>`:''}${e.status==='DRAFT'?`<button class="btn" data-event-action="open" data-event-id="${e.id}">Mở phòng</button>`:''}${e.status==='OPEN'?`<button class="btn primary" data-event-action="start" data-event-id="${e.id}">Bắt đầu</button>`:''}${['OPEN','LIVE','DRAFT'].includes(e.status)?`<button class="btn warn" data-event-action="finish" data-event-id="${e.id}">Kết thúc</button>`:''}<button class="btn" data-copy-code="${escapeHtml(e.join_code)}">Copy mã</button></div></div>`).join(''):'<div class="empty">Chưa có cuộc thi nào. Hãy tạo một cuộc thi đầu tiên.</div>';
+ const list=$('eventsList');if(!list)return;
+ adminEventPage=clampAdminPage(adminEventPage,adminEvents.length,ADMIN_EVENTS_PAGE_SIZE);
+ const pages=Math.max(1,Math.ceil(adminEvents.length/ADMIN_EVENTS_PAGE_SIZE));
+ const from=(adminEventPage-1)*ADMIN_EVENTS_PAGE_SIZE;
+ const shown=adminEvents.slice(from,from+ADMIN_EVENTS_PAGE_SIZE);
+ list.innerHTML=(shown.length?shown.map(e=>`<div class="editor-item"><div><strong>${escapeHtml(e.title)}</strong> <span class="pill ${e.status==='LIVE'?'good':e.status==='FINISHED'?'red':'yellow'}">${e.status}</span><p class="small-note" style="margin:7px 0">Mã: <b>${escapeHtml(e.join_code)}</b> · ${e.participants}/${e.max_players} người · ${e.rounds.length} vòng</p></div><div class="form-actions">${['DRAFT','OPEN'].includes(e.status)?`<button class="btn" data-edit-event="${e.id}">Sửa</button>`:''}${e.status==='DRAFT'?`<button class="btn" data-event-action="open" data-event-id="${e.id}">Mở phòng</button>`:''}${e.status==='OPEN'?`<button class="btn primary" data-event-action="start" data-event-id="${e.id}">Bắt đầu</button>`:''}${['OPEN','LIVE','DRAFT'].includes(e.status)?`<button class="btn warn" data-event-action="finish" data-event-id="${e.id}">Kết thúc</button>`:''}<button class="btn" data-copy-code="${escapeHtml(e.join_code)}">Copy mã</button></div></div>`).join(''):'<div class="empty">Chưa có cuộc thi nào. Hãy tạo một cuộc thi đầu tiên.</div>')+
+ (adminEvents.length?`<div class="admin-page-bar" role="navigation" aria-label="Phân trang danh sách giải đấu"><span class="small-note">Giải ${from+1}–${from+shown.length}/${adminEvents.length} · Trang ${adminEventPage}/${pages}</span><div class="form-actions"><button type="button" class="btn" data-admin-event-page="prev" ${adminEventPage===1?'disabled':''}>← Trước</button><button type="button" class="btn" data-admin-event-page="next" ${adminEventPage===pages?'disabled':''}>Tiếp →</button></div></div>`:'');
 }
+
 async function submitEventForm(event){event.preventDefault();collectRounds();const f=new FormData(event.target);const p=Object.fromEntries(f);const penalty=Number(p.penalty);const rounds=draftRounds.map(r=>({...r,penalty}));const payload={title:p.title,max_players:Number(p.max_players),rounds};if(p.password)payload.password=p.password;
  for(const round of rounds){
   if(round.mode==='BOMB'&&round.duration_seconds<(Math.ceil(round.question_count/Number(round.bomb_batch_size??2))-1)*Number(round.bomb_spawn_interval_seconds??9)+Number(round.bomb_fall_seconds??16)){toast('Tăng thời gian vòng: bom cuối chưa đủ thời gian để rơi.',true);return;}
@@ -599,7 +690,28 @@ function renderAdminVocab(){const host=$('adminPanelVocab');if(!host)return;
 <div class="form-actions"><button class="btn primary" type="submit">Lưu CEFR</button><button type="button" class="btn" id="cefrCancel">Hủy</button></div>
 </form>
 </div></div>
-<div class="dashboard-card"><h2>Quản lý chủ đề và nội dung từ</h2><p class="small-note">Mở chủ đề để sửa nghĩa, ví dụ hoặc ẩn từ. Để tìm và đổi CEFR nhanh, dùng bảng kết quả ngay phía trên.</p>${topics.map(t=>`<details class="room-card"><summary class="dashboard-row"><strong>${escapeHtml(t.title)} (${t.words.length})</strong><span><button class="btn" data-edit-topic="${t.id}">Sửa tên</button> <button class="btn warn" data-del-topic="${t.id}">Ẩn chủ đề</button></span></summary><div style="margin-top:15px">${t.words.map(w=>`<div class="editor-item"><div><strong>${escapeHtml(w.english)}</strong> <small>${escapeHtml(w.meaning)}</small><small>CEFR: ${escapeHtml(w.cefr_level||'—')} · ${escapeHtml(w.cefr_review_status||'UNREVIEWED')}</small></div><span class="form-actions"><button class="btn" data-edit-cefr="${w.id}">CEFR</button><button class="btn" data-edit-word="${w.id}">Sửa</button><button class="btn warn" data-del-word="${w.id}">Ẩn</button></span></div>`).join('')}</div></details>`).join('')}</div>`}
+<div class="dashboard-card"><h2>Quản lý chủ đề và nội dung từ</h2><p class="small-note">Mở chủ đề để sửa nghĩa, ví dụ hoặc ẩn từ. Để tìm và đổi CEFR nhanh, dùng bảng kết quả ngay phía trên.</p><div class="admin-topic-controls"><label for="adminTopicSearch">Tìm chủ đề<input id="adminTopicSearch" type="search" placeholder="Nhập tên chủ đề…" autocomplete="off" value="${escapeHtml(adminTopicQuery)}"></label></div><div id="adminTopicList"></div><div id="adminTopicPager"></div></div>`;
+ renderAdminTopicList();
+}
+function filterAdminTopics(query){
+ const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('vi').replace(/đ/g,'d');
+ const needle=fold(query).trim();
+ return needle?topics.filter(t=>fold(t.title).includes(needle)):topics;
+}
+function renderAdminTopicList(){
+ const list=$('adminTopicList'),pager=$('adminTopicPager');if(!list||!pager)return;
+ // Read the live disclosure state before replacing DOM: toggle events can be queued.
+ for(const item of list.querySelectorAll('details[data-admin-topic-id]')){
+  if(item.open)adminOpenTopicIds.add(item.dataset.adminTopicId);
+  else adminOpenTopicIds.delete(item.dataset.adminTopicId);
+ }
+ const filtered=filterAdminTopics(adminTopicQuery);
+ adminTopicPage=clampAdminPage(adminTopicPage,filtered.length,ADMIN_TOPICS_PAGE_SIZE);
+ const pages=Math.max(1,Math.ceil(filtered.length/ADMIN_TOPICS_PAGE_SIZE));
+ const from=(adminTopicPage-1)*ADMIN_TOPICS_PAGE_SIZE,shown=filtered.slice(from,from+ADMIN_TOPICS_PAGE_SIZE);
+ list.innerHTML=shown.length?shown.map(t=>`<details class="room-card admin-topic-item" data-admin-topic-id="${t.id}" ${adminOpenTopicIds.has(t.id)?'open':''}><summary><strong>${escapeHtml(t.title)} (${(t.words||[]).length} từ)</strong></summary><div class="form-actions admin-topic-actions"><button type="button" class="btn" data-edit-topic="${t.id}">Sửa tên</button><button type="button" class="btn warn" data-del-topic="${t.id}">Ẩn chủ đề</button></div><div class="admin-topic-words">${(t.words||[]).map(w=>`<div class="editor-item"><div><strong>${escapeHtml(w.english)}</strong> <small>${escapeHtml(w.meaning)}</small><small>CEFR: ${escapeHtml(w.cefr_level||'—')} · ${escapeHtml(w.cefr_review_status||'UNREVIEWED')}</small></div><span class="form-actions"><button type="button" class="btn" data-edit-cefr="${w.id}">CEFR</button><button type="button" class="btn" data-edit-word="${w.id}">Sửa</button><button type="button" class="btn warn" data-del-word="${w.id}">Ẩn</button></span></div>`).join('')}</div></details>`).join(''):'<div class="empty">Không tìm thấy chủ đề phù hợp.</div>';
+ pager.innerHTML=`<div class="admin-page-bar" role="navigation" aria-label="Phân trang chủ đề từ vựng"><span class="small-note">${filtered.length?`Chủ đề ${from+1}–${from+shown.length}/${filtered.length}`:'0 chủ đề'} · Trang ${adminTopicPage}/${pages}</span><div class="form-actions"><button type="button" class="btn" data-admin-topic-page="prev" ${adminTopicPage===1?'disabled':''}>← Trước</button><button type="button" class="btn" data-admin-topic-page="next" ${adminTopicPage===pages?'disabled':''}>Tiếp →</button></div></div>`;
+}
 function openCefrEditor(id,scroll=true){
  const w=topics.flatMap(t=>t.words||[]).find(x=>x.id===id);
  if(!w)return toast('Không tìm thấy từ vựng',true);
@@ -693,7 +805,7 @@ async function manageVocabulary(type,id){
 }
  // Prevent tapping virtual keys from opening the mobile OS keyboard.
  window.addEventListener('pointerdown',event=>{if(event.target.closest('[data-game-key]'))event.preventDefault()},{passive:false});
- window.addEventListener('resize',()=>{prepareGameInput($('bombAnswer'));prepareGameInput($('carAnswer'));prepareGameInput($('soloBombAnswer'));});
+ window.addEventListener('resize',()=>{prepareGameInput($('bombAnswer'));prepareGameInput($('carAnswer'));prepareGameInput($('soloBombAnswer'));prepareGameInput($('soloCarAnswer'));});
  // Delegated user interactions
  window.addEventListener('click',async event=>{
  const button=event.target.closest('button,[data-screen],[data-close]');if(!button)return;
@@ -704,12 +816,12 @@ async function manageVocabulary(type,id){
  if(button.id==='signupTab'){setLoginMode('signup');return}
  if(button.id==='attendanceLogin'||button.id==='adminLoginBtn'){setLoginMode('login');openAuth();return}
  if(button.id==='checkinBtn'){try{const r=await api('attendance/checkin',{method:'POST',body:{}});toast(r.already?'Hôm nay bạn đã điểm danh rồi!':`Điểm danh thành công! +${r.earned} XP`);loadAttendance()}catch(e){toast(e.message,true)}return}
- if(['soloNewConfig','soloBombNewConfig'].includes(button.id)){resetSolo();return}
- if(['soloReplay','soloBombReplay'].includes(button.id)){const mode=soloGame?.game?.mode||soloModeForScreen(),config={topic_id:soloGame?.round?.topic_id||null,difficulty:soloGame?.round?.difficulty,question_count:soloGame?.round?.question_count,duration_seconds:soloGame?.round?.duration_seconds};await beginSolo(mode,config);return}
- if(['soloHome','soloBombHome'].includes(button.id)){navigate('home');return}
- if(['soloTopicsRetry','soloBombTopicsRetry'].includes(button.id)){await loadTopics();return}
- if(['soloStartRetry','soloBombStartRetry'].includes(button.id)){if(lastSoloConfig)await beginSolo(lastSoloConfig.mode,lastSoloConfig.config);return}
- if(['soloPendingRetry','soloBombPendingRetry'].includes(button.id)){await resolveSoloPending();return}
+ if(['soloNewConfig','soloBombNewConfig','soloCarNewConfig'].includes(button.id)){resetSolo();return}
+ if(['soloReplay','soloBombReplay','soloCarReplay'].includes(button.id)){const mode=soloGame?.game?.mode||soloModeForScreen(),config={topic_id:soloGame?.round?.topic_id||null,difficulty:soloGame?.round?.difficulty,question_count:soloGame?.round?.question_count,duration_seconds:soloGame?.round?.duration_seconds};await beginSolo(mode,config);return}
+ if(['soloHome','soloBombHome','soloCarHome'].includes(button.id)){navigate('home');return}
+ if(['soloTopicsRetry','soloBombTopicsRetry','soloCarTopicsRetry'].includes(button.id)){await loadTopics();return}
+ if(['soloStartRetry','soloBombStartRetry','soloCarStartRetry'].includes(button.id)){if(lastSoloConfig)await beginSolo(lastSoloConfig.mode,lastSoloConfig.config);return}
+ if(['soloPendingRetry','soloBombPendingRetry','soloCarPendingRetry'].includes(button.id)){await resolveSoloPending();return}
  if(button.dataset.soloPairLeft){if(soloGame?.game.status!=='PLAYING'||soloBusy||soloPending)return;selectedSoloEnglish=button.dataset.soloPairLeft;soloFeedback='';soloPairFeedback=null;renderSoloGame();return}
  if(button.dataset.soloPairRight){if(soloGame?.game.status!=='PLAYING'||soloBusy||soloPending)return;if(!selectedSoloEnglish){toast('Chọn từ tiếng Anh ở cột trái trước');return}const leftId=selectedSoloEnglish;selectedSoloEnglish=null;await submitSoloAnswer({leftId,rightId:button.dataset.soloPairRight});return}
  if(button.id==='gameSizeToggle'){gameExpanded=!gameExpanded;renderGame();return}
@@ -717,25 +829,23 @@ async function manageVocabulary(type,id){
  if(button.id==='refreshRoom'){loadRoom();return}
  if(button.id==='leaveRoom'){leaveRoom();return}
   if(button.dataset.gameKey!==undefined){
-   const input=$(button.dataset.keyboardTarget),isSoloBomb=button.dataset.keyboardTarget==='soloBombAnswer';if(!input||input.disabled||(isSoloBomb?(soloBusy||soloPending):gameBusy))return;
+   const input=$(button.dataset.keyboardTarget),isSolo=button.dataset.keyboardTarget==='soloBombAnswer'||button.dataset.keyboardTarget==='soloCarAnswer';if(!input||input.disabled||(isSolo?(soloBusy||soloPending):gameBusy))return;
    const key=button.dataset.gameKey;
-   if(key==='ENTER'){if(button.dataset.keyboardTarget==='carAnswer'&&Date.now()+localTimeOffset<Number(game?.game?.nextAllowedAt||0)){feedback='⏳ Chờ chút';renderGame();return}input.closest('form')?.requestSubmit();return}
+   if(key==='ENTER'){input.closest('form')?.requestSubmit();return}
    if(key==='DEL')input.value=removeLastGameCharacter(input.value);
    else if(key==='CLEAR')input.value='';
    else if(key==='SPACE'&&input.value.length<input.maxLength)input.value+=' ';
    else if(input.value.length<input.maxLength)input.value+=key.toLowerCase();
-   input.dispatchEvent(new Event('input',{bubbles:true}));return;
+   input.dispatchEvent(new Event('input',{bubbles:true}));input.focus({preventScroll:true});return;
   }
   if(button.dataset.selectBomb){return}
   if(button.dataset.pairLeft){if(game?.game.status!=='PLAYING')return;selectedEnglish=button.dataset.pairLeft;renderGame();return}
  if(button.dataset.pairRight){if(game?.game.status!=='PLAYING')return;if(!selectedEnglish){toast('Chọn từ tiếng Anh ở cột trái trước');return}const leftId=selectedEnglish;selectedEnglish=null;await submitGameAnswer({leftId,rightId:button.dataset.pairRight});return}
- if(button.dataset.lane!==undefined){if(gameBusy)return;const lane=Number(button.dataset.lane);if(game?.game?.level?.lanes?.[lane]?.kind==='BLOCKED'){feedback='🧱 Làn có vật cản';renderGame();return}feedback='';const input=$('carAnswer');if(input)input.value='';selectedLane=lane;renderGame();return}
- if(button.hasAttribute('data-car-left')){if(gameBusy)return;const input=$('carAnswer');if(input)input.value='';selectedLane=Math.max(0,selectedLane-1);renderGame();return}
- if(button.hasAttribute('data-car-right')){if(gameBusy)return;const input=$('carAnswer');if(input)input.value='';selectedLane=Math.min(4,selectedLane+1);renderGame();return}
-  if(button.hasAttribute('data-car-go')){const value=$('carAnswer')?.value||'';const lane=game?.game.level?.lanes?.[selectedLane];if(lane?.kind==='BLOCKED'||value.trim())await submitGameAnswer({lane:selectedLane,answer:value});return}
  if(button.dataset.adminTab){adminTab=button.dataset.adminTab;document.querySelectorAll('[data-admin-tab]').forEach(b=>b.classList.toggle('on',b.dataset.adminTab===adminTab));document.querySelectorAll('.admin-panel').forEach(p=>p.classList.toggle('active',p.id==='adminPanel'+adminTab.charAt(0).toUpperCase()+adminTab.slice(1)));return}
  if(button.dataset.addRound){if(button.dataset.addRound==='CAR'&&!carFeatureEnabled)return toast('CAR đang tắt cho tới khi dữ liệu CEFR sẵn sàng.',true);collectRounds();if(draftRounds.length>=12)return toast('Tối đa 12 vòng',true);draftRounds.push({mode:button.dataset.addRound,difficulty:'NORMAL',duration_seconds:90,question_count:8,points_per_correct:100,penalty:25,weight:1,topic_id:button.dataset.addRound==='CAR'?null:topics[0]?.id||null,bomb_fall_seconds:16,bomb_batch_size:2,bomb_spawn_interval_seconds:9,car_step_seconds:8});renderRounds();return}
  if(button.dataset.removeRound!==undefined){collectRounds();if(draftRounds.length===1)return toast('Phải còn ít nhất một vòng',true);draftRounds.splice(Number(button.dataset.removeRound),1);renderRounds();return}
+ if(button.dataset.adminEventPage){adminEventPage+=button.dataset.adminEventPage==='next'?1:-1;renderAdminEventList();return}
+ if(button.dataset.adminTopicPage){adminTopicPage+=button.dataset.adminTopicPage==='next'?1:-1;renderAdminTopicList();return}
  if(button.dataset.editEvent){editEvent(button.dataset.editEvent);return}
  if(button.id==='cancelEditEvent'){editingEvent=null;draftRounds=[];renderAdminEvents();return}
  if(button.dataset.eventAction){await manageAction(button.dataset.eventAction,button.dataset.eventId);return}
@@ -749,16 +859,24 @@ async function manageVocabulary(type,id){
 });
 window.addEventListener('submit',async e=>{
  if(e.target.id==='authForm'){handleAuth(e);return}
- if(['soloSetupForm','soloBombSetupForm'].includes(e.target.id)){e.preventDefault();const f=Object.fromEntries(new FormData(e.target));await beginSolo(soloModeForScreen(),{topic_id:f.topic_id||null,difficulty:f.difficulty,question_count:Number(f.question_count),duration_seconds:Number(f.duration_seconds)});return}
+ if(['soloSetupForm','soloBombSetupForm','soloCarSetupForm'].includes(e.target.id)){e.preventDefault();const f=Object.fromEntries(new FormData(e.target));await beginSolo(soloModeForScreen(),{topic_id:f.topic_id||null,difficulty:f.difficulty,question_count:Number(f.question_count),duration_seconds:Number(f.duration_seconds)});return}
  if(e.target.id==='joinForm'){joinRoom(e);return}
  if(e.target.id==='createEventForm'){submitEventForm(e);return}
  if(e.target.id==='topicForm'){e.preventDefault();const f=new FormData(e.target);try{await api('admin/topics',{method:'POST',body:{title:f.get('title')}});toast('Đã thêm chủ đề');loadAdmin()}catch(x){toast(x.message,true)}return}
  if(e.target.id==='cefrReviewForm'){await saveCefrReview(e);return}
  if(e.target.id==='wordForm'){e.preventDefault();const f=Object.fromEntries(new FormData(e.target));try{await api('admin/words',{method:'POST',body:f});toast('Đã thêm từ mới');loadAdmin()}catch(x){toast(x.message,true)}return}
+  if(e.target.id==='soloCarAnswerForm'){e.preventDefault();await submitSoloCarAnswer();return}
   if(e.target.id==='bombAnswerForm'){e.preventDefault();queueBombCheck(0);return}
-  if(e.target.id==='carAnswerForm'){e.preventDefault();if(Date.now()+localTimeOffset<Number(game?.game?.nextAllowedAt||0)){feedback='⏳ Chờ chút';renderGame();return}const ans=e.target.elements.answer.value;const lane=game?.game.level?.lanes?.[selectedLane];if(lane?.kind==='BLOCKED'){feedback='🧱 Đổi làn!';renderGame();return}if(!ans.trim()){feedback='⌨️ Nhập từ đã';renderGame();return}await submitGameAnswer({lane:selectedLane,answer:ans});return}
+  if(e.target.id==='carAnswerForm'){e.preventDefault();queueCarAutoCheck('room',0);return}
 });
-window.addEventListener('input',e=>{if(e.target.id==='cefrSearchFilter')filterAdminCefr();if(e.target.id==='bombAnswer'){feedback='';const note=$('gameFeedback');if(note)note.hidden=true;queueBombCheck();}if(e.target.id==='soloBombAnswer'){soloFeedback='';const note=$('soloBombFeedback');if(note)note.hidden=true;queueSoloBombCheck();}});
+window.addEventListener('input',e=>{if(e.target.id==='adminTopicSearch'){adminTopicQuery=e.target.value;adminTopicPage=1;renderAdminTopicList();return}if(e.target.id==='cefrSearchFilter')filterAdminCefr();if(e.target.id==='bombAnswer'){feedback='';const note=$('gameFeedback');if(note)note.hidden=true;queueBombCheck();}if(e.target.id==='soloBombAnswer'){soloFeedback='';const note=$('soloBombFeedback');if(note)note.hidden=true;queueSoloBombCheck();}if(e.target.id==='soloCarAnswer')queueCarAutoCheck('solo');if(e.target.id==='carAnswer')queueCarAutoCheck('room');});
+// Persist expanded topic identity across pages and Admin refreshes.
+window.addEventListener('toggle',e=>{
+ const item=e.target?.closest?.('#adminTopicList details[data-admin-topic-id]');
+ if(!item)return;
+ if(item.open)adminOpenTopicIds.add(item.dataset.adminTopicId);
+ else adminOpenTopicIds.delete(item.dataset.adminTopicId);
+},true);
 window.addEventListener('change',async e=>{
  if(['cefrLevelFilter','cefrStatusFilter'].includes(e.target.id)){filterAdminCefr();return}
  if(e.target.closest('#roundsEditor')&&e.target.dataset.k){collectRounds();if(e.target.dataset.k==='difficulty'){const r=draftRounds[Number(e.target.closest('[data-round]')?.dataset.round)];if(r?.mode==='BOMB'){const p={EASY:[20,2,10],NORMAL:[16,2,9],HARD:[10,3,6]}[r.difficulty];if(p)[r.bomb_fall_seconds,r.bomb_batch_size,r.bomb_spawn_interval_seconds]=p;}}renderRounds();return;}
@@ -766,16 +884,16 @@ window.addEventListener('change',async e=>{
 });
 window.addEventListener('keydown',e=>{
  const routeCard=e.target.closest?.('[data-screen][tabindex]');if(routeCard&&['Enter',' '].includes(e.key)){e.preventDefault();navigate(routeCard.dataset.screen);return}
- if(screen!=='rooms'||!game||game.game.status!=='PLAYING'||game.game.mode!=='CAR'||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
- if(gameBusy)return;
- if(['ArrowLeft','a','A'].includes(e.key)){e.preventDefault();selectedLane=Math.max(0,selectedLane-1);renderGame()}
- if(['ArrowRight','d','D'].includes(e.key)){e.preventDefault();selectedLane=Math.min(4,selectedLane+1);renderGame()}
-  if([' ','Enter'].includes(e.key)&&!['BUTTON'].includes(e.target.tagName)){e.preventDefault();$('carAnswer')?.focus()}
+ // CAR Solo and multiplayer always keep the typing field as the keyboard target.
+ if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.metaKey||e.ctrlKey||e.altKey)return;
+ const target=screen==='solo-car'&&soloGame?.game.mode==='CAR'&&soloGame.game.status==='PLAYING'?'soloCarAnswer':screen==='rooms'&&game?.game.mode==='CAR'&&game.game.status==='PLAYING'?'carAnswer':null;
+ if(!target)return;
+ if(e.key.length===1||e.key==='Backspace'){$(target)?.focus({preventScroll:true})}
 });
 // Keep same-page navigation in sync with browser Back / Forward.
 function restoreArenaRoute(){
  const hash=location.hash.slice(1);
- navigate(['home','solo','solo-bomb','rooms','attendance','rank','admin'].includes(hash)?hash:'home',{fromHistory:true});
+ navigate(['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'].includes(hash)?hash:'home',{fromHistory:true});
 }
 window.addEventListener('popstate',restoreArenaRoute);
 window.addEventListener('hashchange',restoreArenaRoute);
@@ -783,7 +901,7 @@ let polling=false;setInterval(async()=>{
  if(polling)return;polling=true;updateCountdowns();try{if(screen==='rooms'&&roomCode){
   if(game?.game.status==='PLAYING'){await refreshGame()}
   else{await loadRoom()}
- }else if(['solo','solo-bomb'].includes(screen)&&soloGame?.game.status==='PLAYING'){await refreshSoloGame()}}finally{polling=false}
+ }else if(['solo','solo-bomb','solo-car'].includes(screen)&&soloGame?.game.status==='PLAYING'){await refreshSoloGame()}}finally{polling=false}
 },1200);
 setInterval(updateCountdowns,500);
 (async function init(){
@@ -793,5 +911,5 @@ setInterval(updateCountdowns,500);
  await loadTopics(true);
  const saved=sessionStore.getItem('wordsky_room_code');if(saved&&/^[A-Z0-9]{5,12}$/.test(saved)){roomCode=saved;}
  // Restore Arena route without rewriting browser history.
- const hash=location.hash.slice(1);if(['home','solo','solo-bomb','attendance','rank','rooms','admin'].includes(hash))navigate(hash,{fromHistory:true});
+ const hash=location.hash.slice(1);if(['home','solo','solo-bomb','solo-car','attendance','rank','rooms','admin'].includes(hash))navigate(hash,{fromHistory:true});
 })();

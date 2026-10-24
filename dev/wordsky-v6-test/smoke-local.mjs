@@ -98,6 +98,33 @@ try{
  assert.equal(bombAnswer.json.game.correct,1);assert.equal(bombRetry.json.game.correct,1);
  assert.equal([bombAnswer.json.duplicate,bombRetry.json.duplicate].filter(Boolean).length,1,'row lock + receipt must apply one BOMB answer');
  assert.equal((await request('/api/solo/runs/'+solo.json.runId,{cookie:bombSolo.cookie})).status,200,'BOMB start must preserve ownership of an older MATCH run');
+
+ const carSolo=await request('/api/solo/car/start',{method:'POST',body:{topic_id:school.id,difficulty:'NORMAL',question_count:3,duration_seconds:90},cookie:bombSolo.cookie});
+ assert.equal(carSolo.status,201,JSON.stringify(carSolo.json));createdSoloIds.push(carSolo.json.runId);
+ assert.equal(carSolo.json.game.mode,'CAR');assert.equal(carSolo.json.game.level.lanes.length,5);
+ assert.ok(carSolo.json.game.level.lanes.every(l=>!('english' in l)),'CAR Solo never leaks answers');
+ assert.equal((await request('/api/solo/runs/'+solo.json.runId,{cookie:carSolo.cookie})).status,200,'CAR start must preserve guest ownership of old MATCH run');
+ const carSecret=await db.query('SELECT state,mode FROM ws_solo_runs WHERE id=$1',[carSolo.json.runId]);
+ assert.equal(carSecret.rows[0].mode,'CAR');
+ const carLane=carSecret.rows[0].state.levels[0].lanes.findIndex(l=>l.kind==='DOUBLE');
+ const carWord=carSecret.rows[0].state.levels[0].lanes[carLane].english;
+ const carBeforeReady=await request(`/api/solo/runs/${carSolo.json.runId}/answer`,{method:'POST',body:{attemptId:crypto.randomUUID(),lane:carLane,answer:carWord},cookie:carSolo.cookie});
+ assert.equal(carBeforeReady.status,409,'CAR Solo cannot bypass 1.2s readiness delay');
+ await sleep(Math.max(0,carSolo.json.game.nextAllowedAt-Date.now()+110));
+ const wrongCar=await request(`/api/solo/runs/${carSolo.json.runId}/answer`,{method:'POST',body:{attemptId:crypto.randomUUID(),lane:carLane,answer:'wrong-translation'},cookie:carSolo.cookie});
+ assert.equal(wrongCar.status,200,JSON.stringify(wrongCar.json));assert.equal(wrongCar.json.game.index,0);
+ const carAttempt={method:'POST',body:{attemptId:crypto.randomUUID(),lane:carLane,answer:carWord},cookie:carSolo.cookie};
+ const [correctCar,retryCar]=await Promise.all([
+  request(`/api/solo/runs/${carSolo.json.runId}/answer`,carAttempt),
+  request(`/api/solo/runs/${carSolo.json.runId}/answer`,carAttempt),
+ ]);
+ assert.equal(correctCar.status,200,JSON.stringify(correctCar.json));assert.equal(retryCar.status,200,JSON.stringify(retryCar.json));
+ assert.equal(correctCar.json.game.score,200);assert.equal(retryCar.json.game.score,200);
+ assert.equal(correctCar.json.game.index,1);assert.equal(retryCar.json.game.index,1);
+ assert.equal([correctCar.json.duplicate,retryCar.json.duplicate].filter(Boolean).length,1);
+ const carConstraint=await db.query(`SELECT pg_get_constraintdef(oid) definition FROM pg_constraint WHERE conrelid='ws_solo_runs'::regclass AND conname='ws_solo_runs_mode_check'`);
+ assert.match(carConstraint.rows[0].definition,/CAR/);
+
  const constraints=await db.query(`SELECT pg_get_constraintdef(oid) definition FROM pg_constraint WHERE conrelid='ws_solo_runs'::regclass AND conname='ws_solo_runs_mode_check'`);
  assert.match(constraints.rows[0].definition,/MATCH/);assert.match(constraints.rows[0].definition,/BOMB/);
  const auth=await request('/api/auth/login',{method:'POST',body:{username:'owner',password}});
@@ -137,7 +164,7 @@ try{
  assert.equal(wrong.status,200,JSON.stringify(wrong.json));assert.equal(wrong.json.game.index,0);assert.equal(wrong.json.result.wordCorrect,false);
  const good=await request(`/api/rooms/${code}/runs/${run.json.runId}/answer`,{method:'POST',body:{lane:activeLane,answer:translated.rows[0].english},cookie:guestCookie});
  assert.equal(good.status,200,JSON.stringify(good.json));assert.equal(good.json.result.correct,true);assert.equal(good.json.game.index,1);assert.equal(good.json.result.awarded,200);
- console.log(`LOCAL E2E PASS: MATCH + BOMB Solo guest/start/ownership/hidden-answer/concurrent-idempotency, 26 topics, ${counts.rows[0].words} words, ${counts.rows[0].approved} local approvals (12 required fixture records), no 27th topic, server login/admin room/join/start, C1/C2 x2 lane +200, wrong answer blocked.`);
+ console.log(`LOCAL E2E PASS: MATCH + BOMB + CAR Solo guest/start/ownership/hidden-answer/concurrent-idempotency, 26 topics, ${counts.rows[0].words} words, ${counts.rows[0].approved} local approvals (12 required fixture records), no 27th topic, server login/admin room/join/start, C1/C2 x2 lane +200, wrong answer blocked.`);
 }catch(e){console.error('LOCAL E2E FAILED',e);process.exitCode=1}
 finally{
  try{if(createdId)await db.query('DELETE FROM ws_events WHERE id=$1',[createdId]);for(const id of createdSoloIds)await db.query('DELETE FROM ws_solo_runs WHERE id=$1',[id])}catch(e){console.warn('Local fixture cleanup failed:',e.message)}

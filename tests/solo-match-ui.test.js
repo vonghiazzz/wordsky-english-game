@@ -11,7 +11,7 @@ test('MATCH Solo is reachable from home, shared navigation and direct hash routi
  assert.match(html,/id="screen-solo"/);
  assert.match(html,/data-screen="solo"/);
  assert.match(nav,/key:'solo'.*arena:'solo'/);
- assert.match(app,/\['home','solo','solo-bomb','rooms','attendance','rank','admin'\]/);
+ assert.match(app,/\['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'\]/);
  assert.match(html,/Chơi thử/);
 });
 
@@ -43,7 +43,7 @@ test('Solo UI uses dedicated API lifecycle and server-issued public state',()=>{
 
 test('uncertain Solo answers preserve one attempt across retry and reload',()=>{
  assert.match(app,/wordsky_solo_pending/);
- assert.match(app,/rememberSoloPending\(\{runId:soloGame\.runId,attemptId:crypto\.randomUUID\(\),mode:soloGame\.game\.mode,\.\.\.payload\}\)/);
+ assert.match(app,/rememberSoloPending\(\{runId:soloGame\.runId,attemptId:crypto\.randomUUID\(\),mode:soloGame\.game\.mode,\.\.\.payload,stageIndex:soloGame\.game\.index\}\)/);
  assert.match(app,/attempts\/\$\{pending\.attemptId\}/);
  assert.match(app,/\{attemptId:pending\.attemptId,leftId:pending\.leftId,rightId:pending\.rightId\}/);
  assert.match(app,/if\(!soloGame\|\|soloBusy\|\|soloPending/);
