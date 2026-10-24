@@ -9,7 +9,7 @@ test('BOMB poll reconciles stable card nodes by ID, without destroying the arena
  assert.match(js,/data-bomb-id="\$\{escapeHtml\(b\.id\)\}"/);
  assert.match(js,/function reconcileBombCards\(arena,g,rd\)/);
  assert.match(js,/if\(!visible\.has\(node\.dataset\.bombId\)\)/);
- assert.match(js,/if\(!present\.has\(String\(bomb\.id\)\)\)arena\.insertAdjacentHTML/);
+ assert.match(js,/lane\.insertAdjacentHTML\('beforeend',bombCardMarkup\(bomb,rd\)\)/);
  for(const name of ['syncBombArena','syncSoloBombArena']){
   const start=js.indexOf('function '+name+'(){');
   assert.ok(start>=0,name+' missing');
@@ -26,7 +26,7 @@ test('bombs use compositor animation with server timestamps and no polling-drive
  const body=js.slice(start,end);
  assert.match(body,/bomb\.animate\(\[/);
  assert.match(body,/animation\.currentTime=elapsed/);
- assert.match(body,/const key=`\$\{spawn\}:\$\{deadline\}:\$\{floor\}`/);
+ assert.match(body,/const key=`\$\{spawn\}:\$\{deadline\}:\$\{startY\}:\$\{floor\}`/);
  assert.match(body,/if\(bomb\._fallKey!==key\|\|!bomb\._fallMotion\)/);
  assert.match(body,/prefers-reduced-motion: reduce/);
  assert.match(css,/\.bomb-falling\{will-change:transform\}/);
