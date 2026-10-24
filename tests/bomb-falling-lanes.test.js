@@ -16,7 +16,7 @@ test('both BOMB modes use independent falling lanes, not a static queue',()=>{
  assert.match(app,/class="bomb-arena bomb-falling-lanes solo-bomb-arena"/);
  assert.match(app,/class="bomb-arena bomb-falling-lanes" id="bombArena"/);
  assert.doesNotMatch(app,/bomb-queue-layout/);
- assert.match(css,/\.bomb-arena\.bomb-falling-lanes\{\s*display:grid/);
+ assert.match(css,/\.bomb-arena\.bomb-falling-lanes\{[\s\S]*?display:flex;[\s\S]*?flex-wrap:nowrap/);
  assert.match(css,/\.bomb-fall-track\{\s*position:relative/);
  assert.match(css,/\.bomb-arena\.bomb-falling-lanes \.bomb-falling\{\s*position:absolute/);
  assert.doesNotMatch(css,/\.bomb-arena\.bomb-falling-lanes \.bomb-falling\{[^}]*transform:none!important/);
@@ -40,7 +40,7 @@ test('polling retains active nodes and deletes expired wrapper with card',()=>{
  assert.doesNotMatch(fn,/arena\.innerHTML\s*=/);
  assert.match(app,/function syncSoloBombArena\(\)/);
  assert.match(app,/function syncBombArena\(\)/);
- assert.match(css,/overflow-y:auto/);
+ assert.match(css,/overflow-x:auto;overflow-y:hidden/);
 });
 
 test('falling animation uses server deadline and individual track distance',()=>{
@@ -62,4 +62,19 @@ test('falling animation uses server deadline and individual track distance',()=>
  animate(arena);
  assert.strictEqual(bomb._fallMotion,active,'server polling should not reset the fall animation');
  assert.equal(animations,1);
+});
+// Regression: the 4th bomb must not be sent to grid row 2, as in v2.
+test('later waves start at the SAME arena top edge and every track extends to the bottom',()=>{
+ const board=css.slice(css.indexOf('/* WordSky BOMB shared sky v3'));
+ assert.match(board,/display:flex;flex-direction:row;flex-wrap:nowrap/);
+ assert.match(board,/\.bomb-fall-track\{[\s\S]*?align-self:stretch/);
+ assert.match(board,/\.bomb-topline\{[\s\S]*?position:absolute;top:8px/);
+ assert.doesNotMatch(board,/grid-template-columns:repeat\(3/);
+ assert.doesNotMatch(board,/grid-template-columns:repeat\(2/);
+ assert.match(board,/overflow-x:auto;overflow-y:hidden/);
+ assert.doesNotMatch(board,/height:166px/);
+ assert.doesNotMatch(board,/height:162px/);
+ const fn=extractFunction('animateBombs','updateCountdowns');
+ assert.match(fn,/const height=track\?track\.clientHeight:arena\.clientHeight/);
+ assert.match(fn,/animation\.currentTime=elapsed/);
 });
