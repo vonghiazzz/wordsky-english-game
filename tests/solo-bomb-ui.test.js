@@ -38,10 +38,10 @@ test('BOMB retry persists the exact attempt and answer only in sessionStorage',(
  assert.doesNotMatch(app,/localStorage/);
 });
 
-test('BOMB Solo mobile layout stays within 360px and provides the shared compact keyboard',()=>{
- assert.match(css,/Phase 2\.2 — BOMB Solo/);assert.match(css,/#soloBombGamePane \.game-keyboard\{display:flex/);
+test('BOMB Solo mobile layout stays within 360px and uses native keyboard',()=>{
+ assert.match(css,/Phase 2\.2 — BOMB Solo/);assert.match(css,/\.game-keyboard\{display:none!important\}/);
  assert.match(css,/@media\(max-width:390px\)/);assert.match(css,/\.solo-bomb-shell\{padding-inline:9px\}/);
- assert.match(css,/overflow:hidden/);assert.match(app,/compactKeyboard\('soloBombAnswer',true\)/);
+ assert.match(css,/overflow:hidden/);assert.doesNotMatch(app,/compactKeyboard\('soloBombAnswer',true\)/);
 });
 
 test('MATCH route and multiplayer BOMB/CAR hooks remain available',()=>{

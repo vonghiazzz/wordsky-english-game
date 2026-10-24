@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS ws_events (
  password_hash text NOT NULL,
  status text NOT NULL DEFAULT 'DRAFT' CHECK(status IN ('DRAFT','OPEN','LIVE','FINISHED','CANCELLED')),
  max_players integer NOT NULL CHECK(max_players BETWEEN 2 AND 500),
+ round_start_overrides jsonb NOT NULL DEFAULT '{}'::jsonb,
  started_at timestamptz,
  completed_at timestamptz,
  created_at timestamptz NOT NULL DEFAULT now()

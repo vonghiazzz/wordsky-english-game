@@ -216,7 +216,7 @@ async function adminStatus(req,id,verb){mustAdmin(req);if(badId(id))throw fail('
  await db.query(`UPDATE ws_events SET status=$1,started_at=CASE WHEN $1='LIVE' THEN now() ELSE started_at END,completed_at=CASE WHEN $1='FINISHED' THEN now() ELSE completed_at END WHERE id=$2`,[newStatus,id]);await audit(db,'event.'+verb,id);return {success:true,status:newStatus};
  })}
 async function adminList(){const e=await sql(`SELECT e.id,e.title,e.join_code,e.status,e.max_players,e.started_at,e.created_at,(SELECT count(*)::int FROM ws_participants p WHERE p.event_id=e.id) participants FROM ws_events e ORDER BY e.created_at DESC LIMIT 100`);const rr=await sql('SELECT * FROM ws_rounds ORDER BY position');return e.rows.map(x=>({...x,rounds:rr.rows.filter(y=>y.event_id===x.id)}))}
-async function eventInfo(code){const e=await sql('SELECT id,title,join_code,status,max_players,started_at,completed_at FROM ws_events WHERE join_code=$1',[code]);if(!e.rows.length)throw fail('Không tìm thấy phòng thi',404);const rounds=await sql('SELECT id,position,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,weight,bomb_fall_seconds,bomb_batch_size,bomb_spawn_interval_seconds,car_step_seconds FROM ws_rounds WHERE event_id=$1 ORDER BY position',[e.rows[0].id]);const c=await sql('SELECT count(*)::int n FROM ws_participants WHERE event_id=$1',[e.rows[0].id]);return {...e.rows[0],participant_count:c.rows[0].n,rounds: e.rows[0].started_at?roundWindows(e.rows[0].started_at,rounds.rows):rounds.rows}}
+async function eventInfo(code){const e=await sql('SELECT id,title,join_code,status,max_players,started_at,completed_at,round_start_overrides FROM ws_events WHERE join_code=$1',[code]);if(!e.rows.length)throw fail('Không tìm thấy phòng thi',404);const rounds=await sql('SELECT id,position,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,weight,bomb_fall_seconds,bomb_batch_size,bomb_spawn_interval_seconds,car_step_seconds FROM ws_rounds WHERE event_id=$1 ORDER BY position',[e.rows[0].id]);const c=await sql('SELECT count(*)::int n FROM ws_participants WHERE event_id=$1',[e.rows[0].id]);return {...e.rows[0],participant_count:c.rows[0].n,rounds: e.rows[0].started_at?roundWindows(e.rows[0].started_at,rounds.rows,e.rows[0].round_start_overrides):rounds.rows}}
 async function joinRoom(req,res,code){code=code.toUpperCase();if(!/^[A-Z0-9]{5,12}$/.test(code))throw fail('Mã phòng không hợp lệ');let b=body(req);
  const e=await sql('SELECT * FROM ws_events WHERE join_code=$1',[code]);if(!e.rows.length)throw fail('Phòng không tồn tại',404);const ev=e.rows[0];
  if(ev.status!=='OPEN')throw fail('Phòng hiện chưa nhận người chơi',409);
@@ -274,18 +274,49 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
   if(!saved.rows.length){const retry=await db.query('SELECT * FROM ws_runs WHERE participant_id=$1 AND round_id=$2',[p.id,roundId]);return {runId:retry.rows[0].id,round,game:publicState(retry.rows[0].state,now)}};
   return {runId:saved.rows[0].id,round,game:publicState(st,now)};
  })}
+// Only after ALL joined players have a persisted terminal run do we shorten the
+// next round's start. An event-row lock makes the operation safe with concurrent
+// answers and several serverless instances. The earlier rounds retain their rows.
+async function shortenRoundWhenEveryoneFinished(eventId,roundId,now=Date.now()){
+ return transaction(async db=>{
+  const evResult=await db.query('SELECT status,started_at,round_start_overrides FROM ws_events WHERE id=$1 FOR UPDATE',[eventId]);
+  const ev=evResult.rows[0];if(!ev||ev.status!=='LIVE'||!ev.started_at)return false;
+  const rounds=(await db.query('SELECT id,position,duration_seconds FROM ws_rounds WHERE event_id=$1 ORDER BY position',[eventId])).rows;
+  const idx=rounds.findIndex(r=>r.id===roundId);
+  if(idx<0||idx>=rounds.length-1)return false;
+  const next=rounds[idx+1];const overrides=ev.round_start_overrides||{};
+  if(overrides[String(next.position)])return false;
+  const windows=roundWindows(ev.started_at,rounds,overrides);
+  if(now<Date.parse(windows[idx].starts_at)||now>=Date.parse(windows[idx].ends_at))return false;
+  if(now+5000>=Date.parse(windows[idx+1].starts_at))return false;
+  const ready=await db.query(`SELECT count(*)::int AS total,
+    count(r.id) FILTER(WHERE r.status IN ('COMPLETED','FAILED','TIMEOUT'))::int AS finished
+   FROM ws_participants p LEFT JOIN ws_runs r ON r.participant_id=p.id AND r.round_id=$2
+   WHERE p.event_id=$1`,[eventId,roundId]);
+  const {total,finished}=ready.rows[0];
+  if(total<1||finished!==total)return false;
+  await db.query(`UPDATE ws_events SET round_start_overrides=jsonb_set(
+    coalesce(round_start_overrides,'{}'::jsonb),ARRAY[$2],to_jsonb($3::text),true)
+    WHERE id=$1`,[eventId,String(next.position),new Date(now+5000).toISOString()]);
+  return true;
+ });
+}
 async function playRound(req,code,runId,answer){const e=await eventInfo(code.toUpperCase());const p=await membership(req,e);if(p.admin)throw fail('Admin không được ghi điểm',403);
  if(badId(runId))throw fail('ID lượt chơi không hợp lệ');
  if(answer&&e.status!=='LIVE')throw fail('Cuộc thi đã đóng, không nhận thêm đáp án',409);
- return transaction(async db=>{
-  const q=await db.query('SELECT a.*,r.mode,r.difficulty,r.points_per_correct,r.penalty,r.weight,r.question_count,r.duration_seconds,r.car_step_seconds,r.bomb_fall_seconds,r.bomb_batch_size,r.bomb_spawn_interval_seconds,r.event_id FROM ws_runs a JOIN ws_rounds r ON r.id=a.round_id WHERE a.id=$1 AND a.participant_id=$2 AND r.event_id=$3 FOR UPDATE OF a',[runId,p.id,e.id]);
+ const response=await transaction(async db=>{
+  const q=await db.query('SELECT a.*,r.mode,r.difficulty,r.points_per_correct,r.penalty,r.weight,r.question_count,r.duration_seconds,r.car_step_seconds,r.bomb_fall_seconds,r.bomb_batch_size,r.bomb_spawn_interval_seconds,r.event_id,r.id AS round_id FROM ws_runs a JOIN ws_rounds r ON r.id=a.round_id WHERE a.id=$1 AND a.participant_id=$2 AND r.event_id=$3 FOR UPDATE OF a',[runId,p.id,e.id]);
   if(!q.rows.length)throw fail('Không tìm thấy lượt chơi',404);const rec=q.rows[0];const now=Date.now();let st=rec.state;
   const previous=JSON.stringify(st);let result={};
   if(answer){({state:st,result}=answerQuestion(st,rec,answer,now));}
   else reconcile(st,rec,now);
   if(JSON.stringify(st)!==previous){await db.query('UPDATE ws_runs SET state=$1::jsonb,score=$2,health=$3,correct=$4,mistakes=$5,status=$6,finished_at=CASE WHEN $6=$7 THEN finished_at ELSE coalesce(finished_at,now()) END WHERE id=$8',[JSON.stringify(st),st.score,st.health,st.correct,st.mistakes,st.status,'PLAYING',runId])}
-  return {runId,game:publicState(st,now),result};
- })}
+  return {runId,roundId:rec.round_id,game:publicState(st,now),result};
+ });
+ if(response.game.status!=='PLAYING')await shortenRoundWhenEveryoneFinished(e.id,response.roundId);
+ const {roundId,...publicResponse}=response;
+ return publicResponse;
+}
 async function playerStats(req){const user=await playerRow(mustPlayer(req).id);const today=new Date().toISOString().slice(0,10);return {...user,rank:rankForXp(user.xp),today};}
 async function globalRank(){const r=await sql('SELECT id,display_name,xp,streak FROM ws_users ORDER BY xp DESC,created_at ASC LIMIT 100');return r.rows.map((u,i)=>({...u,rank:rankForXp(u.xp),position:i+1}))}
 

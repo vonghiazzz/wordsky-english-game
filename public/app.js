@@ -135,7 +135,7 @@ function renderSoloCarGame(){
  <div class="car-vehicle" id="soloCarVehicle" role="img" aria-label="Xe đang ở làn ${(g.carLane??2)+1}" style="left:${10+20*(g.carLane??2)}%">🏎️</div><div class="car-track-caption">🏁 Nhập đúng từ — xe tự vượt chặng</div></div>
  <form id="soloCarAnswerForm" class="car-answer-form" autocomplete="off"><label for="soloCarAnswer">Nhập từ của một làn an toàn</label>
  <div class="car-answer-row"><input id="soloCarAnswer" name="answer" type="text" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" maxlength="100" enterkeyhint="done" placeholder="Gõ từ tiếng Anh — tự chuyển làn" aria-label="Từ tiếng Anh để vượt chặng"></div>
- <span id="soloCarReadyHint" class="small-note"></span><span id="soloCarStepTimer" class="small-note"></span></form>${compactKeyboard('soloCarAnswer',true)}`}
+ <span id="soloCarReadyHint" class="small-note"></span><span id="soloCarStepTimer" class="small-note"></span></form>`}
  ${!ended&&(soloFeedback||soloPending)?`<div class="game-status ${soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả…')} ${soloPending?`<button id="soloCarPendingRetry" type="button" class="btn small ghost" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button>`:''}</div>`:''}
  <div class="form-actions solo-actions">${ended?'<button id="soloCarReplay" type="button" class="btn primary">Chơi lại</button><button id="soloCarHome" type="button" class="btn ghost">Về trang chủ</button>':''}<button type="button" id="soloCarNewConfig" class="btn ghost" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
  if(!ended){const input=$('soloCarAnswer');if(input){input.value=answer;prepareGameInput(input);if(screen==='solo-car'&&!document.getElementById('authModal')?.classList.contains('active'))input.focus({preventScroll:true})}updateSoloCarTimers()}
@@ -149,7 +149,7 @@ function updateSoloCarTimers(){
  if(ready)ready.textContent=now<g.nextAllowedAt?'Chờ '+Math.ceil((g.nextAllowedAt-now)/1000)+'s':'Sẵn sàng vượt chặng';
 }
 // Keep this helper independent from the selected-lane UI: one answer fits any safe lane.
-function queueCarAutoCheck(mode,delay=270){
+function queueCarAutoCheck(mode,delay=185){
  const solo=mode==='solo';
  if(solo)clearTimeout(soloCarAutoTimer);else clearTimeout(carAutoTimer);
  const g=solo?soloGame?.game:game?.game;
@@ -184,10 +184,10 @@ function renderSoloGame(){
  const resultLabel=g.status==='COMPLETED'?(bomb?'🎉 Đã gỡ toàn bộ bom!':'🎉 Hoàn thành tất cả cặp!'):g.status==='FAILED'?'💔 Bạn đã hết tim.':g.status==='TIMEOUT'?'⌛ Đã hết thời gian.':'';
  host.innerHTML=`<div class="game-shell solo-game-shell ${bomb?'solo-bomb-shell':''}"><div class="game-bar"><strong>${bomb?'💣 BOMB':'🔗 MATCH'} Solo</strong><span class="counter" id="${bomb?'soloBombScore':'soloScore'}">${fmt(g.score)} ĐIỂM</span><span id="${bomb?'soloBombHealth':'soloHealth'}">❤️ ${g.health}/3</span><span>⏱ <span id="${bomb?'soloBombCountdown':'soloCountdown'}">${formatCountdown(secLeft(g.endsAt))}</span></span></div>
  <div class="solo-progress" role="progressbar" aria-label="${bomb?'Tiến độ gỡ bom':'Tiến độ ghép cặp'}" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.correct}"><span style="width:${Math.round(100*g.correct/Math.max(1,rd.question_count))}%"></span></div>
- ${ended?`<div class="game-status good" tabindex="-1" id="${bomb?'soloBombResultTitle':'soloResultTitle'}"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} ${bomb?'bom đã gỡ':'cặp đúng'} · ${fmt(g.score)} điểm · ${g.mistakes} ${bomb?'bom quá hạn':'lần sai'}</div>`:bomb?`<p class="small-note">Gõ nguyên từ tiếng Anh ứng với bất kỳ bom đang rơi. Chưa đủ từ không mất tim hoặc điểm.</p><div class="bomb-arena solo-bomb-arena" id="soloBombArena" aria-label="Các quả bom Solo đang rơi">${bombCardsMarkup(g,rd)}</div><div class="bomb-answer-form"><label for="soloBombAnswer">Nhập đáp án tiếng Anh</label><div class="game-answer-row"><input id="soloBombAnswer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="100" placeholder="Gõ từ tiếng Anh — bom tự được giải"></div><small class="small-note">Tự kiểm tra sau khi bạn ngừng gõ một chút.</small></div>${compactKeyboard('soloBombAnswer',true)}`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
+ ${ended?`<div class="game-status good" tabindex="-1" id="${bomb?'soloBombResultTitle':'soloResultTitle'}"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} ${bomb?'bom đã gỡ':'cặp đúng'} · ${fmt(g.score)} điểm · ${g.mistakes} ${bomb?'bom quá hạn':'lần sai'}</div>`:bomb?`<p class="small-note">Gõ nguyên từ tiếng Anh ứng với bất kỳ bom đang rơi. Chưa đủ từ không mất tim hoặc điểm.</p><div class="bomb-arena solo-bomb-arena" id="soloBombArena" aria-label="Các quả bom Solo đang rơi">${bombCardsMarkup(g,rd)}</div><div class="bomb-answer-form"><label for="soloBombAnswer">Nhập đáp án tiếng Anh</label><div class="game-answer-row"><input id="soloBombAnswer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="100" placeholder="Gõ từ tiếng Anh — bom tự được giải"></div><small class="small-note">Tự kiểm tra sau khi bạn ngừng gõ một chút.</small></div>`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
  ${bomb&&!ended?`<div id="soloBombFeedback" class="game-status ${soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite" ${soloPending||soloFeedback?'':'hidden'}><span class="solo-bomb-feedback-text">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')}</span> <button type="button" class="btn small ghost" id="soloBombPendingRetry" ${soloPending?'':'hidden'} ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloPending&&!ended?`<div id="soloFeedback" class="game-status bad" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')} <button type="button" class="btn small ghost" id="soloPendingRetry" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloFeedback&&!ended?`<div id="soloFeedback" class="game-status ${soloFeedback.startsWith('Đúng')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback)}</div>`:''}
  <div class="form-actions solo-actions">${ended?`<button type="button" class="btn primary" id="${bomb?'soloBombReplay':'soloReplay'}">Chơi lại</button><button type="button" class="btn ghost" id="${bomb?'soloBombHome':'soloHome'}">Về trang chủ</button>`:''}<button type="button" class="btn ghost" id="${bomb?'soloBombNewConfig':'soloNewConfig'}" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
- if(bomb&&!ended){const input=$('soloBombAnswer');if(input){input.value=existingBombAnswer;prepareGameInput(input)}animateBombs($('soloBombArena'));if(oldFocus==='soloBombAnswer'&&input&&!mobileGameKeyboard())input.focus({preventScroll:true})}
+ if(bomb&&!ended){const input=$('soloBombAnswer');if(input){input.value=existingBombAnswer;prepareGameInput(input)}animateBombs($('soloBombArena'));if(oldFocus==='soloBombAnswer'&&input)input.focus({preventScroll:true})}
  if(ended)setTimeout(()=>host.querySelector('#'+(bomb?'soloBombResultTitle':'soloResultTitle'))?.focus({preventScroll:true}),0);
 }
 function renderSolo(){if(soloGame)renderSoloGame();else renderSoloSetup()}
@@ -267,12 +267,23 @@ async function joinRoom(event){
  finally{joinBusy=false;if(button){button.disabled=false;button.textContent=label}}
 }
 function currentRoundFromEvent(e){let now=Date.now()+localTimeOffset;return e.rounds.find(r=>r.starts_at&&now>=new Date(r.starts_at).getTime()&&now<new Date(r.ends_at).getTime())}
-async function loadRoom(){if(!roomCode)return;try{const data=await api('rooms/'+encodeURIComponent(roomCode));const previous=room;room=data;localTimeOffset=data.serverNow-Date.now();$('joinRoomPane').classList.add('hidden');$('roomPane').classList.remove('hidden');if(previous&&previous.event.status===data.event.status&&previous.event.started_at===data.event.started_at&&!game&&$('eventBoard')){$('eventBoard').innerHTML=boardHtml(data.board,'event');}else renderRoom();}catch(e){if(e.message.includes('chưa tham gia')||e.message.includes('đăng nhập')){roomCode='';sessionStore.removeItem('wordsky_room_code');$('roomPane').classList.add('hidden');$('joinRoomPane').classList.remove('hidden')}else toast(e.message,true)}}
+async function loadRoom(){if(!roomCode)return;try{const data=await api('rooms/'+encodeURIComponent(roomCode));const previous=room;room=data;localTimeOffset=data.serverNow-Date.now();$('joinRoomPane').classList.add('hidden');$('roomPane').classList.remove('hidden');if(previous&&previous.event.status===data.event.status&&previous.event.started_at===data.event.started_at&&!game&&$('eventBoard')){$('eventBoard').innerHTML=boardHtml(data.board,'event');}else renderRoom();
+  // After the server-authoritative five-second transition, automatically enter
+  // the next round. Never auto-start the first round for a new participant.
+  const next=currentRoundFromEvent(data.event);
+  if(next&&game&&game.game.status!=='PLAYING'&&game.round.id!==next.id&&!gameBusy)await startRound();
+ }catch(e){if(e.message.includes('chưa tham gia')||e.message.includes('đăng nhập')){roomCode='';sessionStore.removeItem('wordsky_room_code');$('roomPane').classList.add('hidden');$('joinRoomPane').classList.remove('hidden')}else toast(e.message,true)}}
 function renderRoom(){if(!room)return;const e=room.event,active=currentRoundFromEvent(e),live=e.status==='LIVE',ended=e.status==='FINISHED'||e.status==='CANCELLED'||(live&&!active&&Date.now()+localTimeOffset>=new Date(e.rounds.at(-1).ends_at).getTime());
  const statusLabel={DRAFT:'Đang chuẩn bị',OPEN:'Đang nhận người',LIVE:'Đang thi',FINISHED:'Đã kết thúc',CANCELLED:'Đã hủy'}[e.status];
  let head=`<div class="room-card"><div class="room-title"><div><span class="mini">PHÒNG #${escapeHtml(e.join_code)}</span><h2>${escapeHtml(e.title)}</h2></div><span class="pill ${live?'good':ended?'red':'yellow'}">${statusLabel}</span></div><p class="small-note">${fmt(e.participant_count)} / ${fmt(e.max_players)} người · ${e.rounds.length} vòng · ${room.me?`Bạn: ${escapeHtml(room.me.name)}`:'Admin'}</p><div class="round-list">${e.rounds.map(r=>`<div class="round-tile ${active?.id===r.id?'active':''}"><div class="number">ROUND ${r.position}</div><strong>${MODE_LABEL[r.mode]}</strong><small>${fmt(r.duration_seconds)} giây · ${escapeHtml(r.difficulty)} · x${r.weight} điểm</small>${r.starts_at?`<div class="small-note" style="margin-top:7px">${fmtDate(r.starts_at)}</div>`:''}</div>`).join('')}</div>`;
  if(e.status==='OPEN')head+=`<p class="game-status">⏳ Đang đợi quản trị viên bắt đầu. Có thể chia sẻ mã <strong>${escapeHtml(e.join_code)}</strong> và mật khẩu cho bạn bè.</p>`;
- else if(live&&active)head+=`<p class="game-status">⚡ Đang mở ${MODE_LABEL[active.mode]}. Còn <b id="roundCountdown">${formatCountdown(secLeft(active.ends_at))}</b>.</p><button class="btn primary" id="startRoundButton" ${game?.runId&&game.round?.id===active.id?'disabled':''}>${game?.runId&&game.round?.id===active.id?'Vòng đang diễn ra bên dưới':'Bắt đầu / Tiếp tục vòng '+active.position} →</button>`;
+ else if(live&&active){
+  const finishedHere=game?.round?.id===active.id&&game?.game.status!=='PLAYING';
+  const upcoming=e.rounds.find(x=>x.position===active.position+1);
+  head+=finishedHere&&upcoming
+   ?`<p class="game-status">✅ Đã xong vòng ${active.position}. Chờ người chơi khác hoặc tự chuyển sang ${MODE_LABEL[upcoming.mode]} khi hết <b id="roundCountdown">${formatCountdown(secLeft(active.ends_at))}</b>.</p>`
+   :`<p class="game-status">⚡ Đang mở ${MODE_LABEL[active.mode]}. Còn <b id="roundCountdown">${formatCountdown(secLeft(active.ends_at))}</b>.</p><button class="btn primary" id="startRoundButton" ${game?.runId&&game.round?.id===active.id?'disabled':''}>${game?.runId&&game.round?.id===active.id?'Vòng đang diễn ra bên dưới':'Bắt đầu / Tiếp tục vòng '+active.position} →</button>`;
+ }
  else if(live&&!ended)head+=`<p class="game-status">Vòng tiếp theo chưa bắt đầu, bảng xếp hạng sẽ tự cập nhật.</p>`;
  else if(ended)head+=`<p class="game-status good">🏆 Cuộc thi đã đến thời điểm kết thúc. Xem bảng điểm tổng bên dưới.</p>`;
  head+='</div>';
@@ -293,7 +304,9 @@ async function startRound(){
 async function refreshGame(){if(!game||!roomCode)return;
  const revision=gameRevision;try{const before=game.game;const answer=await api(`rooms/${roomCode}/runs/${game.runId}`);if(!game||gameBusy||revision!==gameRevision)return;if(before.mode==='BOMB'&&answer.game.health<before.health)feedback='💥 Bom nổ! -1 tim';if(before.mode==='CAR'&&answer.game.health<before.health)feedback='⌛ Trễ chặng! -1 tim';game.game=answer.game;
   const fingerprint=g=>JSON.stringify([g.mode,g.status,g.score,g.health,g.correct,g.mistakes,g.index,g.bombs?.map(b=>b.id)]);
-  if(fingerprint(before)!==fingerprint(game.game)){if(!(game.game.mode==='BOMB'&&before.mode==='BOMB'&&before.status==='PLAYING'&&game.game.status==='PLAYING'&&syncBombArena()))renderGame();}else animateBombs();
+  if(game.game.mode==='BOMB'&&before.mode==='BOMB'&&before.status==='PLAYING'&&game.game.status==='PLAYING'&&syncBombArena()){
+   // A bomb spawn or timeout must not unmount the input or reset animations.
+  }else if(fingerprint(before)!==fingerprint(game.game))renderGame();else if(game.game.mode==='BOMB')animateBombs();
   if(game.game.status!=='PLAYING'){setTimeout(()=>loadRoom(),1100)}}catch(e){if(screen==='rooms')toast(e.message,true)}
 }
 // Move the car only after server-authoritative acceptance, never while merely selecting a lane.
@@ -337,23 +350,15 @@ async function submitGameAnswer(payload){
  }catch(e){feedback=before.mode==='CAR'?(e.status===429?'⏳ Chờ chút':'⚠️ '+String(e.message).slice(0,54)):e.message;renderGame()}
  finally{gameBusy=false}
 }
-function compactKeyboard(target,autoSubmit=false){
- const rows=['qwertyuiop','asdfghjkl','zxcvbnm'];
- const key=(label,value,klass='')=>`<button type="button" class="${klass}" data-game-key="${value}" data-keyboard-target="${target}" aria-label="${value==='DEL'?'X\u00f3a k\u00fd t\u1ef1 cu\u1ed1i':value==='SPACE'?'D\u1ea5u c\u00e1ch':value==='CLEAR'?'X\u00f3a h\u1ebft':value==='ENTER'?'Tr\u1ea3 l\u1eddi':'Ch\u1eef '+label}">${label}</button>`;
- return `<div class="game-keyboard" role="group" aria-label="B\u00e0n ph\u00edm ti\u1ebfng Anh trong game" data-keyboard-target="${target}">
-  ${rows.map(row=>`<div class="game-keyboard-row">${[...row].map(c=>key(c.toUpperCase(),c.toUpperCase())).join('')}</div>`).join('')}
-  <div class="game-keyboard-row">${key('X\u00f3a h\u1ebft','CLEAR','game-keyboard-clear')}${key('D\u1ea5u c\u00e1ch','SPACE','game-keyboard-wide')}${autoSubmit?'':key('\u21b5 Enter','ENTER','game-keyboard-enter')}${key('\u232b X\u00f3a ch\u1eef','DEL','game-keyboard-delete-word')}</div>
- </div>`;
-}
-function removeLastGameCharacter(text){
- return Array.from(String(text)).slice(0,-1).join('');
-}
-function mobileGameKeyboard(){return matchMedia('(pointer:coarse) and (max-width:760px)').matches}
 function prepareGameInput(input){
  if(!input)return;
- const mobile=mobileGameKeyboard();
- input.readOnly=mobile;
- input.inputMode=mobile?'none':'text';
+ // Use the device keyboard on mobile and the hardware keyboard on desktop.
+ // readonly/inputmode=none previously swallowed real taps on many touch devices.
+ input.readOnly=false;
+ input.inputMode='text';
+ input.autocomplete='off';
+ input.autocapitalize='none';
+ input.spellcheck=false;
 }
 // BOMB: automatically resolve a full English word against all active bombs.
 // Keep the native mobile input mounted while the 1.2s server poll redraws bombs.
@@ -410,7 +415,7 @@ function syncSoloBombArena(){
  }
  return true;
 }
-function queueSoloBombCheck(delay=260){clearTimeout(soloBombCheckTimer);soloBombCheckTimer=setTimeout(checkSoloBombAnswer,delay)}
+function queueSoloBombCheck(delay=185){clearTimeout(soloBombCheckTimer);soloBombCheckTimer=setTimeout(checkSoloBombAnswer,delay)}
 async function checkSoloBombAnswer(){
  const field=$('soloBombAnswer'),typed=field?.value.trim(),current=soloGame;
  if(!typed||!current||current.game?.mode!=='BOMB'||current.game.status!=='PLAYING')return;
@@ -420,7 +425,7 @@ async function checkSoloBombAnswer(){
  await submitSoloAnswer({answer:typed,auto:true});
  const next=$('soloBombAnswer')?.value.trim();if(soloGame?.runId===current.runId&&next&&next!==typed)queueSoloBombCheck();
 }
-function queueBombCheck(delay=260){clearTimeout(bombCheckTimer);bombCheckTimer=setTimeout(checkBombAnswer,delay)}
+function queueBombCheck(delay=185){clearTimeout(bombCheckTimer);bombCheckTimer=setTimeout(checkBombAnswer,delay)}
 async function checkBombAnswer(){
  const field=$('bombAnswer');
  const typed=field?.value.trim(), currentGame=game;
@@ -473,7 +478,7 @@ function renderGame(){
       <label for="bombAnswer">Nhập đáp án tiếng Anh</label>
       <div class="game-answer-row"><input id="bombAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Gõ từ tiếng Anh — bom tự được giải" maxlength="100" aria-label="Từ tiếng Anh để giải bom"></div>
       <small class="small-note">Tự kiểm tra khi bạn ngừng gõ một chút. Chưa gõ đủ từ không bị trừ điểm.</small>
-     </div>${g.status==='PLAYING'?compactKeyboard('bombAnswer',true):''}`;
+     </div>`;
  }else if(g.mode==='CAR'){
   const next=Math.max(0,Math.ceil((g.nextAllowedAt-Date.now()-localTimeOffset)/1000));
     const symbol=k=>k==='BLOCKED'?'🧱':k==='BONUS'?'⭐':k==='DOUBLE'?'×2':'·';
@@ -484,7 +489,7 @@ function renderGame(){
     <label for="carAnswer">Nhập từ của bất kỳ làn an toàn nào</label>
     <div class="car-answer-row"><input id="carAnswer" name="answer" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="100" placeholder="Gõ từ đúng — xe tự chuyển làn"></div>
     <span id="carReadyHint" class="small-note">${next?'Chờ '+next+' giây':'Sẵn sàng'}</span><span id="carStepTimer" class="small-note">⏱ Còn ${Math.max(0,Math.ceil(((g.stepDeadlineAt||g.endsAt)-Date.now()-localTimeOffset)/1000))}s để qua chặng</span>
-   </form>${g.status==='PLAYING'?compactKeyboard('carAnswer',true):''}
+   </form>
    <p class="small-note game-rules">Gõ đúng từ tiếng Anh ở bất kỳ làn an toàn nào. Xe tự chuyển làn, không cần nhấn Enter.</p>`;
 
  }
@@ -493,7 +498,7 @@ function renderGame(){
  if(g.mode==='BOMB'&&g.status==='PLAYING'){
   const el=$('bombAnswer');if(el){el.value=existingBombAnswer;prepareGameInput(el);}
   animateBombs();
-  if(oldFocus==='bombAnswer'&&el&&!mobileGameKeyboard())el.focus({preventScroll:true});
+  if(oldFocus==='bombAnswer'&&el)el.focus({preventScroll:true});
  }
  if(g.mode==='CAR'&&g.status==='PLAYING'){
   const el=$('carAnswer');if(el){el.value=existingCarAnswer;prepareGameInput(el);}
@@ -507,7 +512,8 @@ function animateBombs(arena=$('bombArena')){
  for(const bomb of arena.querySelectorAll('.bomb-falling')){
   const spawn=Number(bomb.dataset.bombSpawn),deadline=Number(bomb.dataset.bombDeadline);
   const duration=Math.max(1,deadline-spawn),elapsed=Math.max(0,Math.min(duration,now-spawn));
-  const floor=Math.max(42,arena.clientHeight-bomb.offsetHeight-12);
+  const height=arena.clientHeight,cardHeight=bomb._cardHeight??(bomb._cardHeight=bomb.offsetHeight);
+  const floor=Math.max(42,height-cardHeight-12);
   const key=`${spawn}:${deadline}:${floor}`;
   const small=bomb.querySelector('small');if(small)small.textContent=Math.max(0,Math.ceil((deadline-now)/1000))+'s';
   // Fallback deliberately follows real time; no cumulative per-poll motion.
@@ -804,7 +810,6 @@ async function manageVocabulary(type,id){
  }
 }
  // Prevent tapping virtual keys from opening the mobile OS keyboard.
- window.addEventListener('pointerdown',event=>{if(event.target.closest('[data-game-key]'))event.preventDefault()},{passive:false});
  window.addEventListener('resize',()=>{prepareGameInput($('bombAnswer'));prepareGameInput($('carAnswer'));prepareGameInput($('soloBombAnswer'));prepareGameInput($('soloCarAnswer'));});
  // Delegated user interactions
  window.addEventListener('click',async event=>{
@@ -828,16 +833,6 @@ async function manageVocabulary(type,id){
   if(button.id==='startRoundButton'){await startRound();return}
  if(button.id==='refreshRoom'){loadRoom();return}
  if(button.id==='leaveRoom'){leaveRoom();return}
-  if(button.dataset.gameKey!==undefined){
-   const input=$(button.dataset.keyboardTarget),isSolo=button.dataset.keyboardTarget==='soloBombAnswer'||button.dataset.keyboardTarget==='soloCarAnswer';if(!input||input.disabled||(isSolo?(soloBusy||soloPending):gameBusy))return;
-   const key=button.dataset.gameKey;
-   if(key==='ENTER'){input.closest('form')?.requestSubmit();return}
-   if(key==='DEL')input.value=removeLastGameCharacter(input.value);
-   else if(key==='CLEAR')input.value='';
-   else if(key==='SPACE'&&input.value.length<input.maxLength)input.value+=' ';
-   else if(input.value.length<input.maxLength)input.value+=key.toLowerCase();
-   input.dispatchEvent(new Event('input',{bubbles:true}));input.focus({preventScroll:true});return;
-  }
   if(button.dataset.selectBomb){return}
   if(button.dataset.pairLeft){if(game?.game.status!=='PLAYING')return;selectedEnglish=button.dataset.pairLeft;renderGame();return}
  if(button.dataset.pairRight){if(game?.game.status!=='PLAYING')return;if(!selectedEnglish){toast('Chọn từ tiếng Anh ở cột trái trước');return}const leftId=selectedEnglish;selectedEnglish=null;await submitGameAnswer({leftId,rightId:button.dataset.pairRight});return}
@@ -886,9 +881,16 @@ window.addEventListener('keydown',e=>{
  const routeCard=e.target.closest?.('[data-screen][tabindex]');if(routeCard&&['Enter',' '].includes(e.key)){e.preventDefault();navigate(routeCard.dataset.screen);return}
  // CAR Solo and multiplayer always keep the typing field as the keyboard target.
  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.metaKey||e.ctrlKey||e.altKey)return;
- const target=screen==='solo-car'&&soloGame?.game.mode==='CAR'&&soloGame.game.status==='PLAYING'?'soloCarAnswer':screen==='rooms'&&game?.game.mode==='CAR'&&game.game.status==='PLAYING'?'carAnswer':null;
- if(!target)return;
- if(e.key.length===1||e.key==='Backspace'){$(target)?.focus({preventScroll:true})}
+ const soloTarget=screen==='solo-car'?'soloCarAnswer':screen==='solo-bomb'?'soloBombAnswer':null;
+ const roomTarget=game?.game.mode==='CAR'?'carAnswer':game?.game.mode==='BOMB'?'bombAnswer':null;
+ const target=soloTarget&&soloGame?.game.status==='PLAYING'?soloTarget:screen==='rooms'&&game?.game.status==='PLAYING'?roomTarget:null;
+ const field=target?$(target):null;
+ if(!field||field.disabled||e.isComposing||e.key==='Tab'||e.target.closest?.('button,a,[role="button"]'))return;
+ if(e.key.length===1&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
+  e.preventDefault();field.focus({preventScroll:true});
+  field.setRangeText(e.key,field.selectionStart,field.selectionEnd,'end');
+  field.dispatchEvent(new Event('input',{bubbles:true}));
+ }else if(e.key==='Backspace')field.focus({preventScroll:true});
 });
 // Keep same-page navigation in sync with browser Back / Forward.
 function restoreArenaRoute(){

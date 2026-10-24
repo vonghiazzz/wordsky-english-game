@@ -10,11 +10,11 @@ test('admin displays persisted bomb and per-stage CAR options',()=>{
   assert.match(api,new RegExp('r\\.'+k+'|r\\.mode'));
  }
 });
-test('BOMB and CAR render custom keyboards only for active rounds and keep Start unobstructed',()=>{
+test('BOMB and CAR render native keyboard inputs while keeping Start unobstructed',()=>{
  assert.match(ui,/bombArenaMarkup\(g,rd\)/);
  assert.match(ui,/id="carAnswer"[^>]*inputmode="text"/);
- assert.match(ui,/g\.status==='PLAYING'\?compactKeyboard\('bombAnswer',true\)/);
- assert.match(ui,/g\.status==='PLAYING'\?compactKeyboard\('carAnswer',true\)/);
+ assert.doesNotMatch(ui,/compactKeyboard\('bombAnswer',true\)/);
+ assert.doesNotMatch(ui,/compactKeyboard\('carAnswer',true\)/);
  assert.match(css,/#startRoundButton\{position:relative;z-index:2\}/);
  assert.match(css,/\.game-answer-row\{display:flex/);
 });
@@ -45,20 +45,20 @@ test('BOMB auto-defuses without selecting a bomb or submitting the form',()=>{
  assert.match(bomb,/bombArenaMarkup\(g,rd\)/);
  assert.match(bomb,/id="bombAnswer"[^>]*inputmode="text"/);
  assert.doesNotMatch(bomb,/data-select-bomb/);
- assert.match(bomb,/compactKeyboard\('bombAnswer',true\)/);
+ assert.doesNotMatch(bomb,/compactKeyboard\('bombAnswer',true\)/);
  assert.match(ui,/body:\{answer:typed,auto:true\}/);
  assert.match(ui,/queueBombCheck\(\)/);
  assert.match(ui,/function syncBombArena\(\)/);
 });
 
-test('CAR auto-type uses its word keyboard and asks the server to select the lane',()=>{
+test('CAR auto-type uses native input and asks server to select the lane',()=>{
  const car=ui.split(" }else if(g.mode==='CAR'){")[1]?.split(' if(feedback')[0];
  assert.ok(car);
  assert.match(car,/id="carAnswer"[^>]*inputmode="text"/);
- assert.match(car,/compactKeyboard\('carAnswer',true\)/);
+ assert.doesNotMatch(car,/compactKeyboard\('carAnswer',true\)/);
  assert.doesNotMatch(car,/data-lane=/);
- assert.match(ui,/input\.readOnly=mobile/);
- assert.match(ui,/input\.inputMode=mobile\?'none':'text'/);
+ assert.match(ui,/input\.readOnly=false/);
+ assert.match(ui,/input\.inputMode='text'/);
  assert.match(ui,/submitGameAnswer\(\{auto:true,answer:typed\}\)/);
 });
 
@@ -69,52 +69,16 @@ test('leaderboard has mobile-friendly score columns and compact spacing',()=>{
 });
 
 
-test('BOMB and CAR custom keyboards reproduce the falling-word QWERTY rows and actions',()=>{
- const section=ui.split('function compactKeyboard(target,autoSubmit=false){')[1]?.split('function mobileGameKeyboard()')[0];
- assert.ok(section,'custom keyboard helper exists');
- const render=new Function(`function compactKeyboard(target,autoSubmit=false){${section}return compactKeyboard;`)();
- const bomb=render('bombAnswer',true);
- const car=render('carAnswer',true);
- for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){
-  assert.match(bomb,new RegExp(`data-game-key="${c}"`));
-  assert.match(car,new RegExp(`data-game-key="${c}"`));
+test('all typing games use device keyboard, no virtual keys mounted or pointerdown suppression',()=>{
+ for(const target of ['bombAnswer','carAnswer','soloBombAnswer','soloCarAnswer']){
+  assert.doesNotMatch(ui,new RegExp(`compactKeyboard\\('${target}',true\\)`));
  }
- assert.match(bomb,/data-game-key="CLEAR"/);
- assert.match(bomb,/data-game-key="SPACE"/);
- assert.match(bomb,/data-game-key="DEL"/);
- assert.doesNotMatch(bomb,/data-game-key="ENTER"/);
- assert.doesNotMatch(bomb,/data-game-key="DEL_WORD"/);
- assert.match(car,/data-game-key="CLEAR"/);
- assert.match(car,/data-game-key="SPACE"/);
- assert.doesNotMatch(car,/data-game-key="ENTER"/);
- assert.match(car,/data-game-key="DEL"/);
- assert.ok(bomb.indexOf('data-game-key="CLEAR"')<bomb.indexOf('data-game-key="DEL"'));
- assert.ok(car.indexOf('data-game-key="CLEAR"')<car.indexOf('data-game-key="DEL"'));
+ assert.match(ui,/input\.readOnly=false/);
+ assert.match(ui,/input\.inputMode='text'/);
+ assert.doesNotMatch(ui,/pointerdown.*data-game-key/);
+ assert.match(css,/\.game-keyboard\{display:none!important\}/);
+ assert.match(ui,/field\.setRangeText\(e\.key/);
 });
-
-test('right keyboard action removes one character, left clears all',()=>{
- const helper=ui.match(/function removeLastGameCharacter\(text\)\{[\s\S]*?\n\}/)?.[0];
- assert.ok(helper);
- const remove=new Function(`${helper};return removeLastGameCharacter`)();
- assert.equal(remove('apple'),'appl');
- assert.equal(remove('green apple'),'green appl');
- assert.equal(remove(''), '');
- assert.match(ui,/key==='CLEAR'\)input\.value=''/);
- assert.match(ui,/key==='DEL'\)input\.value=removeLastGameCharacter/);
-});
-
-test('touch typing uses embedded keyboards and does not open the system keyboard',()=>{
- assert.match(ui,/function mobileGameKeyboard\(\)\{return matchMedia/);
- assert.match(ui,/input\.readOnly=mobile/);
- assert.match(ui,/input\.inputMode=mobile\?'none':'text'/);
- assert.match(ui,/event\.target\.closest\('\[data-game-key\]'\)/);
- assert.match(css,/@media \(pointer:coarse\) and \(max-width:760px\)/);
- assert.match(css,/#liveGame \.game-keyboard\{display:flex/);
- assert.match(css,/#liveGame \.bomb-arena\{height:clamp\(/);
- assert.match(ui,/input\.dispatchEvent\(new Event\('input',\{bubbles:true\}\)\)/);
- assert.match(ui,/queueBombCheck\(\)/);
-});
-
 
 test('Admin CEFR requirements match CAR difficulty lane plans',()=>{
  const fn=ui.match(/function carVocabularyNeeds\(difficulty,count\)\{[\s\S]*?\n\}/)?.[0];

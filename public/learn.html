@@ -69,6 +69,13 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
  .game-area.typing-active .falling-word strong{font-size:clamp(12px,3vw,15px)}
  .typing-board{opacity:.83}
 }
+/* Native keyboard input: hide input until the user actually starts; ready button stays clickable. */
+.game-area .game-overlay{z-index:12}
+.game-area.typing-active:not(.typing-running) .typing-dock{display:none}
+.game-area.typing-active .typing-board{display:none!important}
+.game-area.typing-active .typing-dock{bottom:max(8px,env(safe-area-inset-bottom));max-height:65px}
+.game-area.typing-active .typing-form input{font-size:16px;caret-color:auto;touch-action:auto}
+@media(pointer:coarse) and (max-width:760px){.game-area.typing-active{height:clamp(320px,61dvh,520px);min-height:320px}}
 @media (max-height:540px) and (orientation:landscape){
  .game-area.typing-active:fullscreen,.game-area.typing-active.fullscreen-fallback{height:100dvh}
  .game-area.typing-active .typing-key{min-height:27px;padding:2px 0}
@@ -87,7 +94,7 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
 <nav class="tabs" aria-label="Chế độ học"><button class="tab active" id="flashTab" aria-selected="true">🃏 Flashcard</button><button class="tab" id="gameTab" aria-selected="false">🌠 Game chữ rơi</button><button class="tab" id="manageTab" aria-selected="false">⚙️ Quản lý từ vựng</button></nav>
 <section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng.</p><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button><form id="cambridgeLookupForm" class="cambridge-form" action="https://dictionary.cambridge.org/search/english/direct/" method="get" target="_blank" rel="noopener noreferrer" aria-label="Tra từ hiện tại trên Cambridge Dictionary"><input type="hidden" name="q" id="cambridgeTerm"><input type="hidden" name="utm_source" value="widget_searchbox_source"><input type="hidden" name="utm_medium" value="widget_searchbox"><input type="hidden" name="utm_campaign" value="widget_tracking"><button type="submit" class="secondary" id="cambridgeLookupSubmit" disabled>📖 Tra Cambridge ↗</button></form></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny">Tiến độ được lưu trên trình duyệt này.</p></div><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
 <section class="panel hidden" id="gamePanel"><div class="toolbar"><h2>🌠 Bắt chữ rơi</h2><div class="controls"><label for="gameTopic">Chủ đề:</label><select id="gameTopic"></select><label for="gameMode">Chế độ:</label><select id="gameMode"><option value="letters">🔠 Bắt chữ cái</option><option value="typing">⚡ Gõ cả từ</option></select><label for="difficulty">Tốc độ:</label><select id="difficulty"><option value="easy">Dễ</option><option value="normal">Vừa</option><option value="hard">Khó</option></select><label for="wordLimit">Số từ:</label><input id="wordLimit" type="number" min="1" max="50" step="1" value="10" inputmode="numeric" aria-label="Số từ mỗi lượt chơi" style="width:77px"></div></div><div class="game-profile"><div class="name-field"><label for="playerName">👤 Tên người chơi</label><input id="playerName" type="text" maxlength="24" placeholder="Ví dụ: Nghĩa" autocomplete="nickname" aria-describedby="playerHelp"></div><p class="profile-help" id="playerHelp">Nhập tên trước khi bắt đầu. Điểm được ghi theo tên để hai người so tài trên cùng trình duyệt.</p></div>
-<div id="gameRules" class="rule">🎯 <b>Bắt chữ cái:</b> Nhìn nghĩa tiếng Việt, chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z. Chọn sai hoặc bỏ lỡ chữ đúng mất 1 tim.</div><div class="game-header"><div class="metric"><strong id="score">0</strong><span>Điểm</span></div><div class="metric"><strong id="hearts">❤️❤️❤️</strong><span>Máu</span></div><div class="metric"><strong id="round">0 / 10</strong><span>Số từ</span></div><div class="metric"><strong id="best">0</strong><span>Kỷ lục của bạn</span></div></div><div class="prompt" aria-live="polite"><div class="translation" id="clue">Bắt đầu trò chơi để nhận câu hỏi</div><div class="blanks" id="blanks">_ _ _ _ _</div></div><div class="game-area" id="gameArea" aria-label="Khu vực chữ rơi"><div class="typing-hud hidden" id="typingHud" aria-live="off"><span id="typingTime">⏱ --</span><span id="typingCount">✅ 0 từ đúng</span></div><button type="button" class="game-fullscreen" id="fullscreenGame" aria-label="Phóng to toàn màn hình game" title="Toàn màn hình">⛶</button><div class="typing-dock hidden" id="typingDock"><form class="typing-form" id="typingForm" autocomplete="off"><input id="typingAnswer" type="text" maxlength="45" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Nhập tiếng Anh rồi nhấn Enter…" aria-label="Nhập cả từ tiếng Anh" disabled></form><div id="virtualKeyboard" class="typing-board" role="group" aria-label="Bàn phím tiếng Anh trong trò chơi"></div></div><div class="cloud" style="left:10%;top:14%">☁</div><div class="cloud" style="right:10%;top:60%">☁</div><div id="gameOverlay" class="game-overlay"><div class="overlay-box"><h3 id="overlayTitle">Sẵn sàng chưa? 🚀</h3><p id="overlayText">Các từ vựng ngẫu nhiên đang chờ. Chạm vào chữ cái đang rơi hoặc dùng bàn phím để điền từ!</p><button class="primary" id="startGame">▶ Bắt đầu chơi</button></div></div></div><div class="game-footer"><div class="feedback" id="feedback" aria-live="polite"></div><div class="controls"><button class="secondary" id="pauseGame" disabled>⏸ Tạm dừng</button><button class="secondary" id="restartGame">↻ Chơi lại</button></div></div><p class="key-hint" id="gameHint">Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab trình duyệt.</p>
+<div id="gameRules" class="rule">🎯 <b>Bắt chữ cái:</b> Nhìn nghĩa tiếng Việt, chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z. Chọn sai hoặc bỏ lỡ chữ đúng mất 1 tim.</div><div class="game-header"><div class="metric"><strong id="score">0</strong><span>Điểm</span></div><div class="metric"><strong id="hearts">❤️❤️❤️</strong><span>Máu</span></div><div class="metric"><strong id="round">0 / 10</strong><span>Số từ</span></div><div class="metric"><strong id="best">0</strong><span>Kỷ lục của bạn</span></div></div><div class="prompt" aria-live="polite"><div class="translation" id="clue">Bắt đầu trò chơi để nhận câu hỏi</div><div class="blanks" id="blanks">_ _ _ _ _</div></div><div class="game-area" id="gameArea" aria-label="Khu vực chữ rơi"><div class="typing-hud hidden" id="typingHud" aria-live="off"><span id="typingTime">⏱ --</span><span id="typingCount">✅ 0 từ đúng</span></div><button type="button" class="game-fullscreen" id="fullscreenGame" aria-label="Phóng to toàn màn hình game" title="Toàn màn hình">⛶</button><div class="typing-dock hidden" id="typingDock"><form class="typing-form" id="typingForm" autocomplete="off"><input id="typingAnswer" type="text" maxlength="45" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Nhập tiếng Anh rồi nhấn Enter…" aria-label="Nhập cả từ tiếng Anh" disabled></form></div><div class="cloud" style="left:10%;top:14%">☁</div><div class="cloud" style="right:10%;top:60%">☁</div><div id="gameOverlay" class="game-overlay"><div class="overlay-box"><h3 id="overlayTitle">Sẵn sàng chưa? 🚀</h3><p id="overlayText">Các từ vựng ngẫu nhiên đang chờ. Chạm vào chữ cái đang rơi hoặc dùng bàn phím để điền từ!</p><button class="primary" id="startGame">▶ Bắt đầu chơi</button></div></div></div><div class="game-footer"><div class="feedback" id="feedback" aria-live="polite"></div><div class="controls"><button class="secondary" id="pauseGame" disabled>⏸ Tạm dừng</button><button class="secondary" id="restartGame">↻ Chơi lại</button></div></div><p class="key-hint" id="gameHint">Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab trình duyệt.</p>
 <section class="scoreboard" aria-labelledby="scoresTitle"><div class="scoreboard-top"><h3 id="scoresTitle">🏆 Bảng điểm người chơi</h3><div class="controls"><label for="rankingMode">Xem điểm:</label><select id="rankingMode"><option value="letters">Bắt chữ cái</option><option value="typing">Gõ cả từ</option></select></div></div><div id="scoreboardList" class="scoreboard-list"><p class="empty-message">Chưa có lượt chơi nào.</p></div><p class="scoreboard-note">Điểm theo tên được lưu trên <b>trình duyệt này</b>, không tự đồng bộ giữa hai thiết bị. Để so điểm giữa hai máy, xuất và nhập file bảng điểm (chỉ hợp nhất điểm, không xóa thẻ).</p><div class="scoreboard-actions"><button type="button" id="exportScores" class="secondary">⬇ Xuất bảng điểm</button><label for="importScores" class="secondary">⬆ Nhập bảng điểm<input id="importScores" class="hidden" type="file" accept=".json,application/json" aria-label="Nhập JSON bảng điểm"></label></div></section></section>
 <section class="panel hidden" id="managePanel">
   <div class="toolbar"><h2>⚙️ Quản lý từ vựng</h2><div class="controls"><span class="pill tiny"><b id="topicCount">26</b> chủ đề</span><span class="pill tiny"><b id="wordCount">260</b> thẻ</span></div></div>
@@ -456,8 +463,8 @@ function drawBlanks(){
   }$('blanks').replaceChildren(out)
 }
 function isMobileTyping(){return matchMedia('(pointer:coarse) and (max-width:760px)').matches}
-function focusTypingInput(){if(!isMobileTyping()&&!$('typingAnswer').disabled)$('typingAnswer').focus({preventScroll:true})}
-function setTypingEnabled(enabled){$('typingAnswer').disabled=!enabled;$('typingAnswer').readOnly=isMobileTyping()}
+function focusTypingInput(){if(!$('typingAnswer').disabled)$('typingAnswer').focus({preventScroll:true})}
+function setTypingEnabled(enabled){$('typingAnswer').disabled=!enabled;$('typingAnswer').readOnly=false;$('typingAnswer').inputMode='text'}
 function removeFallingWord(item){item.el.remove();state.fallWords=state.fallWords.filter(x=>x!==item)}
 function spawnFallingWord(){
  if(state.nextSpawn>=state.pool.length||state.fallWords.length>=3)return;
@@ -490,9 +497,10 @@ function showOverlay(title,body,button){$('overlayTitle').textContent=title;$('o
 function displayGameMode(){
  const typing=$('gameMode').value==='typing';
  $('gameArea').classList.toggle('typing-active',typing);
+  $('gameArea').classList.toggle('typing-running',typing&&state.running&&!state.paused);
  $('typingDock').classList.toggle('hidden',!typing);$('typingHud').classList.toggle('hidden',!typing);
- $('gameRules').textContent=typing?'⚡ GÕ CẢ TỪ: Có tối đa 3 thẻ rơi cùng lúc. Nhập từ tiếng Anh phù hợp với một thẻ và nhấn Enter. Đúng: thẻ biến mất và cộng điểm. Sai: không trừ tim, thẻ vẫn rơi. Thẻ chạm đất: mất 1 tim.':'🎯 BẮT CHỮ CÁI: Nhìn nghĩa tiếng Việt. Chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z để ghép thành từ. Sai hoặc để chữ đúng rơi xuống đất mất 1 tim.';
- $('gameHint').textContent=typing?'Điện thoại: dùng bàn phím nhỏ ngay trong game; Enter gửi đáp án. Nhấn ⛶ để phóng to. Máy tính: gõ bàn phím thông thường.':'Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab.';
+ $('gameRules').textContent=typing?'⚡ GÕ CẢ TỪ: Có tối đa 3 thẻ rơi cùng lúc. Gõ trọn từ tiếng Anh để tự giải. Đúng: thẻ biến mất và cộng điểm. Sai: không trừ tim, thẻ vẫn rơi. Thẻ chạm đất: mất 1 tim.':'🎯 BẮT CHỮ CÁI: Nhìn nghĩa tiếng Việt. Chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z để ghép thành từ. Sai hoặc để chữ đúng rơi xuống đất mất 1 tim.';
+ $('gameHint').textContent=typing?'Chạm ô nhập để dùng bàn phím của thiết bị. Gõ đúng từ, thẻ sẽ tự biến mất; nhấn Enter cũng được.':'Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab.';
  setTypingEnabled(state.running&&!state.paused&&typing)
 }
 function start(){
@@ -574,6 +582,11 @@ function submitWholeWord(e){
  if(!isMobileTyping()){$('typingAnswer').select();focusTypingInput()}
 }
 $('typingForm').addEventListener('submit',submitWholeWord);
+$('typingAnswer').addEventListener('input',()=>{
+ if(!state.running||state.paused||state.mode!=='typing')return;
+ const typed=normalizeWord($('typingAnswer').value);
+ if(typed&&state.fallWords.some(item=>normalizeWord(item.card[0])===typed))submitWholeWord();
+});
 function tick(t){
   if(!state.running||state.paused)return;
   if(!state.last)state.last=t;const dt=Math.min((t-state.last)/1000,.06);state.last=t;
@@ -607,27 +620,6 @@ document.addEventListener('keydown',e=>{
   if(matches.length){matches.sort((a,b)=>b.y-a.y);pick(matches[0])}
 });
 // In-game keyboard prevents Android/iOS system keyboard from covering falling words.
-const keyboard=$('virtualKeyboard');
-function addTypingKey(parent,label,value,klass=''){
- const btn=document.createElement('button');btn.type='button';btn.className='typing-key '+klass;btn.textContent=label;
- btn.setAttribute('aria-label',value==='BACKSPACE'?'Xóa ký tự':value==='ENTER'?'Gửi câu trả lời':value==='SPACE'?'Dấu cách':'Chữ '+label);
- btn.addEventListener('pointerdown',e=>e.preventDefault());
- btn.addEventListener('click',()=>{
-   if(!state.running||state.paused||state.mode!=='typing')return;
-   const input=$('typingAnswer');
-   if(value==='ENTER'){submitWholeWord();return}
-   if(value==='BACKSPACE')input.value=input.value.slice(0,-1);
-   else if(value==='SPACE'){if(input.value.length<input.maxLength)input.value+=' '}
-   else if(input.value.length<input.maxLength)input.value+=value;
- });parent.append(btn)
-}
-for(const letters of ['qwertyuiop','asdfghjkl','zxcvbnm']){
- const row=document.createElement('div');row.className='typing-row';
- for(const char of letters)addTypingKey(row,char.toUpperCase(),char);
- keyboard.append(row)
-}
-const actions=document.createElement('div');actions.className='typing-row';
-addTypingKey(actions,'⌫','BACKSPACE','action');addTypingKey(actions,'Dấu cách','SPACE','space');addTypingKey(actions,'↵ Enter','ENTER','action');keyboard.append(actions);
 function syncFallingGeometry(){
  const area=$('gameArea'),dock=$('typingDock');
  for(const item of state.fallWords){
@@ -655,7 +647,6 @@ $('fullscreenGame').addEventListener('click',toggleGameFullscreen);
 document.addEventListener('fullscreenchange',setFullscreenVisual);
 window.addEventListener('resize',()=>requestAnimationFrame(syncFallingGeometry));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('gameArea').classList.contains('fullscreen-fallback')){$('gameArea').classList.remove('fullscreen-fallback');setFullscreenVisual()}});
-$('typingAnswer').addEventListener('focus',()=>{if(isMobileTyping())$('typingAnswer').blur()});
 $('exportScores').onclick=()=>{
   const data=JSON.stringify({format:'wordsky-scores',version:1,records:scoreHistory},null,2);
   const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob);
