@@ -6,7 +6,7 @@ The **only production database remains the existing Supabase database**. This ki
 
 - Install or start OrbStack / Docker Desktop; run `docker compose version`.
 - Make sure port `5547` is free on your Mac.
-- In `~/Downloads/wordsky-english-game`, stay on `feature/arena-v5-latency-bomb-car`.
+- In `~/Downloads/wordsky-english-game`, stay on `feature/solo-bomb-phase2-2`.
 - `npm ci` if `node_modules` is missing.
 - Don't use any production `DATABASE_URL` or Supabase password; the runner supplies its **own fixed localhost-only URL**.
 
@@ -23,11 +23,11 @@ bash dev/wordsky-v6-test/local-db.sh test
 `test` performs:
 
 1. Starts a **dedicated** PostgreSQL 17 container and waits for health.
-2. Applies `db/schema.sql` and V6 additive migration to this local DB.
+2. Applies `db/schema.sql` and all V6/Solo additive migrations, including BOMB Solo, to this local DB.
 3. Seeds **26 original topics + 260 original words** into local DB.
 4. Creates 12 temporary **FAKE-approved test-only** CEFR cards (from draft terms); this is NOT vocabulary approval.
 5. Adds 12 fake-approved words to existing topics without creating any new topics.
-6. Runs real HTTP API + PostgreSQL smoke: MATCH Solo guest start/ownership/answer, `/api/topics`, admin login, reject insufficient C1 stock, room create/open, player join, start, Car x2 answer wrong vs correct, +200 scoring.
+6. Runs real HTTP API + PostgreSQL smoke: MATCH and BOMB Solo guest start/ownership, hidden answers and concurrent idempotency, `/api/topics`, admin login, reject insufficient C1 stock, room create/open, player join, start, Car x2 answer wrong vs correct, +200 scoring.
 7. Removes temporary test fixture and the test room (keeps local DB & test-only words).
 
 Expected after first test: 26 topics, 272 words (260 + 12 temporary test words), 12 simulated APPROVED **in LOCAL DB only**.

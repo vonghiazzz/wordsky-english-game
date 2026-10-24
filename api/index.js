@@ -1,7 +1,7 @@
 // WordSky V4 server-side API. Vercel Node Function, PostgreSQL as durable source of truth.
 import {sql,transaction} from '../lib/db.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
-import {rankForXp,awardedAttendance,normalizeRound,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
+import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 
 const AUTH_COOKIE='ws_auth';
@@ -283,31 +283,34 @@ async function playRound(req,code,runId,answer){const e=await eventInfo(code.toU
 async function playerStats(req){const user=await playerRow(mustPlayer(req).id);const today=new Date().toISOString().slice(0,10);return {...user,rank:rankForXp(user.xp),today};}
 async function globalRank(){const r=await sql('SELECT id,display_name,xp,streak FROM ws_users ORDER BY xp DESC,created_at ASC LIMIT 100');return r.rows.map((u,i)=>({...u,rank:rankForXp(u.xp),position:i+1}))}
 
-function soloRound(input){
+function soloRound(mode,input){
  const b=input||{};
  return normalizeRound({
-  mode:'MATCH',difficulty:b.difficulty||'EASY',topic_id:b.topic_id||null,
-  duration_seconds:b.duration_seconds??90,question_count:b.question_count??6,
+  mode,difficulty:b.difficulty||'EASY',topic_id:b.topic_id||null,
+  duration_seconds:b.duration_seconds??90,question_count:b.question_count??(mode==='BOMB'?8:6),
   points_per_correct:100,penalty:25,weight:1
  });
 }
-function soloPublicRound(round){
- return {mode:'MATCH',topic_id:round.topic_id,difficulty:round.difficulty,duration_seconds:round.duration_seconds,
+function soloPublicRound(round,state){
+ const out={mode:round.mode,topic_id:round.topic_id,difficulty:round.difficulty,duration_seconds:round.duration_seconds,
   question_count:round.question_count,points_per_correct:round.points_per_correct,penalty:round.penalty};
+ if(round.mode==='BOMB')Object.assign(out,state?.soloConfig||{});
+ return out;
 }
 function soloGuestIdentity(req,signingSecret){
  const existing=parseSession(parseCookie(req.headers.cookie,SOLO_COOKIE),signingSecret);
  if(existing?.role==='guest'&&existing.scope==='solo'&&/^[0-9a-f]{64}$/i.test(String(existing.token||'')))return {token:existing.token};
  return {token:randomToken()};
 }
-async function startSoloMatch(req,res){
- const round=soloRound(body(req));
+async function startSolo(req,res,mode){
+ if(!['MATCH','BOMB'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
+ const round=soloRound(mode,body(req));
  const signingSecret=secret();if(!signingSecret||signingSecret.length<32)throw fail('Máy chủ chưa cấu hình SESSION_SECRET an toàn',503);
  const owner=actor(req);const identity=soloGuestIdentity(req,signingSecret);const accessHash=hashToken(identity.token);const now=Date.now();
  const fingerprintHash=hashToken(signingSecret+':'+ipOf(req));
  const created=await transaction(async db=>{
-  const feature=await db.query("SELECT enabled FROM ws_features WHERE feature_key='MATCH'");
-  if(feature.rows[0]?.enabled===false)throw fail('Chế độ MATCH hiện đang tạm dừng',403);
+  const feature=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[mode]);
+  if(feature.rows[0]?.enabled===false)throw fail(`Chế độ ${mode} hiện đang tạm dừng`,403);
   // Serialize the rate-limit check per fingerprint across all serverless instances.
   await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[fingerprintHash]);
   const recent=await db.query("SELECT count(*)::int AS n FROM ws_solo_runs WHERE client_fingerprint_hash=$1 AND started_at>now()-interval '15 minutes'",[fingerprintHash]);
@@ -318,16 +321,17 @@ async function startSoloMatch(req,res){
   }
   const words=await selectMatchWords(db,round);
   const state=createState(round,words,now,now+round.duration_seconds*1000);
+  if(mode==='BOMB')state.soloConfig={bomb_fall_seconds:round.bomb_fall_seconds,bomb_batch_size:round.bomb_batch_size,bomb_spawn_interval_seconds:round.bomb_spawn_interval_seconds};
   state.answerReceipts={};
   const q=await db.query(`INSERT INTO ws_solo_runs(user_id,access_token_hash,client_fingerprint_hash,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,status,score,health,correct,mistakes,state)
-   VALUES($1,$2,$3,'MATCH',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb)
-   RETURNING id`,[owner?.role==='player'?owner.id:null,accessHash,fingerprintHash,round.topic_id,round.difficulty,round.duration_seconds,round.question_count,round.points_per_correct,round.penalty,state.status,state.score,state.health,state.correct,state.mistakes,JSON.stringify(state)]);
+   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb)
+   RETURNING id`,[owner?.role==='player'?owner.id:null,accessHash,fingerprintHash,mode,round.topic_id,round.difficulty,round.duration_seconds,round.question_count,round.points_per_correct,round.penalty,state.status,state.score,state.health,state.correct,state.mistakes,JSON.stringify(state)]);
   return {id:q.rows[0].id,state};
  });
  // This cookie identifies one browser, not one run, so creating a new run never
  // removes access to older runs owned by the same guest identity.
  res.setHeader('set-cookie',cookie(SOLO_COOKIE,issueSession({role:'guest',scope:'solo',token:identity.token},signingSecret,SOLO_COOKIE_MAX_AGE),SOLO_COOKIE_MAX_AGE));
- return {runId:created.id,round:soloPublicRound(round),game:publicState(created.state,now)};
+ return {runId:created.id,round:soloPublicRound(round,created.state),game:publicState(created.state,now)};
 }
 function authorizeSolo(req,run){
  const a=actor(req);
@@ -340,7 +344,26 @@ function authorizeSolo(req,run){
   throw fail('Phiên chơi Solo không hợp lệ hoặc đã hết hạn',401);
 }
 const receiptResult=receipt=>receipt?.result??receipt??{};
-async function playSoloMatch(req,runId,answer,lookupAttemptId){
+function soloAttemptContent(mode,answer){
+ if(mode==='MATCH')return {leftId:String(answer.leftId||''),rightId:String(answer.rightId||'')};
+ if(mode==='BOMB'){
+  if(answer.auto!==true||answer.bombId!==undefined)throw fail('BOMB Solo chỉ nhận chế độ tự động theo từ đã nhập');
+  return {answer:normalizeAnswer(answer.answer),auto:true};
+ }
+ throw fail('Chế độ Solo không hợp lệ',409);
+}
+function receiptContent(receipt){
+ if(receipt?.content)return receipt.content;
+ if(receipt?.leftId)return {leftId:receipt.leftId,rightId:receipt.rightId};
+ return null;
+}
+// JSONB can reorder keys. Compare canonical scalar fields.
+function sameAttemptContent(a,b){
+ if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)||Array.isArray(b))return false;
+ const keysA=Object.keys(a).sort(),keysB=Object.keys(b).sort();
+ return keysA.length===keysB.length&&keysA.every((key,i)=>key===keysB[i]&&a[key]===b[key]);
+}
+async function playSolo(req,runId,answer,lookupAttemptId){
  if(badId(runId))throw fail('ID lượt chơi không hợp lệ');
  return transaction(async db=>{
   const q=await db.query(`SELECT id,user_id,access_token_hash,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,state
@@ -348,8 +371,8 @@ async function playSoloMatch(req,runId,answer,lookupAttemptId){
   if(!q.rows.length)throw fail('Không tìm thấy lượt chơi Solo',404);
   const rec=q.rows[0];authorizeSolo(req,rec);
   if(answer){
-   const feature=await db.query("SELECT enabled FROM ws_features WHERE feature_key='MATCH'");
-   if(feature.rows[0]?.enabled===false)throw fail('Chế độ MATCH hiện đang tạm dừng',403);
+   const feature=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[rec.mode]);
+   if(feature.rows[0]?.enabled===false)throw fail(`Chế độ ${rec.mode} hiện đang tạm dừng`,403);
   }
   const now=Date.now();let state=rec.state;const before=JSON.stringify(state);let result={};let duplicate=false;let attempt;
   reconcile(state,rec,now);
@@ -362,22 +385,24 @@ async function playSoloMatch(req,runId,answer,lookupAttemptId){
   if(answer){
    const attemptId=String(answer.attemptId||'');
    if(!idRegexp.test(attemptId))throw fail('Mã lần trả lời không hợp lệ');
+   const content=soloAttemptContent(rec.mode,answer);
+   if(rec.mode==='BOMB'&&!content.answer)throw fail('Nhập câu trả lời tiếng Anh');
    const receipt=state.answerReceipts?.[attemptId];
    if(receipt){
-    if(receipt.leftId&&(receipt.leftId!==String(answer.leftId||'')||receipt.rightId!==String(answer.rightId||'')))
+    if(receiptContent(receipt)&&!sameAttemptContent(receiptContent(receipt),content))
      throw fail('Mã lần trả lời đã được dùng cho một thao tác khác',409);
     result=receiptResult(receipt);duplicate=true;
    }
    else{
     ({state,result}=answerQuestion(state,rec,answer,now));
     if(!state.answerReceipts||typeof state.answerReceipts!=='object')state.answerReceipts={};
-    state.answerReceipts[attemptId]={leftId:String(answer.leftId||''),rightId:String(answer.rightId||''),result};
+    state.answerReceipts[attemptId]={content,result};
    }
   }
   if(JSON.stringify(state)!==before)await db.query(`UPDATE ws_solo_runs SET state=$1::jsonb,status=$2,score=$3,health=$4,correct=$5,mistakes=$6,
    finished_at=CASE WHEN $2='PLAYING' THEN finished_at ELSE coalesce(finished_at,now()) END WHERE id=$7`,
    [JSON.stringify(state),state.status,state.score,state.health,state.correct,state.mistakes,runId]);
-  return {runId,round:soloPublicRound(rec),game:publicState(state,now),result,duplicate,...(attempt?{attempt}:{})};
+  return {runId,round:soloPublicRound(rec,state),game:publicState(state,now),result,duplicate,...(attempt?{attempt}:{})};
  });
 }
 
@@ -396,10 +421,11 @@ export default async function handler(req,res){
   if(method==='GET'&&key==='attendance/me')return output(res,200,await playerStats(req));
   if(method==='GET'&&key==='rankings')return output(res,200,{players:await globalRank()});
   if(method==='GET'&&key==='topics')return output(res,200,{topics:await fetchTopics(false)});
-  if(method==='POST'&&key==='solo/match/start')return output(res,201,await startSoloMatch(req,res));
-  if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSoloMatch(req,r[2]));
-  if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='attempts'&&r[4]&&r.length===5)return output(res,200,await playSoloMatch(req,r[2],undefined,r[4]));
-  if(method==='POST'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='answer'&&r.length===4)return output(res,200,await playSoloMatch(req,r[2],body(req)));
+  if(method==='POST'&&key==='solo/match/start')return output(res,201,await startSolo(req,res,'MATCH'));
+  if(method==='POST'&&key==='solo/bomb/start')return output(res,201,await startSolo(req,res,'BOMB'));
+  if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSolo(req,r[2]));
+  if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='attempts'&&r[4]&&r.length===5)return output(res,200,await playSolo(req,r[2],undefined,r[4]));
+  if(method==='POST'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='answer'&&r.length===4)return output(res,200,await playSolo(req,r[2],body(req)));
   if(method==='GET'&&key==='admin/topics'){mustAdmin(req);return output(res,200,{topics:await fetchTopics(true)})}
   if(method==='POST'&&key==='admin/topics'){
    mustAdmin(req);const b=body(req),title=normalizeName(b.title,80);if(title.length<2)throw fail('Tên chủ đề tối thiểu 2 ký tự');

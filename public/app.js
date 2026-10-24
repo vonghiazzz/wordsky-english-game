@@ -7,7 +7,7 @@ const MODE_LABEL={MATCH:'🔗 Nối từ',BOMB:'💣 Giải bom',CAR:'🏎️ Đ
 const MODE_SHORT={MATCH:'Matching',BOMB:'Bomb Defuser',CAR:'Lane Escape'};
 const rankThresholds=[{xp:0,label:'🥉 Đồng'},{xp:200,label:'🥈 Bạc'},{xp:600,label:'🥇 Vàng'},{xp:1400,label:'💎 Bạch kim'},{xp:3000,label:'👑 Kim cương'}];
 let session=null,topics=[],adminEvents=[],editingEvent=null,roomCode='',room=null,game=null,localTimeOffset=0,selectedEnglish=null,selectedLane=2,selectedBombId=null,feedback='',adminTab='events',loginMode='login',timer=null,screen='home';
-let gameBusy=false,joinBusy=false,gameRevision=0,soloGame=null,soloBusy=false,soloPending=null,selectedSoloEnglish=null,soloFeedback='',soloPairFeedback=null,soloSetupError='',lastSoloConfig=null,topicsLoading=true,topicsError='';
+let gameBusy=false,joinBusy=false,gameRevision=0,soloGame=null,soloBusy=false,soloPending=null,selectedSoloEnglish=null,soloFeedback='',soloPairFeedback=null,soloSetupError='',lastSoloConfig=null,soloBombCheckTimer=null,soloBombLastAttempt='',topicsLoading=true,topicsError='';
 function toast(message,error=false){const el=$('toast');el.textContent=message;el.className='toast'+(error?' error':'');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.add('hidden'),3800)}
 const apiError=(message,uncertain=false)=>Object.assign(new Error(message),{uncertain});
 async function api(path,{method='GET',body}={}){
@@ -18,7 +18,7 @@ async function api(path,{method='GET',body}={}){
 }
 const $screen=n=>$('screen-'+n);
 function navigate(name,{fromHistory=false}={}){
- if(!['home','solo','rooms','attendance','rank','admin'].includes(name))return;
+ if(!['home','solo','solo-bomb','rooms','attendance','rank','admin'].includes(name))return;
  if(!fromHistory&&location.hash!=='#'+name)history.pushState(null,'','#'+name);
  if(name===screen){window.dispatchEvent(new Event('wordsky:route'));return}
  screen=name;
@@ -27,7 +27,8 @@ function navigate(name,{fromHistory=false}={}){
  window.dispatchEvent(new Event('wordsky:route'));
  // Only intentional screen navigation scrolls to the top, never a same-screen click.
  window.scrollTo({top:0,behavior:'auto'});
- if(name==='attendance')loadAttendance();if(name==='rank')loadRank();if(name==='admin')loadAdmin({preserveView:false});if(name==='rooms'&&roomCode)loadRoom();if(name==='solo')renderSolo();
+ if(name==='attendance')loadAttendance();if(name==='rank')loadRank();if(name==='admin')loadAdmin({preserveView:false});if(name==='rooms'&&roomCode)loadRoom();
+ if(name==='solo'||name==='solo-bomb')activateSoloScreen(name==='solo-bomb'?'BOMB':'MATCH');
 }
 function setupPasswordToggles(root=document){
  for(const input of root.querySelectorAll('input[type="password"]')){
@@ -68,7 +69,7 @@ async function loadAttendance(){
 }
 async function loadRank(){try{let d=await api('rankings');$('rankLeaderboard').innerHTML=boardHtml(d.players)}catch(e){$('rankLeaderboard').innerHTML=`<div class="empty">${escapeHtml(e.message)}</div>`}}
 async function loadTopics(silent=false,includeWords=false){
- topicsLoading=true;topicsError='';if(screen==='solo')renderSoloSetup();
+ topicsLoading=true;topicsError='';if(['solo','solo-bomb'].includes(screen))renderSoloSetup();
  try{const data=await api(includeWords?'admin/topics':'topics');topics=data.topics||[];topicsLoading=false;renderSoloSetup();return topics}
  catch(e){topicsLoading=false;topicsError=e.message;renderSoloSetup();if(!silent)toast(e.message,true);return[]}
 }
@@ -78,20 +79,29 @@ function formatCountdown(sec){return `${String(Math.floor(sec/60)).padStart(2,'0
 function soloTopicOptions(value=''){
  return `<option value="" ${!value?'selected':''}>Tất cả chủ đề</option>`+topics.map(t=>`<option value="${t.id}" ${t.id===value?'selected':''}>${escapeHtml(t.title)} (${t.word_count??t.words?.length??0} từ)</option>`).join('');
 }
+const soloModeForScreen=()=>screen==='solo-bomb'?'BOMB':'MATCH';
+const soloRunKey=mode=>mode==='BOMB'?'wordsky_solo_bomb_run':'wordsky_solo_run';
+const soloPendingKey=mode=>mode==='BOMB'?'wordsky_solo_bomb_pending':'wordsky_solo_pending';
+const soloHost=(mode,kind)=>$(mode==='BOMB'?'soloBomb'+kind:'solo'+kind);
+function activateSoloScreen(mode){
+ if(soloGame?.game?.mode&&soloGame.game.mode!==mode){soloGame=null;soloPending=null;selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;soloSetupError=''}
+ renderSolo();if(!soloGame)restoreSoloRun(mode);
+}
 function renderSoloSetup(){
- const host=$('soloSetupPane');if(!host||soloGame)return;
+ const mode=soloGame?.game?.mode||soloModeForScreen(),bomb=mode==='BOMB';const host=soloHost(mode,'SetupPane');if(!host||soloGame)return;
+ soloHost(mode,'GamePane')?.classList.add('hidden');
  host.classList.remove('hidden');
  if(topicsLoading&&!topics.length){host.innerHTML='<div class="loading solo-setup" role="status" aria-live="polite" aria-busy="true">⏳ Đang tải kho từ vựng…</div>';return}
- if(!topics.length){host.innerHTML=`<div class="empty solo-setup" role="alert"><strong>${topicsError?'Không tải được kho từ vựng':'Kho từ vựng đang trống'}</strong><p>${escapeHtml(topicsError||'Chưa có chủ đề khả dụng để bắt đầu MATCH Solo.')}</p><button type="button" class="btn primary" id="soloTopicsRetry">Thử tải lại</button></div>`;return}
- host.innerHTML=`<div class="auth-panel solo-setup"><div class="panel-header"><span class="panelicon">🔗</span><div><h2>Tạo lượt MATCH</h2><p>Máy chủ chọn và chấm từ; đáp án không nằm trong trạng thái game gửi về trình duyệt.</p></div></div>
- <form id="soloSetupForm" class="form-grid"><label class="span2">Chủ đề<select name="topic_id">${soloTopicOptions()}</select></label>
- <label>Độ khó<select name="difficulty"><option value="EASY" selected>Easy · không có nghĩa nhiễu</option><option value="NORMAL">Normal · thêm 2 nghĩa nhiễu</option><option value="HARD">Hard · thêm 4 nghĩa nhiễu</option></select></label>
- <label>Số cặp<input name="question_count" type="number" min="3" max="20" value="6" required></label>
+ if(!topics.length){host.innerHTML=`<div class="empty solo-setup" role="alert"><strong>${topicsError?'Không tải được kho từ vựng':'Kho từ vựng đang trống'}</strong><p>${escapeHtml(topicsError||`Chưa có chủ đề khả dụng để bắt đầu ${mode} Solo.`)}</p><button type="button" class="btn primary" id="${bomb?'soloBombTopicsRetry':'soloTopicsRetry'}">Thử tải lại</button></div>`;return}
+ host.innerHTML=`<div class="auth-panel solo-setup"><div class="panel-header"><span class="panelicon">${bomb?'💣':'🔗'}</span><div><h2>Tạo lượt ${mode}</h2><p>Máy chủ chọn và chấm từ; đáp án không nằm trong trạng thái game gửi về trình duyệt.</p></div></div>
+ <form id="${bomb?'soloBombSetupForm':'soloSetupForm'}" class="form-grid"><label class="span2">Chủ đề<select name="topic_id">${soloTopicOptions()}</select></label>
+ <label>Độ khó<select name="difficulty"><option value="EASY" selected>${bomb?'Easy · rơi 20s, 2 bom/đợt':'Easy · không có nghĩa nhiễu'}</option><option value="NORMAL">${bomb?'Normal · rơi 16s, 2 bom/đợt':'Normal · thêm 2 nghĩa nhiễu'}</option><option value="HARD">${bomb?'Hard · rơi 10s, 3 bom/đợt':'Hard · thêm 4 nghĩa nhiễu'}</option></select></label>
+ <label>${bomb?'Số bom':'Số cặp'}<input name="question_count" type="number" min="3" max="${bomb?30:20}" value="${bomb?8:6}" required></label>
  <label>Thời gian<input name="duration_seconds" type="number" min="20" max="600" value="90" required><small>20–600 giây</small></label>
- <div class="solo-rule-card"><strong>Luật chơi</strong><span>+100 điểm/cặp đúng</span><span>−25 điểm và −1 tim khi ghép sai</span><span>Hết 3 tim hoặc hết giờ: kết thúc</span></div>
+ <div class="solo-rule-card"><strong>Luật chơi</strong>${bomb?'<span>+100 điểm khi gỡ đúng</span><span>Bom quá hạn mất 1 tim</span><span>Từ chưa hoàn chỉnh không bị phạt</span>':'<span>+100 điểm/cặp đúng</span><span>−25 điểm và −1 tim khi ghép sai</span>'}<span>Hết 3 tim hoặc hết giờ: kết thúc</span></div>
  <button type="submit" class="btn primary span2">Bắt đầu chơi →</button></form>
- ${soloSetupError?`<div class="game-status bad" role="alert">${escapeHtml(soloSetupError)} <button type="button" class="btn small ghost" id="soloStartRetry">Thử lại</button></div>`:''}
- <p class="small-note solo-disclaimer">Lượt Solo không cộng XP và không ảnh hưởng bảng xếp hạng giải đấu trong Phase 2.1.</p></div>`;
+ ${soloSetupError?`<div class="game-status bad" role="alert">${escapeHtml(soloSetupError)} <button type="button" class="btn small ghost" id="${bomb?'soloBombStartRetry':'soloStartRetry'}">Thử lại</button></div>`:''}
+ <p class="small-note solo-disclaimer">Lượt Solo không cộng XP và không ảnh hưởng bảng xếp hạng giải đấu.</p></div>`;
 }
 function soloPairsMarkup(g){
  const right=g.rightOptions||[];
@@ -99,43 +109,46 @@ function soloPairsMarkup(g){
  return `<div class="pair-grid"><div class="pair-col" role="group" aria-labelledby="soloEnglishHeading"><h3 id="soloEnglishHeading">English</h3>${g.pairs.map(p=>`<button type="button" data-solo-pair-left="${p.id}" aria-pressed="${selectedSoloEnglish===p.id}" class="pairbtn ${p.matched?'matched':''} ${selectedSoloEnglish===p.id?'selected':''} ${stateClass('leftId',p.id)}" ${(p.matched||soloPending)?'disabled aria-disabled="true"':''}>${escapeHtml(p.english)}</button>`).join('')}</div><div class="pair-col" role="group" aria-labelledby="soloMeaningHeading"><h3 id="soloMeaningHeading">Nghĩa tiếng Việt</h3>${right.map(p=>`<button type="button" data-solo-pair-right="${p.id}" class="pairbtn ${p.matched?'matched':''} ${stateClass('rightId',p.id)}" ${(p.matched||soloPending)?'disabled aria-disabled="true"':''}>${escapeHtml(p.meaning)}</button>`).join('')}</div></div>`;
 }
 function renderSoloGame(){
- const setup=$('soloSetupPane'),host=$('soloGamePane');if(!setup||!host||!soloGame)return;
+ const mode=soloGame?.game?.mode;if(!mode)return;const setup=soloHost(mode,'SetupPane'),host=soloHost(mode,'GamePane');if(!setup||!host)return;
+ const existingBombAnswer=host.querySelector('#soloBombAnswer')?.value||'',oldFocus=document.activeElement?.id;
  setup.classList.add('hidden');host.classList.remove('hidden');
- const g=soloGame.game,rd=soloGame.round;const ended=g.status!=='PLAYING';
- const resultLabel=g.status==='COMPLETED'?'🎉 Hoàn thành tất cả cặp!':g.status==='FAILED'?'💔 Bạn đã hết tim.':g.status==='TIMEOUT'?'⌛ Đã hết thời gian.':'';
- host.innerHTML=`<div class="game-shell solo-game-shell"><div class="game-bar"><strong>🔗 MATCH Solo</strong><span class="counter" id="soloScore">${fmt(g.score)} ĐIỂM</span><span id="soloHealth">❤️ ${g.health}/3</span><span>⏱ <span id="soloCountdown">${formatCountdown(secLeft(g.endsAt))}</span></span></div>
- <div class="solo-progress" role="progressbar" aria-label="Tiến độ ghép cặp" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.correct}"><span style="width:${Math.round(100*g.correct/Math.max(1,rd.question_count))}%"></span></div>
- ${ended?`<div class="game-status good" tabindex="-1" id="soloResultTitle"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} cặp đúng · ${fmt(g.score)} điểm · ${g.mistakes} lần sai</div>`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
- ${soloPending&&!ended?`<div class="game-status bad" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')} <button type="button" class="btn small ghost" id="soloPendingRetry" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloFeedback&&!ended?`<div class="game-status ${soloFeedback.startsWith('Đúng')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback)}</div>`:''}
- <div class="form-actions solo-actions">${ended?'<button type="button" class="btn primary" id="soloReplay">Chơi lại</button><button type="button" class="btn ghost" id="soloHome">Về trang chủ</button>':''}<button type="button" class="btn ghost" id="soloNewConfig" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
- if(ended)setTimeout(()=>$('soloResultTitle')?.focus({preventScroll:true}),0);
+ const g=soloGame.game,rd=soloGame.round,ended=g.status!=='PLAYING',bomb=mode==='BOMB';
+ const resultLabel=g.status==='COMPLETED'?(bomb?'🎉 Đã gỡ toàn bộ bom!':'🎉 Hoàn thành tất cả cặp!'):g.status==='FAILED'?'💔 Bạn đã hết tim.':g.status==='TIMEOUT'?'⌛ Đã hết thời gian.':'';
+ host.innerHTML=`<div class="game-shell solo-game-shell ${bomb?'solo-bomb-shell':''}"><div class="game-bar"><strong>${bomb?'💣 BOMB':'🔗 MATCH'} Solo</strong><span class="counter" id="${bomb?'soloBombScore':'soloScore'}">${fmt(g.score)} ĐIỂM</span><span id="${bomb?'soloBombHealth':'soloHealth'}">❤️ ${g.health}/3</span><span>⏱ <span id="${bomb?'soloBombCountdown':'soloCountdown'}">${formatCountdown(secLeft(g.endsAt))}</span></span></div>
+ <div class="solo-progress" role="progressbar" aria-label="${bomb?'Tiến độ gỡ bom':'Tiến độ ghép cặp'}" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.correct}"><span style="width:${Math.round(100*g.correct/Math.max(1,rd.question_count))}%"></span></div>
+ ${ended?`<div class="game-status good" tabindex="-1" id="${bomb?'soloBombResultTitle':'soloResultTitle'}"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} ${bomb?'bom đã gỡ':'cặp đúng'} · ${fmt(g.score)} điểm · ${g.mistakes} ${bomb?'bom quá hạn':'lần sai'}</div>`:bomb?`<p class="small-note">Gõ nguyên từ tiếng Anh ứng với bất kỳ bom đang rơi. Chưa đủ từ không mất tim hoặc điểm.</p><div class="bomb-arena solo-bomb-arena" id="soloBombArena" aria-label="Các quả bom Solo đang rơi">${bombCardsMarkup(g,rd)}</div><div class="bomb-answer-form"><label for="soloBombAnswer">Nhập đáp án tiếng Anh</label><div class="game-answer-row"><input id="soloBombAnswer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="100" placeholder="Gõ từ tiếng Anh — bom tự được giải"></div><small class="small-note">Tự kiểm tra sau khi bạn ngừng gõ một chút.</small></div>${compactKeyboard('soloBombAnswer',true)}`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
+ ${soloPending&&!ended?`<div id="${bomb?'soloBombFeedback':'soloFeedback'}" class="game-status bad" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')} <button type="button" class="btn small ghost" id="${bomb?'soloBombPendingRetry':'soloPendingRetry'}" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloFeedback&&!ended?`<div id="${bomb?'soloBombFeedback':'soloFeedback'}" class="game-status ${soloFeedback.startsWith('Đúng')||soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback)}</div>`:''}
+ <div class="form-actions solo-actions">${ended?`<button type="button" class="btn primary" id="${bomb?'soloBombReplay':'soloReplay'}">Chơi lại</button><button type="button" class="btn ghost" id="${bomb?'soloBombHome':'soloHome'}">Về trang chủ</button>`:''}<button type="button" class="btn ghost" id="${bomb?'soloBombNewConfig':'soloNewConfig'}" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
+ if(bomb&&!ended){const input=$('soloBombAnswer');if(input){input.value=existingBombAnswer;prepareGameInput(input)}animateBombs($('soloBombArena'));if(oldFocus==='soloBombAnswer'&&input&&!mobileGameKeyboard())input.focus({preventScroll:true})}
+ if(ended)setTimeout(()=>host.querySelector('#'+(bomb?'soloBombResultTitle':'soloResultTitle'))?.focus({preventScroll:true}),0);
 }
 function renderSolo(){if(soloGame)renderSoloGame();else renderSoloSetup()}
-async function beginSoloMatch(config){
- if(soloBusy||soloPending)return;soloBusy=true;lastSoloConfig=config;soloSetupError='';const button=document.querySelector('#soloSetupForm button[type="submit"]');if(button){button.disabled=true;button.textContent='⏳ Đang tạo lượt…'}
- try{soloGame=await api('solo/match/start',{method:'POST',body:config});localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();sessionStore.setItem('wordsky_solo_run',soloGame.runId);selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;renderSoloGame();$('soloGamePane')?.scrollIntoView({behavior:'smooth',block:'start'});}
+async function beginSolo(mode,config){
+ if(soloBusy||soloPending)return;soloBusy=true;lastSoloConfig={mode,config};soloSetupError='';const button=soloHost(mode,'SetupPane')?.querySelector('form button[type="submit"]');if(button){button.disabled=true;button.textContent='⏳ Đang tạo lượt…'}
+ try{soloGame=await api(`solo/${mode.toLowerCase()}/start`,{method:'POST',body:config});localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();sessionStore.setItem(soloRunKey(mode),soloGame.runId);selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';renderSoloGame();soloHost(mode,'GamePane')?.scrollIntoView({behavior:'smooth',block:'start'});}
  catch(e){soloSetupError=e.message;toast(e.message,true);renderSoloSetup()}finally{soloBusy=false}
 }
-function rememberSoloPending(pending){soloPending=pending;sessionStore.setItem('wordsky_solo_pending',JSON.stringify(pending))}
-function clearSoloPending(){soloPending=null;sessionStore.removeItem('wordsky_solo_pending')}
-function restoreStoredSoloPending(runId){
- try{const pending=JSON.parse(sessionStore.getItem('wordsky_solo_pending')||'null');if(pending?.runId===runId&&/^[0-9a-f-]{36}$/i.test(pending.attemptId)&&pending.leftId&&pending.rightId){soloPending=pending;return}}catch{}
- clearSoloPending();
+async function beginSoloMatch(config){return beginSolo('MATCH',config)}
+function rememberSoloPending(pending){soloPending=pending;sessionStore.setItem(soloPendingKey(pending.mode),JSON.stringify(pending))}
+function clearSoloPending(mode=soloPending?.mode||soloGame?.game?.mode||soloModeForScreen()){soloPending=null;sessionStore.removeItem(soloPendingKey(mode))}
+function restoreStoredSoloPending(runId,mode){
+ try{const pending=JSON.parse(sessionStore.getItem(soloPendingKey(mode))||'null');const valid=mode==='BOMB'?typeof pending?.answer==='string'&&pending.answer.length<=100:pending?.leftId&&pending?.rightId;if(pending?.runId===runId&&pending.mode===mode&&/^[0-9a-f-]{36}$/i.test(pending.attemptId)&&valid){soloPending=pending;return}}catch{}
+ clearSoloPending(mode);
 }
 function acceptSoloAnswer(out,pending){
  clearSoloPending();soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();selectedSoloEnglish=null;
- soloPairFeedback={leftId:pending.leftId,rightId:pending.rightId,correct:!!out.result?.correct};
- soloFeedback=out.result?.correct?'Đúng rồi! +'+fmt(out.result.awarded)+' điểm.':'Sai cặp! Mất 1 tim, còn '+out.game.health+'/3 tim.';
+ if(out.game.mode==='BOMB'){const input=$('soloBombAnswer');if(out.result?.correct&&input?.value.trim()===pending.answer)input.value='';if(out.result?.correct)soloBombLastAttempt='';soloFeedback=out.result?.correct?'✅ Gỡ bom! +'+fmt(out.result.awarded)+' điểm':'Chưa khớp bom đang rơi — tiếp tục gõ.'}
+ else{soloPairFeedback={leftId:pending.leftId,rightId:pending.rightId,correct:!!out.result?.correct};soloFeedback=out.result?.correct?'Đúng rồi! +'+fmt(out.result.awarded)+' điểm.':'Sai cặp! Mất 1 tim, còn '+out.game.health+'/3 tim.'}
 }
 async function rejectSoloPending(error){
  clearSoloPending();
  try{const out=await api(`solo/runs/${soloGame.runId}`);soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now()}catch{}
- soloFeedback=error.message;
+ soloFeedback=error.message;if(soloGame?.game?.mode==='BOMB'&&error.message.includes('Nhập quá nhanh')){soloBombLastAttempt='';queueSoloBombCheck(320)}
 }
 async function resolveSoloPending({sendFirst=false}={}){
  if(!soloPending||soloBusy||!soloGame)return;
  const pending=soloPending;if(pending.runId!==soloGame.runId){clearSoloPending();return}
- const send=()=>api(`solo/runs/${pending.runId}/answer`,{method:'POST',body:{attemptId:pending.attemptId,leftId:pending.leftId,rightId:pending.rightId}});
+ const send=()=>api(`solo/runs/${pending.runId}/answer`,{method:'POST',body:pending.mode==='BOMB'?{attemptId:pending.attemptId,answer:pending.answer,auto:true}:{attemptId:pending.attemptId,leftId:pending.leftId,rightId:pending.rightId}});
  const lookup=()=>api(`solo/runs/${pending.runId}/attempts/${pending.attemptId}`);
  soloBusy=true;soloFeedback='Đang xác nhận kết quả với máy chủ…';renderSoloGame();
  try{
@@ -154,19 +167,19 @@ async function resolveSoloPending({sendFirst=false}={}){
 }
 async function submitSoloAnswer(payload){
  if(!soloGame||soloBusy||soloPending||soloGame.game.status!=='PLAYING')return;
- rememberSoloPending({runId:soloGame.runId,attemptId:crypto.randomUUID(),leftId:payload.leftId,rightId:payload.rightId});
+ rememberSoloPending({runId:soloGame.runId,attemptId:crypto.randomUUID(),mode:soloGame.game.mode,...payload});
  await resolveSoloPending({sendFirst:true});
 }
 async function refreshSoloGame(){
  if(!soloGame||soloBusy||soloPending||soloGame.game.status!=='PLAYING')return;
- try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game;soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(out.game.health<before.health)soloFeedback='⌛ Đã hết thời gian.';if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health)renderSoloGame();}
- catch(e){if(e.message.includes('Phiên chơi Solo')||e.message.includes('Không tìm thấy'))resetSolo(false);else if(screen==='solo')toast(e.message,true)}
+ try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game,lostHealth=out.game.health<before.health;soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(lostHealth)soloFeedback='💥 Bom quá hạn! Mất 1 tim.';if(out.game.mode==='BOMB'&&out.game.status==='PLAYING'&&!lostHealth)syncSoloBombArena();else if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health)renderSoloGame();}
+ catch(e){if(e.message.includes('Phiên chơi Solo')||e.message.includes('Không tìm thấy'))resetSolo(false);else if(['solo','solo-bomb'].includes(screen))toast(e.message,true)}
 }
-function resetSolo(render=true){soloGame=null;selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;clearSoloPending();sessionStore.removeItem('wordsky_solo_run');$('soloGamePane')?.classList.add('hidden');if(render)renderSoloSetup()}
-async function restoreSoloRun(){
- const id=sessionStore.getItem('wordsky_solo_run');if(!/^[0-9a-f-]{36}$/i.test(id||''))return;
- restoreStoredSoloPending(id);
- try{soloGame=await api('solo/runs/'+id);localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();renderSolo();if(soloPending)await resolveSoloPending()}catch{resetSolo(false)}
+function resetSolo(render=true){const mode=soloGame?.game?.mode||soloModeForScreen();soloGame=null;selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';clearSoloPending(mode);sessionStore.removeItem(soloRunKey(mode));soloHost(mode,'GamePane')?.classList.add('hidden');if(render)renderSoloSetup()}
+async function restoreSoloRun(mode=soloModeForScreen()){
+ const id=sessionStore.getItem(soloRunKey(mode));if(!/^[0-9a-f-]{36}$/i.test(id||''))return;
+ restoreStoredSoloPending(id,mode);
+ try{const restored=await api('solo/runs/'+id);if(restored.game?.mode!==mode)throw Error('Sai chế độ Solo');soloGame=restored;localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();renderSolo();if(soloPending)await resolveSoloPending()}catch{if(soloModeForScreen()===mode)resetSolo(false)}
 }
 async function joinRoom(event){
  event.preventDefault();if(joinBusy)return;joinBusy=true;
@@ -271,12 +284,12 @@ let bombCheckTimer=null, bombLastAttempt='',gameExpanded=false;
 function arenaFeedbackMarkup(){
  return `<div id="gameFeedback" role="status" aria-live="polite" ${feedback?'':'hidden'} class="game-inline-feedback ${feedback.startsWith('✅')?'good':'bad'}">${escapeHtml(feedback)}</div>`;
 }
-function bombArenaMarkup(g,rd){
- const bombs=g.bombs||[];
+function bombCardsMarkup(g,rd){
+ const bombs=g.bombs||[],batch=Math.max(1,Number(rd.bomb_batch_size||2)),cardWidth=batch===3?'29%':'43%';
  return `<div class="bomb-topline">💣 ${bombs.length} bom đang rơi · Còn ${g.left} bom chưa gỡ</div>
- ${bombs.map(b=>`<div class="bomb-falling" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/Math.max(1,Number(rd.bomb_batch_size||2)))}%"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div>`).join('')}
- ${arenaFeedbackMarkup()}`;
+ ${bombs.map(b=>`<div class="bomb-falling" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/batch)}%;width:${cardWidth};max-width:${cardWidth}"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div>`).join('')}`;
 }
+function bombArenaMarkup(g,rd){return bombCardsMarkup(g,rd)+arenaFeedbackMarkup()}
 function syncBombArena(){
  const g=game?.game,rd=game?.round,arena=$('bombArena');
  if(!g||g.mode!=='BOMB'||g.status!=='PLAYING'||!rd||!arena||!$('bombAnswer'))return false;
@@ -287,6 +300,25 @@ function syncBombArena(){
  if(message){message.textContent=feedback;message.hidden=!feedback;message.className='game-inline-feedback '+(feedback.startsWith('✅')?'good':'bad');}
  animateBombs();
  return true;
+}
+function syncSoloBombArena(){
+ const g=soloGame?.game,rd=soloGame?.round,arena=$('soloBombArena');
+ if(!g||g.mode!=='BOMB'||g.status!=='PLAYING'||!rd||!arena||!$('soloBombAnswer'))return false;
+ arena.innerHTML=bombCardsMarkup(g,rd);
+ const score=$('soloBombScore'),health=$('soloBombHealth'),progress=document.querySelector('.solo-bomb-shell .solo-progress span'),message=$('soloBombFeedback');
+ if(score)score.textContent=fmt(g.score)+' ĐIỂM';if(health)health.textContent='❤️ '+g.health+'/3';if(progress)progress.style.width=Math.round(100*g.correct/Math.max(1,rd.question_count))+'%';
+ if(message){message.textContent=soloFeedback;message.hidden=!soloFeedback;message.className='game-status '+(soloFeedback.startsWith('✅')?'good':'bad')}
+ animateBombs(arena);return true;
+}
+function queueSoloBombCheck(delay=260){clearTimeout(soloBombCheckTimer);soloBombCheckTimer=setTimeout(checkSoloBombAnswer,delay)}
+async function checkSoloBombAnswer(){
+ const field=$('soloBombAnswer'),typed=field?.value.trim(),current=soloGame;
+ if(!typed||!current||current.game?.mode!=='BOMB'||current.game.status!=='PLAYING')return;
+ if(soloBusy||soloPending){queueSoloBombCheck(280);return}
+ const visible=(current.game.bombs||[]).map(b=>b.id).join(','),stamp=current.runId+':'+visible+':'+typed.toLocaleLowerCase('en-US');
+ if(stamp===soloBombLastAttempt)return;soloBombLastAttempt=stamp;
+ await submitSoloAnswer({answer:typed,auto:true});
+ const next=$('soloBombAnswer')?.value.trim();if(soloGame?.runId===current.runId&&next&&next!==typed)queueSoloBombCheck();
 }
 function queueBombCheck(delay=260){clearTimeout(bombCheckTimer);bombCheckTimer=setTimeout(checkBombAnswer,delay)}
 async function checkBombAnswer(){
@@ -372,8 +404,8 @@ function renderGame(){
   if(oldFocus==='carAnswer'&&el&&!mobileGameKeyboard())el.focus({preventScroll:true});
  }
 }
-function animateBombs(){
- const arena=$('bombArena');if(!arena)return;
+function animateBombs(arena=$('bombArena')){
+ if(!arena)return;
  const now=Date.now()+localTimeOffset;
  for(const b of arena.querySelectorAll('.bomb-falling')){
   const spawn=Number(b.dataset.bombSpawn),deadline=Number(b.dataset.bombDeadline);
@@ -384,7 +416,7 @@ function animateBombs(){
  }
 }
 function updateCountdowns(){
- if(screen==='solo'){const clock=$('soloCountdown');if(clock&&soloGame)clock.textContent=formatCountdown(secLeft(soloGame.game.endsAt));return}
+ if(['solo','solo-bomb'].includes(screen)){const clock=$(screen==='solo-bomb'?'soloBombCountdown':'soloCountdown');if(clock&&soloGame)clock.textContent=formatCountdown(secLeft(soloGame.game.endsAt));if(soloGame?.game.mode==='BOMB')animateBombs($('soloBombArena'));return}
  if(screen!=='rooms')return;animateBombs();const c=$('roundCountdown');const gc=$('gameCountdown');if(c&&room){let rd=currentRoundFromEvent(room.event);if(rd)c.textContent=formatCountdown(secLeft(rd.ends_at))}if(gc&&game)gc.textContent=formatCountdown(secLeft(game.game.endsAt));
  if(game?.game.mode==='CAR'&&game.game.status==='PLAYING'){
   const remaining=Math.max(0,Math.ceil((game.game.nextAllowedAt-Date.now()-localTimeOffset)/1000));
@@ -621,7 +653,7 @@ async function manageVocabulary(type,id){
 }
  // Prevent tapping virtual keys from opening the mobile OS keyboard.
  window.addEventListener('pointerdown',event=>{if(event.target.closest('[data-game-key]'))event.preventDefault()},{passive:false});
- window.addEventListener('resize',()=>{prepareGameInput($('bombAnswer'));prepareGameInput($('carAnswer'));});
+ window.addEventListener('resize',()=>{prepareGameInput($('bombAnswer'));prepareGameInput($('carAnswer'));prepareGameInput($('soloBombAnswer'));});
  // Delegated user interactions
  window.addEventListener('click',async event=>{
  const button=event.target.closest('button,[data-screen],[data-close]');if(!button)return;
@@ -632,12 +664,12 @@ async function manageVocabulary(type,id){
  if(button.id==='signupTab'){setLoginMode('signup');return}
  if(button.id==='attendanceLogin'||button.id==='adminLoginBtn'){setLoginMode('login');openAuth();return}
  if(button.id==='checkinBtn'){try{const r=await api('attendance/checkin',{method:'POST',body:{}});toast(r.already?'Hôm nay bạn đã điểm danh rồi!':`Điểm danh thành công! +${r.earned} XP`);loadAttendance()}catch(e){toast(e.message,true)}return}
- if(button.id==='soloNewConfig'){resetSolo();return}
- if(button.id==='soloReplay'){const config={topic_id:soloGame?.round?.topic_id||null,difficulty:soloGame?.round?.difficulty,question_count:soloGame?.round?.question_count,duration_seconds:soloGame?.round?.duration_seconds};await beginSoloMatch(config);return}
- if(button.id==='soloHome'){navigate('home');return}
- if(button.id==='soloTopicsRetry'){await loadTopics();return}
- if(button.id==='soloStartRetry'){if(lastSoloConfig)await beginSoloMatch(lastSoloConfig);return}
- if(button.id==='soloPendingRetry'){await resolveSoloPending();return}
+ if(['soloNewConfig','soloBombNewConfig'].includes(button.id)){resetSolo();return}
+ if(['soloReplay','soloBombReplay'].includes(button.id)){const mode=soloGame?.game?.mode||soloModeForScreen(),config={topic_id:soloGame?.round?.topic_id||null,difficulty:soloGame?.round?.difficulty,question_count:soloGame?.round?.question_count,duration_seconds:soloGame?.round?.duration_seconds};await beginSolo(mode,config);return}
+ if(['soloHome','soloBombHome'].includes(button.id)){navigate('home');return}
+ if(['soloTopicsRetry','soloBombTopicsRetry'].includes(button.id)){await loadTopics();return}
+ if(['soloStartRetry','soloBombStartRetry'].includes(button.id)){if(lastSoloConfig)await beginSolo(lastSoloConfig.mode,lastSoloConfig.config);return}
+ if(['soloPendingRetry','soloBombPendingRetry'].includes(button.id)){await resolveSoloPending();return}
  if(button.dataset.soloPairLeft){if(soloGame?.game.status!=='PLAYING'||soloBusy||soloPending)return;selectedSoloEnglish=button.dataset.soloPairLeft;soloFeedback='';soloPairFeedback=null;renderSoloGame();return}
  if(button.dataset.soloPairRight){if(soloGame?.game.status!=='PLAYING'||soloBusy||soloPending)return;if(!selectedSoloEnglish){toast('Chọn từ tiếng Anh ở cột trái trước');return}const leftId=selectedSoloEnglish;selectedSoloEnglish=null;await submitSoloAnswer({leftId,rightId:button.dataset.soloPairRight});return}
  if(button.id==='gameSizeToggle'){gameExpanded=!gameExpanded;renderGame();return}
@@ -645,7 +677,7 @@ async function manageVocabulary(type,id){
  if(button.id==='refreshRoom'){loadRoom();return}
  if(button.id==='leaveRoom'){leaveRoom();return}
   if(button.dataset.gameKey!==undefined){
-   const input=$(button.dataset.keyboardTarget);if(!input||input.disabled||gameBusy)return;
+   const input=$(button.dataset.keyboardTarget),isSoloBomb=button.dataset.keyboardTarget==='soloBombAnswer';if(!input||input.disabled||(isSoloBomb?(soloBusy||soloPending):gameBusy))return;
    const key=button.dataset.gameKey;
    if(key==='ENTER'){if(button.dataset.keyboardTarget==='carAnswer'&&Date.now()+localTimeOffset<Number(game?.game?.nextAllowedAt||0)){feedback='⏳ Chờ chút';renderGame();return}input.closest('form')?.requestSubmit();return}
    if(key==='DEL')input.value=removeLastGameCharacter(input.value);
@@ -677,7 +709,7 @@ async function manageVocabulary(type,id){
 });
 window.addEventListener('submit',async e=>{
  if(e.target.id==='authForm'){handleAuth(e);return}
- if(e.target.id==='soloSetupForm'){e.preventDefault();const f=Object.fromEntries(new FormData(e.target));await beginSoloMatch({topic_id:f.topic_id||null,difficulty:f.difficulty,question_count:Number(f.question_count),duration_seconds:Number(f.duration_seconds)});return}
+ if(['soloSetupForm','soloBombSetupForm'].includes(e.target.id)){e.preventDefault();const f=Object.fromEntries(new FormData(e.target));await beginSolo(soloModeForScreen(),{topic_id:f.topic_id||null,difficulty:f.difficulty,question_count:Number(f.question_count),duration_seconds:Number(f.duration_seconds)});return}
  if(e.target.id==='joinForm'){joinRoom(e);return}
  if(e.target.id==='createEventForm'){submitEventForm(e);return}
  if(e.target.id==='topicForm'){e.preventDefault();const f=new FormData(e.target);try{await api('admin/topics',{method:'POST',body:{title:f.get('title')}});toast('Đã thêm chủ đề');loadAdmin()}catch(x){toast(x.message,true)}return}
@@ -686,7 +718,7 @@ window.addEventListener('submit',async e=>{
   if(e.target.id==='bombAnswerForm'){e.preventDefault();queueBombCheck(0);return}
   if(e.target.id==='carAnswerForm'){e.preventDefault();if(Date.now()+localTimeOffset<Number(game?.game?.nextAllowedAt||0)){feedback='⏳ Chờ chút';renderGame();return}const ans=e.target.elements.answer.value;const lane=game?.game.level?.lanes?.[selectedLane];if(lane?.kind==='BLOCKED'){feedback='🧱 Đổi làn!';renderGame();return}if(!ans.trim()){feedback='⌨️ Nhập từ đã';renderGame();return}await submitGameAnswer({lane:selectedLane,answer:ans});return}
 });
-window.addEventListener('input',e=>{if(e.target.id==='cefrSearchFilter')filterAdminCefr();if(e.target.id==='bombAnswer'){feedback='';const note=$('gameFeedback');if(note)note.hidden=true;queueBombCheck();}});
+window.addEventListener('input',e=>{if(e.target.id==='cefrSearchFilter')filterAdminCefr();if(e.target.id==='bombAnswer'){feedback='';const note=$('gameFeedback');if(note)note.hidden=true;queueBombCheck();}if(e.target.id==='soloBombAnswer'){soloFeedback='';const note=$('soloBombFeedback');if(note)note.hidden=true;queueSoloBombCheck();}});
 window.addEventListener('change',async e=>{
  if(['cefrLevelFilter','cefrStatusFilter'].includes(e.target.id)){filterAdminCefr();return}
  if(e.target.closest('#roundsEditor')&&e.target.dataset.k){collectRounds();if(e.target.dataset.k==='difficulty'){const r=draftRounds[Number(e.target.closest('[data-round]')?.dataset.round)];if(r?.mode==='BOMB'){const p={EASY:[20,2,10],NORMAL:[16,2,9],HARD:[10,3,6]}[r.difficulty];if(p)[r.bomb_fall_seconds,r.bomb_batch_size,r.bomb_spawn_interval_seconds]=p;}}renderRounds();return;}
@@ -703,7 +735,7 @@ window.addEventListener('keydown',e=>{
 // Keep same-page navigation in sync with browser Back / Forward.
 function restoreArenaRoute(){
  const hash=location.hash.slice(1);
- navigate(['home','solo','rooms','attendance','rank','admin'].includes(hash)?hash:'home',{fromHistory:true});
+ navigate(['home','solo','solo-bomb','rooms','attendance','rank','admin'].includes(hash)?hash:'home',{fromHistory:true});
 }
 window.addEventListener('popstate',restoreArenaRoute);
 window.addEventListener('hashchange',restoreArenaRoute);
@@ -711,7 +743,7 @@ let polling=false;setInterval(async()=>{
  if(polling)return;polling=true;updateCountdowns();try{if(screen==='rooms'&&roomCode){
   if(game?.game.status==='PLAYING'){await refreshGame()}
   else{await loadRoom()}
- }else if(screen==='solo'&&soloGame?.game.status==='PLAYING'){await refreshSoloGame()}}finally{polling=false}
+ }else if(['solo','solo-bomb'].includes(screen)&&soloGame?.game.status==='PLAYING'){await refreshSoloGame()}}finally{polling=false}
 },1200);
 setInterval(updateCountdowns,500);
 (async function init(){
@@ -719,8 +751,7 @@ setInterval(updateCountdowns,500);
   setupPasswordToggles(document);
   await refreshSession();
  await loadTopics(true);
- await restoreSoloRun();
  const saved=sessionStore.getItem('wordsky_room_code');if(saved&&/^[A-Z0-9]{5,12}$/.test(saved)){roomCode=saved;}
  // Restore Arena route without rewriting browser history.
- const hash=location.hash.slice(1);if(['home','solo','attendance','rank','rooms','admin'].includes(hash))navigate(hash,{fromHistory:true});
+ const hash=location.hash.slice(1);if(['home','solo','solo-bomb','attendance','rank','rooms','admin'].includes(hash))navigate(hash,{fromHistory:true});
 })();

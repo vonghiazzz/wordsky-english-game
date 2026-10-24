@@ -11,31 +11,31 @@ test('MATCH Solo is reachable from home, shared navigation and direct hash routi
  assert.match(html,/id="screen-solo"/);
  assert.match(html,/data-screen="solo"/);
  assert.match(nav,/key:'solo'.*arena:'solo'/);
- assert.match(app,/\['home','solo','rooms','attendance','rank','admin'\]/);
+ assert.match(app,/\['home','solo','solo-bomb','rooms','attendance','rank','admin'\]/);
  assert.match(html,/Chơi thử/);
 });
 
 test('Solo setup exposes topic, difficulty, pair count and duration controls',()=>{
- assert.match(app,/id="soloSetupForm"/);
+ assert.match(app,/soloBombSetupForm/);assert.match(app,/soloSetupForm/);
  for(const field of ['topic_id','difficulty','question_count','duration_seconds'])assert.match(app,new RegExp(`name="${field}"`));
  assert.match(app,/Easy · không có nghĩa nhiễu/);
  assert.match(app,/Hard · thêm 4 nghĩa nhiễu/);
  assert.match(app,/value="EASY" selected/);
- assert.match(app,/name="question_count"[^>]+value="6"/);
+ assert.match(app,/name="question_count"[^>]+value="\$\{bomb\?8:6\}"/);
  assert.match(app,/name="duration_seconds"[^>]+value="90"/);
  assert.match(app,/không cộng XP/);
 });
 
 test('Solo UI uses dedicated API lifecycle and server-issued public state',()=>{
- assert.match(app,/api\('solo\/match\/start'/);
+ assert.match(app,/api\(`solo\/\$\{mode\.toLowerCase\(\)\}\/start`/);
  assert.match(app,/includeWords\?'admin\/topics':'topics'/);
   assert.match(app,/api\(`solo\/runs\/\$\{pending\.runId\}\/answer`/);
  assert.match(app,/data-solo-pair-left/);
  assert.match(app,/data-solo-pair-right/);
- assert.match(app,/sessionStore\.setItem\('wordsky_solo_run'/);
+ assert.match(app,/wordsky_solo_run/);
  assert.match(app,/attemptId:crypto\.randomUUID\(\)/);
- assert.match(app,/id="soloHome">Về trang chủ/);
- assert.match(app,/id="soloTopicsRetry">Thử tải lại/);
+ assert.match(app,/soloBombHome/);assert.match(app,/soloHome/);
+ assert.match(app,/soloBombTopicsRetry/);assert.match(app,/soloTopicsRetry/);
  assert.match(app,/stateClass/);
  assert.match(css,/Phase 2\.1 — MATCH Solo/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/);
@@ -43,13 +43,13 @@ test('Solo UI uses dedicated API lifecycle and server-issued public state',()=>{
 
 test('uncertain Solo answers preserve one attempt across retry and reload',()=>{
  assert.match(app,/wordsky_solo_pending/);
- assert.match(app,/rememberSoloPending\(\{runId:soloGame\.runId,attemptId:crypto\.randomUUID\(\),leftId:payload\.leftId,rightId:payload\.rightId\}\)/);
+ assert.match(app,/rememberSoloPending\(\{runId:soloGame\.runId,attemptId:crypto\.randomUUID\(\),mode:soloGame\.game\.mode,\.\.\.payload\}\)/);
  assert.match(app,/attempts\/\$\{pending\.attemptId\}/);
- assert.match(app,/body:\{attemptId:pending\.attemptId,leftId:pending\.leftId,rightId:pending\.rightId\}/);
+ assert.match(app,/\{attemptId:pending\.attemptId,leftId:pending\.leftId,rightId:pending\.rightId\}/);
  assert.match(app,/if\(!soloGame\|\|soloBusy\|\|soloPending/);
  assert.match(app,/if\(soloPending\)await resolveSoloPending\(\)/);
  assert.match(app,/method!=='GET'&&resp\.status>=500/);
- assert.match(app,/id="soloPendingRetry"/);
+ assert.match(app,/soloBombPendingRetry/);assert.match(app,/soloPendingRetry/);
  assert.doesNotMatch(app,/localStorage/);
 });
 
