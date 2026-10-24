@@ -43,7 +43,7 @@ test('Solo UI uses dedicated API lifecycle and server-issued public state',()=>{
 
 test('uncertain Solo answers preserve one attempt across retry and reload',()=>{
  assert.match(app,/wordsky_solo_pending/);
- assert.match(app,/rememberSoloPending\(\{runId:soloGame\.runId,attemptId:crypto\.randomUUID\(\),mode:soloGame\.game\.mode,\.\.\.payload\}\)/);
+ assert.match(app,/rememberSoloPending\(\{runId:soloGame\.runId,attemptId:crypto\.randomUUID\(\),mode:soloGame\.game\.mode,\.\.\.payload,stageIndex:soloGame\.game\.index\}\)/);
  assert.match(app,/attempts\/\$\{pending\.attemptId\}/);
  assert.match(app,/\{attemptId:pending\.attemptId,leftId:pending\.leftId,rightId:pending\.rightId\}/);
  assert.match(app,/if\(!soloGame\|\|soloBusy\|\|soloPending/);

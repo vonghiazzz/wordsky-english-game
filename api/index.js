@@ -358,10 +358,14 @@ function soloAttemptContent(mode,answer){
   return {answer:normalizeAnswer(answer.answer),auto:true};
  }
  if(mode==='CAR'){
-  const lane=Number(answer.lane);
-  if(!Number.isInteger(lane)||lane<0||lane>4)throw fail('Làn đường phải từ 1 đến 5');
   const typed=normalizeAnswer(answer.answer);
   if(typed.length>100)throw fail('Câu trả lời quá dài');
+  if(answer.auto===true){
+   if(answer.lane!==undefined||!typed)throw fail('CAR tự động chỉ nhận từ tiếng Anh, không nhận làn');
+   return {answer:typed,auto:true};
+  }
+  const lane=Number(answer.lane);
+  if(!Number.isInteger(lane)||lane<0||lane>4)throw fail('Làn đường phải từ 1 đến 5');
   return {lane,answer:typed};
  }
  throw fail('Chế độ Solo không hợp lệ',409);
@@ -401,7 +405,7 @@ async function playSolo(req,runId,answer,lookupAttemptId){
    if(!idRegexp.test(attemptId))throw fail('Mã lần trả lời không hợp lệ');
    const content=soloAttemptContent(rec.mode,answer);
    if(rec.mode==='BOMB'&&!content.answer)throw fail('Nhập câu trả lời tiếng Anh');
-   if(rec.mode==='CAR'&&(answer.lane!==content.lane||normalizeAnswer(answer.answer)!==content.answer))throw fail('Dữ liệu làn đường không hợp lệ');
+   if(rec.mode==='CAR'&&normalizeAnswer(answer.answer)!==content.answer)throw fail('Dữ liệu CAR không hợp lệ');
    const receipt=state.answerReceipts?.[attemptId];
    if(receipt){
     if(receiptContent(receipt)&&!sameAttemptContent(receiptContent(receipt),content))

@@ -12,14 +12,19 @@ test('CAR Solo is reachable from home, shared navigation and direct route',()=>{
 });
 test('CAR uses server-reported lanes, CEFR tiers, correct CSS/keyboard and 360px guard',()=>{
  assert.match(app,/function renderSoloCarGame/);
- assert.match(app,/data-solo-car-lane=/);assert.match(app,/car-stage solo-car-stage/);
- assert.match(app,/compactKeyboard\('soloCarAnswer'\)/);
- assert.match(app,/if\(!lane\|\|lane\.kind==='BLOCKED'\)/);
+ assert.match(app,/car-auto-lane/);assert.match(app,/car-stage solo-car-stage/);
+ assert.doesNotMatch(app,/data-solo-car-lane=/);
+ assert.match(app,/compactKeyboard\('soloCarAnswer',true\)/);
+ assert.match(app,/queueCarAutoCheck\('solo'/);
+ assert.match(app,/submitSoloAnswer\(\{auto:true,answer:typed\}\)/);
  assert.match(css,/@media\(max-width:760px\)/);
 });
 test('CAR Solo shares pending receipt persistence and does not touch tournament XP',()=>{
  assert.match(app,/wordsky_solo_car_run/);assert.match(app,/wordsky_solo_car_pending/);
- assert.match(app,/pending\.mode==='CAR'\?\{attemptId:pending\.attemptId,lane:pending\.lane,answer:pending\.answer\}/);
+ assert.match(app,/pending\.mode==='CAR'\?\(pending\.auto\?/);
+ assert.match(app,/\{attemptId:pending\.attemptId,answer:pending\.answer,auto:true\}/);
+ assert.match(app,/\{attemptId:pending\.attemptId,lane:pending\.lane,answer:pending\.answer\}/);
+ assert.match(app,/stageIndex:soloGame\.game\.index/);
  assert.match(app,/const send=\(\)=>api\(`solo\/runs\/\$\{pending.runId\}\/answer`/);
  assert.match(app,/updateSoloCarTimers/);
 });

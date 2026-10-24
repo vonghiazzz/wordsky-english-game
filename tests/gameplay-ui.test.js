@@ -14,7 +14,7 @@ test('BOMB and CAR render custom keyboards only for active rounds and keep Start
  assert.match(ui,/bombArenaMarkup\(g,rd\)/);
  assert.match(ui,/id="carAnswer"[^>]*inputmode="text"/);
  assert.match(ui,/g\.status==='PLAYING'\?compactKeyboard\('bombAnswer',true\)/);
- assert.match(ui,/g\.status==='PLAYING'&&!isBlocked\?compactKeyboard\('carAnswer'\)/);
+ assert.match(ui,/g\.status==='PLAYING'\?compactKeyboard\('carAnswer',true\)/);
  assert.match(css,/#startRoundButton\{position:relative;z-index:2\}/);
  assert.match(css,/\.game-answer-row\{display:flex/);
 });
@@ -51,14 +51,15 @@ test('BOMB auto-defuses without selecting a bomb or submitting the form',()=>{
  assert.match(ui,/function syncBombArena\(\)/);
 });
 
-test('CAR uses an in-game full-word keyboard and keeps server-validated lane answers',()=>{
+test('CAR auto-type uses its word keyboard and asks the server to select the lane',()=>{
  const car=ui.split(" }else if(g.mode==='CAR'){")[1]?.split(' if(feedback')[0];
  assert.ok(car);
  assert.match(car,/id="carAnswer"[^>]*inputmode="text"/);
- assert.match(car,/compactKeyboard\('carAnswer'\)/);
+ assert.match(car,/compactKeyboard\('carAnswer',true\)/);
+ assert.doesNotMatch(car,/data-lane=/);
  assert.match(ui,/input\.readOnly=mobile/);
  assert.match(ui,/input\.inputMode=mobile\?'none':'text'/);
- assert.match(ui,/submitGameAnswer\(\{lane:selectedLane,answer:ans\}\)/);
+ assert.match(ui,/submitGameAnswer\(\{auto:true,answer:typed\}\)/);
 });
 
 test('leaderboard has mobile-friendly score columns and compact spacing',()=>{
@@ -73,7 +74,7 @@ test('BOMB and CAR custom keyboards reproduce the falling-word QWERTY rows and a
  assert.ok(section,'custom keyboard helper exists');
  const render=new Function(`function compactKeyboard(target,autoSubmit=false){${section}return compactKeyboard;`)();
  const bomb=render('bombAnswer',true);
- const car=render('carAnswer');
+ const car=render('carAnswer',true);
  for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){
   assert.match(bomb,new RegExp(`data-game-key="${c}"`));
   assert.match(car,new RegExp(`data-game-key="${c}"`));
@@ -85,7 +86,7 @@ test('BOMB and CAR custom keyboards reproduce the falling-word QWERTY rows and a
  assert.doesNotMatch(bomb,/data-game-key="DEL_WORD"/);
  assert.match(car,/data-game-key="CLEAR"/);
  assert.match(car,/data-game-key="SPACE"/);
- assert.match(car,/data-game-key="ENTER"/);
+ assert.doesNotMatch(car,/data-game-key="ENTER"/);
  assert.match(car,/data-game-key="DEL"/);
  assert.ok(bomb.indexOf('data-game-key="CLEAR"')<bomb.indexOf('data-game-key="DEL"'));
  assert.ok(car.indexOf('data-game-key="CLEAR"')<car.indexOf('data-game-key="DEL"'));
@@ -125,11 +126,11 @@ test('Admin CEFR requirements match CAR difficulty lane plans',()=>{
  assert.match(ui,/const need=carVocabularyNeeds\(round\.difficulty,round\.question_count\)/);
 });
 
-test('CAR submits by in-game Enter with no extra submit button',()=>{
+test('CAR auto-checks complete words without requiring lane selection or Enter',()=>{
  assert.doesNotMatch(ui, /<button id="carDrive"/);
- assert.match(ui,/if\(key==='ENTER'\)/);
+ assert.match(ui,/queueCarAutoCheck\('room'/);
  assert.match(ui,/id="carAnswerForm"/);
- assert.match(ui,/game\?\.game\?\.nextAllowedAt/);
+ assert.match(ui,/if\(Date\.now\(\)\+localTimeOffset<g\.nextAllowedAt\)/);
  assert.match(ui,/e\.target\.id==='carAnswerForm'/);
 });
 
