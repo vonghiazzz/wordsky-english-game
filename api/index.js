@@ -102,6 +102,31 @@ async function approvedCarWordCounts(db,round){
  const row=q.rows[0]||{};
  return {A2:Number(row.a2||0),BONUS:Number(row.bonus||0),DOUBLE:Number(row.double||0)};
 }
+// Exactly the same approved, per-tier selection for multiplayer and Solo CAR.
+// Capacity is checked before creating any persistent run.
+async function selectApprovedCarWords(db,round){
+ const need=carWordRequirements(round);
+ const cards=await db.query(`SELECT id,english,meaning,cefr_level,tier FROM (
+  SELECT w.id,w.english,w.meaning,w.cefr_level,
+   CASE WHEN w.cefr_level IN ('A1','A2') THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END AS tier,
+   row_number() OVER (PARTITION BY CASE WHEN w.cefr_level IN ('A1','A2') THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END ORDER BY random()) AS rn
+  FROM (
+   SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level
+   FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
+   WHERE w.enabled=true AND t.enabled=true AND w.cefr_review_status='APPROVED'
+    AND w.cefr_level IN ('A1','A2','B1','B2','C1','C2')
+    AND ($1::uuid IS NULL OR w.topic_id=$1)
+   ORDER BY lower(w.english),w.id
+  ) w
+ ) pool
+ WHERE (tier='A2' AND rn<=$2) OR (tier='BONUS' AND rn<=$3) OR (tier='DOUBLE' AND rn<=$4)`,[round.topic_id||null,need.A2,need.BONUS,need.DOUBLE]);
+ const words={A2:[],BONUS:[],DOUBLE:[]};
+ for(const card of cards.rows)words[card.tier].push(card);
+ const missing=carMissingWords(round,words);
+ if(missing.length)throw fail('Không đủ từ CEFR APPROVED cho CAR Solo/vòng thi: '+missing.join('; '),409);
+ return words;
+}
+
 async function selectMatchWords(db,round){
  const wordLimit=requiredWords(round);
  const data=await db.query(`SELECT id,english,meaning FROM (
@@ -240,26 +265,7 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
   if(existed.rows.length){const run=existed.rows[0];return {runId:run.id,round,game:publicState(run.state,now)}};
    let words=[];
    if(round.mode==='CAR'){
-    // Select unique randomized cards per CEFR tier in one bounded SQL query.
-    const need=carWordRequirements(round);
-    const cards=await db.query(`SELECT id,english,meaning,cefr_level,tier FROM (
-     SELECT w.id,w.english,w.meaning,w.cefr_level,
-      CASE WHEN w.cefr_level IN ('A1','A2') THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END AS tier,
-      row_number() OVER (PARTITION BY CASE WHEN w.cefr_level IN ('A1','A2') THEN 'A2' WHEN w.cefr_level IN ('B1','B2') THEN 'BONUS' ELSE 'DOUBLE' END ORDER BY random()) AS rn
-     FROM (
-      SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level
-      FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
-      WHERE w.enabled=true AND t.enabled=true AND w.cefr_review_status='APPROVED'
-        AND w.cefr_level IN ('A1','A2','B1','B2','C1','C2')
-        AND ($1::uuid IS NULL OR w.topic_id=$1)
-      ORDER BY lower(w.english),w.id
-     ) w
-    ) pool
-    WHERE (tier='A2' AND rn<=$2) OR (tier='BONUS' AND rn<=$3) OR (tier='DOUBLE' AND rn<=$4)`,[round.topic_id||null,need.A2,need.BONUS,need.DOUBLE]);
-    words={A2:[],BONUS:[],DOUBLE:[]};
-    for(const card of cards.rows)words[card.tier].push(card);
-    const missing=carMissingWords(round,words);
-    if(missing.length)throw fail('Không đủ từ đã duyệt để mở vòng: '+missing.join('; '),409);
+    words=await selectApprovedCarWords(db,round);
    }else{
     words=await selectMatchWords(db,round);
    }
@@ -287,14 +293,14 @@ function soloRound(mode,input){
  const b=input||{};
  return normalizeRound({
   mode,difficulty:b.difficulty||'EASY',topic_id:b.topic_id||null,
-  duration_seconds:b.duration_seconds??90,question_count:b.question_count??(mode==='BOMB'?8:6),
+  duration_seconds:b.duration_seconds??90,question_count:b.question_count??(mode==='BOMB'?8:mode==='CAR'?3:6),
   points_per_correct:100,penalty:25,weight:1
  });
 }
 function soloPublicRound(round,state){
  const out={mode:round.mode,topic_id:round.topic_id,difficulty:round.difficulty,duration_seconds:round.duration_seconds,
   question_count:round.question_count,points_per_correct:round.points_per_correct,penalty:round.penalty};
- if(round.mode==='BOMB')Object.assign(out,state?.soloConfig||{});
+ if(round.mode==='BOMB'||round.mode==='CAR')Object.assign(out,state?.soloConfig||{});
  return out;
 }
 function soloGuestIdentity(req,signingSecret){
@@ -303,7 +309,7 @@ function soloGuestIdentity(req,signingSecret){
  return {token:randomToken()};
 }
 async function startSolo(req,res,mode){
- if(!['MATCH','BOMB'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
+ if(!['MATCH','BOMB','CAR'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
  const round=soloRound(mode,body(req));
  const signingSecret=secret();if(!signingSecret||signingSecret.length<32)throw fail('Máy chủ chưa cấu hình SESSION_SECRET an toàn',503);
  const owner=actor(req);const identity=soloGuestIdentity(req,signingSecret);const accessHash=hashToken(identity.token);const now=Date.now();
@@ -319,9 +325,10 @@ async function startSolo(req,res,mode){
    const topic=await db.query('SELECT id FROM ws_topics WHERE id=$1 AND enabled=true',[round.topic_id]);
    if(!topic.rows.length)throw fail('Chủ đề không tồn tại hoặc đang bị tắt',404);
   }
-  const words=await selectMatchWords(db,round);
+  const words=mode==='CAR'?await selectApprovedCarWords(db,round):await selectMatchWords(db,round);
   const state=createState(round,words,now,now+round.duration_seconds*1000);
   if(mode==='BOMB')state.soloConfig={bomb_fall_seconds:round.bomb_fall_seconds,bomb_batch_size:round.bomb_batch_size,bomb_spawn_interval_seconds:round.bomb_spawn_interval_seconds};
+  if(mode==='CAR')state.soloConfig={car_step_seconds:round.car_step_seconds};
   state.answerReceipts={};
   const q=await db.query(`INSERT INTO ws_solo_runs(user_id,access_token_hash,client_fingerprint_hash,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,status,score,health,correct,mistakes,state)
    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb)
@@ -349,6 +356,13 @@ function soloAttemptContent(mode,answer){
  if(mode==='BOMB'){
   if(answer.auto!==true||answer.bombId!==undefined)throw fail('BOMB Solo chỉ nhận chế độ tự động theo từ đã nhập');
   return {answer:normalizeAnswer(answer.answer),auto:true};
+ }
+ if(mode==='CAR'){
+  const lane=Number(answer.lane);
+  if(!Number.isInteger(lane)||lane<0||lane>4)throw fail('Làn đường phải từ 1 đến 5');
+  const typed=normalizeAnswer(answer.answer);
+  if(typed.length>100)throw fail('Câu trả lời quá dài');
+  return {lane,answer:typed};
  }
  throw fail('Chế độ Solo không hợp lệ',409);
 }
@@ -387,6 +401,7 @@ async function playSolo(req,runId,answer,lookupAttemptId){
    if(!idRegexp.test(attemptId))throw fail('Mã lần trả lời không hợp lệ');
    const content=soloAttemptContent(rec.mode,answer);
    if(rec.mode==='BOMB'&&!content.answer)throw fail('Nhập câu trả lời tiếng Anh');
+   if(rec.mode==='CAR'&&(answer.lane!==content.lane||normalizeAnswer(answer.answer)!==content.answer))throw fail('Dữ liệu làn đường không hợp lệ');
    const receipt=state.answerReceipts?.[attemptId];
    if(receipt){
     if(receiptContent(receipt)&&!sameAttemptContent(receiptContent(receipt),content))
@@ -423,6 +438,7 @@ export default async function handler(req,res){
   if(method==='GET'&&key==='topics')return output(res,200,{topics:await fetchTopics(false)});
   if(method==='POST'&&key==='solo/match/start')return output(res,201,await startSolo(req,res,'MATCH'));
   if(method==='POST'&&key==='solo/bomb/start')return output(res,201,await startSolo(req,res,'BOMB'));
+  if(method==='POST'&&key==='solo/car/start')return output(res,201,await startSolo(req,res,'CAR'));
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSolo(req,r[2]));
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='attempts'&&r[4]&&r.length===5)return output(res,200,await playSolo(req,r[2],undefined,r[4]));
   if(method==='POST'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='answer'&&r.length===4)return output(res,200,await playSolo(req,r[2],body(req)));

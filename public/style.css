@@ -242,3 +242,26 @@ body:has(#liveGame.game-expanded){overflow:hidden}
 /* Falling BOMB cards stay mounted; compositor owns their full descent. */
 .bomb-falling{will-change:transform}
 #soloBombFeedback[hidden],#soloBombPendingRetry[hidden]{display:none!important}
+
+/* Phase 2.3: reuse multiplayer CAR stage and keyboard in independent Solo screen */
+.solo-car-shell .car-stage{margin-block:1rem}
+.solo-car-shell .car-lanes{min-width:0}
+.solo-car-shell .car-answer-form{max-width:100%}
+.solo-car-shell .game-keyboard{max-width:100%}
+@media(max-width:760px){
+ .solo-car-shell .car-v6-lane{min-width:0;padding-inline:2px}
+ .solo-car-shell .car-lane-word{overflow-wrap:anywhere}
+ .solo-car-shell .car-answer-form .form-actions{flex-wrap:wrap}
+}
+@media(pointer:coarse) and (max-width:760px){
+ #soloCarGamePane .game-keyboard{display:flex;flex-direction:column;gap:4px;width:100%;max-width:100%;margin:6px auto 0;padding:6px 5px;border:1px solid #66809d77;border-radius:11px;background:rgba(37,55,83,.78);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+ #soloCarGamePane .game-keyboard-row{display:flex;gap:4px;margin:0;justify-content:center}
+ #soloCarGamePane .game-keyboard-row button{flex:1 1 0;max-width:none;min-width:0;min-height:34px;padding:4px 1px;font-size:clamp(11px,3vw,16px)}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-clear{flex:1.4}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-wide{flex:3;max-width:none}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-enter{flex:1.5;max-width:none}
+ #soloCarGamePane .game-keyboard-row button.game-keyboard-delete-word{flex:1.65;max-width:none}
+ #soloCarAnswer{caret-color:transparent;min-height:48px;font-size:16px}
+}
+/* CAR Solo keeps an accessible in-game keyboard on desktop as well as touch screens. */
+#soloCarGamePane .game-keyboard{display:flex;flex-direction:column;gap:4px;width:100%;max-width:650px;margin:8px auto;padding:7px;border:1px solid #66809d77;border-radius:11px;background:rgba(37,55,83,.78)}

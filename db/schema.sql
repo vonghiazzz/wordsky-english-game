@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS ws_solo_runs (
  user_id uuid REFERENCES ws_users(id) ON DELETE SET NULL,
  access_token_hash text NOT NULL,
  client_fingerprint_hash text NOT NULL,
- mode text NOT NULL DEFAULT 'MATCH' CHECK(mode IN ('MATCH','BOMB')),
+ mode text NOT NULL DEFAULT 'MATCH' CHECK(mode IN ('MATCH','BOMB','CAR')),
  topic_id uuid REFERENCES ws_topics(id) ON DELETE SET NULL,
  difficulty text NOT NULL CHECK(difficulty IN ('EASY','NORMAL','HARD')),
  duration_seconds integer NOT NULL CHECK(duration_seconds BETWEEN 20 AND 600),

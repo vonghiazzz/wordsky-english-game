@@ -11,7 +11,7 @@ test('MATCH Solo is reachable from home, shared navigation and direct hash routi
  assert.match(html,/id="screen-solo"/);
  assert.match(html,/data-screen="solo"/);
  assert.match(nav,/key:'solo'.*arena:'solo'/);
- assert.match(app,/\['home','solo','solo-bomb','rooms','attendance','rank','admin'\]/);
+ assert.match(app,/\['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'\]/);
  assert.match(html,/Chơi thử/);
 });
 
