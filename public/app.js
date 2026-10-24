@@ -117,7 +117,7 @@ function renderSoloGame(){
  host.innerHTML=`<div class="game-shell solo-game-shell ${bomb?'solo-bomb-shell':''}"><div class="game-bar"><strong>${bomb?'💣 BOMB':'🔗 MATCH'} Solo</strong><span class="counter" id="${bomb?'soloBombScore':'soloScore'}">${fmt(g.score)} ĐIỂM</span><span id="${bomb?'soloBombHealth':'soloHealth'}">❤️ ${g.health}/3</span><span>⏱ <span id="${bomb?'soloBombCountdown':'soloCountdown'}">${formatCountdown(secLeft(g.endsAt))}</span></span></div>
  <div class="solo-progress" role="progressbar" aria-label="${bomb?'Tiến độ gỡ bom':'Tiến độ ghép cặp'}" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.correct}"><span style="width:${Math.round(100*g.correct/Math.max(1,rd.question_count))}%"></span></div>
  ${ended?`<div class="game-status good" tabindex="-1" id="${bomb?'soloBombResultTitle':'soloResultTitle'}"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} ${bomb?'bom đã gỡ':'cặp đúng'} · ${fmt(g.score)} điểm · ${g.mistakes} ${bomb?'bom quá hạn':'lần sai'}</div>`:bomb?`<p class="small-note">Gõ nguyên từ tiếng Anh ứng với bất kỳ bom đang rơi. Chưa đủ từ không mất tim hoặc điểm.</p><div class="bomb-arena solo-bomb-arena" id="soloBombArena" aria-label="Các quả bom Solo đang rơi">${bombCardsMarkup(g,rd)}</div><div class="bomb-answer-form"><label for="soloBombAnswer">Nhập đáp án tiếng Anh</label><div class="game-answer-row"><input id="soloBombAnswer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="100" placeholder="Gõ từ tiếng Anh — bom tự được giải"></div><small class="small-note">Tự kiểm tra sau khi bạn ngừng gõ một chút.</small></div>${compactKeyboard('soloBombAnswer',true)}`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
- ${soloPending&&!ended?`<div id="${bomb?'soloBombFeedback':'soloFeedback'}" class="game-status bad" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')} <button type="button" class="btn small ghost" id="${bomb?'soloBombPendingRetry':'soloPendingRetry'}" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloFeedback&&!ended?`<div id="${bomb?'soloBombFeedback':'soloFeedback'}" class="game-status ${soloFeedback.startsWith('Đúng')||soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback)}</div>`:''}
+ ${bomb&&!ended?`<div id="soloBombFeedback" class="game-status ${soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite" ${soloPending||soloFeedback?'':'hidden'}><span class="solo-bomb-feedback-text">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')}</span> <button type="button" class="btn small ghost" id="soloBombPendingRetry" ${soloPending?'':'hidden'} ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloPending&&!ended?`<div id="soloFeedback" class="game-status bad" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')} <button type="button" class="btn small ghost" id="soloPendingRetry" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloFeedback&&!ended?`<div id="soloFeedback" class="game-status ${soloFeedback.startsWith('Đúng')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback)}</div>`:''}
  <div class="form-actions solo-actions">${ended?`<button type="button" class="btn primary" id="${bomb?'soloBombReplay':'soloReplay'}">Chơi lại</button><button type="button" class="btn ghost" id="${bomb?'soloBombHome':'soloHome'}">Về trang chủ</button>`:''}<button type="button" class="btn ghost" id="${bomb?'soloBombNewConfig':'soloNewConfig'}" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
  if(bomb&&!ended){const input=$('soloBombAnswer');if(input){input.value=existingBombAnswer;prepareGameInput(input)}animateBombs($('soloBombArena'));if(oldFocus==='soloBombAnswer'&&input&&!mobileGameKeyboard())input.focus({preventScroll:true})}
  if(ended)setTimeout(()=>host.querySelector('#'+(bomb?'soloBombResultTitle':'soloResultTitle'))?.focus({preventScroll:true}),0);
@@ -150,7 +150,7 @@ async function resolveSoloPending({sendFirst=false}={}){
  const pending=soloPending;if(pending.runId!==soloGame.runId){clearSoloPending();return}
  const send=()=>api(`solo/runs/${pending.runId}/answer`,{method:'POST',body:pending.mode==='BOMB'?{attemptId:pending.attemptId,answer:pending.answer,auto:true}:{attemptId:pending.attemptId,leftId:pending.leftId,rightId:pending.rightId}});
  const lookup=()=>api(`solo/runs/${pending.runId}/attempts/${pending.attemptId}`);
- soloBusy=true;soloFeedback='Đang xác nhận kết quả với máy chủ…';renderSoloGame();
+ soloBusy=true;soloFeedback='Đang xác nhận kết quả với máy chủ…';if(!(pending.mode==='BOMB'&&syncSoloBombArena()))renderSoloGame();
  try{
   if(sendFirst){
    try{acceptSoloAnswer(await send(),pending);return}catch(e){if(!e.uncertain){await rejectSoloPending(e);return}}
@@ -163,7 +163,7 @@ async function resolveSoloPending({sendFirst=false}={}){
    try{state=await lookup();if(state.attempt?.applied){acceptSoloAnswer(state,pending);return}}catch{}
    soloFeedback='Kết quả vẫn chưa rõ. Lượt chọn đang được giữ nguyên và chưa thể thao tác tiếp.';
   }
- }finally{soloBusy=false;renderSoloGame()}
+ }finally{soloBusy=false;if(!(soloGame?.game?.mode==='BOMB'&&soloGame.game.status==='PLAYING'&&syncSoloBombArena()))renderSoloGame()}
 }
 async function submitSoloAnswer(payload){
  if(!soloGame||soloBusy||soloPending||soloGame.game.status!=='PLAYING')return;
@@ -172,7 +172,7 @@ async function submitSoloAnswer(payload){
 }
 async function refreshSoloGame(){
  if(!soloGame||soloBusy||soloPending||soloGame.game.status!=='PLAYING')return;
- try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game,lostHealth=out.game.health<before.health;soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(lostHealth)soloFeedback='💥 Bom quá hạn! Mất 1 tim.';if(out.game.mode==='BOMB'&&out.game.status==='PLAYING'&&!lostHealth)syncSoloBombArena();else if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health)renderSoloGame();}
+ try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game,lostHealth=out.game.health<before.health;soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(lostHealth)soloFeedback='💥 Bom quá hạn! Mất 1 tim.';if(out.game.mode==='BOMB'&&out.game.status==='PLAYING'&&syncSoloBombArena()){}else if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health)renderSoloGame();}
  catch(e){if(e.message.includes('Phiên chơi Solo')||e.message.includes('Không tìm thấy'))resetSolo(false);else if(['solo','solo-bomb'].includes(screen))toast(e.message,true)}
 }
 function resetSolo(render=true){const mode=soloGame?.game?.mode||soloModeForScreen();soloGame=null;selectedSoloEnglish=null;soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';clearSoloPending(mode);sessionStore.removeItem(soloRunKey(mode));soloHost(mode,'GamePane')?.classList.add('hidden');if(render)renderSoloSetup()}
@@ -284,31 +284,54 @@ let bombCheckTimer=null, bombLastAttempt='',gameExpanded=false;
 function arenaFeedbackMarkup(){
  return `<div id="gameFeedback" role="status" aria-live="polite" ${feedback?'':'hidden'} class="game-inline-feedback ${feedback.startsWith('✅')?'good':'bad'}">${escapeHtml(feedback)}</div>`;
 }
+function bombCardMarkup(b,rd){
+ const batch=Math.max(1,Number(rd.bomb_batch_size||2)),cardWidth=batch===3?'29%':'43%';
+ return `<div class="bomb-falling" data-bomb-id="${escapeHtml(b.id)}" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/batch)}%;width:${cardWidth};max-width:${cardWidth}"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div>`;
+}
 function bombCardsMarkup(g,rd){
- const bombs=g.bombs||[],batch=Math.max(1,Number(rd.bomb_batch_size||2)),cardWidth=batch===3?'29%':'43%';
- return `<div class="bomb-topline">💣 ${bombs.length} bom đang rơi · Còn ${g.left} bom chưa gỡ</div>
- ${bombs.map(b=>`<div class="bomb-falling" data-bomb-spawn="${Number(b.spawnAt)}" data-bomb-deadline="${Number(b.deadline)}" style="left:${((Number(b.slot??0)+0.5)*100/batch)}%;width:${cardWidth};max-width:${cardWidth}"><span class="bomb-emoji">💣</span><strong>${escapeHtml(b.meaning)}</strong><small>${Math.max(0,Math.ceil((b.deadline-Date.now()-localTimeOffset)/1000))}s</small></div>`).join('')}`;
+ const bombs=g.bombs||[];
+ return `<div class="bomb-topline">💣 ${bombs.length} bom đang rơi · Còn ${g.left} bom chưa gỡ</div>${bombs.map(b=>bombCardMarkup(b,rd)).join('')}`;
 }
 function bombArenaMarkup(g,rd){return bombCardsMarkup(g,rd)+arenaFeedbackMarkup()}
+// Keep each live DOM node and its compositor animation across server polls.
+function reconcileBombCards(arena,g,rd){
+ const bombs=g.bombs||[],visible=new Set(bombs.map(b=>String(b.id)));
+ const headline=arena.querySelector('.bomb-topline');
+ if(headline)headline.textContent=`💣 ${bombs.length} bom đang rơi · Còn ${g.left} bom chưa gỡ`;
+ for(const node of arena.querySelectorAll('.bomb-falling')){
+  if(!visible.has(node.dataset.bombId)){node._fallMotion?.cancel();node.remove()}
+ }
+ const present=new Set([...arena.querySelectorAll('.bomb-falling')].map(node=>node.dataset.bombId));
+ for(const bomb of bombs){
+  if(!present.has(String(bomb.id)))arena.insertAdjacentHTML('beforeend',bombCardMarkup(bomb,rd));
+ }
+ animateBombs(arena);
+}
 function syncBombArena(){
  const g=game?.game,rd=game?.round,arena=$('bombArena');
  if(!g||g.mode!=='BOMB'||g.status!=='PLAYING'||!rd||!arena||!$('bombAnswer'))return false;
- arena.innerHTML=bombArenaMarkup(g,rd);
+ reconcileBombCards(arena,g,rd);
  const score=$('gameScore'),health=$('gameHealth'),message=$('gameFeedback');
  if(score)score.textContent=fmt(g.score)+' ĐIỂM';
  if(health)health.textContent='❤️ '+g.health+'/3';
  if(message){message.textContent=feedback;message.hidden=!feedback;message.className='game-inline-feedback '+(feedback.startsWith('✅')?'good':'bad');}
- animateBombs();
  return true;
 }
 function syncSoloBombArena(){
  const g=soloGame?.game,rd=soloGame?.round,arena=$('soloBombArena');
  if(!g||g.mode!=='BOMB'||g.status!=='PLAYING'||!rd||!arena||!$('soloBombAnswer'))return false;
- arena.innerHTML=bombCardsMarkup(g,rd);
+ reconcileBombCards(arena,g,rd);
  const score=$('soloBombScore'),health=$('soloBombHealth'),progress=document.querySelector('.solo-bomb-shell .solo-progress span'),message=$('soloBombFeedback');
  if(score)score.textContent=fmt(g.score)+' ĐIỂM';if(health)health.textContent='❤️ '+g.health+'/3';if(progress)progress.style.width=Math.round(100*g.correct/Math.max(1,rd.question_count))+'%';
- if(message){message.textContent=soloFeedback;message.hidden=!soloFeedback;message.className='game-status '+(soloFeedback.startsWith('✅')?'good':'bad')}
- animateBombs(arena);return true;
+ if(message){
+  const label=message.querySelector('.solo-bomb-feedback-text');
+  if(label)label.textContent=soloFeedback||'Đang xác nhận kết quả với máy chủ…';
+  message.hidden=!(soloPending||soloFeedback);
+  message.className='game-status '+(soloFeedback.startsWith('✅')?'good':'bad');
+  const retry=message.querySelector('#soloBombPendingRetry');
+  if(retry){retry.hidden=!soloPending;retry.disabled=soloBusy}
+ }
+ return true;
 }
 function queueSoloBombCheck(delay=260){clearTimeout(soloBombCheckTimer);soloBombCheckTimer=setTimeout(checkSoloBombAnswer,delay)}
 async function checkSoloBombAnswer(){
@@ -395,8 +418,7 @@ function renderGame(){
  h+='</div>';host.innerHTML=h;
  if(g.mode==='BOMB'&&g.status==='PLAYING'){
   const el=$('bombAnswer');if(el){el.value=existingBombAnswer;prepareGameInput(el);}
-  for(const bomb of $('bombArena').querySelectorAll('.bomb-falling'))bomb.style.transition='none';
-  animateBombs();requestAnimationFrame(()=>{for(const bomb of $('bombArena')?.querySelectorAll('.bomb-falling')||[])bomb.style.transition='';});
+  animateBombs();
   if(oldFocus==='bombAnswer'&&el&&!mobileGameKeyboard())el.focus({preventScroll:true});
  }
  if(g.mode==='CAR'&&g.status==='PLAYING'){
@@ -407,12 +429,30 @@ function renderGame(){
 function animateBombs(arena=$('bombArena')){
  if(!arena)return;
  const now=Date.now()+localTimeOffset;
- for(const b of arena.querySelectorAll('.bomb-falling')){
-  const spawn=Number(b.dataset.bombSpawn),deadline=Number(b.dataset.bombDeadline);
-  const pct=Math.max(0,Math.min(1,(now-spawn)/Math.max(1,deadline-spawn)));
-  const floor=Math.max(0,arena.clientHeight-b.offsetHeight-12);
-  b.style.transform=`translate(-50%,${Math.round(42+pct*Math.max(0,floor-42))}px)`;
-  const small=b.querySelector('small');if(small)small.textContent=Math.max(0,Math.ceil((deadline-now)/1000))+'s';
+ const reduced=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ for(const bomb of arena.querySelectorAll('.bomb-falling')){
+  const spawn=Number(bomb.dataset.bombSpawn),deadline=Number(bomb.dataset.bombDeadline);
+  const duration=Math.max(1,deadline-spawn),elapsed=Math.max(0,Math.min(duration,now-spawn));
+  const floor=Math.max(42,arena.clientHeight-bomb.offsetHeight-12);
+  const key=`${spawn}:${deadline}:${floor}`;
+  const small=bomb.querySelector('small');if(small)small.textContent=Math.max(0,Math.ceil((deadline-now)/1000))+'s';
+  // Fallback deliberately follows real time; no cumulative per-poll motion.
+  if(reduced||typeof bomb.animate!=='function'){
+   bomb._fallMotion?.cancel();bomb._fallMotion=null;bomb._fallKey=null;
+   bomb.style.transition='none';
+   bomb.style.transform=`translate(-50%,${Math.round(42+(floor-42)*elapsed/duration)}px)`;
+   continue;
+  }
+  if(bomb._fallKey!==key||!bomb._fallMotion){
+   bomb._fallMotion?.cancel();
+   bomb.style.transition='none';
+   const animation=bomb.animate([
+    {transform:'translate(-50%,42px)'},
+    {transform:`translate(-50%,${floor}px)`}
+   ],{duration,easing:'linear',fill:'both'});
+   animation.currentTime=elapsed;
+   bomb._fallMotion=animation;bomb._fallKey=key;
+  }
  }
 }
 function updateCountdowns(){
