@@ -14,7 +14,7 @@ test('CAR uses server-reported lanes, CEFR tiers, correct CSS/keyboard and 360px
  assert.match(app,/function renderSoloCarGame/);
  assert.match(app,/car-auto-lane/);assert.match(app,/car-stage solo-car-stage/);
  assert.doesNotMatch(app,/data-solo-car-lane=/);
- assert.match(app,/compactKeyboard\('soloCarAnswer',true\)/);
+ assert.doesNotMatch(app,/compactKeyboard\('soloCarAnswer',true\)/);
  assert.match(app,/queueCarAutoCheck\('solo'/);
  assert.match(app,/submitSoloAnswer\(\{auto:true,answer:typed\}\)/);
  assert.match(css,/@media\(max-width:760px\)/);

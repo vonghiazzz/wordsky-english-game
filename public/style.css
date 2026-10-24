@@ -278,3 +278,8 @@ body:has(#liveGame.game-expanded){overflow:hidden}
 .admin-page-bar .form-actions{align-items:center;}
 .admin-page-bar button:disabled{opacity:.42;cursor:not-allowed;}
 @media(max-width:730px){.round-line > .round-remove-row{justify-content:stretch;}.round-line > .round-remove-row .btn{width:100%;}.admin-page-bar{align-items:stretch;}.admin-page-bar .form-actions button{flex:1;}}
+
+/* Unified fast input: native OS keyboard on touch devices, hardware keyboard on desktop. */
+.game-keyboard{display:none!important}
+#liveGame .bomb-answer-form input,#liveGame .car-answer-form input,#soloBombGamePane .bomb-answer-form input,#soloCarGamePane .car-answer-form input{font-size:16px;min-height:48px;touch-action:auto;caret-color:auto}
+@media(pointer:coarse) and (max-width:760px){#liveGame .bomb-arena,#soloBombGamePane .solo-bomb-arena{height:clamp(170px,32dvh,270px);min-height:170px}#liveGame .game-shell,#soloBombGamePane .game-shell,#soloCarGamePane .game-shell{scroll-margin-bottom:24px}}
