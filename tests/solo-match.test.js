@@ -29,7 +29,7 @@ const resetHarness=(ids=[runId])=>{enabled=true;rateCount=0;stored=null;runs=new
 pg.Pool.prototype.connect=async function(){
  return {async query(text,params=[]){
   log.push(text);
-  if(text.includes("SELECT enabled FROM ws_features WHERE feature_key='MATCH'"))return {rows:[{enabled}]};
+  if(text.startsWith('SELECT enabled FROM ws_features WHERE feature_key='))return {rows:[{enabled}]};
   if(text.startsWith('SELECT t.id,t.title,t.enabled,'))return {rows:[{id:topicId,title:'School',enabled:true,word_count:12,approved_a2:12,approved_bonus:0,approved_double:0}]};
   if(text.startsWith('SELECT id,title,enabled FROM ws_topics'))return {rows:[{id:topicId,title:'School',enabled:true}]};
   if(text.startsWith('SELECT id,topic_id,english,meaning'))return {rows:words};
@@ -38,7 +38,7 @@ pg.Pool.prototype.connect=async function(){
   if(text.startsWith('SELECT id,english,meaning FROM ('))return {rows:words};
   if(text.startsWith('INSERT INTO ws_solo_runs')){
    const id=insertIds.shift()||runId;
-   const record={id,user_id:params[0],access_token_hash:params[1],client_fingerprint_hash:params[2],mode:'MATCH',topic_id:params[3],difficulty:params[4],duration_seconds:params[5],question_count:params[6],points_per_correct:params[7],penalty:params[8],state:JSON.parse(params[14])};
+   const record={id,user_id:params[0],access_token_hash:params[1],client_fingerprint_hash:params[2],mode:params[3],topic_id:params[4],difficulty:params[5],duration_seconds:params[6],question_count:params[7],points_per_correct:params[8],penalty:params[9],state:JSON.parse(params[15])};
    runs.set(id,record);stored=record;return {rows:[{id}]};
   }
   if(text.startsWith('SELECT id,user_id,access_token_hash')){const record=runs.get(params[0]);return {rows:record?[structuredClone(record)]:[]};}

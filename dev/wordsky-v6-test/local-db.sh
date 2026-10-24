@@ -28,6 +28,8 @@ setup(){
  dc exec -T db psql -X -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test < db/migrations/20261022_gameplay_round_settings.sql >/dev/null
  echo 'Applying MATCH Solo migration to LOCAL test DB...'
  dc exec -T db psql -X -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test < db/migrations/20261023_220000_match_solo.sql >/dev/null
+ echo 'Applying BOMB Solo migration to LOCAL test DB...'
+ dc exec -T db psql -X -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test < db/migrations/20261024_100000_bomb_solo.sql >/dev/null
  echo 'Seeding original 26 topics and 260 words to LOCAL test DB...'
  DATABASE_URL="$LOCAL_URL" node scripts/seed.js
  echo 'LOCAL DB initialized. Draft CEFR records remain PROVISIONAL, no approvals.'

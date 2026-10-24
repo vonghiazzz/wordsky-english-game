@@ -82,6 +82,24 @@ try{
  const secondSolo=await request('/api/solo/match/start',{method:'POST',body:{topic_id:school.id,difficulty:'EASY',question_count:3,duration_seconds:60},cookie:solo.cookie});
  assert.equal(secondSolo.status,201,JSON.stringify(secondSolo.json));createdSoloIds.push(secondSolo.json.runId);
  assert.equal((await request('/api/solo/runs/'+solo.json.runId,{cookie:secondSolo.cookie})).status,200,'new run cookie must still own the old run');
+ const bombSolo=await request('/api/solo/bomb/start',{method:'POST',body:{topic_id:school.id,difficulty:'EASY',question_count:3,duration_seconds:60},cookie:secondSolo.cookie});
+ assert.equal(bombSolo.status,201,JSON.stringify(bombSolo.json));createdSoloIds.push(bombSolo.json.runId);
+ assert.equal(bombSolo.json.game.mode,'BOMB');assert.equal(bombSolo.json.game.bombs.length,2);
+ assert.ok(bombSolo.json.game.bombs.every(b=>!('english' in b)),'BOMB Solo must hide English answers');
+ const bombSecret=await db.query('SELECT mode,state FROM ws_solo_runs WHERE id=$1',[bombSolo.json.runId]);
+ assert.equal(bombSecret.rows[0].mode,'BOMB');const bombWord=bombSecret.rows[0].state.bombs[0].english;
+ const bombAttempt={method:'POST',body:{attemptId:crypto.randomUUID(),answer:bombWord,auto:true},cookie:bombSolo.cookie};
+ const [bombAnswer,bombRetry]=await Promise.all([
+  request(`/api/solo/runs/${bombSolo.json.runId}/answer`,bombAttempt),
+  request(`/api/solo/runs/${bombSolo.json.runId}/answer`,bombAttempt),
+ ]);
+ assert.equal(bombAnswer.status,200,JSON.stringify(bombAnswer.json));assert.equal(bombRetry.status,200,JSON.stringify(bombRetry.json));
+ assert.equal(bombAnswer.json.game.score,100);assert.equal(bombRetry.json.game.score,100);
+ assert.equal(bombAnswer.json.game.correct,1);assert.equal(bombRetry.json.game.correct,1);
+ assert.equal([bombAnswer.json.duplicate,bombRetry.json.duplicate].filter(Boolean).length,1,'row lock + receipt must apply one BOMB answer');
+ assert.equal((await request('/api/solo/runs/'+solo.json.runId,{cookie:bombSolo.cookie})).status,200,'BOMB start must preserve ownership of an older MATCH run');
+ const constraints=await db.query(`SELECT pg_get_constraintdef(oid) definition FROM pg_constraint WHERE conrelid='ws_solo_runs'::regclass AND conname='ws_solo_runs_mode_check'`);
+ assert.match(constraints.rows[0].definition,/MATCH/);assert.match(constraints.rows[0].definition,/BOMB/);
  const auth=await request('/api/auth/login',{method:'POST',body:{username:'owner',password}});
  assert.equal(auth.status,200,JSON.stringify(auth.json));
  const adminCookie=auth.cookie;assert.ok(adminCookie?.startsWith('ws_auth='));
@@ -119,7 +137,7 @@ try{
  assert.equal(wrong.status,200,JSON.stringify(wrong.json));assert.equal(wrong.json.game.index,0);assert.equal(wrong.json.result.wordCorrect,false);
  const good=await request(`/api/rooms/${code}/runs/${run.json.runId}/answer`,{method:'POST',body:{lane:activeLane,answer:translated.rows[0].english},cookie:guestCookie});
  assert.equal(good.status,200,JSON.stringify(good.json));assert.equal(good.json.result.correct,true);assert.equal(good.json.game.index,1);assert.equal(good.json.result.awarded,200);
- console.log(`LOCAL E2E PASS: MATCH Solo guest/start/secure-answer, 26 topics, ${counts.rows[0].words} words, ${counts.rows[0].approved} local approvals (12 required fixture records), no 27th topic, server login/admin room/join/start, C1/C2 x2 lane +200, wrong answer blocked.`);
+ console.log(`LOCAL E2E PASS: MATCH + BOMB Solo guest/start/ownership/hidden-answer/concurrent-idempotency, 26 topics, ${counts.rows[0].words} words, ${counts.rows[0].approved} local approvals (12 required fixture records), no 27th topic, server login/admin room/join/start, C1/C2 x2 lane +200, wrong answer blocked.`);
 }catch(e){console.error('LOCAL E2E FAILED',e);process.exitCode=1}
 finally{
  try{if(createdId)await db.query('DELETE FROM ws_events WHERE id=$1',[createdId]);for(const id of createdSoloIds)await db.query('DELETE FROM ws_solo_runs WHERE id=$1',[id])}catch(e){console.warn('Local fixture cleanup failed:',e.message)}
