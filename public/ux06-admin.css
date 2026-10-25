@@ -1,0 +1,38 @@
+/* WordSky UX-06: authenticated Admin workspace. Scoped to Admin only. */
+#screen-admin .ws06-page-title{padding:clamp(27px,5vw,55px) 0 23px}
+#screen-admin .ws06-page-title .mini{display:inline-flex;align-items:center;border:1px solid #446e83;background:#152b42;border-radius:99px;padding:7px 11px;color:#9ef2d0;letter-spacing:1.5px}
+#screen-admin .ws06-page-title h1{font-size:clamp(31px,4.3vw,52px);line-height:1.14;letter-spacing:-1.6px;margin:14px 0 10px}
+#screen-admin .ws06-page-title p{font-size:14px;max-width:650px;line-height:1.7}
+#screen-admin .ws06-overview{margin:1px 0 23px}
+#screen-admin .ws06-overview-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:0 0 19px}
+#screen-admin .ws06-overview-heading h2{font-size:clamp(21px,2.8vw,29px);letter-spacing:-.6px;margin:0 0 7px;line-height:1.2}
+#screen-admin .ws06-overview-heading p{font-size:13px;line-height:1.6;color:#adbfdb;margin:0;max-width:560px}
+#screen-admin .ws06-private-label{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:99px;border:1px solid #427962;background:#193c35;color:#b9f8d4;font-weight:850;font-size:11px}
+#screen-admin .ws06-quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+#screen-admin .ws06-quick{display:flex;flex-direction:column;align-items:flex-start;min-width:0;min-height:201px;gap:9px;padding:20px;border-radius:20px;text-align:left;border:1px solid #465b7b;background:linear-gradient(132deg,#21365b,#17223c);color:#f6f8ff;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+#screen-admin .ws06-quick[data-ws06-open="vocab"]{background:linear-gradient(132deg,#2b3059,#18223d)}
+#screen-admin .ws06-quick[data-ws06-open="features"]{background:linear-gradient(132deg,#1b444b,#17273d)}
+#screen-admin .ws06-quick:hover{border-color:#9eafff;transform:translateY(-2px);box-shadow:0 12px 30px #060c1a66}
+#screen-admin .ws06-quick:focus-visible,#screen-admin .ws06-review:focus-visible{outline:3px solid #d1d6ff;outline-offset:3px}
+#screen-admin .ws06-quick.is-current{border-color:#a6a4fb;box-shadow:inset 0 0 0 1px #a6a4fb66}
+#screen-admin .ws06-quick-icon{display:grid;place-items:center;width:47px;height:47px;border-radius:14px;border:1px solid #ffffff29;background:#ffffff12;font-size:24px}
+#screen-admin .ws06-quick strong{font-weight:900;font-size:19px;line-height:1.25}
+#screen-admin .ws06-quick-desc{font-size:12px;line-height:1.65;color:#b9cce6;flex:1}
+#screen-admin .ws06-quick-link{font-size:12px;font-weight:850;color:#cbf9e7}
+#screen-admin .ws06-workflow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin:17px 0 8px;padding:16px 18px;border:1px solid #395776;border-radius:16px;background:#15233b}
+#screen-admin .ws06-workflow strong{display:block;font-size:14px;color:#f1f5ff;margin-bottom:5px}
+#screen-admin .ws06-workflow p{margin:0;color:#b0c4e3;font-size:12px;line-height:1.6;max-width:650px}
+#screen-admin .ws06-review{display:inline-flex;align-items:center;justify-content:center;border:1px solid #6f82a6;color:#eff6ff;background:#27365b;border-radius:11px;min-height:44px;padding:10px 14px;font-weight:850;font-size:12px;white-space:normal}
+#screen-admin #adminContent>.panel-tabs{display:flex;gap:9px;overflow-x:auto;max-width:100%;padding:11px 2px 13px;margin:0 0 18px;scrollbar-width:thin;scroll-margin-top:95px}
+#screen-admin #adminContent>.panel-tabs button{flex:0 0 auto;min-height:44px;white-space:nowrap}
+#screen-admin #adminContent>.panel-tabs button.on{box-shadow:0 5px 20px #626ce240}
+#screen-admin .admin-panel .dashboard-card,#screen-admin .admin-panel .room-card{min-width:0;max-width:100%}
+#screen-admin .admin-panel .dashboard-card h2{line-height:1.35}
+#screen-admin .admin-panel label{min-width:0}
+#screen-admin .admin-panel .form-actions{max-width:100%}
+#screen-admin .admin-panel .form-actions>.btn{min-height:40px}
+#screen-admin .admin-panel input,#screen-admin .admin-panel select{max-width:100%;min-width:0}
+@media(max-width:860px){#screen-admin .ws06-quick{min-height:216px;padding:16px}}
+@media(max-width:700px){#screen-admin .ws06-quick-grid{grid-template-columns:1fr;gap:10px}#screen-admin .ws06-quick{min-height:0;gap:6px;padding:16px}#screen-admin .ws06-quick-desc{flex:initial}#screen-admin .ws06-workflow{align-items:stretch;flex-direction:column}#screen-admin .ws06-review{width:100%}#screen-admin .admin-panel .form-grid{grid-template-columns:minmax(0,1fr)}#screen-admin .admin-panel .form-grid .span2{grid-column:1}}
+@media(max-width:390px){#screen-admin .ws06-page-title{padding-top:21px}#screen-admin .ws06-private-label{font-size:10px}#screen-admin .ws06-quick strong{font-size:17px}#screen-admin #adminContent>.panel-tabs{gap:6px}}
+@media(prefers-reduced-motion:reduce){#screen-admin .ws06-quick{transition:none}#screen-admin .ws06-quick:hover{transform:none}}
