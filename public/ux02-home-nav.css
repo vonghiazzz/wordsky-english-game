@@ -1,0 +1,60 @@
+/* WordSky UX-02 | Home + navigational IA only.
+ * Deliberately avoids gameplay animation, falling objects and input internals.
+ * Loaded after shared Design System UX-01 on both Arena and Learn.
+ */
+#wsSharedNav .ws-nav-progress.is-open .ws-nav-chevron{transform:rotate(180deg)}
+#wsSharedNav .ws-nav-progress-toggle.is-active{background:rgba(170,168,255,.14);color:#f5f7ff!important}
+#wsSharedNav .ws-nav-progress-list{min-width:200px}
+#wsSharedNav .ws-nav-link[aria-current="page"],
+#wsSharedNav .ws-nav-games-toggle.is-active{box-shadow:inset 0 -2px var(--ws-color-accent,#aaa8ff)}
+#wsSharedNav .ws-nav-games-list a{white-space:normal;line-height:1.35}
+#wsSharedNav .ws-nav-progress-list[hidden]{display:none!important}
+
+/* The Home scope uses ws02- names to avoid overriding MATCH, BOMB and CAR. */
+#screen-home .ws02-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(230px,.85fr);align-items:center;gap:clamp(16px,3vw,38px);padding:clamp(26px,5vw,52px);margin:24px 0 30px;min-height:310px;border:1px solid #747de799;background:radial-gradient(ellipse at 91% 10%,#bbabff55,transparent 45%),linear-gradient(115deg,#4049a4,#243365 88%);border-radius:26px;overflow:hidden;box-shadow:0 24px 65px #14183e55}
+#screen-home .ws02-hero::before{content:'✦';position:absolute;right:13%;top:-36px;color:#ffffff12;font-size:180px;line-height:1;pointer-events:none;z-index:-1}
+#screen-home .ws02-hero-copy{min-width:0}
+#screen-home .ws02-eyebrow{display:inline-block;color:#d9fbee;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:17px}
+#screen-home .ws02-hero h1{font-size:clamp(32px,4.1vw,55px);letter-spacing:-.04em;line-height:1.08;margin:0 0 17px;max-width:750px}
+#screen-home .ws02-hero h1 em{font-style:normal;color:#bffbe4}
+#screen-home .ws02-hero-copy p{color:#edf1ff;line-height:1.7;font-size:clamp(13px,1.3vw,16px);max-width:540px;margin:0}
+#screen-home .ws02-hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0 16px}
+#screen-home .ws02-hero-actions .btn{min-height:44px;font-size:14px;max-width:100%}
+#screen-home .ws02-hero-actions .btn.primary{background:#d0fff0;border-color:#d0fff0;color:#12263b;box-shadow:0 8px 20px #0a183344}
+#screen-home .ws02-hero-actions .btn.ghost{color:#fff;background:#ffffff15;border-color:#cdd9ff77}
+#screen-home .ws02-helper{font-size:12px;color:#e0e6ff;display:flex;gap:8px;align-items:flex-start}
+#screen-home .ws02-helper::before{content:'✓';font-weight:900;color:#c8ffeb}
+#screen-home .ws02-hero-art{display:flex;align-items:center;justify-content:center;position:relative;min-width:0;min-height:220px}
+#screen-home .ws02-orbit{width:min(100%,250px);aspect-ratio:1;border:1px solid #d4d5ff55;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#a8a7ff38 12%,transparent 65%);box-shadow:0 0 0 25px #ffffff08,0 0 0 51px #ffffff06}
+#screen-home .ws02-orbit span{font-size:100px;line-height:1;filter:drop-shadow(0 20px 30px #151b3c55)}
+#screen-home .ws02-orbit-label{position:absolute;bottom:10px;right:0;background:#19274ccb;border:1px solid #afbcff88;border-radius:999px;padding:9px 13px;font-size:12px;font-weight:800;color:#e9efff}
+#screen-home .ws02-journeys{margin:18px 0 35px}
+#screen-home .ws02-section-heading{display:flex;flex-direction:column;gap:7px;margin-bottom:17px}
+#screen-home .ws02-section-heading .ws02-eyebrow{margin:0;color:var(--ws-color-mint,#75e3c0)}
+#screen-home .ws02-section-heading h2{font-size:clamp(22px,3vw,30px);margin:0;letter-spacing:-.025em}
+#screen-home .ws02-section-heading p{font-size:14px;color:var(--ws-color-muted,#aebbd4);line-height:1.6;margin:0}
+#screen-home .ws02-journey-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+#screen-home .ws02-journey{appearance:none;font:inherit;text-align:left;color:var(--ws-color-text,#f5f7ff);text-decoration:none;display:flex;align-items:flex-start;flex-direction:column;gap:10px;min-width:0;min-height:192px;padding:22px;border:1px solid var(--ws-color-border,#394967);border-radius:20px;background:linear-gradient(145deg,#202d4a,#141e32);transition:border-color .18s,transform .18s,box-shadow .18s;cursor:pointer}
+#screen-home .ws02-journey:hover{border-color:#aba6ff;transform:translateY(-2px);box-shadow:0 12px 28px #070b2299}
+#screen-home .ws02-journey:focus-visible{outline:3px solid var(--ws-color-focus,#c0c4ff);outline-offset:3px}
+#screen-home .ws02-journey-icon{display:grid;place-items:center;font-size:23px;width:45px;height:45px;border-radius:13px;background:#8d8cff20}
+#screen-home .ws02-journey strong{font-size:19px;font-weight:850}
+#screen-home .ws02-journey span.ws02-description{font-size:13px;line-height:1.55;color:#b7c6df;flex:1}
+#screen-home .ws02-journey small{font-size:12px;color:#b6f3df;font-weight:850}
+@media(max-width:880px){#screen-home .ws02-hero{grid-template-columns:1fr 190px;padding:30px;min-height:260px}#screen-home .ws02-orbit span{font-size:70px}#screen-home .ws02-hero-art{min-height:190px}#screen-home .ws02-journey-grid{gap:10px}#screen-home .ws02-journey{padding:17px}}
+@media(max-width:680px){#screen-home .ws02-hero{grid-template-columns:1fr;margin:12px 0 25px;padding:25px 20px 20px;min-height:0}#screen-home .ws02-hero-art{display:none}#screen-home .ws02-hero h1{font-size:clamp(31px,8.4vw,42px)}#screen-home .ws02-journey-grid{grid-template-columns:1fr}#screen-home .ws02-journey{min-height:0;padding:15px;display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;column-gap:13px;row-gap:4px}#screen-home .ws02-journey-icon{grid-row:1/3}#screen-home .ws02-journey strong{font-size:17px}#screen-home .ws02-journey .ws02-description{grid-column:2;grid-row:2}#screen-home .ws02-journey small{grid-column:3;grid-row:1/3;white-space:nowrap}#wsSharedNav .ws-nav-progress{width:100%}#wsSharedNav .ws-nav-progress-list{width:100%;min-width:0}}
+@media(max-width:390px){#screen-home .ws02-hero{padding:22px 16px}#screen-home .ws02-hero-actions{flex-direction:column;align-items:stretch}#screen-home .ws02-hero-actions .btn{width:100%}#screen-home .ws02-journey{grid-template-columns:40px minmax(0,1fr);gap:5px 11px}#screen-home .ws02-journey small{grid-column:2;grid-row:3}#screen-home .ws02-journey-icon{grid-row:1/4;width:40px;height:40px}}
+@media(prefers-reduced-motion:reduce){#screen-home .ws02-journey{transition:none}#screen-home .ws02-journey:hover{transform:none}}
+
+/* Compact bottom navigation only outside active game and room screens. */
+#wsSharedNav .ws-mobile-dock{display:none}
+@media(max-width:680px){
+ body.ws-mobile-dock-visible{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+ #wsSharedNav:not(.ws-dock-hidden) .ws-mobile-dock{position:fixed;left:0;right:0;bottom:0;z-index:79;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:6px max(7px,env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-right));background:#101a30f5;border-top:1px solid #4d5d7a;box-shadow:0 -12px 28px #050a19aa;backdrop-filter:blur(16px)}
+ #wsSharedNav .ws-mobile-dock a{min-height:54px;min-width:0;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;text-decoration:none;color:#b3c2dc;font-size:20px;border-radius:12px;padding:4px 2px}
+ #wsSharedNav .ws-mobile-dock a small{font-size:10px;line-height:1.2;font-weight:750;white-space:nowrap}
+ #wsSharedNav .ws-mobile-dock a.is-active{color:#c6fff0;background:#293456}
+ #wsSharedNav .ws-mobile-dock a:focus-visible{outline:3px solid #b4b6ff;outline-offset:-3px}
+ #wsSharedNav.ws-dock-hidden .ws-mobile-dock{display:none!important}
+}
+@media(max-width:355px){#wsSharedNav .ws-mobile-dock a small{font-size:9px}}

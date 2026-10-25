@@ -72,8 +72,10 @@ test('game links are grouped under one disclosure without changing routes',()=>{
  assert.match(nav,/data-ws-games-group/);
  assert.match(nav,/data-ws-games-toggle aria-expanded="false" aria-controls="wsNavGamesList"/);
  assert.match(nav,/ws-nav-games-list" id="wsNavGamesList" hidden/);
- assert.match(nav,/item\.key==='game'\?gamesMarkup:gameKeys\.has\(item\.key\)\?'':navLink\(item\)/);
- assert.match(nav,/gamesToggle\.classList\.toggle\('is-active',gameKeys\.has\(active\)\)/);
+ assert.match(nav,/const navMarkup=\[/);
+ assert.match(nav,/navLink\(menuItems\.find\(item=>item\.key==='rooms'\)\)/);
+ assert.match(nav,/data-ws-progress-toggle aria-expanded="false" aria-controls="wsNavProgressList"/);
+ assert.match(nav,/gamesToggle\.classList\.toggle\('is-active',gameKeys\.has\(active\)&&active!=='rooms'\)/);
  assert.match(nav,/setGamesOpen\(false\)/);
  assert.match(nav,/gamesList\.querySelectorAll\('a'\)/);
  assert.match(style,/\.ws-nav-games-list\[hidden\]/);
