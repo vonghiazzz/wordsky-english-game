@@ -1,0 +1,44 @@
+/* WordSky UX-03 — Game Library & Solo setup preview. Presentation only. */
+#screen-home .ws03-library{margin:10px 0 46px;scroll-margin-top:105px}
+#screen-home .ws03-library-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:20px;margin:0 0 22px}
+#screen-home .ws03-kicker{display:inline-block;color:var(--ws-color-mint,#75e3c0);font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+#screen-home .ws03-library-head h2{font-size:clamp(25px,3vw,38px);line-height:1.13;letter-spacing:-1px;margin:0 0 10px;max-width:600px}
+#screen-home .ws03-library-head p{font-size:14px;line-height:1.65;color:var(--ws-color-muted,#aebbd4);margin:0;max-width:590px}
+#screen-home .ws03-library-note{display:flex;align-items:center;gap:9px;min-height:40px;padding:9px 13px;border:1px solid #52648a;border-radius:99px;background:#1a2c44;color:#e5edff;font-size:12px;font-weight:750;white-space:normal}
+#screen-home .ws03-game-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+#screen-home .ws03-game{position:relative;isolation:isolate;display:flex;flex-direction:column;min-width:0;min-height:276px;padding:24px;overflow:hidden;border-radius:23px;border:1px solid #495d83;background:linear-gradient(128deg,#27385a,#141e36);box-shadow:0 14px 38px #03081930;color:#f2f6ff;text-decoration:none;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+#screen-home .ws03-game::before{content:"";position:absolute;inset:0 0 auto 60%;height:200px;border-radius:50%;filter:blur(35px);background:var(--ws03-glow,#586bd1);opacity:.18;z-index:-1;pointer-events:none}
+#screen-home .ws03-game--match{--ws03-glow:#728ffd}
+#screen-home .ws03-game--bomb{--ws03-glow:#ff90b6;background:linear-gradient(135deg,#3c2747,#171f38)}
+#screen-home .ws03-game--car{--ws03-glow:#71edc1;background:linear-gradient(135deg,#1c454b,#142438)}
+#screen-home .ws03-game--fall{--ws03-glow:#ffd886;background:linear-gradient(135deg,#463b54,#22213d)}
+#screen-home .ws03-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:17px}
+#screen-home .ws03-glyph{display:grid;place-items:center;width:65px;height:65px;border:1px solid #ffffff3b;border-radius:19px;background:#ffffff15;font-size:35px;line-height:1}
+#screen-home .ws03-level{color:#e3ecff;background:#ffffff16;border:1px solid #ffffff25;border-radius:99px;padding:8px 11px;text-align:right;font-size:11px;font-weight:850}
+#screen-home .ws03-kind{color:#c7d5ef;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;font-weight:900;margin-bottom:8px}
+#screen-home .ws03-game h3{font-size:clamp(21px,2vw,27px);line-height:1.15;margin:0 0 8px;color:#fff}
+#screen-home .ws03-game p{font-size:13px;line-height:1.68;color:#cbd8f1;margin:0 0 16px;max-width:440px;flex:1}
+#screen-home .ws03-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #ffffff27;padding-top:14px;font-weight:850;font-size:13px;color:#ebf4ff}
+#screen-home .ws03-card-footer small{font-size:11px;color:#b7c7e3;font-weight:700}
+#screen-home .ws03-game:hover{transform:translateY(-3px);border-color:#a9b7ff;box-shadow:0 18px 48px #03081970}
+#screen-home .ws03-game:focus-visible{outline:3px solid #d2d1ff;outline-offset:4px}
+#screen-home .ws03-library-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:20px;padding:16px 18px;border:1px solid #3c5071;border-radius:16px;background:#17233c}
+#screen-home .ws03-library-foot p{color:#b7c9e5;font-size:13px;line-height:1.55;margin:0}
+#screen-home .ws03-library-foot .btn{flex-shrink:0;min-height:44px}
+#screen-solo .ws03-intro,#screen-solo-bomb .ws03-intro,#screen-solo-car .ws03-intro{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 21px;margin:0 0 19px;border:1px solid #43587b;border-radius:17px;background:linear-gradient(120deg,#1d3051,#19233b)}
+#screen-solo .ws03-intro h2,#screen-solo-bomb .ws03-intro h2,#screen-solo-car .ws03-intro h2{font-size:20px;line-height:1.25;margin:0 0 6px;color:#f6f8ff}
+#screen-solo .ws03-intro p,#screen-solo-bomb .ws03-intro p,#screen-solo-car .ws03-intro p{margin:0;color:#c1d2ed;font-size:13px;line-height:1.65}
+#screen-solo .ws03-intro .btn,#screen-solo-bomb .ws03-intro .btn,#screen-solo-car .ws03-intro .btn{min-height:44px;flex-shrink:0}
+#screen-solo .solo-setup,#screen-solo-bomb .solo-setup,#screen-solo-car .solo-setup{border-color:#455879;box-shadow:0 10px 36px #00000033}
+#screen-solo .solo-setup .form-grid,#screen-solo-bomb .solo-setup .form-grid,#screen-solo-car .solo-setup .form-grid{gap:16px}
+#screen-solo .solo-setup label,#screen-solo-bomb .solo-setup label,#screen-solo-car .solo-setup label{font-size:13px;color:#d4e1f6}
+#screen-solo .solo-setup select,#screen-solo-bomb .solo-setup select,#screen-solo-car .solo-setup select,#screen-solo .solo-setup input,#screen-solo-bomb .solo-setup input,#screen-solo-car .solo-setup input{min-height:46px}
+#screen-solo .solo-setup [type=submit],#screen-solo-bomb .solo-setup [type=submit],#screen-solo-car .solo-setup [type=submit]{min-height:50px;font-size:14px}
+.ws03-setup-preview{display:flex;flex-direction:column;gap:6px;margin:18px 0 10px;border:1px solid #5f699a;border-radius:15px;padding:14px 17px;background:#272d51;color:#eaf0ff;line-height:1.5}
+.ws03-setup-preview strong{font-size:13px;color:#fff}
+.ws03-setup-preview span{font-size:13px;overflow-wrap:anywhere}
+.ws03-setup-preview small{color:#c7d4eb;font-size:11px}
+@media(max-width:800px){#screen-home .ws03-library-head{align-items:flex-start}#screen-home .ws03-game-grid{gap:12px}#screen-home .ws03-game{padding:18px;min-height:270px}}
+@media(max-width:620px){#screen-home .ws03-game-grid{grid-template-columns:1fr}#screen-home .ws03-game{min-height:230px}#screen-home .ws03-library-foot{flex-direction:column;align-items:stretch}#screen-home .ws03-library-foot .btn{width:100%}#screen-solo .ws03-intro,#screen-solo-bomb .ws03-intro,#screen-solo-car .ws03-intro{align-items:stretch;flex-direction:column;padding:15px}#screen-solo .ws03-intro .btn,#screen-solo-bomb .ws03-intro .btn,#screen-solo-car .ws03-intro .btn{align-self:flex-start}}
+@media(max-width:390px){#screen-home .ws03-game{padding:16px}#screen-home .ws03-glyph{width:55px;height:55px;font-size:29px}#screen-home .ws03-library-head h2{font-size:27px}#screen-home .ws03-level{font-size:10px}}
+@media(prefers-reduced-motion:reduce){#screen-home .ws03-game{transition:none}#screen-home .ws03-game:hover{transform:none}}
