@@ -1,0 +1,235 @@
+/* WordSky UX-01 | Shared Design System v1
+ * Presentation-only layer shared by Arena and Learn.
+ * Deliberately does NOT style BOMB tracks, CAR lanes, falling words,
+ * game animations, timers, input behavior, or backend-owned state.
+ * Load after style.css / shared-nav.css (Arena) or inline Learn styles.
+ */
+:root {
+  color-scheme: dark;
+  --ws-color-bg: #0c1123;
+  --ws-color-surface: #171f35;
+  --ws-color-surface-raised: #1d2942;
+  --ws-color-border: #394967;
+  --ws-color-text: #f5f7ff;
+  --ws-color-muted: #aebbd4;
+  --ws-color-accent: #aaa8ff;
+  --ws-color-mint: #75e3c0;
+  --ws-color-gold: #ffe09f;
+  --ws-color-danger: #ffa4ad;
+  --ws-color-focus: #c0c4ff;
+  --ws-color-on-accent: #11172c;
+  --ws-shadow-card: 0 14px 42px rgba(3, 7, 25, .26);
+  --ws-shadow-popover: 0 20px 48px rgba(3, 7, 25, .54);
+  --ws-radius-sm: 10px;
+  --ws-radius-control: 12px;
+  --ws-radius-card: 22px;
+  --ws-motion-fast: 160ms;
+  --ws-space-1: 4px;
+  --ws-space-2: 8px;
+  --ws-space-3: 12px;
+  --ws-space-4: 16px;
+  --ws-space-5: 20px;
+  --ws-space-6: 24px;
+  --ws-space-8: 32px;
+}
+
+/* Common page language. Never impose a fixed viewport or min-width. */
+body {
+  background: radial-gradient(ellipse 650px 460px at 96% -10%, rgba(88, 91, 165, .22), transparent 80%),
+              radial-gradient(ellipse 600px 420px at -22% 30%, rgba(35, 78, 111, .16), transparent 80%),
+              var(--ws-color-bg);
+  color: var(--ws-color-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+:where(button, input, textarea, select) { font-family: inherit; }
+:where(button, input, textarea, select, a, [role="button"], [role="link"]):focus-visible {
+  outline: 3px solid var(--ws-color-focus);
+  outline-offset: 3px;
+}
+:where(button, [role="button"]):disabled, :where(button)[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* Native reusable primitives for upcoming UX PRs. */
+.ws-ui-card {
+  background: linear-gradient(150deg, var(--ws-color-surface-raised), var(--ws-color-surface));
+  border: 1px solid var(--ws-color-border);
+  border-radius: var(--ws-radius-card);
+  box-shadow: var(--ws-shadow-card);
+  min-width: 0;
+}
+.ws-ui-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--ws-space-2);
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: var(--ws-radius-control);
+  border: 1px solid var(--ws-color-border);
+  background: var(--ws-color-surface-raised);
+  color: var(--ws-color-text);
+  font-weight: 750;
+  text-decoration: none;
+  transition: background-color var(--ws-motion-fast), border-color var(--ws-motion-fast), box-shadow var(--ws-motion-fast);
+}
+.ws-ui-button--primary { background: var(--ws-color-accent); color: var(--ws-color-on-accent); border-color: transparent; }
+.ws-ui-button--danger { background: #462d3b; color: #ffd9de; border-color: #8b5f6b; }
+.ws-ui-field {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--ws-radius-control);
+  border: 1px solid #556783;
+  background: #1b2943;
+  color: var(--ws-color-text);
+  padding: 10px 13px;
+}
+.ws-ui-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--ws-color-border); border-radius: 999px; background: #25334c; color: #d6e0f3; font-size: 12px; font-weight: 750; }
+.ws-ui-muted { color: var(--ws-color-muted); }
+
+/* Consistent shared navigation, without changing its breakpoint or routing. */
+#wsSharedNav .ws-site-header {
+  background: rgba(14, 21, 39, .96);
+  border-bottom-color: rgba(171, 181, 230, .2);
+  box-shadow: 0 8px 32px rgba(4, 8, 25, .12);
+}
+#wsSharedNav .ws-logo-mark {
+  background: linear-gradient(135deg, #b6b1ff, #79e5c4);
+  color: #161c32;
+  border-radius: 13px;
+}
+#wsSharedNav .ws-logo-sky { color: var(--ws-color-accent); }
+#wsSharedNav .ws-nav-link:hover,
+#wsSharedNav .ws-nav-link.is-active,
+#wsSharedNav .ws-nav-games-toggle.is-active {
+  background: #2c3457;
+  color: #f7f8ff !important;
+}
+#wsSharedNav .ws-nav-games-list {
+  background: #17233d;
+  border-color: var(--ws-color-border);
+  box-shadow: var(--ws-shadow-popover);
+}
+#wsSharedNav :is(.ws-nav-link, .ws-nav-toggle, .ws-site-account, .ws-site-logo):focus-visible {
+  outline: 3px solid var(--ws-color-focus);
+  outline-offset: 3px;
+}
+
+/* Arena: skin existing controls; no event listeners or DOM changes. */
+.btn {
+  min-height: 44px;
+  border-radius: var(--ws-radius-control);
+  border-color: var(--ws-color-border);
+  background-color: #263551;
+  color: var(--ws-color-text);
+  transition: background-color var(--ws-motion-fast), border-color var(--ws-motion-fast), filter var(--ws-motion-fast);
+}
+.btn.primary { background: var(--ws-color-accent); color: var(--ws-color-on-accent); border-color: #b7b6ff; }
+.btn.ghost { background: #1d2b46; border-color: #4c5c79; }
+.btn.warn { background: #462d3b; border-color: #8b5f6b; color: #ffd9de; }
+.btn:focus-visible { outline: 3px solid var(--ws-color-focus); outline-offset: 3px; }
+
+#screen-home .hero {
+  position: relative;
+  padding: clamp(25px, 4.2vw, 52px);
+  border: 1px solid #6c74b3;
+  border-radius: 26px;
+  background: radial-gradient(circle at 90% 14%, rgba(202, 194, 255, .2), transparent 36%),
+              linear-gradient(120deg, #333e89 0%, #263564 65%, #202d55 100%);
+  box-shadow: 0 18px 62px rgba(24, 29, 92, .22);
+  overflow: hidden;
+}
+#screen-home .hero h1 { font-size: clamp(30px, 3.8vw, 52px); letter-spacing: -.045em; line-height: 1.13; }
+#screen-home .hero p { color: #e0e6ff; line-height: 1.65; }
+#screen-home .hero .eyebrow { color: #c6d6ff; }
+#screen-home .stats {
+  margin-top: 22px;
+  border-color: var(--ws-color-border);
+  border-radius: 18px;
+  background: #18243b;
+  box-shadow: var(--ws-shadow-card);
+}
+#screen-home .section-head h2 { letter-spacing: -.035em; }
+#screen-home .gamecard {
+  min-width: 0;
+  border-color: #4a5982;
+  border-radius: var(--ws-radius-card);
+  box-shadow: var(--ws-shadow-card);
+  transition: border-color var(--ws-motion-fast), box-shadow var(--ws-motion-fast), transform var(--ws-motion-fast);
+}
+#screen-home .gamecard-action:hover { border-color: #b5b0ff; box-shadow: 0 20px 52px rgba(4, 8, 29, .48); }
+#screen-home .gamecard-action:focus-visible { outline: 3px solid var(--ws-color-focus); outline-offset: 4px; }
+#screen-home .gamecard-foot { border-top-color: rgba(233, 239, 255, .2); }
+#screen-home .panel:not(.lightpanel) {
+  border-color: #4c5980;
+  border-radius: var(--ws-radius-card);
+  box-shadow: var(--ws-shadow-card);
+}
+/* The intentional pale promo card keeps its original dark typography. */
+#screen-home .lightpanel { border-radius: var(--ws-radius-card); box-shadow: var(--ws-shadow-card); }
+
+/* Arena page headers and non-game containers. */
+.screen .page-title { padding-top: clamp(28px, 4vw, 46px); }
+.screen .page-title h1 { letter-spacing: -.04em; }
+.screen .page-title p { color: var(--ws-color-muted); }
+.auth-panel, .dashboard-card, .room-card {
+  border-color: var(--ws-color-border);
+  border-radius: var(--ws-radius-card);
+  background: linear-gradient(155deg, #1c2943, #172139);
+  box-shadow: var(--ws-shadow-card);
+}
+.screen :is(.form-grid, .form-stack) label { color: #ced7ef; }
+/* Only configuration/admin form controls, not gameplay native inputs. */
+.screen :is(.form-grid, .form-stack) input:not([type="checkbox"]):not([type="radio"]),
+.screen :is(.form-grid, .form-stack) select,
+.screen :is(.form-grid, .form-stack) textarea {
+  border-color: #556783;
+  border-radius: var(--ws-radius-control);
+  background: #19283f;
+  color: var(--ws-color-text);
+}
+.screen :is(.form-grid, .form-stack) input:focus-visible,
+.screen :is(.form-grid, .form-stack) select:focus-visible,
+.screen :is(.form-grid, .form-stack) textarea:focus-visible { outline: 3px solid var(--ws-color-focus); outline-offset: 2px; }
+#screen-admin .panel-tabs button.on,
+#screen-admin .tabs-small button.on { background: var(--ws-color-accent); color: var(--ws-color-on-accent); border-color: #b7b6ff; }
+#screen-admin .panel-tabs button:focus-visible { outline: 3px solid var(--ws-color-focus); outline-offset: 3px; }
+
+/* Learn: shared visual language with Arena; not the game field or animations. */
+.tabs .tab { border-color: var(--ws-color-border); border-radius: var(--ws-radius-control); background: #1c2942; color: #d0daee; }
+.tabs .tab.active { background: var(--ws-color-accent); border-color: #b7b6ff; color: var(--ws-color-on-accent); }
+.tabs .tab:focus-visible { outline: 3px solid var(--ws-color-focus); outline-offset: 3px; }
+#flashPanel, #gamePanel, #managePanel {
+  border-color: var(--ws-color-border);
+  border-radius: var(--ws-radius-card);
+  background: linear-gradient(155deg, #1c2943, #152039);
+  box-shadow: var(--ws-shadow-card);
+}
+#flashPanel .face { border-radius: var(--ws-radius-card); border-color: #647aa7; }
+#flashPanel .face:not(.back) { background: linear-gradient(130deg, #344b89, #243766); }
+#flashPanel .face.back { background: linear-gradient(130deg, #245267, #1c3f52); }
+#flashPanel .statbox { border-color: var(--ws-color-border); border-radius: 18px; background: #18253c; }
+#flashPanel .primary, #gamePanel .primary, #managePanel .primary { background: var(--ws-color-accent); color: var(--ws-color-on-accent); border-radius: var(--ws-radius-control); }
+#flashPanel .secondary, #gamePanel .secondary, #managePanel .secondary { background: #253651; color: var(--ws-color-text); border-color: #576987; border-radius: var(--ws-radius-control); }
+#flashPanel :is(select, .smallbtn), #gamePanel :is(select, .smallbtn), #managePanel :is(select, .smallbtn) { border-color: #546784; background: #1c2d47; color: #f4f7ff; border-radius: var(--ws-radius-control); }
+#managePanel :is(input, textarea):focus-visible, #flashPanel :is(select, button):focus-visible, #gamePanel :is(select, button):focus-visible { outline: 3px solid var(--ws-color-focus); outline-offset: 3px; }
+
+@media (max-width: 730px) {
+  #screen-home .hero { padding: 26px 20px; }
+  #screen-home .hero h1 { font-size: clamp(28px, 7.6vw, 37px); }
+  #screen-home .stats { margin-top: 15px; }
+  #screen-home .gamecard { border-radius: 18px; }
+}
+@media (max-width: 390px) {
+  #screen-home .hero { padding: 22px 15px; border-radius: 20px; }
+  #screen-home .hero h1 { font-size: 28px; }
+  #screen-home .hero .hero-actions .btn { min-width: 0; max-width: 100%; }
+  #wsSharedNav .ws-nav-games-list { box-shadow: none; }
+}
+/* Scope reduced-motion transitions to UX elements; gameplay mechanics untouched. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .ws-ui-button, .btn, #screen-home .gamecard, #wsSharedNav .ws-nav-link { transition: none; }
+}
