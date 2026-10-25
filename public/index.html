@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/ux02-home-nav.css" />
 <link rel="stylesheet" href="/ux03-game-library.css" />
 <link rel="stylesheet" href="/ux04-results.css" />
+<link rel="stylesheet" href="/ux06-admin.css" />
 </head>
 <body>
 <div class="aurora"></div>
@@ -92,7 +93,7 @@
 <section id="screen-solo-car" class="screen"><div class="page-title"><span class="mini">PHASE 2.3 · SOLO PLAY</span><h1>CAR Solo · Lane Escape</h1><p>Chơi 5 làn đường, dịch từ và vượt chặng không cần mã phòng hay đăng nhập.</p></div><aside class="ws03-intro" aria-label="Hướng dẫn SOLO-CAR Solo"><div><h2>🏎️ Cách chơi CAR</h2><p>Quan sát năm làn, gõ từ tiếng Anh của làn an toàn. Xe tự đổi làn khi đáp án hợp lệ; tránh chướng ngại và vượt chặng.</p></div><button type="button" class="btn ghost" data-screen="home">← Chọn trò khác</button></aside>
 <div id="soloCarSetupPane"></div><div id="soloCarGamePane" class="hidden"></div></section>
 <section id="screen-rooms" class="screen"><div class="page-title"><span class="mini">MULTIPLAYER ARENA</span><h1>Phòng thi trực tuyến</h1><p>Nhập mã phòng, mật khẩu và tên bạn muốn hiển thị trong giải.</p></div><div id="joinRoomPane" class="auth-panel"><div class="panel-header"><span class="panelicon">🎟️</span><div><h2>Tham gia cuộc thi</h2><p>Phòng thi được tạo và bắt đầu bởi quản trị viên.</p></div></div><form id="joinForm" class="form-grid"><label>Mã phòng<input name="code" required autocomplete="off" maxlength="12" placeholder="VD: A7B9M2C" style="text-transform:uppercase"></label><label>Mật khẩu phòng<input name="password" type="password" required autocomplete="off" placeholder="Mật khẩu do admin cung cấp"></label><label class="span2">Tên hiển thị trong cuộc thi<input name="name" required minlength="2" maxlength="40" placeholder="Tên người chơi"></label><button type="submit" class="btn primary span2">Vào phòng thi →</button></form></div><div id="roomPane" class="hidden"></div></section>
-<section id="screen-admin" class="screen"><div class="page-title"><span class="mini">ADMIN COMMAND CENTER</span><h1>Quản trị WordSky</h1><p>Tài khoản quản trị được xác thực trên máy chủ. Quản lý chủ đề, tính năng và giải đấu.</p></div><div id="adminContent"><div class="empty">Vui lòng đăng nhập tài khoản quản trị.</div></div></section>
+<section id="screen-admin" class="screen"><div class="page-title ws06-page-title"><span class="mini">ADMIN COMMAND CENTER</span><h1>Quản trị WordSky</h1><p>Tài khoản quản trị được xác thực trên máy chủ. Quản lý chủ đề, tính năng và giải đấu.</p></div><div id="adminContent"><div class="empty">Vui lòng đăng nhập tài khoản quản trị.</div></div></section>
 </main>
 <footer class="footer"><div class="wrap footinner"><div><b>✦ WordSky Arena</b><span>Learn. Compete. Grow.</span></div><div>Made for curious minds · Vietnam 🇻🇳</div></div></footer>
 <div class="modal-wrap hidden" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle"><div class="modal-backdrop" data-close="auth"></div><div class="modal"><button class="close" data-close="auth" aria-label="Đóng">✕</button><div class="mini">WORDSKY ACCOUNT</div><h2 id="authTitle">Đăng nhập</h2><p class="modal-help">Đăng nhập để tích điểm chuyên cần. Chưa có tài khoản? Chọn đăng ký bên dưới.</p><div class="tabs-small"><button id="loginTab" class="on" type="button">Đăng nhập</button><button id="signupTab" type="button">Đăng ký</button></div><form id="authForm" class="form-stack"><label>Tên đăng nhập<input name="username" type="text" minlength="3" maxlength="24" autocomplete="username" required placeholder="vd: player_nghia"></label><label id="displayNameLabel" class="hidden">Tên hiển thị<input name="display_name" maxlength="40" placeholder="Tên trên bảng xếp hạng"></label><label>Mật khẩu<input name="password" type="password" minlength="8" autocomplete="current-password" required placeholder="Ít nhất 8 ký tự"></label><button class="btn primary" type="submit">Tiếp tục →</button></form><div class="form-message" id="authMessage"></div></div></div>
@@ -100,4 +101,5 @@
 <script src="/shared-nav.js" defer></script>
 <script src="/app.js" defer></script>
 <script src="/ux03-game-library.js" defer></script>
+<script src="/ux06-admin.js" defer></script>
 </body></html>
