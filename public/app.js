@@ -119,6 +119,25 @@ function renderSoloCarSetup(){
  ${soloSetupError?`<div role="alert" class="game-status bad">${escapeHtml(soloSetupError)} <button type="button" id="soloCarStartRetry" class="btn small ghost">Thử lại</button></div>`:''}
  <p class="small-note">Máy chủ kiểm tra CEFR APPROVED theo từng cấp trước khi tạo lượt. Solo không cộng XP hay điểm giải đấu.</p></div>`;
 }
+function soloResultMarkup(g,rd,mode){
+ // Display only server-returned public state; do not infer answered word identities.
+ const safeInteger=value=>{const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.floor(n)):0};
+ const target=Math.max(1,safeInteger(rd.question_count));
+ const correct=Math.min(target,safeInteger(g.correct));
+ const mistakes=safeInteger(g.mistakes);
+ const score=safeInteger(g.score);
+ const percent=Math.round(100*correct/target);
+ const state={COMPLETED:['Hoàn thành','Bạn đã vượt qua thử thách!'],FAILED:['Hết tim','Bạn có thể thử lại với mức độ phù hợp hơn.'],TIMEOUT:['Hết giờ','Hãy thử lại hoặc điều chỉnh thời gian.']}[g.status]||['Đã kết thúc','Bạn có thể bắt đầu lượt luyện tập khác.'];
+ const unit=mode==='CAR'?'chặng':mode==='BOMB'?'bom':'cặp';
+ const mistakeLabel=mode==='CAR'?'Lượt bị phạt':mode==='BOMB'?'Bom quá hạn':'Lần ghép sai';
+ return `<section class="ws04-result" aria-label="Kết quả ${mode} Solo">
+ <div class="ws04-heading"><span class="ws04-kicker">KẾT QUẢ · ${mode} SOLO</span><h3>${state[0]}</h3><p>${state[1]}</p></div>
+ <dl class="ws04-metrics"><div><dt>Điểm</dt><dd>${fmt(score)}</dd></div><div><dt>Đã hoàn thành</dt><dd>${correct}<small> / ${target} ${unit}</small></dd></div><div><dt>${mistakeLabel}</dt><dd>${mistakes}</dd></div></dl>
+ <div class="ws04-progress-title"><span>Tiến độ hoàn thành</span><strong>${percent}%</strong></div>
+ <div class="ws04-progress" role="progressbar" aria-label="Mục hoàn thành" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${correct}"><span style="width:${percent}%"></span></div>
+ <div class="ws04-next"><p><strong>Tiếp tục ghi nhớ từ vựng</strong><span>Ôn Flashcard theo chủ đề. Danh sách từ trả lời sai trong lượt chưa được hệ thống cung cấp.</span></p><a class="btn ghost ws04-learn" href="/learn.html#flash">Ôn Flashcard →</a></div>
+ </section>`;
+}
 function renderSoloCarGame(){
  const host=soloHost('CAR','GamePane'),setup=soloHost('CAR','SetupPane');if(!host||!setup||!soloGame)return;
  const g=soloGame.game,rd=soloGame.round,ended=g.status!=='PLAYING',answer=host.querySelector('#soloCarAnswer')?.value||'';
@@ -137,6 +156,7 @@ function renderSoloCarGame(){
  <div class="car-answer-row"><input id="soloCarAnswer" name="answer" type="text" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" maxlength="100" enterkeyhint="done" placeholder="Gõ từ tiếng Anh — tự chuyển làn" aria-label="Từ tiếng Anh để vượt chặng"></div>
  <span id="soloCarReadyHint" class="small-note"></span><span id="soloCarStepTimer" class="small-note"></span></form>`}
  ${!ended&&(soloFeedback||soloPending)?`<div class="game-status ${soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả…')} ${soloPending?`<button id="soloCarPendingRetry" type="button" class="btn small ghost" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button>`:''}</div>`:''}
+ ${ended?soloResultMarkup(g,rd,'CAR'):''}
  <div class="form-actions solo-actions">${ended?'<button id="soloCarReplay" type="button" class="btn primary">Chơi lại</button><button id="soloCarHome" type="button" class="btn ghost">Về trang chủ</button>':''}<button type="button" id="soloCarNewConfig" class="btn ghost" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
  if(!ended){const input=$('soloCarAnswer');if(input){input.value=answer;prepareGameInput(input);if(screen==='solo-car'&&!document.getElementById('authModal')?.classList.contains('active'))input.focus({preventScroll:true})}updateSoloCarTimers()}
  else setTimeout(()=>host.querySelector('#soloCarResultTitle')?.focus({preventScroll:true}),0);
@@ -186,6 +206,7 @@ function renderSoloGame(){
  <div class="solo-progress" role="progressbar" aria-label="${bomb?'Tiến độ gỡ bom':'Tiến độ ghép cặp'}" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.correct}"><span style="width:${Math.round(100*g.correct/Math.max(1,rd.question_count))}%"></span></div>
  ${ended?`<div class="game-status good" tabindex="-1" id="${bomb?'soloBombResultTitle':'soloResultTitle'}"><strong>${resultLabel}</strong><br>${g.correct}/${rd.question_count} ${bomb?'bom đã gỡ':'cặp đúng'} · ${fmt(g.score)} điểm · ${g.mistakes} ${bomb?'bom quá hạn':'lần sai'}</div>`:bomb?`<p class="small-note">Gõ nguyên từ tiếng Anh ứng với bất kỳ bom đang rơi. Chưa đủ từ không mất tim hoặc điểm.</p><div class="bomb-arena bomb-fixed-columns solo-bomb-arena" id="soloBombArena" style="--bomb-lanes:${bombLaneCount(rd)}" data-bomb-lanes="${bombLaneCount(rd)}" aria-label="Các quả bom Solo đang rơi">${bombCardsMarkup(g,rd)}</div><div class="bomb-answer-form"><label for="soloBombAnswer">Nhập đáp án tiếng Anh</label><div class="game-answer-row"><input id="soloBombAnswer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="100" placeholder="Gõ từ tiếng Anh — bom tự được giải"></div><small class="small-note">Tự kiểm tra sau khi bạn ngừng gõ một chút.</small></div>`:`<p class="small-note">Chọn từ tiếng Anh, sau đó chọn nghĩa tiếng Việt. Sai mất 1 tim và trừ ${rd.penalty} điểm.</p>${soloPairsMarkup(g)}`}
  ${bomb&&!ended?`<div id="soloBombFeedback" class="game-status ${soloFeedback.startsWith('✅')?'good':'bad'}" role="status" aria-live="polite" ${soloPending||soloFeedback?'':'hidden'}><span class="solo-bomb-feedback-text">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')}</span> <button type="button" class="btn small ghost" id="soloBombPendingRetry" ${soloPending?'':'hidden'} ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloPending&&!ended?`<div id="soloFeedback" class="game-status bad" role="status" aria-live="polite">${escapeHtml(soloFeedback||'Đang xác nhận kết quả với máy chủ…')} <button type="button" class="btn small ghost" id="soloPendingRetry" ${soloBusy?'disabled':''}>Đồng bộ / thử lại</button></div>`:soloFeedback&&!ended?`<div id="soloFeedback" class="game-status ${soloFeedback.startsWith('Đúng')?'good':'bad'}" role="status" aria-live="polite">${escapeHtml(soloFeedback)}</div>`:''}
+ ${ended?soloResultMarkup(g,rd,mode):''}
  <div class="form-actions solo-actions">${ended?`<button type="button" class="btn primary" id="${bomb?'soloBombReplay':'soloReplay'}">Chơi lại</button><button type="button" class="btn ghost" id="${bomb?'soloBombHome':'soloHome'}">Về trang chủ</button>`:''}<button type="button" class="btn ghost" id="${bomb?'soloBombNewConfig':'soloNewConfig'}" ${soloPending?'disabled':''}>${ended?'Đổi cấu hình':'Kết thúc giao diện lượt này'}</button></div></div>`;
  if(bomb&&!ended){const input=$('soloBombAnswer');if(input){input.value=existingBombAnswer;prepareGameInput(input)}animateBombs($('soloBombArena'));if(oldFocus==='soloBombAnswer'&&input)input.focus({preventScroll:true})}
  if(ended)setTimeout(()=>host.querySelector('#'+(bomb?'soloBombResultTitle':'soloResultTitle'))?.focus({preventScroll:true}),0);
