@@ -150,7 +150,7 @@ function boot() {
   const importInfo = byId('ws10ImportInfo');
   function showNotice(message) {accountNotice = message; displayAccount();}
   function displayAccount() {
-    const ready = account.kind === 'ready' && (unified.kind!=='ready' || account.actor.id===unified.actor.id);
+    const ready = account.kind === 'ready' && unified.kind==='ready' && account.actor.id===unified.actor.id;
     accountLogin.hidden = account.kind !== 'guest';
     accountRefresh.hidden = !ready;
     accountStats.hidden = !ready || unified.kind === 'ready';
