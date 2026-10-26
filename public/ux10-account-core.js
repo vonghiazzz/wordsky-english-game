@@ -66,9 +66,11 @@ export async function loadAccount() {
       progress.scope !== 'account' || catalog.scope !== 'catalog') throw new Error('Dữ liệu đồng bộ không hợp lệ');
   return {kind:'ready',actor:auth.actor,catalog:catalog.words,words:progress.words,index:catalogIndex(catalog.words)};
 }
-export async function postAccountReview(wordId, remembered) {
+export async function postAccountReview(wordId, remembered, expectedActorId) {
+  const body={word_id:wordId,remembered};
+  if (expectedActorId) body.expected_actor_id=expectedActorId;
   const saved = await learningApi('learning/flashcards/reviews',{
-    method:'POST',body:{word_id:wordId,remembered}
+    method:'POST',body
   });
   if (saved.scope !== 'account' || saved.word_id !== wordId) throw new Error('Máy chủ chưa xác nhận bản ghi');
   return saved;

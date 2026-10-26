@@ -24,7 +24,7 @@ window.addEventListener('wordsky:flashcard-reviewed',event=>{
       return;
     }
     try {
-      await postAccountReview(match.word_id,detail.remembered);
+      await postAccountReview(match.word_id,detail.remembered,account.actor.id);
       announce('Đã nhớ và đồng bộ từ “' + english + '” theo tài khoản.');
     } catch(error) {
       announce('Đã lưu trên thiết bị, nhưng tài khoản chưa đồng bộ: ' + error.message,true);

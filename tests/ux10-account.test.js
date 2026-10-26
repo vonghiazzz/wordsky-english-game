@@ -93,8 +93,23 @@ test('UX10 review queue survives focus refresh and never posts under a switched 
  assert.match(ui,/const clickedBy = account\.kind === 'ready' \? account\.actor\.id : null/);
  assert.match(ui,/const currentSession = await learningApi\('auth\/me'\)/);
  assert.match(ui,/if \(clickedBy && clickedBy !== currentSession\.actor\.id\)/);
- assert.match(ui,/await postAccountReview\(target\.word_id, remembered\)/);
+ assert.match(ui,/await postAccountReview\(target\.word_id, remembered, currentSession\.actor\.id\)/);
  assert.match(ui,/await refreshAccount\(\)/);
  assert.doesNotMatch(ui,/if \(account\.kind !== 'ready' \|\| account\.actor\.id !== sessionId\) return/);
  assert.match(sync,/window\.addEventListener\('focus', \(\) => \{accountPromise = loadAccount\(\)/);
+});
+
+test('UX11 pins account review writes to the expected actor in the same authenticated request',async()=>{
+ const original=globalThis.fetch;
+ try{
+  let body=null;
+  globalThis.fetch=async(url,opts)=>{body=JSON.parse(opts.body);return {ok:true,json:async()=>({scope:'account',word_id:uuid1})}};
+  await postAccountReview(uuid1,true,'00000000-0000-4000-8000-000000000009');
+  assert.deepEqual(body,{word_id:uuid1,remembered:true,expected_actor_id:'00000000-0000-4000-8000-000000000009'});
+  const api=readFileSync(new URL('../api/index.js',import.meta.url),'utf8');
+  assert.match(api,/review\.expected_actor_id!==undefined&&review\.expected_actor_id!==userId/);
+  assert.match(api,/throw fail\('Tài khoản đã thay đổi; không gửi tiến độ sang người dùng khác',409\)/);
+  const ui=readFileSync(new URL('../public/ux10-progress.js',import.meta.url),'utf8');
+  assert.match(ui,/postAccountReview\(entry\.word_id,true,clickedBy\)/);
+ }finally{globalThis.fetch=original}
 });

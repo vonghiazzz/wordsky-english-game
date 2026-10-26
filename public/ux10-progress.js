@@ -171,7 +171,7 @@ function boot() {
           showNotice('Từ này chỉ lưu trên trình duyệt vì không khớp chính xác với dữ liệu tài khoản.');
           return;
         }
-        await postAccountReview(target.word_id, remembered);
+        await postAccountReview(target.word_id, remembered, currentSession.actor.id);
         // Refresh from the server so a concurrent focus refresh cannot replace
         // the newer review with a stale in-memory account snapshot.
         await refreshAccount();
@@ -191,7 +191,7 @@ function boot() {
       const session = await learningApi('auth/me');
       if (session.actor?.role !== 'player' || session.actor.id !== clickedBy)
         throw new Error('Phiên đăng nhập đã thay đổi; không ghi sang tài khoản khác.');
-      await postAccountReview(card.word_id,remembered);
+      await postAccountReview(card.word_id,remembered,clickedBy);
       await refreshAccount();
       showNotice('Đã lưu “' + card.english + '” lên tài khoản.');
     } catch (error) {
@@ -208,13 +208,14 @@ function boot() {
     const batch = plan.eligible.slice(0,20);
     if (!window.confirm('Chỉ chuyển ' + batch.length +
       ' từ khớp chính xác, chưa có tiến độ trên tài khoản. Không xóa dữ liệu trình duyệt. Xác nhận?')) return;
+    const clickedBy = account.actor.id;
     busy = true; displayAccount();
     let complete = 0, error = '';
     try {
       await remoteQueue;
       for (const entry of batch) {
         try {
-          await postAccountReview(entry.word_id,true);
+          await postAccountReview(entry.word_id,true,clickedBy);
           complete++;
           account.words.unshift({word_id:entry.word_id,english:entry.english,topic:'',remembered:true});
         } catch (e) {error = e.message; break;}

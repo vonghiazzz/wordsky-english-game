@@ -464,7 +464,14 @@ export default async function handler(req,res){
   if(!['GET','POST','PATCH','DELETE'].includes(req.method))return output(res,405,{error:'Phương thức không được hỗ trợ'});
   if(req.method!=='GET'&&!sameOrigin(req))return output(res,403,{error:'Invalid origin'});
   const r=requestSegments=route(req),method=req.method,key=r.join('/');
-  if(method==='POST'&&key==='learning/flashcards/reviews')return output(res,201,await recordFlashcardReview(mustPlayer(req).id,body(req)));
+  if(method==='POST'&&key==='learning/flashcards/reviews'){
+    const userId=mustPlayer(req).id,review=body(req);
+    // Optional actor pin protects against login/logout between client verification
+    // and POST, especially during batch import from local Flashcards.
+    if(review.expected_actor_id!==undefined&&review.expected_actor_id!==userId)
+      throw fail('Tài khoản đã thay đổi; không gửi tiến độ sang người dùng khác',409);
+    return output(res,201,await recordFlashcardReview(userId,review));
+  }
   if(method==='GET'&&key==='learning/flashcards/progress')return output(res,200,await getFlashcardProgress(mustPlayer(req).id));
   if(method==='GET'&&key==='learning/flashcards/catalog'){mustPlayer(req);return output(res,200,await getFlashcardCatalog());}
   if(method==='GET'&&key==='health')return output(res,200,{ok:true,service:'wordsky-v4',database:!!process.env.DATABASE_URL});
