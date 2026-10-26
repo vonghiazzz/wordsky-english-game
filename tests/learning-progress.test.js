@@ -80,6 +80,12 @@ test('UX10 new public tables deny Data API roles by RLS and grants',()=>{
  const migration=readFileSync(new URL('../db/migrations/20261025_ux10_flashcard_progress.sql',import.meta.url),'utf8');
  for(const name of ['ws_learning_flashcard_reviews','ws_learning_word_progress']){
   assert.match(migration,new RegExp('ALTER TABLE public\\.'+name+' ENABLE ROW LEVEL SECURITY'));
-  assert.match(migration,new RegExp('REVOKE ALL ON public\\.'+name+' FROM PUBLIC, anon, authenticated'));
+  assert.match(migration,new RegExp('REVOKE ALL ON public\\.'+name+' FROM PUBLIC;'));
  }
+});
+
+test('UX10 migration remains compatible with PostgreSQL without Supabase Data API roles',()=>{
+ const migration=readFileSync(new URL('../db/migrations/20261025_ux10_flashcard_progress.sql',import.meta.url),'utf8');
+ assert.match(migration,/IF EXISTS \(SELECT 1 FROM pg_roles WHERE rolname = role_name\)/);
+ assert.match(migration,/EXECUTE format\('REVOKE ALL ON TABLE public\.%I FROM %I'/);
 });
