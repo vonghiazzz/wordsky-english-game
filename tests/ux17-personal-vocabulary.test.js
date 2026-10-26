@@ -24,10 +24,10 @@ test('personal API derives user scope from authenticated server session',()=>{
 
 test('UX18 update/delete include revision and user ownership in SQL predicates',()=>{
  const source=readFileSync(new URL('../lib/personal-vocabulary.js',import.meta.url),'utf8');
- assert.match(source,/AND deleted_at IS NULL AND revision=\\$9 RETURNING/);
- assert.match(source,/WHERE user_id=\\$1 AND id=\\$2 AND revision=\\$3 AND deleted_at IS NULL RETURNING/);
+ assert.match(source,/AND deleted_at IS NULL AND revision=\$9 RETURNING/);
+ assert.match(source,/WHERE user_id=\$1 AND id=\$2 AND revision=\$3 AND deleted_at IS NULL RETURNING/);
  const api=readFileSync(new URL('../api/index.js',import.meta.url),'utf8');
  assert.match(api,/input.expected_actor_id!==undefined&&input.expected_actor_id!==userId/);
- assert.match(api,/updatePersonalCard\\(userId,r\\[2\\],input\\)/);
- assert.match(api,/deletePersonalCard\\(userId,r\\[2\\],input.revision\\)/);
+ assert.match(api,/updatePersonalCard\(userId,r\[2\],input\)/);
+ assert.match(api,/deletePersonalCard\(userId,r\[2\],input.revision\)/);
 });
