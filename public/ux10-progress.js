@@ -1,5 +1,6 @@
 /* WordSky UX-10: browser-only local progress and separately authenticated account progress. */
 import {loadAccount,learningApi,postAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
+import {selectLearningView} from './ux11-dashboard-model.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -71,7 +72,7 @@ function boot() {
   if (!list) return;
   const state = {words: [], learned: {}, initialized: false, error: null, visible: 60};
   let account = {kind:'checking'}, accountNotice = '', requestNumber = 0, busy = false;
-  let remoteQueue = Promise.resolve();
+  let remoteQueue = Promise.resolve(), accountSaving = false;
   const accountMsg = byId('ws10AccountMessage');
   const accountStats = byId('ws10AccountStats');
   const accountWords = byId('ws10AccountWords');
@@ -111,7 +112,7 @@ function boot() {
     importInfo.textContent = 'Có thể chuyển ' + plan.eligible.length + ' từ đã nhớ trên thiết bị lên tài khoản; ' +
       plan.unmatched + ' từ không khớp chính xác, ' + plan.alreadyReviewed + ' từ đã có quyết định trên tài khoản. Không tự ghi đè dữ liệu tài khoản.';
     accountImport.hidden = plan.eligible.length === 0;
-    accountImport.disabled = busy;
+    accountImport.disabled = busy || accountSaving;
     accountImport.textContent = busy ? 'Đang đồng bộ…' : 'Đồng bộ ' + Math.min(plan.eligible.length,20) + ' từ đã nhớ';
     const heading = node('h3', '', 'Những từ đã ôn theo tài khoản');
     accountWords.append(heading);
@@ -142,7 +143,7 @@ function boot() {
       if (current !== requestNumber) return;
       account = {kind:'error',message:error.message || 'Lỗi kết nối'};
     }
-    displayAccount();
+    render();
   }
   function queueReview(card, remembered) {
     // Capture the actor at click time. A window-focus event may start refreshing
@@ -170,7 +171,7 @@ function boot() {
           showNotice('Từ này chỉ lưu trên trình duyệt vì không khớp chính xác với dữ liệu tài khoản.');
           return;
         }
-        await postAccountReview(target.word_id, remembered);
+        await postAccountReview(target.word_id, remembered, currentSession.actor.id);
         // Refresh from the server so a concurrent focus refresh cannot replace
         // the newer review with a stale in-memory account snapshot.
         await refreshAccount();
@@ -180,20 +181,41 @@ function boot() {
       }
     }).catch(() => showNotice('Không thể đồng bộ; dữ liệu trên trình duyệt được giữ nguyên.'));
   }
+  async function updateAccountCard(card, remembered) {
+    if (account.kind !== 'ready' || accountSaving || busy || !card.word_id) return;
+    const clickedBy = account.actor.id;
+    accountSaving = true;
+    render();
+    try {
+      await remoteQueue;
+      const session = await learningApi('auth/me');
+      if (session.actor?.role !== 'player' || session.actor.id !== clickedBy)
+        throw new Error('Phiên đăng nhập đã thay đổi; không ghi sang tài khoản khác.');
+      await postAccountReview(card.word_id,remembered,clickedBy);
+      await refreshAccount();
+      showNotice('Đã lưu “' + card.english + '” lên tài khoản.');
+    } catch (error) {
+      showNotice('Không thể lưu tài khoản; dữ liệu trình duyệt không bị thay đổi: ' + error.message);
+    } finally {
+      accountSaving = false;
+      render();
+    }
+  }
   accountImport.addEventListener('click', async () => {
-    if (account.kind !== 'ready' || busy) return;
+    if (account.kind !== 'ready' || busy || accountSaving) return;
     const plan = eligibleImports(state.words,state.learned,account.index,account.words);
     if (!plan.eligible.length) return;
     const batch = plan.eligible.slice(0,20);
     if (!window.confirm('Chỉ chuyển ' + batch.length +
       ' từ khớp chính xác, chưa có tiến độ trên tài khoản. Không xóa dữ liệu trình duyệt. Xác nhận?')) return;
+    const clickedBy = account.actor.id;
     busy = true; displayAccount();
     let complete = 0, error = '';
     try {
       await remoteQueue;
       for (const entry of batch) {
         try {
-          await postAccountReview(entry.word_id,true);
+          await postAccountReview(entry.word_id,true,clickedBy);
           complete++;
           account.words.unshift({word_id:entry.word_id,english:entry.english,topic:'',remembered:true});
         } catch (e) {error = e.message; break;}
@@ -224,28 +246,44 @@ function boot() {
     }
   }
   function render() {
-    const {total, known, review, percent} = summarize(state.words, state.learned);
+    const view = selectLearningView(state,account);
+    const isAccount = view.source === 'account';
+    const {total, known, review, percent} = summarize(view.words,view.learned);
+    byId('ws10SourceBadge').textContent = isAccount ? 'ACCOUNT · POSTGRESQL' : 'BROWSER ONLY';
+    byId('ws10HeroScope').textContent = isAccount ? 'ACCOUNT' : 'LOCAL';
+    byId('ws10StorageTitle').textContent = isAccount ? 'Tiến độ theo tài khoản đang đăng nhập' : 'Tiến độ Flashcard trên thiết bị này';
+    byId('ws10StorageText').textContent = isAccount
+      ? 'Các số liệu phía trên và thư viện từ vựng được đọc từ PostgreSQL theo tài khoản. Bộ Flashcard trên thiết bị vẫn được giữ riêng; bạn có thể chuyển từ cũ có đối chiếu chính xác bằng nút bên dưới.'
+      : account.kind === 'error'
+      ? 'Chưa tải được tiến độ tài khoản: ' + account.message + '. Đang chỉ hiển thị dữ liệu trên trình duyệt này; chưa có dữ liệu nào được đồng bộ.'
+      : 'Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Đăng nhập và đồng bộ để dùng chung tiến độ trên nhiều thiết bị.';
+    byId('ws10TotalHint').textContent = isAccount ? 'Từ đang bật trong kho từ máy chủ' : 'Từ bộ Flashcard lưu trên thiết bị';
+    byId('ws10KnownHint').textContent = isAccount ? 'Đã nhớ theo tài khoản' : 'Bạn đã chọn “Đã nhớ”';
+    byId('ws10ReviewHint').textContent = isAccount ? 'Bao gồm từ chưa học và cần ôn' : 'Chưa đánh dấu “Đã nhớ”';
+    byId('ws10PercentHint').textContent = isAccount ? 'Tỷ lệ trên kho từ máy chủ' : 'Tỷ lệ trong bộ thẻ hiện tại';
+    byId('ws10LibraryHint').textContent = isAccount ? 'Kho từ của tài khoản. Những lần đánh dấu mới được ghi lên PostgreSQL.' : 'Chọn “Đã nhớ” hoặc “Cần ôn” để cập nhật đúng trạng thái Flashcard trên thiết bị.';
+    byId('ws10WordsTitle').textContent = isAccount ? 'Kho từ theo tài khoản ✳' : 'Thư viện từ vựng ✳';
     byId('ws10Total').textContent = total.toLocaleString('vi-VN');
     byId('ws10Known').textContent = known.toLocaleString('vi-VN');
     byId('ws10Review').textContent = review.toLocaleString('vi-VN');
     byId('ws10Percent').textContent = percent + '%';
     byId('ws10RingValue').textContent = percent + '%';
     byId('ws10Ring').style.setProperty('--value', String(percent));
-    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + ' từ đã đánh dấu nhớ' : 'Chưa có dữ liệu Flashcard trên thiết bị này.';
-    alert.hidden = !state.error;
-    alert.textContent = state.error || '';
+    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isAccount ? ' từ theo tài khoản' : ' từ đã đánh dấu nhớ trên thiết bị') : (isAccount ? 'Kho từ tài khoản hiện chưa có từ nào.' : 'Chưa có dữ liệu Flashcard trên thiết bị này.');
+    alert.hidden = !view.error;
+    alert.textContent = view.error || '';
     const existingTopic = topicFilter.value;
-    const topics = [...new Set(state.words.map(word => word.topic))];
+    const topics = [...new Set(view.words.map(word => word.topic))];
     topicFilter.replaceChildren(new Option('Tất cả chủ đề', ''), ...topics.map(topic => new Option(topic, topic)));
     if (topics.includes(existingTopic)) topicFilter.value = existingTopic;
-    const filtered = filterWords(state.words, state.learned, {query: search.value, topic: topicFilter.value, status: statusFilter.value});
+    const filtered = filterWords(view.words, view.learned, {query: search.value, topic: topicFilter.value, status: statusFilter.value});
     byId('ws10Count').textContent = filtered.length.toLocaleString('vi-VN') + ' thẻ';
     list.replaceChildren();
     const empty = byId('ws10Empty');
     empty.hidden = filtered.length > 0;
     if (!filtered.length) {
-      const title = !state.initialized ? 'Chưa có bộ từ được lưu' : state.error ? 'Chưa thể đọc dữ liệu' : !state.words.length ? 'Bộ từ hiện chưa có thẻ' : 'Không tìm thấy từ phù hợp';
-      const description = !state.initialized ? 'Mở Flashcard trước để khởi tạo bộ từ trên trình duyệt này.' : state.error ? 'Hãy kiểm tra bộ từ hoặc quyền lưu trữ. Không có dữ liệu nào bị xóa.' : !state.words.length ? 'Thêm từ tại trang quản lý Flashcard để theo dõi tiến độ.' : 'Thử một từ khóa hoặc bộ lọc khác.';
+      const title = !view.initialized ? 'Chưa có bộ từ được lưu' : view.error ? 'Chưa thể đọc dữ liệu' : !view.words.length ? (isAccount ? 'Kho từ máy chủ chưa có từ nào' : 'Bộ từ hiện chưa có thẻ') : 'Không tìm thấy từ phù hợp';
+      const description = !view.initialized ? 'Mở Flashcard trước để khởi tạo bộ từ trên trình duyệt này.' : view.error ? 'Hãy kiểm tra bộ từ hoặc quyền lưu trữ. Không có dữ liệu nào bị xóa.' : !view.words.length ? 'Chưa có từ vựng trong phạm vi dữ liệu này.' : 'Thử một từ khóa hoặc bộ lọc khác.';
       byId('ws10EmptyTitle').textContent = title;
       byId('ws10EmptyText').textContent = description;
     }
@@ -257,7 +295,7 @@ function boot() {
       const meaning = node('div', 'ws10-word-meaning', card.meaning);
       if (card.example) meaning.append(node('small', '', card.example));
       const actions = node('div', 'ws10-word-actions');
-      const known = state.learned[card.key] === true;
+      const known = view.learned[card.key] === true;
       const knownBtn = node('button', 'ws10-chip' + (known ? ' is-known' : ''), '✓ Đã nhớ');
       const reviewBtn = node('button', 'ws10-chip' + (!known ? ' is-review' : ''), '↻ Cần ôn');
       for (const button of [knownBtn, reviewBtn]) button.type = 'button';
@@ -265,10 +303,10 @@ function boot() {
       reviewBtn.setAttribute('aria-pressed', String(!known));
       knownBtn.setAttribute('aria-label', 'Đánh dấu đã nhớ: ' + card.english);
       reviewBtn.setAttribute('aria-label', 'Đánh dấu cần ôn: ' + card.english);
-      knownBtn.disabled = !!state.error;
-      reviewBtn.disabled = !!state.error;
-      knownBtn.addEventListener('click', () => updateCard(card, true));
-      reviewBtn.addEventListener('click', () => updateCard(card, false));
+      knownBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
+      reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
+      knownBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, true) : updateCard(card, true));
+      reviewBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, false) : updateCard(card, false));
       actions.append(knownBtn, reviewBtn);
       row.append(wordCol, meaning, actions);
       fragment.append(row);

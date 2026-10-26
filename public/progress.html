@@ -25,7 +25,7 @@
       <div class="ws10-actions"><a class="ws10-button ws10-primary" href="/learn.html#flash">↗ Tiếp tục Flashcard</a><a class="ws10-button ws10-secondary" href="/learn.html#manage">Quản lý bộ từ</a></div>
     </div>
     <div class="ws10-hero-figure">
-      <div class="ws10-figure-top"><span>✦ LEARNING JOURNEY</span><span class="ws10-device">LOCAL</span></div>
+      <div class="ws10-figure-top"><span>✦ LEARNING JOURNEY</span><span class="ws10-device" id="ws10HeroScope">LOCAL</span></div>
       <div class="ws10-figure-ring" id="ws10Ring" style="--value:0"><div><strong id="ws10RingValue">0%</strong><small>đã ghi nhớ</small></div></div>
       <p id="ws10RingCaption">Chưa có dữ liệu Flashcard trên thiết bị này.</p>
       <div class="ws10-sparkle ws10-sparkle-a">✦</div><div class="ws10-sparkle ws10-sparkle-b">✳</div>
@@ -33,18 +33,18 @@
   </header>
 
   <section class="ws10-storage" aria-label="Phạm vi lưu trữ">
-    <span class="ws10-storage-icon">⌁</span><div><strong>Tiến độ Flashcard trên thiết bị này</strong><p>Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Khi đăng nhập, những từ khớp chính xác có thể đồng bộ riêng lên PostgreSQL; xem mục Tiến độ theo tài khoản bên dưới.</p></div><span class="ws10-storage-badge">BROWSER ONLY</span>
+    <span class="ws10-storage-icon">⌁</span><div><strong id="ws10StorageTitle">Tiến độ Flashcard trên thiết bị này</strong><p id="ws10StorageText">Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Khi đăng nhập, những từ khớp chính xác có thể đồng bộ riêng lên PostgreSQL; xem mục Tiến độ theo tài khoản bên dưới.</p></div><span class="ws10-storage-badge" id="ws10SourceBadge">BROWSER ONLY</span>
   </section>
 
   <section class="ws10-metrics" aria-label="Thống kê học tập">
-    <article class="ws10-stat"><span class="ws10-stat-icon purple">▦</span><span class="ws10-stat-label">TỔNG SỐ THẺ TỪ</span><strong id="ws10Total">0</strong><small>Từ bộ Flashcard lưu trên thiết bị</small></article>
-    <article class="ws10-stat"><span class="ws10-stat-icon mint">✓</span><span class="ws10-stat-label">ĐÃ ĐÁNH DẤU NHỚ</span><strong id="ws10Known">0</strong><small>Bạn đã chọn “Đã nhớ”</small></article>
-    <article class="ws10-stat"><span class="ws10-stat-icon peach">↻</span><span class="ws10-stat-label">CHƯA NHỚ / CẦN ÔN</span><strong id="ws10Review">0</strong><small>Chưa đánh dấu “Đã nhớ”</small></article>
-    <article class="ws10-stat"><span class="ws10-stat-icon blue">◴</span><span class="ws10-stat-label">TIẾN ĐỘ ĐÃ NHỚ</span><strong id="ws10Percent">0%</strong><small>Tỷ lệ trong bộ thẻ hiện tại</small></article>
+    <article class="ws10-stat"><span class="ws10-stat-icon purple">▦</span><span class="ws10-stat-label">TỔNG SỐ THẺ TỪ</span><strong id="ws10Total">0</strong><small id="ws10TotalHint">Từ bộ Flashcard lưu trên thiết bị</small></article>
+    <article class="ws10-stat"><span class="ws10-stat-icon mint">✓</span><span class="ws10-stat-label">ĐÃ ĐÁNH DẤU NHỚ</span><strong id="ws10Known">0</strong><small id="ws10KnownHint">Bạn đã chọn “Đã nhớ”</small></article>
+    <article class="ws10-stat"><span class="ws10-stat-icon peach">↻</span><span class="ws10-stat-label">CHƯA NHỚ / CẦN ÔN</span><strong id="ws10Review">0</strong><small id="ws10ReviewHint">Chưa đánh dấu “Đã nhớ”</small></article>
+    <article class="ws10-stat"><span class="ws10-stat-icon blue">◴</span><span class="ws10-stat-label">TIẾN ĐỘ ĐÃ NHỚ</span><strong id="ws10Percent">0%</strong><small id="ws10PercentHint">Tỷ lệ trong bộ thẻ hiện tại</small></article>
   </section>
 
   <section class="ws10-library" aria-labelledby="ws10WordsTitle">
-    <div class="ws10-section-top"><div><span class="ws10-overline">YOUR VOCABULARY</span><h2 id="ws10WordsTitle">Thư viện từ vựng <span>✳</span></h2><p>Chọn “Đã nhớ” hoặc “Cần ôn” để cập nhật đúng trạng thái Flashcard của bạn.</p></div><span class="ws10-count" id="ws10Count">0 thẻ</span></div>
+    <div class="ws10-section-top"><div><span class="ws10-overline">YOUR VOCABULARY</span><h2 id="ws10WordsTitle">Thư viện từ vựng <span>✳</span></h2><p id="ws10LibraryHint">Chọn “Đã nhớ” hoặc “Cần ôn” để cập nhật đúng trạng thái Flashcard của bạn.</p></div><span class="ws10-count" id="ws10Count">0 thẻ</span></div>
     <div class="ws10-filters"><label class="ws10-search"><span aria-hidden="true">⌕</span><input type="search" id="ws10Search" placeholder="Tìm từ tiếng Anh hoặc nghĩa tiếng Việt..." autocomplete="off" aria-label="Tìm kiếm từ vựng"></label><label class="ws10-filter"><span>Chủ đề</span><select id="ws10Topic"><option value="">Tất cả chủ đề</option></select></label><label class="ws10-filter"><span>Trạng thái</span><select id="ws10Status"><option value="all">Tất cả từ</option><option value="known">Đã nhớ</option><option value="review">Cần ôn</option></select></label></div>
     <div id="ws10Alert" class="ws10-alert" role="status" aria-live="polite" hidden></div>
     <div id="ws10Empty" class="ws10-empty" hidden><span class="ws10-empty-icon">✦</span><h3 id="ws10EmptyTitle">Chưa có bộ từ được lưu</h3><p id="ws10EmptyText">Hãy mở Flashcard để bắt đầu sử dụng bộ từ của bạn trên trình duyệt này.</p><a class="ws10-button ws10-primary" href="/learn.html#flash">Mở Flashcard →</a></div>
