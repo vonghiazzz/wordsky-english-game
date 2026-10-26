@@ -51,7 +51,27 @@
     <div id="ws10WordList" class="ws10-word-list" aria-live="off"></div>
     <div class="ws10-list-bottom"><span id="ws10Showing"></span><button class="ws10-button ws10-secondary" id="ws10More" type="button" hidden>Xem thêm từ ↓</button></div>
   </section>
-  <section class="ws10-account"><div class="ws10-account-icon">☁</div><div><h2>Đồng bộ giữa các thiết bị?</h2><p>Phiên bản Preview này chưa hỗ trợ đồng bộ tiến độ Flashcard lên tài khoản. Đăng nhập không tự chuyển dữ liệu trình duyệt lên máy chủ.</p></div><a class="ws10-button ws10-secondary" href="/#home">Về trang chủ ↗</a></section>
+  <section class="ws10-account" id="ws10AccountSection" aria-label="Tiến độ theo tài khoản">
+    <div class="ws10-account-icon" aria-hidden="true">☁</div>
+    <div class="ws10-account-inner">
+      <span class="ws10-overline">ACCOUNT-SYNCED PROGRESS</span>
+      <h2>Tiến độ theo tài khoản</h2>
+      <p id="ws10AccountMessage" role="status" aria-live="polite">Đang kiểm tra phiên đăng nhập…</p>
+      <p id="ws10AccountNotice" class="ws10-account-notice" role="status" aria-live="polite" hidden></p>
+      <div id="ws10AccountStats" class="ws10-account-stats" hidden>
+        <span><strong id="ws10AccountReviewed">0</strong> từ đã ôn</span>
+        <span><strong id="ws10AccountKnown">0</strong> đã nhớ</span>
+        <span><strong id="ws10AccountReview">0</strong> cần ôn</span>
+      </div>
+      <div id="ws10AccountWords" class="ws10-account-words"></div>
+      <p id="ws10ImportInfo" class="ws10-import-info" hidden></p>
+    </div>
+    <div class="ws10-account-actions">
+      <a id="ws10LoginLink" class="ws10-button ws10-secondary" href="/#home">Đăng nhập tại Trang chủ ↗</a>
+      <button id="ws10Import" class="ws10-button ws10-primary" type="button" hidden>Đồng bộ từ đã nhớ lên tài khoản</button>
+      <button id="ws10Refresh" class="ws10-button ws10-secondary" type="button" hidden>↻ Làm mới</button>
+    </div>
+  </section>
   <footer class="ws10-footer"><span>✦ WordSky</span><span>Learn · Practice · Grow</span></footer>
 </main>
 </body></html>

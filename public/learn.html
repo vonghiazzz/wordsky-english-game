@@ -354,8 +354,15 @@ $('know').onclick=()=>{
     if(previous===undefined)delete learned[mark];else learned[mark]=previous;
     return;
   }
+  // Report the exact card after local persistence; account sync is best-effort.
+  window.dispatchEvent(new CustomEvent('wordsky:flashcard-reviewed',{
+    detail:{topic,card:[...cards[cardIndex]],remembered:true}
+  }));
   advance(1);
 };
+window.addEventListener('wordsky:flashcard-sync-status',event=>{
+  if(event.detail?.message)note(event.detail.message,!!event.detail.error);
+});
 $('resetProgress').onclick=()=>{cards.forEach(c=>delete learned[key(topic,c[0])]);saveLearned();cardIndex=0;renderCard()};
 $('shuffle').onclick=()=>{DATA[topic].sort(()=>Math.random()-.5);cardIndex=0;renderCard()};
 $('topic').onchange=e=>{topic=e.target.value;cardIndex=0;renderCard()};
@@ -740,4 +747,4 @@ installTopicPackOnce();
 if(!loaded&&safeStorage.read(STORE)===null)saveTopics();
 renderSelectors();renderCard();renderManager();
 
-</script><script src="/ux05-learn.js" defer></script></body></html>
+</script><script src="/ux05-learn.js" defer></script><script type="module" src="/ux10-learn-sync.js"></script></body></html>

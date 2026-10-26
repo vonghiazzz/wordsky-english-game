@@ -11,3 +11,24 @@
 @media(max-width:680px){.ws10-container{width:calc(100% - 24px)}.ws10-breadcrumb{padding:15px 0}.ws10-hero{grid-template-columns:1fr;border-radius:19px}.ws10-hero-copy{padding:27px 22px}.ws10-hero h1{font-size:37px;letter-spacing:-1.5px;margin:18px 0 12px}.ws10-hero-copy>p{font-size:13px}.ws10-hero-figure{min-height:270px;padding:30px 16px}.ws10-figure-ring{width:165px;height:165px}.ws10-figure-ring strong{font-size:42px}.ws10-figure-top{top:14px;left:17px;right:17px}.ws10-storage{padding:15px;align-items:flex-start;gap:12px;flex-wrap:wrap}.ws10-storage-badge{margin:0 0 0 56px}.ws10-metrics{gap:9px;margin-bottom:24px}.ws10-stat{padding:16px;border-radius:13px}.ws10-stat strong{font-size:30px}.ws10-stat small{font-size:10px}.ws10-stat-icon{margin-bottom:12px}.ws10-library{padding:17px 13px;border-radius:16px}.ws10-section-top h2{font-size:22px}.ws10-section-top{align-items:flex-start}.ws10-count{font-size:10px;padding:8px}.ws10-filters{grid-template-columns:1fr 1fr;gap:8px;margin:19px 0}.ws10-search{grid-column:1/-1}.ws10-filter select{width:100%}.ws10-word{grid-template-columns:1fr;gap:9px;padding:15px}.ws10-word-actions{justify-content:flex-start}.ws10-account{padding:18px;flex-wrap:wrap}.ws10-account .ws10-button{margin:0;width:100%}.ws10-footer{padding-bottom:88px}}
 @media(max-width:360px){.ws10-actions .ws10-button{width:100%}.ws10-stat-label{font-size:9px}.ws10-section-top{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.ws10-page *{scroll-behavior:auto!important;transition:none!important}}
+/* UX-10 account section: server data is never mixed into browser metrics. */
+.ws10-account-inner{flex:1;min-width:0}
+.ws10-account-inner h2{margin:8px 0 7px}
+.ws10-account-actions{margin-left:auto;display:flex;flex-direction:column;gap:9px;max-width:250px;min-width:190px}
+.ws10-account-actions .ws10-button{margin:0}
+.ws10-account-actions [hidden],.ws10-account [hidden]{display:none!important}
+.ws10-account-notice{margin-top:12px!important;color:#a9f6d1!important}
+.ws10-account-stats{display:flex;flex-wrap:wrap;gap:9px;margin-top:17px}
+.ws10-account-stats>span{background:#24354d;border:1px solid #435572;border-radius:9px;padding:9px 11px;font-size:12px;color:#d4e4f8}
+.ws10-account-stats strong{font-size:19px;margin-right:4px;color:white}
+.ws10-import-info{margin-top:16px!important}
+.ws10-account-words{margin-top:16px}
+.ws10-account-words h3{font-size:13px;margin:0 0 10px;color:#d4ddff}
+.ws10-account-word{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto;gap:12px;align-items:center;border-top:1px solid #394965;padding:10px 0;font-size:12px}
+.ws10-account-word strong,.ws10-account-word span{min-width:0;overflow-wrap:anywhere}
+.ws10-account-word span{color:#abbad5}
+.ws10-account-word .ws10-account-known{color:#a5efc5}
+.ws10-account-word .ws10-account-review{color:#ffd19f}
+.ws10-account-empty{color:#9eafc9;font-size:12px;line-height:1.6}
+@media(max-width:760px){.ws10-account{align-items:flex-start;flex-wrap:wrap}.ws10-account-actions{width:100%;max-width:none;flex-direction:row;margin:0}.ws10-account-actions .ws10-button{flex:1;min-width:0}}
+@media(max-width:480px){.ws10-account-icon{display:none}.ws10-account-actions{flex-direction:column}.ws10-account-word{grid-template-columns:minmax(0,1fr) auto}.ws10-account-word span:nth-child(2){grid-column:1/-1;grid-row:2}.ws10-account-word span:last-child{grid-row:1;grid-column:2}}

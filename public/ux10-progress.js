@@ -1,4 +1,5 @@
-/* WordSky UX-10: browser-only Flashcard progress. No inferred account sync or game scoring. */
+/* WordSky UX-10: browser-only local progress and separately authenticated account progress. */
+import {loadAccount,postAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -19,7 +20,7 @@ export function parseBrowserVocabulary(raw) {
         const key = cardKey(topic, english);
         if (seen.has(key)) continue;
         seen.add(key);
-        words.push({key, topic, english, ipa: card[1], meaning: card[2], example: card[3]});
+        words.push({key, topic, english, ipa: card[1], meaning: card[2], example: card[3], translation: card[4]});
       }
     }
     return {words, initialized: true, error: null};
@@ -69,6 +70,130 @@ function boot() {
   const list = byId('ws10WordList');
   if (!list) return;
   const state = {words: [], learned: {}, initialized: false, error: null, visible: 60};
+  let account = {kind:'checking'}, accountNotice = '', requestNumber = 0, busy = false;
+  let remoteQueue = Promise.resolve(), lastRefresh = 0;
+  const accountMsg = byId('ws10AccountMessage');
+  const accountStats = byId('ws10AccountStats');
+  const accountWords = byId('ws10AccountWords');
+  const accountImport = byId('ws10Import');
+  const accountRefresh = byId('ws10Refresh');
+  const accountLogin = byId('ws10LoginLink');
+  const importInfo = byId('ws10ImportInfo');
+  function showNotice(message) {accountNotice = message; displayAccount();}
+  function displayAccount() {
+    const ready = account.kind === 'ready';
+    accountLogin.hidden = account.kind !== 'guest';
+    accountRefresh.hidden = !ready;
+    accountStats.hidden = !ready;
+    accountWords.replaceChildren();
+    const notice = byId('ws10AccountNotice');
+    notice.hidden = !accountNotice;
+    notice.textContent = accountNotice;
+    accountImport.hidden = true;
+    importInfo.hidden = true;
+    if (!ready) {
+      accountMsg.textContent = account.kind === 'guest'
+        ? 'Chưa đăng nhập học viên. Tiến độ trên thiết bị vẫn hoạt động; đăng nhập tại Trang chủ để đồng bộ từ tương ứng với kho từ máy chủ.'
+        : account.kind === 'error'
+        ? 'Không thể tải tiến độ tài khoản: ' + account.message + '. Tiến độ trên thiết bị không bị ảnh hưởng.'
+        : 'Đang xác minh tài khoản và tiến độ đã lưu…';
+      return;
+    }
+    const reviewed = account.words.length;
+    const known = account.words.filter(word => word.remembered === true).length;
+    accountMsg.textContent = 'Đã đăng nhập: ' + (account.actor.profile?.display_name || 'Học viên') +
+      '. Dữ liệu bên dưới lưu trên PostgreSQL và có thể xem trên thiết bị khác sau khi đăng nhập cùng tài khoản.';
+    byId('ws10AccountReviewed').textContent = String(reviewed);
+    byId('ws10AccountKnown').textContent = String(known);
+    byId('ws10AccountReview').textContent = String(reviewed - known);
+    const plan = eligibleImports(state.words, state.learned, account.index, account.words);
+    importInfo.hidden = false;
+    importInfo.textContent = 'Có thể chuyển ' + plan.eligible.length + ' từ đã nhớ trên thiết bị lên tài khoản; ' +
+      plan.unmatched + ' từ không khớp chính xác, ' + plan.alreadyReviewed + ' từ đã có quyết định trên tài khoản. Không tự ghi đè dữ liệu tài khoản.';
+    accountImport.hidden = plan.eligible.length === 0;
+    accountImport.disabled = busy;
+    accountImport.textContent = busy ? 'Đang đồng bộ…' : 'Đồng bộ ' + Math.min(plan.eligible.length,20) + ' từ đã nhớ';
+    const heading = node('h3', '', 'Những từ đã ôn theo tài khoản');
+    accountWords.append(heading);
+    if (!reviewed) {
+      accountWords.append(node('p','ws10-account-empty','Chưa có từ được ghi nhận trên tài khoản này.'));
+    } else {
+      const fragment = document.createDocumentFragment();
+      for (const word of account.words.slice(0,40)) {
+        const item = node('div','ws10-account-word');
+        item.append(node('strong','',word.english),node('span','',word.topic),
+          node('span',word.remembered ? 'ws10-account-known' : 'ws10-account-review',
+            word.remembered ? '✓ Đã nhớ' : '↻ Cần ôn'));
+        fragment.append(item);
+      }
+      accountWords.append(fragment);
+      if (reviewed>40) accountWords.append(node('p','ws10-account-empty','Đang hiển thị 40 / ' + reviewed + ' từ đã ôn.'));
+    }
+  }
+  async function refreshAccount() {
+    if (busy) return;
+    const current = ++requestNumber;
+    account = {kind:'checking'}; accountNotice = ''; displayAccount();
+    try {
+      const result = await loadAccount();
+      if (current !== requestNumber) return;
+      account = result;
+    } catch (error) {
+      if (current !== requestNumber) return;
+      account = {kind:'error',message:error.message || 'Lỗi kết nối'};
+    }
+    lastRefresh = Date.now();
+    displayAccount();
+  }
+  function queueReview(card, remembered) {
+    if (account.kind !== 'ready') return;
+    const sessionId = account.actor.id;
+    const target = exactCatalogMatch(card, account.index);
+    if (!target) {
+      showNotice('Từ này chỉ được lưu trên trình duyệt vì không khớp chính xác với dữ liệu tài khoản.');
+      return;
+    }
+    remoteQueue = remoteQueue.then(async () => {
+      // Never send a review under another actor if session changed.
+      if (account.kind !== 'ready' || account.actor.id !== sessionId) return;
+      try {
+        await postAccountReview(target.word_id, remembered);
+        const current = account.words.find(w => w.word_id === target.word_id);
+        if (current) current.remembered = remembered;
+        else account.words.unshift({word_id:target.word_id,english:card.english,topic:card.topic,remembered});
+        accountNotice = 'Đã lưu từ “' + card.english + '” lên tài khoản.';
+      } catch (error) {
+        accountNotice = 'Từ vẫn được lưu trên thiết bị; đồng bộ tài khoản thất bại: ' + error.message;
+      }
+      displayAccount();
+    }).catch(()=>{showNotice('Không thể đồng bộ; dữ liệu trên trình duyệt được giữ nguyên.')});
+  }
+  accountImport.addEventListener('click', async () => {
+    if (account.kind !== 'ready' || busy) return;
+    const plan = eligibleImports(state.words,state.learned,account.index,account.words);
+    if (!plan.eligible.length) return;
+    const batch = plan.eligible.slice(0,20);
+    if (!window.confirm('Chỉ chuyển ' + batch.length +
+      ' từ khớp chính xác, chưa có tiến độ trên tài khoản. Không xóa dữ liệu trình duyệt. Xác nhận?')) return;
+    busy = true; displayAccount();
+    let complete = 0, error = '';
+    try {
+      await remoteQueue;
+      for (const entry of batch) {
+        try {
+          await postAccountReview(entry.word_id,true);
+          complete++;
+          account.words.unshift({word_id:entry.word_id,english:entry.english,topic:'',remembered:true});
+        } catch (e) {error = e.message; break;}
+      }
+    } finally {
+      busy = false;
+      await refreshAccount();
+      showNotice('Đã đồng bộ ' + complete + ' từ vào tài khoản.' +
+        (error ? ' Còn từ chưa đồng bộ: ' + error : ''));
+    }
+  });
+  accountRefresh.addEventListener('click', refreshAccount);
   const search = byId('ws10Search');
   const topicFilter = byId('ws10Topic');
   const statusFilter = byId('ws10Status');
@@ -140,6 +265,7 @@ function boot() {
     const visible = Math.min(filtered.length, state.visible);
     byId('ws10Showing').textContent = filtered.length ? 'Hiển thị ' + visible + ' / ' + filtered.length + ' từ' : '';
     byId('ws10More').hidden = state.visible >= filtered.length;
+    displayAccount();
   }
   function reload() {
     Object.assign(state, readLocal());
@@ -150,6 +276,7 @@ function boot() {
     try {
       state.learned = saveRemembered(localStorage, card, remembered);
       render();
+      queueReview(card,remembered);
     } catch {
       state.error = 'Không thể lưu tiến độ trên thiết bị này. Dữ liệu Flashcard cũ được giữ nguyên.';
       render();
@@ -160,8 +287,9 @@ function boot() {
   }
   byId('ws10More').addEventListener('click', () => {state.visible += 60; render()});
   window.addEventListener('storage', event => {if (!event.key || [VOCAB_KEY, LEARNED_KEY].includes(event.key)) reload()});
-  window.addEventListener('focus', reload);
+  window.addEventListener('focus', () => {reload(); if(Date.now()-lastRefresh>30000)refreshAccount()});
   reload();
+  refreshAccount();
 }
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once: true});
