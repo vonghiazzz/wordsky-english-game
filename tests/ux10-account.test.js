@@ -71,7 +71,7 @@ test('Account review is explicitly sent with a UUID and boolean, and errors surf
 test('Flashcard persists local first and emits precise review; account remains a separate module',()=>{
  const learn=readFileSync(new URL('../public/learn.html',import.meta.url),'utf8');
  const progress=readFileSync(new URL('../public/ux10-progress.js',import.meta.url),'utf8');
- assert.match(learn,/if\(!saveLearned\(\)\)/);
+ assert.match(learn,/if\(!\(server\?saveServerLearned\(\):saveLearned\(\)\)\)/);
  assert.match(learn,/new CustomEvent\('wordsky:flashcard-reviewed'/);
  assert.match(learn,/\/ux10-learn-sync\.js/);
  assert.match(progress,/loadAccount\(/);assert.match(progress,/eligibleImports\(/);

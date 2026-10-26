@@ -58,8 +58,8 @@ test('UX10 includes shared desktop/mobile dock stylesheet in correct order',()=>
 test('Flashcard first visit persists its actual sample vocabulary without replacing existing saved decks',()=>{
  const html=readFileSync(new URL('../public/learn.html',import.meta.url),'utf8');
  assert.match(html,/installTopicPackOnce\(\);[\s\S]*?if\(!loaded&&safeStorage\.read\(STORE\)===null\)saveTopics\(\);/);
- assert.match(html,/if\(!saveLearned\(\)\)/);
- assert.match(html,/if\(previous===undefined\)delete learned\[mark\]/);
+ assert.match(html,/if\(!\(server\?saveServerLearned\(\):saveLearned\(\)\)\)/);
+ assert.match(html,/if\(previous===undefined\)delete progress\[mark\]/);
 });
 
 test('UX10 displays fractional progress for first remembered card in large deck',()=>{
