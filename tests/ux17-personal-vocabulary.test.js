@@ -14,10 +14,20 @@ test('malformed and overly long personal cards rejected',()=>{
 test('personal API derives user scope from authenticated server session',()=>{
  const api=readFileSync(new URL('../api/index.js',import.meta.url),'utf8');
  assert.match(api,/listPersonalVocabulary\(mustPlayer\(req\)\.id\)/);
- assert.match(api,/addPersonalCard\(mustPlayer\(req\)\.id,body\(req\)\)/);
- assert.match(api,/markPersonalCard\(mustPlayer\(req\)\.id,body\(req\)\)/);
+ assert.match(api,/addPersonalCard\(userId,input\)/);
+ assert.match(api,/markPersonalCard\(userId,input\)/);
  const migration=readFileSync(new URL('../db/migrations/20261026_ux17_personal_vocabulary.sql',import.meta.url),'utf8');
  assert.match(migration,/ENABLE ROW LEVEL SECURITY/g);
  assert.match(migration,/FOREIGN KEY \(personal_word_id,user_id\)/);
  assert.doesNotMatch(migration,/\bDROP TABLE\b|\bTRUNCATE\b/);
+});
+
+test('UX18 update/delete include revision and user ownership in SQL predicates',()=>{
+ const source=readFileSync(new URL('../lib/personal-vocabulary.js',import.meta.url),'utf8');
+ assert.match(source,/AND deleted_at IS NULL AND revision=\$9 RETURNING/);
+ assert.match(source,/WHERE user_id=\$1 AND id=\$2 AND revision=\$3 AND deleted_at IS NULL RETURNING/);
+ const api=readFileSync(new URL('../api/index.js',import.meta.url),'utf8');
+ assert.match(api,/input.expected_actor_id!==undefined&&input.expected_actor_id!==userId/);
+ assert.match(api,/updatePersonalCard\(userId,r\[2\],input\)/);
+ assert.match(api,/deletePersonalCard\(userId,r\[2\],input.revision\)/);
 });

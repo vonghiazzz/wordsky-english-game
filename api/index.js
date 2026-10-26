@@ -4,7 +4,7 @@ import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
-import {listPersonalVocabulary,addPersonalCard,markPersonalCard} from '../lib/personal-vocabulary.js';
+import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
 
 const AUTH_COOKIE='ws_auth';
 const SOLO_COOKIE='ws_solo';
@@ -473,9 +473,28 @@ export default async function handler(req,res){
       throw fail('Tài khoản đã thay đổi; không gửi tiến độ sang người dùng khác',409);
     return output(res,201,await recordFlashcardReview(userId,review));
   }
+  // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
   if(method==='GET'&&key==='learning/personal')return output(res,200,await listPersonalVocabulary(mustPlayer(req).id));
-  if(method==='POST'&&key==='learning/personal')return output(res,201,await addPersonalCard(mustPlayer(req).id,body(req)));
-  if(method==='POST'&&key==='learning/personal/reviews')return output(res,201,await markPersonalCard(mustPlayer(req).id,body(req)));
+  if(method==='POST'&&key==='learning/personal'){
+    const input=body(req),userId=mustPlayer(req).id;
+    if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
+    return output(res,201,await addPersonalCard(userId,input));
+  }
+  if(method==='POST'&&key==='learning/personal/reviews'){
+    const input=body(req),userId=mustPlayer(req).id;
+    if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
+    return output(res,201,await markPersonalCard(userId,input));
+  }
+  if(method==='PATCH'&&r.length===3&&r[0]==='learning'&&r[1]==='personal'){
+    const input=body(req),userId=mustPlayer(req).id;
+    if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
+    return output(res,200,await updatePersonalCard(userId,r[2],input));
+  }
+  if(method==='DELETE'&&r.length===3&&r[0]==='learning'&&r[1]==='personal'){
+    const input=body(req),userId=mustPlayer(req).id;
+    if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
+    return output(res,200,await deletePersonalCard(userId,r[2],input.revision));
+  }
   if(method==='GET'&&key==='learning/flashcards/progress')return output(res,200,await getFlashcardProgress(mustPlayer(req).id));
   if(method==='GET'&&key==='learning/flashcards/catalog'){mustPlayer(req);return output(res,200,await getFlashcardCatalog());}
   // Enabled vocabulary is public to all learners, including guests.
