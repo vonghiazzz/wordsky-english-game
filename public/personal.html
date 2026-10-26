@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WordSky — Bộ từ theo tài khoản</title>
+<style>
+:root{color-scheme:dark;font:16px system-ui,-apple-system,sans-serif}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top left,#1b3560 0,#0b1022 58%);color:#edf4ff;min-height:100vh}
+main{width:min(1050px,calc(100% - 30px));margin:0 auto;padding:25px 0 65px}
+a{color:#a7c4ff}.nav{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin-bottom:27px}
+h1{font-size:clamp(27px,5vw,42px);margin:0 0 8px}.muted{color:#b8c9e5;line-height:1.6}.panel{background:#142441;border:1px solid #4b6187;border-radius:18px;padding:clamp(15px,3vw,25px);margin:16px 0}
+button,input,textarea{font:inherit}button{background:#9fb5ff;border:0;border-radius:10px;padding:11px 16px;color:#101b32;font-weight:800;cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+button.secondary{background:#27395d;color:#edf4ff;border:1px solid #51678e}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #8ce8d1;outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.status{font-size:14px;line-height:1.6;color:#bdf9df;min-height:23px;overflow-wrap:anywhere}
+.status.error{color:#ffc1c6}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.card{border:1px solid #52688d;background:#1b2b4c;padding:16px;border-radius:14px;min-width:0}.card h3{margin:0 0 6px;color:#bbd7ff}.card p{margin:7px 0;color:#b9c8dc;font-size:14px}
+.card .row{margin-top:12px}label{display:grid;gap:6px;font-size:13px;color:#c8d6ea;font-weight:700}
+input,textarea{width:100%;border:1px solid #5a6d92;background:#111d36;color:#fff;border-radius:9px;padding:10px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.wide{grid-column:1/-1}
+.hidden{display:none!important}.summary{font-weight:800;color:#91f4cb}
+@media(max-width:580px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.card button{flex:1}}
+</style></head><body><main>
+<nav class="nav"><a href="/">← Trang chủ</a><a href="/learn.html#manage">Quản lý Flashcard trên máy</a><a href="/progress.html">My Learning</a></nav>
+<header><h1>📚 Bộ từ theo tài khoản</h1><p class="muted">Kho từ bạn tự thêm, sửa và ghi nhớ được lưu trên PostgreSQL theo tài khoản WordSky, khác với 365 từ chung. Dữ liệu trình duyệt cũ chỉ chuyển lên khi bạn xác nhận.</p></header>
+<section class="panel"><h2>Đồng bộ dữ liệu cá nhân</h2><p id="ws17Auth" class="muted" aria-live="polite">Đang kiểm tra đăng nhập…</p>
+<p id="ws17Local" class="muted"></p><div class="row"><button id="ws17Import" disabled>Chuyển bộ từ trên máy lên tài khoản</button><button class="secondary" id="ws17Refresh">Tải lại dữ liệu tài khoản</button></div>
+<p class="muted">Nhập theo lô, không xóa bộ từ trên thiết bị, không ghi đè từ đã lưu trên tài khoản. Từ trùng được giữ nguyên theo bản trên server. Hãy sao lưu nếu bạn định thay đổi hàng loạt.</p>
+<p id="ws17Status" class="status" role="status" aria-live="polite"></p></section>
+<section class="panel"><h2>Danh sách từ cá nhân trên tài khoản</h2><p class="summary" id="ws17Summary">Chưa tải dữ liệu.</p><div id="ws17Cards" class="cards"></div></section>
+<section class="panel hidden" id="ws17Editor"><h2>Chỉnh sửa từ trên tài khoản</h2><p class="muted">Thay đổi sẽ được lưu vào PostgreSQL. Nếu phiên bản ở thiết bị khác đã đổi, hệ thống yêu cầu tải lại trước khi lưu.</p>
+<form id="ws17Form" class="grid">
+<label>Chủ đề<input id="ws17Topic" maxlength="80" required></label><label>Từ tiếng Anh<input id="ws17English" maxlength="80" required></label>
+<label>Phiên âm<input id="ws17Ipa" maxlength="100"></label><label>Nghĩa<input id="ws17Meaning" maxlength="180" required></label>
+<label class="wide">Ví dụ<input id="ws17Example" maxlength="300"></label><label class="wide">Bản dịch<input id="ws17Translation" maxlength="300"></label>
+<div class="wide row"><label><input id="ws17Remembered" type="checkbox" style="width:auto"> Đã nhớ</label><button type="submit">Lưu lên tài khoản</button><button type="button" class="secondary" id="ws17Cancel">Hủy</button></div>
+</form></section>
+</main><script type="module" src="/ux17-personal-account.js"></script></body></html>

@@ -4,6 +4,7 @@ import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
+import {listPersonalVocabulary,importPersonalVocabulary,updatePersonalVocabulary} from '../lib/personal-vocabulary.js';
 
 const AUTH_COOKIE='ws_auth';
 const SOLO_COOKIE='ws_solo';
@@ -464,6 +465,19 @@ export default async function handler(req,res){
   if(!['GET','POST','PATCH','DELETE'].includes(req.method))return output(res,405,{error:'Phương thức không được hỗ trợ'});
   if(req.method!=='GET'&&!sameOrigin(req))return output(res,403,{error:'Invalid origin'});
   const r=requestSegments=route(req),method=req.method,key=r.join('/');
+  if(method==='GET'&&key==='learning/personal-vocabulary')
+    return output(res,200,await listPersonalVocabulary(mustPlayer(req).id));
+  if(method==='POST'&&key==='learning/personal-vocabulary/import'){
+    const userId=mustPlayer(req).id,payload=body(req);
+    if(payload.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi; ngừng nhập từ cá nhân',409);
+    return output(res,201,await importPersonalVocabulary(userId,payload));
+  }
+  if(method==='PATCH'&&r[0]==='learning'&&r[1]==='personal-vocabulary'&&r.length===3){
+    const userId=mustPlayer(req).id,payload=body(req);
+    if(payload.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi; ngừng cập nhật từ cá nhân',409);
+    if(badId(r[2]))throw fail('Định danh từ không hợp lệ',400);
+    return output(res,200,await updatePersonalVocabulary(userId,r[2],payload));
+  }
   if(method==='POST'&&key==='learning/flashcards/reviews'){
     const userId=mustPlayer(req).id,review=body(req);
     // Optional actor pin protects against login/logout between client verification
