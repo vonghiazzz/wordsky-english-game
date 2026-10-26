@@ -74,7 +74,7 @@ test('UX10 account catalog is authenticated and exposes full word identity, neve
  const service=readFileSync(new URL('../lib/learning-progress.js',import.meta.url),'utf8');
  assert.match(api,/key==='learning\/flashcards\/catalog'\)\{mustPlayer\(req\)/);
  assert.match(service,/w\.id AS word_id,t\.title AS topic,w\.english,w\.ipa,w\.meaning,w\.example,w\.translation/);
- assert.match(api,/e\.code==='42P01'&&r\?\.\[0\]==='learning'/);
+ assert.match(api,/e\.code==='42P01'&&requestSegments\[0\]==='learning'/);
 });
 test('UX10 new public tables deny Data API roles by RLS and grants',()=>{
  const migration=readFileSync(new URL('../db/migrations/20261025_ux10_flashcard_progress.sql',import.meta.url),'utf8');
