@@ -43,3 +43,14 @@ test('UX10 routes and links do not change gameplay scoring',()=>{
  assert.match(api,/learning\/flashcards\/reviews/);assert.match(api,/learning\/flashcards\/progress/);
  assert.match(nav,/\/progress\.html/);assert.match(html,/Xem toàn bộ tiến độ/);
 });
+
+test('UX10 includes shared desktop/mobile dock stylesheet in correct order',()=>{
+ const progress=readFileSync(new URL('../public/progress.html',import.meta.url),'utf8');
+ const mobile=readFileSync(new URL('../public/ux02-home-nav.css',import.meta.url),'utf8');
+ const expected=['/shared-nav.css','/ux-design-system.css','/ux02-home-nav.css','/ux10-progress.css'];
+ const refs=[...progress.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(match=>match[1]);
+ assert.deepEqual(refs,expected);
+ assert.match(mobile,/#wsSharedNav \.ws-mobile-dock\{display:none\}/);
+ assert.match(mobile,/@media\(max-width:680px\)/);
+ assert.match(mobile,/#wsSharedNav:not\(\.ws-dock-hidden\) \.ws-mobile-dock/);
+});
