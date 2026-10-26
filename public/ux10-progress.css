@@ -32,3 +32,7 @@
 .ws10-account-empty{color:#9eafc9;font-size:12px;line-height:1.6}
 @media(max-width:760px){.ws10-account{align-items:flex-start;flex-wrap:wrap}.ws10-account-actions{width:100%;max-width:none;flex-direction:row;margin:0}.ws10-account-actions .ws10-button{flex:1;min-width:0}}
 @media(max-width:480px){.ws10-account-icon{display:none}.ws10-account-actions{flex-direction:column}.ws10-account-word{grid-template-columns:minmax(0,1fr) auto}.ws10-account-word span:nth-child(2){grid-column:1/-1;grid-row:2}.ws10-account-word span:last-child{grid-row:1;grid-column:2}}
+
+/* UX-12: public catalog scope comparison, never conflated with local mastery. */
+.ws10-server-catalog{margin-top:9px!important;color:#b5f2d8!important;font-size:13px!important;line-height:1.65!important}
+.ws10-storage [hidden]{display:none!important}
