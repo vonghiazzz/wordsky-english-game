@@ -423,7 +423,7 @@ function boot() {
     byId('ws10Percent').textContent = percent + '%';
     byId('ws10RingValue').textContent = percent + '%';
     byId('ws10Ring').style.setProperty('--value', String(percent));
-    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isCloud?' từ cá nhân theo tài khoản':isAccount ? ' từ theo tài khoản' : isServer?' từ kho máy chủ đã nhớ trên thiết bị':' từ cá nhân đã nhớ trên thiết bị')) : 'Chưa có từ vựng trong nguồn đang xem.';
+    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isCloud?' từ cá nhân theo tài khoản':isAccount ? ' từ theo tài khoản' : isServer?' từ kho máy chủ đã nhớ trên thiết bị':' từ cá nhân đã nhớ trên thiết bị') : 'Chưa có từ vựng trong nguồn đang xem.';
     alert.hidden = !view.error;
     alert.textContent = view.error || '';
     const existingTopic = topicFilter.value;
