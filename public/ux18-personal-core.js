@@ -2,7 +2,8 @@ import {exactFingerprint} from './ux10-account-core.js';
 const clean=value=>typeof value==='string'?value.trim():'';
 const key=(topic,english)=>clean(topic).toLocaleLowerCase('en')+'\u0000'+clean(english).toLocaleLowerCase('en');
 export function readBrowserPersonal(storage){
-  const original=storage.getItem('wordsky_vocab_v2');
+  let original;
+  try{original=storage.getItem('wordsky_vocab_v2')}catch{return {words:[],learned:{},error:'Không đọc được bộ từ thiết bị; không ghi đè dữ liệu.'}}
   if(original===null)return {words:[],learned:{},error:null};
   try{
     if(original.length>2_000_000)throw Error('Bộ từ quá lớn');

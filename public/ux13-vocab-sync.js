@@ -57,7 +57,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   if (source && refresh && status && host) {
     let priorSource=null;
     try{priorSource=localStorage.getItem('wordsky_flashcard_source_v1')}catch{}
-    let manuallySelected = priorSource==='local', lastChecked = 0, pending = null;
+    let manuallySelected = priorSource==='local'||priorSource==='account', lastChecked = 0, pending = null;
     const setStatus = (message, warning=false) => {
       status.textContent=message;
       status.dataset.warning=String(warning);
