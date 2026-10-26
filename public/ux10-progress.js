@@ -1,6 +1,7 @@
 /* WordSky UX-10: browser-only local progress and separately authenticated account progress. */
 import {loadAccount,learningApi,postAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
 import {selectLearningView} from './ux11-dashboard-model.js';
+import {publicVocabularySummary} from './ux12-catalog-summary.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -73,6 +74,7 @@ function boot() {
   const state = {words: [], learned: {}, initialized: false, error: null, visible: 60};
   let account = {kind:'checking'}, accountNotice = '', requestNumber = 0, busy = false;
   let remoteQueue = Promise.resolve(), accountSaving = false;
+  let serverVocabularySummary = null;
   const accountMsg = byId('ws10AccountMessage');
   const accountStats = byId('ws10AccountStats');
   const accountWords = byId('ws10AccountWords');
@@ -249,6 +251,14 @@ function boot() {
     const view = selectLearningView(state,account);
     const isAccount = view.source === 'account';
     const {total, known, review, percent} = summarize(view.words,view.learned);
+    const publicCatalog = byId('ws10PublicCatalog');
+    publicCatalog.hidden = !serverVocabularySummary;
+    if (serverVocabularySummary) publicCatalog.textContent =
+      'Kho từ máy chủ: ' + serverVocabularySummary.words.toLocaleString('vi-VN') +
+      ' từ / ' + serverVocabularySummary.topics.toLocaleString('vi-VN') +
+      ' chủ đề. ' + (isAccount
+        ? 'Đây là kho từ đang dùng để tính tiến độ tài khoản.'
+        : 'Bộ Flashcard trên thiết bị là danh sách riêng; hệ thống không tự thay thế bộ từ hoặc xóa tiến độ đã nhớ của bạn.');
     byId('ws10SourceBadge').textContent = isAccount ? 'ACCOUNT · POSTGRESQL' : 'BROWSER ONLY';
     byId('ws10HeroScope').textContent = isAccount ? 'ACCOUNT' : 'LOCAL';
     byId('ws10StorageTitle').textContent = isAccount ? 'Tiến độ theo tài khoản đang đăng nhập' : 'Tiến độ Flashcard trên thiết bị này';
@@ -340,6 +350,15 @@ function boot() {
   window.addEventListener('focus', () => {reload(); refreshAccount()});
   reload();
   refreshAccount();
+  // A public, read-only catalog count clarifies why a local 260-card deck can
+  // differ from the 365-word server library while account sync is unavailable.
+  fetch('/api/topics', {credentials:'same-origin',cache:'no-store'})
+    .then(response => response.ok ? response.json() : null)
+    .then(payload => {
+      serverVocabularySummary = publicVocabularySummary(payload);
+      render();
+    })
+    .catch(() => {}); // Keep existing local metrics usable offline.
 }
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once: true});
