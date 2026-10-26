@@ -58,3 +58,18 @@ test('UX17 schema uses private RLS table and prevents overwrite on duplicate imp
  assert.match(sql,/REVOKE ALL ON public\.ws_user_vocabulary FROM PUBLIC/);
  assert.doesNotMatch(sql,/DROP TABLE|TRUNCATE|DELETE FROM/i);
 });
+
+test('UX17 account-sourced Flashcards read and write private cloud cards',()=>{
+ const html=readFileSync(new URL('../public/learn.html',import.meta.url),'utf8');
+ const cloud=readFileSync(new URL('../public/ux17-cloud-flashcards.js',import.meta.url),'utf8');
+ assert.match(html,/option value="account" disabled/);
+ assert.match(html,/function accountProgressMode\(\)/);
+ assert.match(html,/accountCardRow\(topic,x\)/);
+ assert.match(html,/window\.WordSkyCloudFlashcards\.saveRemembered\(card,true\)/);
+ assert.match(html,/setAccountCatalog\(rows\)/);
+ assert.match(html,/if\(account\)\$\('resetProgress'\)\.disabled=true/);
+ assert.match(cloud,/learning\/personal-vocabulary/);
+ assert.match(cloud,/expected_version:card\.version,expected_actor_id:actorId/);
+ assert.match(cloud,/window\.addEventListener\('focus'/);
+ assert.doesNotMatch(cloud,/localStorage\.setItem\(/);
+});
