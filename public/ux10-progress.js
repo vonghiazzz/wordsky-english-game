@@ -3,6 +3,7 @@ import {loadAccount,learningApi,postAccountReview,exactCatalogMatch,eligibleImpo
 import {selectLearningView} from './ux11-dashboard-model.js';
 import {publicVocabularySummary} from './ux12-catalog-summary.js';
 import {SERVER_PROGRESS_KEY,SOURCE_PREFERENCE_KEY,parseServerProgress,serverCatalogView,saveServerProgress,loadCachedCatalog,validateAndCacheCatalog,lastPersonalSelection} from './ux15-dashboard-data.js';
+import {eligibleServerImports} from './ux16-account-import.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -108,6 +109,8 @@ function boot() {
   const accountStats = byId('ws10AccountStats');
   const accountWords = byId('ws10AccountWords');
   const accountImport = byId('ws10Import');
+  const serverImport = byId('ws16ServerImport');
+  const serverImportInfo = byId('ws16ServerImportInfo');
   const accountRefresh = byId('ws10Refresh');
   const accountLogin = byId('ws10LoginLink');
   const importInfo = byId('ws10ImportInfo');
@@ -123,6 +126,8 @@ function boot() {
     notice.textContent = accountNotice;
     accountImport.hidden = true;
     importInfo.hidden = true;
+    serverImport.hidden = true;
+    serverImportInfo.hidden = true;
     if (!ready) {
       accountMsg.textContent = account.kind === 'guest'
         ? 'Chưa đăng nhập học viên. Tiến độ trên thiết bị vẫn hoạt động; đăng nhập tại Trang chủ để đồng bộ từ tương ứng với kho từ máy chủ.'
@@ -144,7 +149,19 @@ function boot() {
       plan.unmatched + ' từ không khớp chính xác, ' + plan.alreadyReviewed + ' từ đã có quyết định trên tài khoản. Không tự ghi đè dữ liệu tài khoản.';
     accountImport.hidden = plan.eligible.length === 0;
     accountImport.disabled = busy || accountSaving;
-    accountImport.textContent = busy ? 'Đang đồng bộ…' : 'Đồng bộ ' + Math.min(plan.eligible.length,20) + ' từ đã nhớ';
+    accountImport.textContent = busy ? 'Đang đồng bộ…' : 'Chuyển ' + Math.min(plan.eligible.length,20) + ' từ cá nhân';
+    const uuidPlan=eligibleServerImports(serverCatalog,serverProgress,account.catalog,account.words);
+    serverImportInfo.hidden = false;
+    serverImportInfo.textContent = uuidPlan.error
+      ? 'Không thể chuyển từ kho máy chủ: ' + uuidPlan.error
+      : 'Kho máy chủ trên thiết bị: ' + uuidPlan.eligible.length +
+        ' từ đã nhớ đủ điều kiện chuyển lên tài khoản, ' + uuidPlan.unmatched +
+        ' từ không đối chiếu được UUID/nội dung, ' + uuidPlan.alreadyReviewed +
+        ' từ đã có trạng thái trên tài khoản. Không ghi đè quyết định cũ.';
+    serverImport.hidden = !!uuidPlan.error || uuidPlan.eligible.length === 0;
+    serverImport.disabled = busy || accountSaving;
+    serverImport.textContent = busy ? 'Đang đồng bộ…'
+      : 'Chuyển ' + Math.min(uuidPlan.eligible.length,20) + ' từ kho máy chủ';
     const heading = node('h3', '', 'Những từ đã ôn theo tài khoản');
     accountWords.append(heading);
     if (!reviewed) {
@@ -256,6 +273,35 @@ function boot() {
       await refreshAccount();
       showNotice('Đã đồng bộ ' + complete + ' từ vào tài khoản.' +
         (error ? ' Còn từ chưa đồng bộ: ' + error : ''));
+    }
+  });
+  serverImport.addEventListener('click', async () => {
+    if(account.kind!=='ready'||busy||accountSaving)return;
+    const plan=eligibleServerImports(serverCatalog,serverProgress,account.catalog,account.words);
+    if(plan.error||!plan.eligible.length)return;
+    const batch=plan.eligible.slice(0,20);
+    if(!window.confirm('Chuyển '+batch.length+' từ đã nhớ từ KHO MÁY CHỦ trên trình duyệt này lên tài khoản? Chỉ chuyển từ khớp UUID và nội dung, chưa có tiến độ trên tài khoản. Không xóa bộ từ hay trạng thái trên thiết bị.'))return;
+    const clickedBy=account.actor.id;
+    busy=true;displayAccount();
+    let complete=0,error='';
+    try{
+      await remoteQueue;
+      for(const entry of batch){
+        try{
+          const session=await learningApi('auth/me');
+          if(session.actor?.role!=='player'||session.actor.id!==clickedBy)
+            throw new Error('Tài khoản đã thay đổi. Ngừng đồng bộ để bảo vệ dữ liệu.');
+          // The API also checks expected_actor_id atomically with its session.
+          await postAccountReview(entry.word_id,true,clickedBy);
+          complete++;
+          account.words.unshift({word_id:entry.word_id,english:entry.english,topic:'',remembered:true});
+        }catch(e){error=e.message;break;}
+      }
+    }finally{
+      busy=false;
+      await refreshAccount();
+      showNotice('Đã chuyển '+complete+' từ kho máy chủ lên tài khoản.'+
+        (error?' Các từ còn lại chưa chuyển: '+error:''));
     }
   });
   accountRefresh.addEventListener('click', refreshAccount);
@@ -381,6 +427,9 @@ function boot() {
       const next=saveServerProgress(localStorage,card.word_id,remembered);
       serverProgress={learned:next,error:null};
       render();
+      // Local UUID marks are always retained, even if account sync fails.
+      // No automatic import of previous marks happens here.
+      if(account.kind==='ready')queueReview(card,remembered);
     }catch(e){
       serverProgress={...serverProgress,error:e.message||'Không thể lưu tiến độ kho máy chủ.'};
       render();
