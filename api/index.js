@@ -4,6 +4,7 @@ import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
+import {listPersonalVocabulary,addPersonalCard,markPersonalCard} from '../lib/personal-vocabulary.js';
 
 const AUTH_COOKIE='ws_auth';
 const SOLO_COOKIE='ws_solo';
@@ -472,6 +473,9 @@ export default async function handler(req,res){
       throw fail('Tài khoản đã thay đổi; không gửi tiến độ sang người dùng khác',409);
     return output(res,201,await recordFlashcardReview(userId,review));
   }
+  if(method==='GET'&&key==='learning/personal')return output(res,200,await listPersonalVocabulary(mustPlayer(req).id));
+  if(method==='POST'&&key==='learning/personal')return output(res,201,await addPersonalCard(mustPlayer(req).id,body(req)));
+  if(method==='POST'&&key==='learning/personal/reviews')return output(res,201,await markPersonalCard(mustPlayer(req).id,body(req)));
   if(method==='GET'&&key==='learning/flashcards/progress')return output(res,200,await getFlashcardProgress(mustPlayer(req).id));
   if(method==='GET'&&key==='learning/flashcards/catalog'){mustPlayer(req);return output(res,200,await getFlashcardCatalog());}
   // Enabled vocabulary is public to all learners, including guests.
