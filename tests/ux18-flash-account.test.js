@@ -11,7 +11,7 @@ test('UX18 account personal Flashcards use distinct source and PostgreSQL identi
  assert.match(learn,/flashSource==='account'&&ACCOUNT_DATA!==null/);
  assert.match(learn,/await accountReviewer\(id\)/);
  assert.match(learn,/ACCOUNT_REMEMBERED\[id\]=true/);
- assert.match(learn,/if\(accountMode\(\)\)\{\$\('resetProgress'\)\.disabled=true/);
+ assert.match(learn,/if\(account\)\{\$\('resetProgress'\)\.disabled=true/);
 });
 test('UX18 login switching fails closed and cannot mark local progress',()=>{
  assert.match(module,/active.actor.id!==id/);

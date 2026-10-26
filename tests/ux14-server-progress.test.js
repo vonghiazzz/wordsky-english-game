@@ -14,7 +14,7 @@ test('UX14 server Flashcards track UUIDs in a separate browser key',()=>{
   assert.match(html,/const progress=server\?serverLearned:learned/);
   assert.match(html,/server\?saveServerLearned\(\):saveLearned\(\)/);
   assert.match(html,/serverLearned\?\.\[serverProgressId\(topic,x\)\]/);
-  assert.match(html,/Kho từ máy chủ: ghi nhớ trên thiết bị theo UUID/);
+  assert.match(html,/Kho từ máy chủ: trạng thái trên thiết bị theo UUID/);
 });
 test('UX14 original legacy progress keys and personal manager remain untouched by server learning',()=>{
   assert.match(html,/const STORE='wordsky_vocab_v2'/);
