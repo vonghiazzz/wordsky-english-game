@@ -58,7 +58,7 @@ test('UX11 browser-only fallback preserves corrupt-local read errors; account su
 test('UX11 account actions never call localStorage and account UI is clearly scoped',()=>{
  const js=readFileSync(new URL('../public/ux10-progress.js',import.meta.url),'utf8');
  const html=readFileSync(new URL('../public/progress.html',import.meta.url),'utf8');
- assert.match(js,/selectLearningView\(state,account\)/);
+ assert.match(js,/selectLearningView\(state,\{kind:'guest'\}\)/);
  assert.match(js,/isUnified \? updateUnifiedCard\(card, true\) : isAccount \? updateAccountCard\(card, true\) : isServer \? updateServerCard\(card,true\) : updateCard\(card,true\)/);
  assert.match(js,/if \(session.actor\?\.role !== 'player' \|\| session.actor.id !== clickedBy\)/);
  assert.match(js,/await postAccountReview\(card.word_id,remembered,clickedBy\)/);
