@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/ux10-progress.css">
 <script src="/shared-nav.js" defer></script>
 <script type="module" src="/ux10-progress.js"></script>
+<script type="module" src="/ux18-personal-summary.js"></script>
 </head>
 <body class="ws10-page">
 <div id="wsSharedNav" data-ws-page="progress"></div>
@@ -22,7 +23,7 @@
       <span class="ws10-eyebrow"><span class="ws10-orb"></span> MY LEARNING DASHBOARD</span>
       <h1>Mỗi từ mới.<br><em>Một bước tiến.</em></h1>
       <p>Nhìn lại những từ bạn đã ghi nhớ, tìm từ cần ôn và tiếp tục hành trình học tiếng Anh theo nhịp riêng.</p>
-      <div class="ws10-actions"><a class="ws10-button ws10-primary" href="/learn.html#flash">↗ Tiếp tục Flashcard</a><a class="ws10-button ws10-secondary" href="/learn.html#manage">Quản lý bộ từ</a></div>
+      <div class="ws10-actions"><a class="ws10-button ws10-primary" href="/learn.html#flash">↗ Tiếp tục Flashcard</a><a class="ws10-button ws10-secondary" href="/learn.html#manage">Quản lý bộ từ</a><a class="ws10-button ws10-secondary" href="/personal.html">Từ cá nhân theo tài khoản</a></div>
     </div>
     <div class="ws10-hero-figure">
       <div class="ws10-figure-top"><span>✦ LEARNING JOURNEY</span><span class="ws10-device" id="ws10HeroScope">LOCAL</span></div>
@@ -45,6 +46,7 @@
     </select>
     <p id="ws15ScopeStatus" role="status" aria-live="polite">Đang kiểm tra các nguồn từ vựng…</p>
   </section>
+  <section class="ws15-scope" aria-label="Kho từ cá nhân theo tài khoản"><strong>MY PERSONAL VOCABULARY</strong><p id="ws18AccountSummary" role="status" aria-live="polite">Đang kiểm tra từ cá nhân theo tài khoản…</p><a href="/personal.html">Mở kho từ cá nhân theo tài khoản →</a></section>
   <section class="ws10-metrics" aria-label="Thống kê học tập">
     <article class="ws10-stat"><span class="ws10-stat-icon purple">▦</span><span class="ws10-stat-label">TỔNG SỐ THẺ TỪ</span><strong id="ws10Total">0</strong><small id="ws10TotalHint">Từ bộ Flashcard lưu trên thiết bị</small></article>
     <article class="ws10-stat"><span class="ws10-stat-icon mint">✓</span><span class="ws10-stat-label">ĐÃ ĐÁNH DẤU NHỚ</span><strong id="ws10Known">0</strong><small id="ws10KnownHint">Bạn đã chọn “Đã nhớ”</small></article>

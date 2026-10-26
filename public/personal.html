@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1226">
+<title>Từ vựng cá nhân theo tài khoản · WordSky</title>
+<link rel="stylesheet" href="/shared-nav.css"><link rel="stylesheet" href="/ux-design-system.css">
+<link rel="stylesheet" href="/ux18-personal.css">
+<script src="/shared-nav.js" defer></script>
+<script type="module" src="/ux18-personal.js"></script>
+</head>
+<body>
+<div id="wsSharedNav" data-ws-page="learn"></div>
+<main class="personal-layout">
+<nav class="crumb"><a href="/">WordSky</a><span>/</span><a href="/progress.html">My Learning</a><span>/</span>Từ cá nhân</nav>
+<header class="intro"><p class="eyebrow">YOUR ACCOUNT · PERSONAL VOCABULARY</p><h1>Từ vựng riêng của bạn</h1>
+<p>Thẻ lưu trong PostgreSQL theo tài khoản WordSky, không phụ thuộc trình duyệt. Bộ Flashcard cũ trên thiết bị được giữ nguyên cho đến khi bạn chủ động chuyển.</p></header>
+<div id="personalMessage" role="status" aria-live="polite" class="message">Đang kiểm tra tài khoản…</div>
+<section class="metrics" aria-label="Tiến độ từ cá nhân">
+<div><small>TỪ CÁ NHÂN TRONG TÀI KHOẢN</small><strong id="personalTotal">—</strong></div>
+<div><small>ĐÃ NHỚ TRONG TÀI KHOẢN</small><strong id="personalKnown">—</strong></div>
+<div><small>ĐÃ NHỚ TRÊN THIẾT BỊ CHƯA CHUYỂN</small><strong id="personalLocal">—</strong></div>
+</section>
+<section class="panel" id="personalAccount" hidden>
+<div class="heading"><div><h2>Kho từ cá nhân trên tài khoản</h2><p>Chỉ bạn mới có thể thêm, sửa, xóa và đánh dấu nhớ những thẻ này.</p></div><button type="button" id="personalReload">↻ Tải lại</button></div>
+<form id="personalForm">
+<input type="hidden" id="personalId">
+<div class="form-grid">
+<label>Chủ đề <input id="personalTopic" maxlength="80" required placeholder="Food"></label>
+<label>Tiếng Anh <input id="personalEnglish" maxlength="80" required placeholder="apple"></label>
+<label>Nghĩa <input id="personalMeaning" maxlength="180" required placeholder="Quả táo"></label>
+<label>IPA <input id="personalIpa" maxlength="120" placeholder="/ˈæp.əl/"></label>
+<label>Ví dụ <input id="personalExample" maxlength="500" placeholder="I eat an apple."></label>
+<label>Bản dịch ví dụ <input id="personalTranslation" maxlength="500"></label>
+</div>
+<div class="actions"><button type="submit" id="personalSave" class="primary">+ Thêm từ</button><button type="button" id="personalCancel" hidden>Hủy sửa</button></div>
+</form>
+<div class="heading"><div><h3>Thư viện đã đồng bộ</h3><p id="personalListMeta"></p></div><input id="personalSearch" type="search" placeholder="Tìm từ hoặc chủ đề..." aria-label="Tìm từ cá nhân"></div>
+<div id="personalList" class="word-list"></div>
+</section>
+<section class="panel" id="personalImport" hidden>
+<h2>Chuyển Flashcard cũ từ thiết bị</h2>
+<p>Chỉ chuyển khi bạn bấm xác nhận. Mỗi lần tối đa 20 thẻ. Từ trùng nhưng khác nội dung sẽ được bỏ qua; trạng thái đã lưu của tài khoản không bị ghi đè.</p>
+<p id="personalImportDetail" role="status"></p>
+<button type="button" class="primary" id="personalImportButton">Chuyển tối đa 20 thẻ</button>
+<p class="footnote">Dữ liệu <code>wordsky_vocab_v2</code> và <code>wordsky_learned</code> của thiết bị được giữ nguyên sau khi chuyển.</p>
+</section>
+<footer><a href="/learn.html#manage">Bộ Flashcard trên thiết bị</a> · <a href="/progress.html">My Learning</a></footer>
+</main></body></html>
