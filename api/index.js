@@ -474,6 +474,9 @@ export default async function handler(req,res){
   }
   if(method==='GET'&&key==='learning/flashcards/progress')return output(res,200,await getFlashcardProgress(mustPlayer(req).id));
   if(method==='GET'&&key==='learning/flashcards/catalog'){mustPlayer(req);return output(res,200,await getFlashcardCatalog());}
+  // Enabled vocabulary is public to all learners, including guests.
+  // No user progress, credentials, or CEFR moderation metadata is exposed.
+  if(method==='GET'&&key==='learning/vocabulary')return output(res,200,await getFlashcardCatalog());
   if(method==='GET'&&key==='health')return output(res,200,{ok:true,service:'wordsky-v4',database:!!process.env.DATABASE_URL});
   if(method==='POST'&&key==='auth/login')return output(res,200,await signIn(req,res));
   if(method==='POST'&&key==='auth/signup')return output(res,201,await signUp(req,res));
