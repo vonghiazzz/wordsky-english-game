@@ -246,7 +246,11 @@ let gameTopic='__all';
 const $notify=$('notice');let noteTimer;
 function note(message,error=false){$notify.textContent=message;$notify.classList.toggle('error',error);$notify.classList.add('show');clearTimeout(noteTimer);noteTimer=setTimeout(()=>$notify.classList.remove('show'),4000)}
 function saveTopics(){if(!safeStorage.write(STORE,JSON.stringify({version:2,topics:DATA}))){note('Không lưu được dữ liệu. Kiểm tra chế độ ẩn danh hoặc bộ nhớ trình duyệt.',true);return false}return true}
-function saveLearned(){safeStorage.write(PROGRESS,JSON.stringify(learned))}
+function saveLearned(){
+  if(safeStorage.write(PROGRESS,JSON.stringify(learned)))return true;
+  note('Không lưu được tiến độ đã nhớ. Kiểm tra quyền lưu trữ của trình duyệt.',true);
+  return false;
+}
 // Restore only Daily Life. Keep user-created topics and edited/learned cards intact.
 function restoreDailyLife({select=true,announce=true}={}){
   const existing=Object.keys(DATA).find(t=>t.toLowerCase()==='daily life');
@@ -341,7 +345,17 @@ function advance(n){if(!cards.length)return;cardIndex=(cardIndex+n+cards.length)
 $('flashCard').addEventListener('click',()=>{if(cards.length)$('flashCard').classList.toggle('flipped')});
 $('flashCard').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('flashCard').click()}});
 $('prev').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);
-$('know').onclick=()=>{if(!cards.length)return;learned[key(topic,cards[cardIndex][0])]=true;saveLearned();advance(1)};
+$('know').onclick=()=>{
+  if(!cards.length)return;
+  const mark=key(topic,cards[cardIndex][0]);
+  const previous=learned[mark];
+  learned[mark]=true;
+  if(!saveLearned()){
+    if(previous===undefined)delete learned[mark];else learned[mark]=previous;
+    return;
+  }
+  advance(1);
+};
 $('resetProgress').onclick=()=>{cards.forEach(c=>delete learned[key(topic,c[0])]);saveLearned();cardIndex=0;renderCard()};
 $('shuffle').onclick=()=>{DATA[topic].sort(()=>Math.random()-.5);cardIndex=0;renderCard()};
 $('topic').onchange=e=>{topic=e.target.value;cardIndex=0;renderCard()};
@@ -720,6 +734,10 @@ displayGameMode();renderScores();
 for(let i=0;i<35;i++){const star=document.createElement('i');star.className='star';star.style.left=Math.random()*100+'%';star.style.top=Math.random()*100+'%';star.style.width=star.style.height=(Math.random()*2+1)+'px';$('gameArea').append(star)}
 recoverDeletedDailyLifeOnce();
 installTopicPackOnce();
+// UX-10: sample Flashcards can be rendered without a saved vocabulary key.
+// Persist that actual in-memory deck once so My Learning can match its legacy
+// topic:english keys. Never overwrite existing (including malformed) data.
+if(!loaded&&safeStorage.read(STORE)===null)saveTopics();
 renderSelectors();renderCard();renderManager();
 
 </script><script src="/ux05-learn.js" defer></script></body></html>

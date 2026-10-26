@@ -77,7 +77,11 @@ function boot() {
     try {
       const vocabulary = parseBrowserVocabulary(localStorage.getItem(VOCAB_KEY));
       const progress = parseLearned(localStorage.getItem(LEARNED_KEY));
-      return {...vocabulary, learned: progress.learned, error: vocabulary.error || progress.error};
+      const missingDeck = !vocabulary.initialized && Object.values(progress.learned).some(value => value === true);
+      return {...vocabulary, learned: progress.learned,
+        error: vocabulary.error || progress.error || (missingDeck
+          ? 'Đã có từ được đánh dấu nhớ trên thiết bị này, nhưng chưa có bộ từ lưu kèm. Hãy mở Flashcard trên cùng website để lưu bộ từ, rồi quay lại My Learning.'
+          : null)};
     } catch {
       return {words: [], learned: {}, initialized: false, error: 'Trình duyệt đang chặn bộ nhớ cục bộ. Không thể xem hoặc lưu tiến độ.'};
     }
