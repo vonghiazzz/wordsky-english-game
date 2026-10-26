@@ -55,13 +55,16 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const status = document.getElementById('flashVocabularyStatus');
   const host = window.WordSkyFlashcardCatalog;
   if (source && refresh && status && host) {
-    let manuallySelected = false, lastChecked = 0, pending = null;
+    let priorSource=null;
+    try{priorSource=localStorage.getItem('wordsky_flashcard_source_v1')}catch{}
+    let manuallySelected = priorSource==='local', lastChecked = 0, pending = null;
     const setStatus = (message, warning=false) => {
       status.textContent=message;
       status.dataset.warning=String(warning);
     };
     source.addEventListener('change', () => {
       manuallySelected = true;
+      try{localStorage.setItem('wordsky_flashcard_source_v1',source.value)}catch{}
       host.useSource(source.value);
     });
     async function update(force=false) {

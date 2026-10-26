@@ -36,3 +36,10 @@
 /* UX-12: public catalog scope comparison, never conflated with local mastery. */
 .ws10-server-catalog{margin-top:9px!important;color:#b5f2d8!important;font-size:13px!important;line-height:1.65!important}
 .ws10-storage [hidden]{display:none!important}
+
+.ws15-scope{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 23px;padding:16px 19px;background:#17213a;border:1px solid #394b68;border-radius:15px}
+.ws15-scope label{font-size:13px;font-weight:800;color:#cdd8f2}
+.ws15-scope select{color:#f5f6ff;border:1px solid #66749a;border-radius:10px;background:#243152;padding:10px 12px;max-width:100%;min-height:43px;cursor:pointer}
+.ws15-scope select option{background:#18223d}
+.ws15-scope p{flex-basis:100%;margin:0;font-size:12px;color:#a8c4e4;line-height:1.65}
+@media(max-width:560px){.ws15-scope{align-items:stretch;flex-direction:column}.ws15-scope select{width:100%}}

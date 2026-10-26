@@ -2,6 +2,7 @@
 import {loadAccount,learningApi,postAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
 import {selectLearningView} from './ux11-dashboard-model.js';
 import {publicVocabularySummary} from './ux12-catalog-summary.js';
+import {SERVER_PROGRESS_KEY,SOURCE_PREFERENCE_KEY,parseServerProgress,serverCatalogView,saveServerProgress,loadCachedCatalog,validateAndCacheCatalog,lastPersonalSelection} from './ux15-dashboard-data.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -75,6 +76,34 @@ function boot() {
   let account = {kind:'checking'}, accountNotice = '', requestNumber = 0, busy = false;
   let remoteQueue = Promise.resolve(), accountSaving = false;
   let serverVocabularySummary = null;
+  let serverCatalog=null,serverProgress={learned:{},error:null};
+  let selectedScope='auto',manualScope=false,serverCatalogError='';
+  const scopeSelect=byId('ws15Scope');
+  const scopeStatus=byId('ws15ScopeStatus');
+  function scopeView(){
+    const base=selectLearningView(state,account);
+    const server=serverCatalogView(serverCatalog,serverProgress);
+    if(manualScope){
+      if(selectedScope==='local')return base.source==='account'?{...state,source:'browser'}:base;
+      if(selectedScope==='server'&&server)return server;
+      if(selectedScope==='account'&&base.source==='account')return base;
+    }
+    if(base.source==='account')return base;
+    if(server&&!lastPersonalSelection(localStorage))return server;
+    return base;
+  }
+  async function refreshServerCatalog(){
+    try{
+      const res=await fetch('/api/learning/vocabulary',{credentials:'same-origin',cache:'no-store'});
+      if(!res.ok)throw Error('HTTP '+res.status);
+      serverCatalog=validateAndCacheCatalog(localStorage,await res.json());
+      serverCatalogError='';
+    }catch{
+      serverCatalogError='Không kiểm tra được kho từ mới nhất.';
+      try{serverCatalog=loadCachedCatalog(localStorage)}catch{serverCatalog=null}
+    }
+    render();
+  }
   const accountMsg = byId('ws10AccountMessage');
   const accountStats = byId('ws10AccountStats');
   const accountWords = byId('ws10AccountWords');
@@ -248,8 +277,16 @@ function boot() {
     }
   }
   function render() {
-    const view = selectLearningView(state,account);
-    const isAccount = view.source === 'account';
+    const view = scopeView();
+    const isAccount = view.source === 'account',isServer=view.source === 'server';
+    scopeSelect.querySelector('option[value="account"]').disabled=!isAccount&&account.kind!=='ready';
+    scopeSelect.querySelector('option[value="server"]').disabled=!serverCatalog;
+    scopeSelect.value=isAccount?'account':isServer?'server':'local';
+    scopeStatus.textContent=isAccount?'Đang xem tiến độ PostgreSQL theo tài khoản.'
+      :isServer?'Đang xem tiến độ UUID kho máy chủ lưu trên thiết bị này. '+serverCatalogError+
+        ' Trình duyệt khác sẽ không có tiến độ này nếu chưa được đồng bộ vào tài khoản.'
+      :'Đang xem bộ từ cá nhân trên thiết bị này. '+serverCatalogError+
+        ' Dữ liệu trình duyệt khác không tự được chia sẻ.';
     const {total, known, review, percent} = summarize(view.words,view.learned);
     const publicCatalog = byId('ws10PublicCatalog');
     publicCatalog.hidden = !serverVocabularySummary;
@@ -258,28 +295,33 @@ function boot() {
       ' từ / ' + serverVocabularySummary.topics.toLocaleString('vi-VN') +
       ' chủ đề. ' + (isAccount
         ? 'Đây là kho từ đang dùng để tính tiến độ tài khoản.'
-        : 'Bộ Flashcard trên thiết bị là danh sách riêng; hệ thống không tự thay thế bộ từ hoặc xóa tiến độ đã nhớ của bạn.');
-    byId('ws10SourceBadge').textContent = isAccount ? 'ACCOUNT · POSTGRESQL' : 'BROWSER ONLY';
-    byId('ws10HeroScope').textContent = isAccount ? 'ACCOUNT' : 'LOCAL';
-    byId('ws10StorageTitle').textContent = isAccount ? 'Tiến độ theo tài khoản đang đăng nhập' : 'Tiến độ Flashcard trên thiết bị này';
+        : isServer ? 'Số liệu đang hiển thị là tiến độ học kho máy chủ trên thiết bị này.'
+        : 'Bộ Flashcard cá nhân là danh sách riêng; hệ thống không tự thay thế hoặc xóa tiến độ đã nhớ.');
+    byId('ws10SourceBadge').textContent = isAccount ? 'ACCOUNT · POSTGRESQL' : isServer?'SERVER · THIS DEVICE':'PERSONAL · THIS DEVICE';
+    byId('ws10HeroScope').textContent = isAccount ? 'ACCOUNT' : isServer?'SERVER · LOCAL':'PERSONAL · LOCAL';
+    byId('ws10StorageTitle').textContent = isAccount ? 'Tiến độ theo tài khoản đang đăng nhập'
+      : isServer?'Kho từ máy chủ — tiến độ trên thiết bị':'Bộ từ cá nhân — tiến độ trên thiết bị';
     byId('ws10StorageText').textContent = isAccount
-      ? 'Các số liệu phía trên và thư viện từ vựng được đọc từ PostgreSQL theo tài khoản. Bộ Flashcard trên thiết bị vẫn được giữ riêng; bạn có thể chuyển từ cũ có đối chiếu chính xác bằng nút bên dưới.'
-      : account.kind === 'error'
-      ? 'Chưa tải được tiến độ tài khoản: ' + account.message + '. Đang chỉ hiển thị dữ liệu trên trình duyệt này; chưa có dữ liệu nào được đồng bộ.'
-      : 'Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Đăng nhập và đồng bộ để dùng chung tiến độ trên nhiều thiết bị.';
-    byId('ws10TotalHint').textContent = isAccount ? 'Từ đang bật trong kho từ máy chủ' : 'Từ bộ Flashcard lưu trên thiết bị';
-    byId('ws10KnownHint').textContent = isAccount ? 'Đã nhớ theo tài khoản' : 'Bạn đã chọn “Đã nhớ”';
-    byId('ws10ReviewHint').textContent = isAccount ? 'Bao gồm từ chưa học và cần ôn' : 'Chưa đánh dấu “Đã nhớ”';
-    byId('ws10PercentHint').textContent = isAccount ? 'Tỷ lệ trên kho từ máy chủ' : 'Tỷ lệ trong bộ thẻ hiện tại';
-    byId('ws10LibraryHint').textContent = isAccount ? 'Kho từ của tài khoản. Những lần đánh dấu mới được ghi lên PostgreSQL.' : 'Chọn “Đã nhớ” hoặc “Cần ôn” để cập nhật đúng trạng thái Flashcard trên thiết bị.';
-    byId('ws10WordsTitle').textContent = isAccount ? 'Kho từ theo tài khoản ✳' : 'Thư viện từ vựng ✳';
+      ? 'Dữ liệu từ PostgreSQL theo tài khoản; có thể dùng trên trình duyệt khác khi đồng bộ thành công.'
+      : (account.kind==='error'?'Chưa đồng bộ tài khoản: '+account.message+'. ':'') +
+        (isServer?'Các từ lấy từ kho chung PostgreSQL nhưng dấu đã nhớ được lưu riêng theo UUID trong trình duyệt này.'
+          :'Dấu đã nhớ của bộ Flashcard cá nhân chỉ lưu trong trình duyệt này.')+
+        ' Không tự chia sẻ tiến độ giữa Chrome, Safari hoặc điện thoại.';
+    byId('ws10TotalHint').textContent = isAccount||isServer ? 'Từ đang bật trong kho từ máy chủ' : 'Từ bộ Flashcard cá nhân';
+    byId('ws10KnownHint').textContent = isAccount ? 'Đã nhớ theo tài khoản' : isServer?'Đã nhớ trên thiết bị (theo UUID)':'Đã nhớ trên thiết bị (bộ cá nhân)';
+    byId('ws10ReviewHint').textContent = isAccount ? 'Chưa học hoặc cần ôn theo tài khoản' : 'Chưa đánh dấu đã nhớ ở nguồn đang xem';
+    byId('ws10PercentHint').textContent = isAccount ? 'Tỷ lệ theo tài khoản' : 'Tỷ lệ trong nguồn từ vựng đang xem';
+    byId('ws10LibraryHint').textContent = isAccount ? 'Kho từ tài khoản — cập nhật PostgreSQL.'
+      : isServer?'Kho từ máy chủ — thao tác ở đây chỉ đổi tiến độ UUID trên thiết bị.'
+      : 'Bộ từ cá nhân — thao tác cập nhật trạng thái riêng trên thiết bị.';
+    byId('ws10WordsTitle').textContent = isAccount ? 'Kho từ theo tài khoản ✳' : isServer?'Kho từ máy chủ ✳':'Bộ từ cá nhân ✳';
     byId('ws10Total').textContent = total.toLocaleString('vi-VN');
     byId('ws10Known').textContent = known.toLocaleString('vi-VN');
     byId('ws10Review').textContent = review.toLocaleString('vi-VN');
     byId('ws10Percent').textContent = percent + '%';
     byId('ws10RingValue').textContent = percent + '%';
     byId('ws10Ring').style.setProperty('--value', String(percent));
-    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isAccount ? ' từ theo tài khoản' : ' từ đã đánh dấu nhớ trên thiết bị') : (isAccount ? 'Kho từ tài khoản hiện chưa có từ nào.' : 'Chưa có dữ liệu Flashcard trên thiết bị này.');
+    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isAccount ? ' từ theo tài khoản' : isServer?' từ kho máy chủ đã nhớ trên thiết bị':' từ cá nhân đã nhớ trên thiết bị') : 'Chưa có từ vựng trong nguồn đang xem.';
     alert.hidden = !view.error;
     alert.textContent = view.error || '';
     const existingTopic = topicFilter.value;
@@ -315,8 +357,8 @@ function boot() {
       reviewBtn.setAttribute('aria-label', 'Đánh dấu cần ôn: ' + card.english);
       knownBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
       reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
-      knownBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, true) : updateCard(card, true));
-      reviewBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, false) : updateCard(card, false));
+      knownBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, true) : isServer ? updateServerCard(card,true) : updateCard(card,true));
+      reviewBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, false) : isServer ? updateServerCard(card,false) : updateCard(card,false));
       actions.append(knownBtn, reviewBtn);
       row.append(wordCol, meaning, actions);
       fragment.append(row);
@@ -329,7 +371,20 @@ function boot() {
   }
   function reload() {
     Object.assign(state, readLocal());
+    try{serverProgress=parseServerProgress(localStorage.getItem(SERVER_PROGRESS_KEY))}
+    catch{serverProgress={learned:{},error:'Không đọc được tiến độ kho máy chủ. Trình duyệt có thể chặn lưu trữ.'}}
     render();
+  }
+  function updateServerCard(card,remembered) {
+    if(serverProgress.error||!card.word_id)return;
+    try{
+      const next=saveServerProgress(localStorage,card.word_id,remembered);
+      serverProgress={learned:next,error:null};
+      render();
+    }catch(e){
+      serverProgress={...serverProgress,error:e.message||'Không thể lưu tiến độ kho máy chủ.'};
+      render();
+    }
   }
   function updateCard(card, remembered) {
     if (state.error) return;
@@ -342,14 +397,27 @@ function boot() {
       render();
     }
   }
+  scopeSelect.addEventListener('change',()=>{
+    manualScope=true;selectedScope=scopeSelect.value;state.visible=60;
+    if(selectedScope==='server'||selectedScope==='local'){
+      try{localStorage.setItem(SOURCE_PREFERENCE_KEY,selectedScope)}catch{}
+    }
+    render();
+  });
   for (const element of [search, topicFilter, statusFilter]) {
     element.addEventListener(element === search ? 'input' : 'change', () => {state.visible = 60; render()});
   }
   byId('ws10More').addEventListener('click', () => {state.visible += 60; render()});
-  window.addEventListener('storage', event => {if (!event.key || [VOCAB_KEY, LEARNED_KEY].includes(event.key)) reload()});
-  window.addEventListener('focus', () => {reload(); refreshAccount()});
+  window.addEventListener('storage', event => {
+    if(!event.key || [VOCAB_KEY,LEARNED_KEY,SERVER_PROGRESS_KEY,SOURCE_PREFERENCE_KEY].includes(event.key)){
+      reload();
+    }
+  });
+  window.addEventListener('focus', () => {reload();refreshAccount();refreshServerCatalog()});
+  try{serverCatalog=loadCachedCatalog(localStorage)}catch{}
   reload();
   refreshAccount();
+  refreshServerCatalog();
   // A public, read-only catalog count clarifies why a local 260-card deck can
   // differ from the 365-word server library while account sync is unavailable.
   fetch('/api/topics', {credentials:'same-origin',cache:'no-store'})

@@ -36,6 +36,15 @@
     <span class="ws10-storage-icon">⌁</span><div><strong id="ws10StorageTitle">Tiến độ Flashcard trên thiết bị này</strong><p id="ws10StorageText">Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Khi đăng nhập, những từ khớp chính xác có thể đồng bộ riêng lên PostgreSQL; xem mục Tiến độ theo tài khoản bên dưới.</p><p id="ws10PublicCatalog" class="ws10-server-catalog" role="status" aria-live="polite" hidden></p></div><span class="ws10-storage-badge" id="ws10SourceBadge">BROWSER ONLY</span>
   </section>
 
+  <section class="ws15-scope" aria-label="Chọn nguồn thống kê">
+    <label for="ws15Scope">Đang xem tiến độ</label>
+    <select id="ws15Scope" aria-label="Chọn nguồn từ vựng">
+      <option value="account" disabled>Tài khoản · PostgreSQL</option>
+      <option value="server" disabled>Kho từ máy chủ · thiết bị này</option>
+      <option value="local">Bộ từ cá nhân · thiết bị này</option>
+    </select>
+    <p id="ws15ScopeStatus" role="status" aria-live="polite">Đang kiểm tra các nguồn từ vựng…</p>
+  </section>
   <section class="ws10-metrics" aria-label="Thống kê học tập">
     <article class="ws10-stat"><span class="ws10-stat-icon purple">▦</span><span class="ws10-stat-label">TỔNG SỐ THẺ TỪ</span><strong id="ws10Total">0</strong><small id="ws10TotalHint">Từ bộ Flashcard lưu trên thiết bị</small></article>
     <article class="ws10-stat"><span class="ws10-stat-icon mint">✓</span><span class="ws10-stat-label">ĐÃ ĐÁNH DẤU NHỚ</span><strong id="ws10Known">0</strong><small id="ws10KnownHint">Bạn đã chọn “Đã nhớ”</small></article>
