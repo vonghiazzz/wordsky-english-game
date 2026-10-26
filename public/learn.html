@@ -318,15 +318,15 @@ function makeOption(value,label){const o=document.createElement('option');o.valu
 function renderSelectors(){
   const active=flashTopics(),names=Object.keys(active);
   if(!active[topic])topic=names[0];
-  if(!DATA[managerTopic])managerTopic=names[0];
+  if(!DATA[managerTopic])managerTopic=Object.keys(DATA)[0];
   if(gameTopic!=='__all'&&!DATA[gameTopic])gameTopic='__all';
   $('topic').replaceChildren(...names.map(t=>makeOption(t,`${t} (${active[t].length})`)));
   $('topic').value=topic;
   $('managerTopic').replaceChildren(...Object.keys(DATA).map(t=>makeOption(t,`${t} (${DATA[t].length})`)));
   $('managerTopic').value=managerTopic;
-  $('gameTopic').replaceChildren(makeOption('__all','Tất cả chủ đề'),...names.map(t=>makeOption(t,`${t} (${DATA[t].length})`)));
+  $('gameTopic').replaceChildren(makeOption('__all','Tất cả chủ đề'),...Object.keys(DATA).map(t=>makeOption(t,`${t} (${DATA[t].length})`)));
   $('gameTopic').value=gameTopic;
-  $('topicCount').textContent=names.length;
+  $('topicCount').textContent=Object.keys(DATA).length;
   $('wordCount').textContent=Object.values(DATA).reduce((sum,arr)=>sum+arr.length,0);
 }
 function renderCard(){
