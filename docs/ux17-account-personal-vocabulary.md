@@ -13,7 +13,7 @@
 4. `/personal.html`: cloud list, remote edit/remember actions, explicit browser import, login status and status messages, linked from Flashcard manager and My Learning.
 
 ## Explicit limitations
-- Existing personal Flashcard/editor continues to use localStorage; the cloud list is a **separate screen** in this first slice. No automatic bidirectional sync of editor changes, no offline conflict merge, and no automatic local overwrite. Review the UX before deciding if the cloud editor should become the default authenticated Flashcard editor.
+- The original **Bộ từ cá nhân** manager/editor continues browser-local and is never silently overwritten. Authenticated learners can separately select **Bộ từ tài khoản** directly in Flashcards, mark remembered with optimistic PostgreSQL updates, and use **Bộ từ cá nhân · tài khoản** as a fourth source in My Learning. The standalone /personal.html editor remains available to modify cloud cards. No automatic bidirectional sync of existing browser-manager edits and no offline conflict merge; legacy cards require explicit import.
 - Personal remembered state is stored in each private card row for this slice; separate immutable history/SRS remains a later phase.
 - Editing topic/English does not alter the original import identity, deliberately preventing a subsequent import from silently overwriting an edited cloud card. Manual duplicate reconciliation remains a later improvement.
 - This migration is independent of UX-10's two `ws_learning_*` account-progress tables. Those are still required for cross-browser **shared server vocabulary** review history.
@@ -23,3 +23,8 @@
 - Isolated Preview: apply additive migration; check RLS and direct role grants.
 - Test guest forbidden, two separate authenticated users cannot read/edit each other's records, same-user cross-browser cloud read/write, duplicate import idempotency and optimistic 409, localStorage preservation, desktop/mobile.
 - Require **separate explicit approval** for Production migration and code merge.
+
+## Additional acceptance evidence
+- Flashcard account source: Chromium first-browser PATCH + reload 9/9 checked, second-browser Cloud source 6/6 checked; legacy local progress preserved. One initial test timed out at `networkidle`; targeted `domcontentloaded`/UI-wait rerun passed.
+- My Learning account-personal scope: final Chromium 9/9 checks PASS, including authenticated PATCH, second browser showing same cloud remembered count, no localStorage copy and mobile width 390px.
+- Repository regression at application commit `27b9ec1f1c38a1c80989a3fd0faaec07170f22ad`: 291/291 PASS. No Production DDL or main merge.
