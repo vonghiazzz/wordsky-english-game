@@ -43,3 +43,8 @@
 .ws15-scope select option{background:#18223d}
 .ws15-scope p{flex-basis:100%;margin:0;font-size:12px;color:#a8c4e4;line-height:1.65}
 @media(max-width:560px){.ws15-scope{align-items:stretch;flex-direction:column}.ws15-scope select{width:100%}}
+
+#ws19AccountStatus{color:#a8ebce;margin:0 0 9px;font-weight:750;line-height:1.55}
+
+/* UX-19: respect native hidden on legacy scope panels when account sync is ready. */
+.ws10-page [hidden]{display:none!important}
