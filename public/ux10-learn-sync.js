@@ -1,7 +1,9 @@
 /* Account reviews are an enhancement: the legacy Flashcard saves locally first.
  * Do not automatically copy prior local progress or infer a DB word by name. */
 import {loadAccount,exactCatalogMatch,postAccountReview} from './ux10-account-core.js';
-const accountPromise = loadAccount().catch(() => ({kind:'unavailable'}));
+let accountPromise = loadAccount().catch(() => ({kind:'unavailable'}));
+// Login/logout can happen in another tab while this Flashcard stays open.
+window.addEventListener('focus', () => {accountPromise = loadAccount().catch(() => ({kind:'unavailable'}));});
 let queue = Promise.resolve();
 function announce(message,error=false) {
   window.dispatchEvent(new CustomEvent('wordsky:flashcard-sync-status',{detail:{message,error}}));

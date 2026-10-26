@@ -86,3 +86,15 @@ test('Local cards remain visibly separated from account-synced totals and scope'
  assert.match(html,/id="ws10Known"/);
  assert.match(html,/id="ws10Import"/);
 });
+
+test('UX10 review queue survives focus refresh and never posts under a switched account',()=>{
+ const ui=readFileSync(new URL('../public/ux10-progress.js',import.meta.url),'utf8');
+ const sync=readFileSync(new URL('../public/ux10-learn-sync.js',import.meta.url),'utf8');
+ assert.match(ui,/const clickedBy = account\.kind === 'ready' \? account\.actor\.id : null/);
+ assert.match(ui,/const currentSession = await learningApi\('auth\/me'\)/);
+ assert.match(ui,/if \(clickedBy && clickedBy !== currentSession\.actor\.id\)/);
+ assert.match(ui,/await postAccountReview\(target\.word_id, remembered\)/);
+ assert.match(ui,/await refreshAccount\(\)/);
+ assert.doesNotMatch(ui,/if \(account\.kind !== 'ready' \|\| account\.actor\.id !== sessionId\) return/);
+ assert.match(sync,/window\.addEventListener\('focus', \(\) => \{accountPromise = loadAccount\(\)/);
+});

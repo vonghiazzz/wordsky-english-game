@@ -1,5 +1,5 @@
 /* WordSky UX-10: browser-only local progress and separately authenticated account progress. */
-import {loadAccount,postAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
+import {loadAccount,learningApi,postAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -145,27 +145,40 @@ function boot() {
     displayAccount();
   }
   function queueReview(card, remembered) {
-    if (account.kind !== 'ready') return;
-    const sessionId = account.actor.id;
-    const target = exactCatalogMatch(card, account.index);
-    if (!target) {
-      showNotice('Từ này chỉ được lưu trên trình duyệt vì không khớp chính xác với dữ liệu tài khoản.');
-      return;
-    }
+    // Capture the actor at click time. A window-focus event may start refreshing
+    // account state before the queued review executes; never silently drop it.
+    const clickedBy = account.kind === 'ready' ? account.actor.id : null;
     remoteQueue = remoteQueue.then(async () => {
-      // Never send a review under another actor if session changed.
-      if (account.kind !== 'ready' || account.actor.id !== sessionId) return;
       try {
+        const currentSession = await learningApi('auth/me');
+        if (currentSession.actor?.role !== 'player' || !currentSession.actor.id) {
+          if (clickedBy) showNotice('Phiên đăng nhập đã kết thúc. Từ vẫn được lưu trên thiết bị.');
+          return;
+        }
+        if (clickedBy && clickedBy !== currentSession.actor.id) {
+          showNotice('Tài khoản đã thay đổi. Không gửi tiến độ của phiên trước sang tài khoản mới.');
+          return;
+        }
+        const active = account.kind === 'ready' && account.actor.id === currentSession.actor.id
+          ? account : await loadAccount();
+        if (active.kind !== 'ready' || active.actor.id !== currentSession.actor.id) {
+          showNotice('Từ đã lưu trên thiết bị. Chưa xác nhận được tài khoản để đồng bộ.');
+          return;
+        }
+        const target = exactCatalogMatch(card, active.index);
+        if (!target) {
+          showNotice('Từ này chỉ lưu trên trình duyệt vì không khớp chính xác với dữ liệu tài khoản.');
+          return;
+        }
         await postAccountReview(target.word_id, remembered);
-        const current = account.words.find(w => w.word_id === target.word_id);
-        if (current) current.remembered = remembered;
-        else account.words.unshift({word_id:target.word_id,english:card.english,topic:card.topic,remembered});
-        accountNotice = 'Đã lưu từ “' + card.english + '” lên tài khoản.';
+        // Refresh from the server so a concurrent focus refresh cannot replace
+        // the newer review with a stale in-memory account snapshot.
+        await refreshAccount();
+        showNotice('Đã lưu từ “' + card.english + '” lên tài khoản.');
       } catch (error) {
-        accountNotice = 'Từ vẫn được lưu trên thiết bị; đồng bộ tài khoản thất bại: ' + error.message;
+        showNotice('Từ vẫn được lưu trên thiết bị; đồng bộ tài khoản thất bại: ' + error.message);
       }
-      displayAccount();
-    }).catch(()=>{showNotice('Không thể đồng bộ; dữ liệu trên trình duyệt được giữ nguyên.')});
+    }).catch(() => showNotice('Không thể đồng bộ; dữ liệu trên trình duyệt được giữ nguyên.'));
   }
   accountImport.addEventListener('click', async () => {
     if (account.kind !== 'ready' || busy) return;
