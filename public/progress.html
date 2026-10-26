@@ -40,11 +40,13 @@
   <section class="ws15-scope" aria-label="Chọn nguồn thống kê">
     <label for="ws15Scope">Đang xem tiến độ</label>
     <select id="ws15Scope" aria-label="Chọn nguồn từ vựng">
-      <option value="account" disabled>Tài khoản · PostgreSQL</option>
+      <option value="account" disabled>365 từ chung · tài khoản</option>
+      <option value="personal-account" disabled>Bộ từ cá nhân · tài khoản</option>
       <option value="server" disabled>Kho từ máy chủ · thiết bị này</option>
       <option value="local">Bộ từ cá nhân · thiết bị này</option>
     </select>
     <p id="ws15ScopeStatus" role="status" aria-live="polite">Đang kiểm tra các nguồn từ vựng…</p>
+    <p id="ws17CloudCount" class="ws10-import-info" aria-live="polite">Đang tải bộ từ theo tài khoản…</p>
   </section>
   <section class="ws10-metrics" aria-label="Thống kê học tập">
     <article class="ws10-stat"><span class="ws10-stat-icon purple">▦</span><span class="ws10-stat-label">TỔNG SỐ THẺ TỪ</span><strong id="ws10Total">0</strong><small id="ws10TotalHint">Từ bộ Flashcard lưu trên thiết bị</small></article>
