@@ -20,7 +20,7 @@ test('UX12 UI contrasts backend count with browser-only data and preserves stora
  const js=readFileSync(new URL('../public/ux10-progress.js',import.meta.url),'utf8');
  assert.match(html,/id="ws10PublicCatalog"/);
  assert.match(js,/fetch\('\/api\/topics'/);
- assert.match(js,/Bộ Flashcard trên thiết bị là danh sách riêng/);
+ assert.match(js,/Bộ Flashcard cá nhân là danh sách riêng/);
  assert.match(js,/publicCatalog.hidden = !serverVocabularySummary/);
  assert.doesNotMatch(js,/localStorage.clear\(/);
 });
