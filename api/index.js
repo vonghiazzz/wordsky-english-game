@@ -3,6 +3,7 @@ import {sql,transaction} from '../lib/db.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
+import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
 
 const AUTH_COOKIE='ws_auth';
 const SOLO_COOKIE='ws_solo';
@@ -462,6 +463,9 @@ export default async function handler(req,res){
   if(!['GET','POST','PATCH','DELETE'].includes(req.method))return output(res,405,{error:'Phương thức không được hỗ trợ'});
   if(req.method!=='GET'&&!sameOrigin(req))return output(res,403,{error:'Invalid origin'});
   const r=route(req),method=req.method,key=r.join('/');
+  if(method==='POST'&&key==='learning/flashcards/reviews')return output(res,201,await recordFlashcardReview(mustPlayer(req).id,body(req)));
+  if(method==='GET'&&key==='learning/flashcards/progress')return output(res,200,await getFlashcardProgress(mustPlayer(req).id));
+  if(method==='GET'&&key==='learning/flashcards/catalog'){mustPlayer(req);return output(res,200,await getFlashcardCatalog());}
   if(method==='GET'&&key==='health')return output(res,200,{ok:true,service:'wordsky-v4',database:!!process.env.DATABASE_URL});
   if(method==='POST'&&key==='auth/login')return output(res,200,await signIn(req,res));
   if(method==='POST'&&key==='auth/signup')return output(res,201,await signUp(req,res));
@@ -558,6 +562,7 @@ export default async function handler(req,res){
   if(method==='POST'&&r[0]==='rooms'&&r[1]&&r[2]==='runs'&&r[3]&&r[4]==='answer')return output(res,200,await playRound(req,r[1],r[3],body(req)));
   return output(res,404,{error:'API không tồn tại'});
  }catch(e){
+  if(e.code==='42P01'&&r?.[0]==='learning')return output(res,503,{error:'Đồng bộ tài khoản chưa được bật trên database này.'});
   if(e.code==='23505')return output(res,409,{error:'Dữ liệu đã tồn tại'});
   if(e.code==='23503')return output(res,400,{error:'Chủ đề hoặc dữ liệu tham chiếu không tồn tại'});
   const status=Number(e.status)||500;if(status>=500)console.error('WordSky API internal error',e?.message);

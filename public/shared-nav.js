@@ -4,10 +4,13 @@
  const mount=document.getElementById('wsSharedNav');
  if(!mount)return;
  const isLearn=mount.dataset.wsPage==='learn';
+ const isProgress=mount.dataset.wsPage==='progress';
+ const isLearningPage=isLearn||isProgress;
  const menuItems=[
   {key:'home',label:'Trang chủ',url:'/#home',arena:'home'},
   {key:'flash',label:'Học từ',url:'/learn.html#flash'},
   {key:'game',label:'Chữ rơi',url:'/learn.html#game'},
+  {key:'learning-progress',label:'My Learning',url:'/progress.html'},
   {key:'solo',label:'Chơi Solo',url:'/#solo',arena:'solo'},
   {key:'solo-bomb',label:'BOMB Solo',url:'/#solo-bomb',arena:'solo-bomb'},
   {key:'solo-car',label:'CAR Solo',url:'/#solo-car',arena:'solo-car'},
@@ -31,6 +34,7 @@
    <button class="ws-nav-link ws-nav-games-toggle ws-nav-progress-toggle" type="button" data-ws-progress-toggle aria-expanded="false" aria-controls="wsNavProgressList">📈 Tiến độ <span class="ws-nav-chevron" aria-hidden="true">⌄</span></button>
    <div class="ws-nav-games-list ws-nav-progress-list" id="wsNavProgressList" hidden>
     <span class="ws-nav-games-caption">THÀNH TÍCH</span>
+    ${navLink(menuItems.find(item=>item.key==='learning-progress'))}
     ${navLink(menuItems.find(item=>item.key==='attendance'))}
     ${navLink(menuItems.find(item=>item.key==='rank'))}
    </div>
@@ -47,7 +51,7 @@
   <a class="ws-site-logo" href="/" aria-label="WordSky - Về trang chủ"><span class="ws-logo-mark" aria-hidden="true">✦</span><span>Word<span class="ws-logo-sky">Sky</span><small>ENGLISH</small></span></a>
   <button class="ws-nav-toggle" type="button" aria-expanded="false" aria-label="Mở menu" aria-controls="wsNavLinks">☰</button>
   <nav class="ws-site-links" id="wsNavLinks" aria-label="Điều hướng WordSky">${navMarkup}</nav>
-  ${isLearn?'<span class="ws-guest-note">Học miễn phí</span>':'<button class="accountbtn ws-site-account" id="accountButton" type="button">Đăng nhập <span>↗</span></button>'}
+  ${isLearningPage?'<span class="ws-guest-note">Học miễn phí</span>':'<button class="accountbtn ws-site-account" id="accountButton" type="button">Đăng nhập <span>↗</span></button>'}
  </div></header>
  <nav class="ws-mobile-dock" aria-label="Điều hướng nhanh">
   <a href="/#home" data-ws-dock="home"><span aria-hidden="true">⌂</span><small>Trang chủ</small></a>
@@ -84,6 +88,7 @@
  }
  function activeKey(){
   const hash=window.location.hash.replace(/^#/,'').toLowerCase();
+  if(isProgress)return 'learning-progress';
   if(isLearn)return hash==='game'?'game':'flash';
   return ['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'].includes(hash)?hash:'home';
  }
@@ -95,14 +100,14 @@
    if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
   }
   gamesToggle.classList.toggle('is-active',gameKeys.has(active)&&active!=='rooms');
-  progressToggle.classList.toggle('is-active',active==='attendance'||active==='rank');
+  progressToggle.classList.toggle('is-active',active==='attendance'||active==='rank'||active==='learning-progress');
   // Hide the bottom dock in games/room to keep typing and Ready controls uncovered.
-  const dockHidden=isLearn?active==='game':['solo','solo-bomb','solo-car','rooms'].includes(active);
+  const dockHidden=isLearn?active==='game':!isProgress&&['solo','solo-bomb','solo-car','rooms'].includes(active);
   mount.classList.toggle('ws-dock-hidden',dockHidden);
   document.body.classList.toggle('ws-mobile-dock-visible',!dockHidden);
   for(const a of mount.querySelectorAll('[data-ws-dock]')){
    const key=a.dataset.wsDock;
-   const current=key==='solo'?gameKeys.has(active)&&active!=='rooms':key==='attendance'?['attendance','rank'].includes(active):key===active;
+   const current=key==='solo'?gameKeys.has(active)&&active!=='rooms':key==='attendance'?['attendance','rank','learning-progress'].includes(active):key===active;
    a.classList.toggle('is-active',current);
    if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
   }

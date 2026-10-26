@@ -122,7 +122,7 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
  <div class="ws05-hero-copy"><div class="kicker">WORDSKY LEARN · THỰC HÀNH MỖI NGÀY</div>
  <h1 id="ws05HeroTitle">Học từ mỗi ngày.<br><em>Nhớ bằng hành động.</em></h1>
  <p>Học nghĩa, phiên âm và ví dụ với Flashcard. Sau đó thử phản xạ trong Chữ rơi, bằng cách bắt chữ cái hoặc gõ cả từ.</p>
- <div class="ws05-hero-actions"><button type="button" class="ws05-action ws05-action-primary" data-ws05-tab="flash">📚 Ôn Flashcard →</button><button type="button" class="ws05-action" data-ws05-tab="game">🌠 Chơi Chữ rơi →</button></div>
+ <div class="ws05-hero-actions"><a class="ws05-action" href="/progress.html" style="text-decoration:none">📈 My Learning →</a><button type="button" class="ws05-action ws05-action-primary" data-ws05-tab="flash">📚 Ôn Flashcard →</button><button type="button" class="ws05-action" data-ws05-tab="game">🌠 Chơi Chữ rơi →</button></div>
  <div class="ws05-hero-fine">Học miễn phí · Không cần tài khoản · Tiến độ lưu trên trình duyệt này</div></div>
  <div class="ws05-visual" aria-hidden="true"><div class="ws05-orbit"></div><div class="ws05-visual-card"><span>📚</span><strong>LEARN &amp; PLAY</strong></div><div class="ws05-visual-badge">✦ Mỗi ngày một từ mới</div></div>
  </section>
@@ -134,7 +134,7 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
  </div>
  </section>
 <nav class="tabs" aria-label="Chế độ học"><button class="tab active" id="flashTab" aria-selected="true">🃏 Flashcard</button><button class="tab" id="gameTab" aria-selected="false">🌠 Game chữ rơi</button><button class="tab" id="manageTab" aria-selected="false">⚙️ Quản lý từ vựng</button></nav>
-<section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng.</p><div class="ws05-steps" aria-label="Hướng dẫn dùng Flashcard"><span><b>01</b> Chọn chủ đề</span><span><b>02</b> Lật thẻ xem nghĩa</span><span><b>03</b> Đánh dấu đã nhớ</span></div><div class="ws05-flash-readout" id="ws05FlashReadout" role="status" aria-live="off">Đang tải thông tin thẻ…</div><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button><form id="cambridgeLookupForm" class="cambridge-form" action="https://dictionary.cambridge.org/search/english/direct/" method="get" target="_blank" rel="noopener noreferrer" aria-label="Tra từ hiện tại trên Cambridge Dictionary"><input type="hidden" name="q" id="cambridgeTerm"><input type="hidden" name="utm_source" value="widget_searchbox_source"><input type="hidden" name="utm_medium" value="widget_searchbox"><input type="hidden" name="utm_campaign" value="widget_tracking"><button type="submit" class="secondary" id="cambridgeLookupSubmit" disabled>📖 Tra Cambridge ↗</button></form></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny">Tiến độ được lưu trên trình duyệt này.</p></div><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
+<section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng.</p><div class="ws05-steps" aria-label="Hướng dẫn dùng Flashcard"><span><b>01</b> Chọn chủ đề</span><span><b>02</b> Lật thẻ xem nghĩa</span><span><b>03</b> Đánh dấu đã nhớ</span></div><div class="ws05-flash-readout" id="ws05FlashReadout" role="status" aria-live="off">Đang tải thông tin thẻ…</div><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button><form id="cambridgeLookupForm" class="cambridge-form" action="https://dictionary.cambridge.org/search/english/direct/" method="get" target="_blank" rel="noopener noreferrer" aria-label="Tra từ hiện tại trên Cambridge Dictionary"><input type="hidden" name="q" id="cambridgeTerm"><input type="hidden" name="utm_source" value="widget_searchbox_source"><input type="hidden" name="utm_medium" value="widget_searchbox"><input type="hidden" name="utm_campaign" value="widget_tracking"><button type="submit" class="secondary" id="cambridgeLookupSubmit" disabled>📖 Tra Cambridge ↗</button></form></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny">Tiến độ được lưu trên trình duyệt này.</p></div><a class="secondary" href="/progress.html" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">📊 Xem toàn bộ tiến độ</a><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
 <section class="panel hidden" id="gamePanel"><div class="toolbar"><h2>🌠 Bắt chữ rơi</h2><div class="controls"><label for="gameTopic">Chủ đề:</label><select id="gameTopic"></select><label for="gameMode">Chế độ:</label><select id="gameMode"><option value="letters">🔠 Bắt chữ cái</option><option value="typing">⚡ Gõ cả từ</option></select><label for="difficulty">Tốc độ:</label><select id="difficulty"><option value="easy">Dễ</option><option value="normal">Vừa</option><option value="hard">Khó</option></select><label for="wordLimit">Số từ:</label><input id="wordLimit" type="number" min="1" max="50" step="1" value="10" inputmode="numeric" aria-label="Số từ mỗi lượt chơi" style="width:77px"></div></div><div class="game-profile"><div class="name-field"><label for="playerName">👤 Tên người chơi</label><input id="playerName" type="text" maxlength="24" placeholder="Ví dụ: Nghĩa" autocomplete="nickname" aria-describedby="playerHelp"></div><p class="profile-help" id="playerHelp">Nhập tên trước khi bắt đầu. Điểm được ghi theo tên để hai người so tài trên cùng trình duyệt.</p></div>
 <aside class="ws05-game-intro" aria-label="Cấu hình chơi Chữ rơi"><div><strong>🎯 Chuẩn bị thử thách</strong><p>Chọn chủ đề, chế độ, tốc độ và số từ rồi nhấn Bắt đầu chơi. Chế độ Gõ cả từ dùng bàn phím native.</p></div><output class="ws05-config-chip" id="ws05GameConfig" aria-label="Cấu hình đang chọn">Đang tải cấu hình…</output></aside>
 <div id="gameRules" class="rule">🎯 <b>Bắt chữ cái:</b> Nhìn nghĩa tiếng Việt, chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z. Chọn sai hoặc bỏ lỡ chữ đúng mất 1 tim.</div><div class="game-header"><div class="metric"><strong id="score">0</strong><span>Điểm</span></div><div class="metric"><strong id="hearts">❤️❤️❤️</strong><span>Máu</span></div><div class="metric"><strong id="round">0 / 10</strong><span>Số từ</span></div><div class="metric"><strong id="best">0</strong><span>Kỷ lục của bạn</span></div></div><div class="prompt" aria-live="polite"><div class="translation" id="clue">Bắt đầu trò chơi để nhận câu hỏi</div><div class="blanks" id="blanks">_ _ _ _ _</div></div><div class="game-area" id="gameArea" aria-label="Khu vực chữ rơi"><div class="typing-hud hidden" id="typingHud" aria-live="off"><span id="typingTime">⏱ --</span><span id="typingCount">✅ 0 từ đúng</span></div><button type="button" class="game-fullscreen" id="fullscreenGame" aria-label="Phóng to toàn màn hình game" title="Toàn màn hình">⛶</button><div class="typing-dock hidden" id="typingDock"><form class="typing-form" id="typingForm" autocomplete="off"><input id="typingAnswer" type="text" maxlength="45" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Nhập tiếng Anh rồi nhấn Enter…" aria-label="Nhập cả từ tiếng Anh" disabled></form></div><div class="cloud" style="left:10%;top:14%">☁</div><div class="cloud" style="right:10%;top:60%">☁</div><div id="gameOverlay" class="game-overlay"><div class="overlay-box"><h3 id="overlayTitle">Sẵn sàng chưa? 🚀</h3><p id="overlayText">Các từ vựng ngẫu nhiên đang chờ. Chạm vào chữ cái đang rơi hoặc dùng bàn phím để điền từ!</p><button class="primary" id="startGame">▶ Bắt đầu chơi</button></div></div></div><div class="game-footer"><div class="feedback" id="feedback" aria-live="polite"></div><div class="controls"><button class="secondary" id="pauseGame" disabled>⏸ Tạm dừng</button><button class="secondary" id="restartGame">↻ Chơi lại</button></div></div><p class="key-hint" id="gameHint">Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab trình duyệt.</p>
@@ -246,7 +246,11 @@ let gameTopic='__all';
 const $notify=$('notice');let noteTimer;
 function note(message,error=false){$notify.textContent=message;$notify.classList.toggle('error',error);$notify.classList.add('show');clearTimeout(noteTimer);noteTimer=setTimeout(()=>$notify.classList.remove('show'),4000)}
 function saveTopics(){if(!safeStorage.write(STORE,JSON.stringify({version:2,topics:DATA}))){note('Không lưu được dữ liệu. Kiểm tra chế độ ẩn danh hoặc bộ nhớ trình duyệt.',true);return false}return true}
-function saveLearned(){safeStorage.write(PROGRESS,JSON.stringify(learned))}
+function saveLearned(){
+  if(safeStorage.write(PROGRESS,JSON.stringify(learned)))return true;
+  note('Không lưu được tiến độ đã nhớ. Kiểm tra quyền lưu trữ của trình duyệt.',true);
+  return false;
+}
 // Restore only Daily Life. Keep user-created topics and edited/learned cards intact.
 function restoreDailyLife({select=true,announce=true}={}){
   const existing=Object.keys(DATA).find(t=>t.toLowerCase()==='daily life');
@@ -341,7 +345,24 @@ function advance(n){if(!cards.length)return;cardIndex=(cardIndex+n+cards.length)
 $('flashCard').addEventListener('click',()=>{if(cards.length)$('flashCard').classList.toggle('flipped')});
 $('flashCard').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('flashCard').click()}});
 $('prev').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);
-$('know').onclick=()=>{if(!cards.length)return;learned[key(topic,cards[cardIndex][0])]=true;saveLearned();advance(1)};
+$('know').onclick=()=>{
+  if(!cards.length)return;
+  const mark=key(topic,cards[cardIndex][0]);
+  const previous=learned[mark];
+  learned[mark]=true;
+  if(!saveLearned()){
+    if(previous===undefined)delete learned[mark];else learned[mark]=previous;
+    return;
+  }
+  // Report the exact card after local persistence; account sync is best-effort.
+  window.dispatchEvent(new CustomEvent('wordsky:flashcard-reviewed',{
+    detail:{topic,card:[...cards[cardIndex]],remembered:true}
+  }));
+  advance(1);
+};
+window.addEventListener('wordsky:flashcard-sync-status',event=>{
+  if(event.detail?.message)note(event.detail.message,!!event.detail.error);
+});
 $('resetProgress').onclick=()=>{cards.forEach(c=>delete learned[key(topic,c[0])]);saveLearned();cardIndex=0;renderCard()};
 $('shuffle').onclick=()=>{DATA[topic].sort(()=>Math.random()-.5);cardIndex=0;renderCard()};
 $('topic').onchange=e=>{topic=e.target.value;cardIndex=0;renderCard()};
@@ -720,6 +741,10 @@ displayGameMode();renderScores();
 for(let i=0;i<35;i++){const star=document.createElement('i');star.className='star';star.style.left=Math.random()*100+'%';star.style.top=Math.random()*100+'%';star.style.width=star.style.height=(Math.random()*2+1)+'px';$('gameArea').append(star)}
 recoverDeletedDailyLifeOnce();
 installTopicPackOnce();
+// UX-10: sample Flashcards can be rendered without a saved vocabulary key.
+// Persist that actual in-memory deck once so My Learning can match its legacy
+// topic:english keys. Never overwrite existing (including malformed) data.
+if(!loaded&&safeStorage.read(STORE)===null)saveTopics();
 renderSelectors();renderCard();renderManager();
 
-</script><script src="/ux05-learn.js" defer></script></body></html>
+</script><script src="/ux05-learn.js" defer></script><script type="module" src="/ux10-learn-sync.js"></script></body></html>
