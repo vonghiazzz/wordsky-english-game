@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1226">
-<meta name="description" content="Theo dõi hành trình ghi nhớ Flashcard WordSky trên trình duyệt của bạn.">
+<meta name="description" content="My Learning WordSky: một tiến độ PostgreSQL theo tài khoản trên mọi thiết bị.">
 <title>My Learning · WordSky</title>
 <link rel="stylesheet" href="/shared-nav.css">
 <link rel="stylesheet" href="/ux-design-system.css">
@@ -34,7 +34,7 @@
   </header>
 
   <section class="ws10-storage" aria-label="Phạm vi lưu trữ">
-    <span class="ws10-storage-icon">⌁</span><div><strong id="ws10StorageTitle">Tiến độ Flashcard trên thiết bị này</strong><p id="ws10StorageText">Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Khi đăng nhập, những từ khớp chính xác có thể đồng bộ riêng lên PostgreSQL; xem mục Tiến độ theo tài khoản bên dưới.</p><p id="ws10PublicCatalog" class="ws10-server-catalog" role="status" aria-live="polite" hidden></p></div><span class="ws10-storage-badge" id="ws10SourceBadge">BROWSER ONLY</span>
+    <span class="ws10-storage-icon">⌁</span><div><p id="ws19AccountStatus" role="status" aria-live="polite" hidden></p><strong id="ws10StorageTitle">Tiến độ Flashcard trên thiết bị này</strong><p id="ws10StorageText">Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Khi đăng nhập, những từ khớp chính xác có thể đồng bộ riêng lên PostgreSQL; xem mục Tiến độ theo tài khoản bên dưới.</p><p id="ws10PublicCatalog" class="ws10-server-catalog" role="status" aria-live="polite" hidden></p></div><span class="ws10-storage-badge" id="ws10SourceBadge">BROWSER ONLY</span>
   </section>
 
   <section class="ws15-scope" aria-label="Chọn nguồn thống kê">
@@ -66,7 +66,7 @@
     <div class="ws10-account-icon" aria-hidden="true">☁</div>
     <div class="ws10-account-inner">
       <span class="ws10-overline">ACCOUNT-SYNCED PROGRESS</span>
-      <h2>Tiến độ theo tài khoản</h2>
+      <h2>Chuyển tiến độ cũ lên tài khoản</h2>
       <p id="ws10AccountMessage" role="status" aria-live="polite">Đang kiểm tra phiên đăng nhập…</p>
       <p id="ws10AccountNotice" class="ws10-account-notice" role="status" aria-live="polite" hidden></p>
       <div id="ws10AccountStats" class="ws10-account-stats" hidden>

@@ -4,6 +4,7 @@ import {selectLearningView} from './ux11-dashboard-model.js';
 import {publicVocabularySummary} from './ux12-catalog-summary.js';
 import {SERVER_PROGRESS_KEY,SOURCE_PREFERENCE_KEY,parseServerProgress,serverCatalogView,saveServerProgress,loadCachedCatalog,validateAndCacheCatalog,lastPersonalSelection} from './ux15-dashboard-data.js';
 import {eligibleServerImports} from './ux16-account-import.js';
+import {buildUnifiedAccountView} from './ux19-unified-account.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -79,10 +80,43 @@ function boot() {
   let serverVocabularySummary = null;
   let serverCatalog=null,serverProgress={learned:{},error:null};
   let selectedScope='auto',manualScope=false,serverCatalogError='';
+  let unified={kind:'checking'},unifiedTicket=0,unifiedSaving=false;
+  const unifiedStatus=byId('ws19AccountStatus');
+  async function refreshUnified() {
+    const ticket=++unifiedTicket;
+    unified={kind:'checking'};render();
+    try {
+      const auth=await learningApi('auth/me');
+      if(auth.actor?.role!=='player'||!auth.actor?.id) {
+        if(ticket!==unifiedTicket)return;
+        unified={kind:'guest'};
+        ++requestNumber;account={kind:'guest'};
+        render();return;
+      }
+      const actorId=auth.actor.id;
+      const payload=await learningApi('learning/me/summary');
+      const view=buildUnifiedAccountView(payload,actorId);
+      const active=await learningApi('auth/me');
+      if(active.actor?.role!=='player'||active.actor.id!==actorId)
+        throw Error('Phiên đăng nhập đã thay đổi; không hiển thị dữ liệu của tài khoản trước.');
+      if(ticket!==unifiedTicket)return;
+      unified={kind:'ready',actor:auth.actor,view};
+    } catch(e) {
+      if(ticket!==unifiedTicket)return;
+      unified={kind:'error',message:e.message||'Không thể tải tiến độ'};
+    }
+    if(ticket===unifiedTicket)render();
+  }
   const scopeSelect=byId('ws15Scope');
   const scopeStatus=byId('ws15ScopeStatus');
   function scopeView(){
-    const base=selectLearningView(state,account);
+    if(unified.kind==='ready')return unified.view;
+    if(unified.kind==='error')return {source:'unified-error',words:[],learned:{},initialized:true,
+      error:'Chưa tải được tiến độ từ tài khoản PostgreSQL: '+unified.message+
+        '. Không sử dụng số liệu trên thiết bị để thay thế kết quả tài khoản.'};
+    if(unified.kind==='checking')return {source:'unified-pending',words:[],learned:{},initialized:false,
+      error:null};
+    const base=selectLearningView(state,{kind:'guest'});
     const server=serverCatalogView(serverCatalog,serverProgress);
     if(manualScope){
       if(selectedScope==='local')return base.source==='account'?{...state,source:'browser'}:base;
@@ -116,10 +150,10 @@ function boot() {
   const importInfo = byId('ws10ImportInfo');
   function showNotice(message) {accountNotice = message; displayAccount();}
   function displayAccount() {
-    const ready = account.kind === 'ready';
+    const ready = account.kind === 'ready' && (unified.kind!=='ready' || account.actor.id===unified.actor.id);
     accountLogin.hidden = account.kind !== 'guest';
     accountRefresh.hidden = !ready;
-    accountStats.hidden = !ready;
+    accountStats.hidden = !ready || unified.kind === 'ready';
     accountWords.replaceChildren();
     const notice = byId('ws10AccountNotice');
     notice.hidden = !accountNotice;
@@ -162,6 +196,7 @@ function boot() {
     serverImport.disabled = busy || accountSaving;
     serverImport.textContent = busy ? 'Đang đồng bộ…'
       : 'Chuyển ' + Math.min(uuidPlan.eligible.length,20) + ' từ kho máy chủ';
+    if(unified.kind==='ready')return; // Main unified library is the only displayed account total/list.
     const heading = node('h3', '', 'Những từ đã ôn theo tài khoản');
     accountWords.append(heading);
     if (!reviewed) {
@@ -304,7 +339,31 @@ function boot() {
         (error?' Các từ còn lại chưa chuyển: '+error:''));
     }
   });
-  accountRefresh.addEventListener('click', refreshAccount);
+  accountRefresh.addEventListener('click',()=>{refreshAccount();refreshUnified()});
+  async function updateUnifiedCard(card,remembered) {
+    if(unified.kind!=='ready'||unifiedSaving||busy)return;
+    const actorId=unified.actor.id;
+    unifiedSaving=true;render();
+    try {
+      const auth=await learningApi('auth/me');
+      if(auth.actor?.role!=='player'||auth.actor.id!==actorId)
+        throw Error('Tài khoản đã thay đổi. Không lưu sang tài khoản khác.');
+      if(card.source==='shared') {
+        await postAccountReview(card.word_id,remembered,actorId);
+      } else if(card.source==='personal') {
+        const saved=await learningApi('learning/personal/reviews',{
+          method:'POST',body:{personal_word_id:card.personal_word_id,
+            remembered,expected_actor_id:actorId}
+        });
+        if(saved.scope!=='personal-account'||saved.personal_word_id!==card.personal_word_id||
+           saved.remembered!==remembered)throw Error('Máy chủ chưa xác nhận kết quả học.');
+      } else throw Error('Nguồn từ không hợp lệ.');
+      await refreshUnified();
+      showNotice('Đã lưu từ “'+card.english+'” theo tài khoản WordSky.');
+    }catch(e){
+      showNotice('Chưa lưu được vào tài khoản: '+e.message);
+    }finally{unifiedSaving=false;render();}
+  }
   const search = byId('ws10Search');
   const topicFilter = byId('ws10Topic');
   const statusFilter = byId('ws10Status');
@@ -324,7 +383,19 @@ function boot() {
   }
   function render() {
     const view = scopeView();
-    const isAccount = view.source === 'account',isServer=view.source === 'server';
+    const isUnified=view.source==='unified';
+    const waitingAccount=view.source==='unified-pending'||view.source==='unified-error';
+    const isAccount=view.source==='account'||isUnified,isServer=view.source==='server';
+    const accountMode=isUnified||waitingAccount;
+    scopeSelect.closest('.ws15-scope').hidden=accountMode;
+    const personalPanel=byId('ws18AccountSummary')?.closest('.ws15-scope');
+    if(personalPanel)personalPanel.hidden=accountMode;
+    unifiedStatus.hidden=!accountMode;
+    unifiedStatus.textContent=isUnified
+      ? 'Một kết quả cho tài khoản '+(unified.actor.profile?.display_name||'WordSky')+
+        ': '+view.summary.shared.known+'/'+view.summary.shared.total+' từ chung và '+
+        view.summary.personal.known+'/'+view.summary.personal.total+' từ cá nhân đã nhớ. Dữ liệu được đọc trực tiếp từ PostgreSQL.'
+      :waitingAccount?(view.error||'Đang lấy tiến độ theo tài khoản…'):'';
     scopeSelect.querySelector('option[value="account"]').disabled=!isAccount&&account.kind!=='ready';
     scopeSelect.querySelector('option[value="server"]').disabled=!serverCatalog;
     scopeSelect.value=isAccount?'account':isServer?'server':'local';
@@ -335,7 +406,7 @@ function boot() {
         ' Dữ liệu trình duyệt khác không tự được chia sẻ.';
     const {total, known, review, percent} = summarize(view.words,view.learned);
     const publicCatalog = byId('ws10PublicCatalog');
-    publicCatalog.hidden = !serverVocabularySummary;
+    publicCatalog.hidden = accountMode || !serverVocabularySummary;
     if (serverVocabularySummary) publicCatalog.textContent =
       'Kho từ máy chủ: ' + serverVocabularySummary.words.toLocaleString('vi-VN') +
       ' từ / ' + serverVocabularySummary.topics.toLocaleString('vi-VN') +
@@ -343,31 +414,35 @@ function boot() {
         ? 'Đây là kho từ đang dùng để tính tiến độ tài khoản.'
         : isServer ? 'Số liệu đang hiển thị là tiến độ học kho máy chủ trên thiết bị này.'
         : 'Bộ Flashcard cá nhân là danh sách riêng; hệ thống không tự thay thế hoặc xóa tiến độ đã nhớ.');
-    byId('ws10SourceBadge').textContent = isAccount ? 'ACCOUNT · POSTGRESQL' : isServer?'SERVER · THIS DEVICE':'PERSONAL · THIS DEVICE';
-    byId('ws10HeroScope').textContent = isAccount ? 'ACCOUNT' : isServer?'SERVER · LOCAL':'PERSONAL · LOCAL';
-    byId('ws10StorageTitle').textContent = isAccount ? 'Tiến độ theo tài khoản đang đăng nhập'
+    byId('ws10SourceBadge').textContent = waitingAccount?'ACCOUNT · PENDING':isUnified?'ACCOUNT · POSTGRESQL':isAccount?'ACCOUNT · POSTGRESQL':isServer?'SERVER · THIS DEVICE':'PERSONAL · THIS DEVICE';
+    byId('ws10HeroScope').textContent = accountMode?'ACCOUNT':isAccount?'ACCOUNT':isServer?'SERVER · LOCAL':'PERSONAL · LOCAL';
+    byId('ws10StorageTitle').textContent = waitingAccount?'Đang xác minh dữ liệu tài khoản':isUnified?'My Learning thống nhất theo tài khoản':isAccount ? 'Tiến độ theo tài khoản đang đăng nhập'
       : isServer?'Kho từ máy chủ — tiến độ trên thiết bị':'Bộ từ cá nhân — tiến độ trên thiết bị';
-    byId('ws10StorageText').textContent = isAccount
+    byId('ws10StorageText').textContent = waitingAccount?(view.error||'Đang tải tiến độ theo tài khoản; chưa dùng số liệu trên trình duyệt.'):
+      isUnified?'Tất cả số liệu chính lấy từ một API PostgreSQL theo tài khoản, gồm từ chung và từ cá nhân. Đăng nhập cùng tài khoản trên bất kỳ trình duyệt nào để nhận cùng kết quả.' : isAccount
       ? 'Dữ liệu từ PostgreSQL theo tài khoản; có thể dùng trên trình duyệt khác khi đồng bộ thành công.'
       : (account.kind==='error'?'Chưa đồng bộ tài khoản: '+account.message+'. ':'') +
         (isServer?'Các từ lấy từ kho chung PostgreSQL nhưng dấu đã nhớ được lưu riêng theo UUID trong trình duyệt này.'
           :'Dấu đã nhớ của bộ Flashcard cá nhân chỉ lưu trong trình duyệt này.')+
         ' Không tự chia sẻ tiến độ giữa Chrome, Safari hoặc điện thoại.';
-    byId('ws10TotalHint').textContent = isAccount||isServer ? 'Từ đang bật trong kho từ máy chủ' : 'Từ bộ Flashcard cá nhân';
+    byId('ws10TotalHint').textContent = isUnified?'Từ chung và từ cá nhân theo tài khoản':isAccount||isServer ? 'Từ đang bật trong kho từ máy chủ' : 'Từ bộ Flashcard cá nhân';
     byId('ws10KnownHint').textContent = isAccount ? 'Đã nhớ theo tài khoản' : isServer?'Đã nhớ trên thiết bị (theo UUID)':'Đã nhớ trên thiết bị (bộ cá nhân)';
     byId('ws10ReviewHint').textContent = isAccount ? 'Chưa học hoặc cần ôn theo tài khoản' : 'Chưa đánh dấu đã nhớ ở nguồn đang xem';
     byId('ws10PercentHint').textContent = isAccount ? 'Tỷ lệ theo tài khoản' : 'Tỷ lệ trong nguồn từ vựng đang xem';
-    byId('ws10LibraryHint').textContent = isAccount ? 'Kho từ tài khoản — cập nhật PostgreSQL.'
+    byId('ws10LibraryHint').textContent = isUnified?'Tất cả từ chung và cá nhân của tài khoản. Các thao tác được ghi trực tiếp vào PostgreSQL.' : isAccount ? 'Kho từ tài khoản — cập nhật PostgreSQL.'
       : isServer?'Kho từ máy chủ — thao tác ở đây chỉ đổi tiến độ UUID trên thiết bị.'
       : 'Bộ từ cá nhân — thao tác cập nhật trạng thái riêng trên thiết bị.';
-    byId('ws10WordsTitle').textContent = isAccount ? 'Kho từ theo tài khoản ✳' : isServer?'Kho từ máy chủ ✳':'Bộ từ cá nhân ✳';
-    byId('ws10Total').textContent = total.toLocaleString('vi-VN');
-    byId('ws10Known').textContent = known.toLocaleString('vi-VN');
-    byId('ws10Review').textContent = review.toLocaleString('vi-VN');
-    byId('ws10Percent').textContent = percent + '%';
-    byId('ws10RingValue').textContent = percent + '%';
-    byId('ws10Ring').style.setProperty('--value', String(percent));
-    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isAccount ? ' từ theo tài khoản' : isServer?' từ kho máy chủ đã nhớ trên thiết bị':' từ cá nhân đã nhớ trên thiết bị') : 'Chưa có từ vựng trong nguồn đang xem.';
+    byId('ws10WordsTitle').textContent = isUnified?'Tất cả từ của tài khoản ✳':isAccount ? 'Kho từ theo tài khoản ✳' : isServer?'Kho từ máy chủ ✳':'Bộ từ cá nhân ✳';
+    byId('ws10Total').textContent = waitingAccount?'—':total.toLocaleString('vi-VN');
+    byId('ws10Known').textContent = waitingAccount?'—':known.toLocaleString('vi-VN');
+    byId('ws10Review').textContent = waitingAccount?'—':review.toLocaleString('vi-VN');
+    byId('ws10Percent').textContent = waitingAccount?'—':percent+'%';
+    byId('ws10RingValue').textContent = waitingAccount?'—':percent+'%';
+    byId('ws10Ring').style.setProperty('--value',waitingAccount?'0':String(percent));
+    byId('ws10RingCaption').textContent = waitingAccount
+      ? (view.error||'Đang tải tiến độ tài khoản…')
+      : total ? known+' / '+total+(isAccount?' từ theo tài khoản':isServer?' từ kho máy chủ đã nhớ trên thiết bị':' từ cá nhân đã nhớ trên thiết bị')
+      : 'Chưa có từ vựng trong nguồn đang xem.';
     alert.hidden = !view.error;
     alert.textContent = view.error || '';
     const existingTopic = topicFilter.value;
@@ -401,10 +476,10 @@ function boot() {
       reviewBtn.setAttribute('aria-pressed', String(!known));
       knownBtn.setAttribute('aria-label', 'Đánh dấu đã nhớ: ' + card.english);
       reviewBtn.setAttribute('aria-label', 'Đánh dấu cần ôn: ' + card.english);
-      knownBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
-      reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
-      knownBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, true) : isServer ? updateServerCard(card,true) : updateCard(card,true));
-      reviewBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, false) : isServer ? updateServerCard(card,false) : updateCard(card,false));
+      knownBtn.disabled = !!view.error || (isAccount && (accountSaving || unifiedSaving || busy));
+      reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || unifiedSaving || busy));
+      knownBtn.addEventListener('click', () => isUnified ? updateUnifiedCard(card, true) : isAccount ? updateAccountCard(card, true) : isServer ? updateServerCard(card,true) : updateCard(card,true));
+      reviewBtn.addEventListener('click', () => isUnified ? updateUnifiedCard(card, false) : isAccount ? updateAccountCard(card, false) : isServer ? updateServerCard(card,false) : updateCard(card,false));
       actions.append(knownBtn, reviewBtn);
       row.append(wordCol, meaning, actions);
       fragment.append(row);
@@ -447,6 +522,7 @@ function boot() {
     }
   }
   scopeSelect.addEventListener('change',()=>{
+    if(unified.kind==='ready'||unified.kind==='error'||unified.kind==='checking')return;
     manualScope=true;selectedScope=scopeSelect.value;state.visible=60;
     if(selectedScope==='server'||selectedScope==='local'){
       try{localStorage.setItem(SOURCE_PREFERENCE_KEY,selectedScope)}catch{}
@@ -462,9 +538,10 @@ function boot() {
       reload();
     }
   });
-  window.addEventListener('focus', () => {reload();refreshAccount();refreshServerCatalog()});
+  window.addEventListener('focus', () => {reload();refreshUnified();refreshAccount();refreshServerCatalog()});
   try{serverCatalog=loadCachedCatalog(localStorage)}catch{}
   reload();
+  refreshUnified();
   refreshAccount();
   refreshServerCatalog();
   // A public, read-only catalog count clarifies why a local 260-card deck can

@@ -5,6 +5,7 @@ import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,
 import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
+import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
 
 const AUTH_COOKIE='ws_auth';
 const SOLO_COOKIE='ws_solo';
@@ -474,6 +475,7 @@ export default async function handler(req,res){
     return output(res,201,await recordFlashcardReview(userId,review));
   }
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
+  if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
   if(method==='GET'&&key==='learning/personal')return output(res,200,await listPersonalVocabulary(mustPlayer(req).id));
   if(method==='POST'&&key==='learning/personal'){
     const input=body(req),userId=mustPlayer(req).id;
