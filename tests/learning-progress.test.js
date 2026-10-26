@@ -7,7 +7,7 @@ const cards={version:2,topics:{'Daily Life':[['hello','','Xin chào','',''],['st
 const parse=()=>parseBrowserVocabulary(JSON.stringify(cards));
 test('UX10 reads real browser-only Flashcard vocabulary and topic+word keys',()=>{
  const parsed=parse();assert.equal(parsed.words.length,3);assert.equal(parsed.words[0].key,'Daily Life:hello');assert.equal(cardKey('Food','Apple'),'Food:apple');
- assert.deepEqual(summarize(parsed.words,{'Daily Life:hello':true}),{total:3,known:1,review:2,percent:33});
+ assert.deepEqual(summarize(parsed.words,{'Daily Life:hello':true}),{total:3,known:1,review:2,percent:33.3});
 });
 test('UX10 does not fabricate missing or malformed vocabulary',()=>{
  assert.deepEqual(parseBrowserVocabulary(null),{words:[],initialized:false,error:null});
@@ -60,4 +60,11 @@ test('Flashcard first visit persists its actual sample vocabulary without replac
  assert.match(html,/installTopicPackOnce\(\);[\s\S]*?if\(!loaded&&safeStorage\.read\(STORE\)===null\)saveTopics\(\);/);
  assert.match(html,/if\(!saveLearned\(\)\)/);
  assert.match(html,/if\(previous===undefined\)delete learned\[mark\]/);
+});
+
+test('UX10 displays fractional progress for first remembered card in large deck',()=>{
+ const words=Array.from({length:260},(_,i)=>({key:'Topic:word'+i}));
+ assert.deepEqual(summarize(words,{'Topic:word0':true}),{total:260,known:1,review:259,percent:0.4});
+ assert.equal(summarize(words,{}).percent,0);
+ assert.equal(summarize(words,Object.fromEntries(words.map(w=>[w.key,true]))).percent,100);
 });

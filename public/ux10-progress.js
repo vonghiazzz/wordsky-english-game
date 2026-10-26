@@ -40,7 +40,7 @@ export function parseLearned(raw) {
 export function summarize(words, learned) {
   const total = words.length;
   const known = words.filter(word => learned[word.key] === true).length;
-  return {total, known, review: total - known, percent: total ? Math.round(known * 100 / total) : 0};
+  return {total, known, review: total - known, percent: total ? Math.round(known * 1000 / total) / 10 : 0};
 }
 export function filterWords(words, learned, {query = '', topic = '', status = 'all'} = {}) {
   const q = query.trim().toLocaleLowerCase();
