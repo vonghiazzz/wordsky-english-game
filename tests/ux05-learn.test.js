@@ -11,7 +11,7 @@ test('UX-05 loads scoped CSS after UX-02 and one defer helper after original inl
  assert.equal(html.split('href="/ux05-learn.css"').length-1,1);
  assert.ok(html.indexOf('href="/ux05-learn.css"')>html.indexOf('href="/ux02-home-nav.css"'));
  assert.equal(html.split('src="/ux05-learn.js"').length-1,1);
- assert.match(html,/<\/script><script src="\/ux05-learn.js" defer><\/script><script type="module" src="\/ux10-learn-sync.js"><\/script><\/body><\/html>/);
+ assert.match(html,/<\/script><script src="\/ux05-learn.js" defer><\/script><script type="module" src="\/ux10-learn-sync.js"><\/script><script type="module" src="\/ux13-vocab-sync.js"><\/script><\/body><\/html>/);
  assert.match(html,/<body class="ws05-learn">/);
 });
 
