@@ -77,3 +77,12 @@ test('Flashcard persists local first and emits precise review; account remains a
  assert.match(progress,/loadAccount\(/);assert.match(progress,/eligibleImports\(/);
  assert.match(progress,/queueReview\(card,remembered\)/);
 });
+
+test('Local cards remain visibly separated from account-synced totals and scope',()=>{
+ const html=readFileSync(new URL('../public/progress.html',import.meta.url),'utf8');
+ assert.match(html,/Các số liệu phía trên được đọc từ trình duyệt/);
+ assert.match(html,/id="ws10AccountStats"/);
+ assert.match(html,/id="ws10AccountKnown"/);
+ assert.match(html,/id="ws10Known"/);
+ assert.match(html,/id="ws10Import"/);
+});

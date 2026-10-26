@@ -71,7 +71,7 @@ function boot() {
   if (!list) return;
   const state = {words: [], learned: {}, initialized: false, error: null, visible: 60};
   let account = {kind:'checking'}, accountNotice = '', requestNumber = 0, busy = false;
-  let remoteQueue = Promise.resolve(), lastRefresh = 0;
+  let remoteQueue = Promise.resolve();
   const accountMsg = byId('ws10AccountMessage');
   const accountStats = byId('ws10AccountStats');
   const accountWords = byId('ws10AccountWords');
@@ -142,7 +142,6 @@ function boot() {
       if (current !== requestNumber) return;
       account = {kind:'error',message:error.message || 'Lỗi kết nối'};
     }
-    lastRefresh = Date.now();
     displayAccount();
   }
   function queueReview(card, remembered) {
@@ -287,7 +286,7 @@ function boot() {
   }
   byId('ws10More').addEventListener('click', () => {state.visible += 60; render()});
   window.addEventListener('storage', event => {if (!event.key || [VOCAB_KEY, LEARNED_KEY].includes(event.key)) reload()});
-  window.addEventListener('focus', () => {reload(); if(Date.now()-lastRefresh>30000)refreshAccount()});
+  window.addEventListener('focus', () => {reload(); refreshAccount()});
   reload();
   refreshAccount();
 }
