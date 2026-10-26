@@ -36,14 +36,17 @@
     <span class="ws10-storage-icon">⌁</span><div><strong id="ws10StorageTitle">Tiến độ Flashcard trên thiết bị này</strong><p id="ws10StorageText">Các số liệu phía trên được đọc từ trình duyệt, không phải từ tài khoản. Khi đăng nhập, những từ khớp chính xác có thể đồng bộ riêng lên PostgreSQL; xem mục Tiến độ theo tài khoản bên dưới.</p><p id="ws10PublicCatalog" class="ws10-server-catalog" role="status" aria-live="polite" hidden></p></div><span class="ws10-storage-badge" id="ws10SourceBadge">BROWSER ONLY</span>
   </section>
 
+  <p class="ws10-import-info">☁️ Bộ từ tự thêm chưa tự chuyển giữa các trình duyệt. <a href="/personal.html" style="color:#b9f5e7;font-weight:800">Mở bộ từ cá nhân theo tài khoản</a> để nhập và quản lý trên PostgreSQL.</p>
   <section class="ws15-scope" aria-label="Chọn nguồn thống kê">
     <label for="ws15Scope">Đang xem tiến độ</label>
     <select id="ws15Scope" aria-label="Chọn nguồn từ vựng">
-      <option value="account" disabled>Tài khoản · PostgreSQL</option>
+      <option value="account" disabled>365 từ chung · tài khoản</option>
+      <option value="personal-account" disabled>Bộ từ cá nhân · tài khoản</option>
       <option value="server" disabled>Kho từ máy chủ · thiết bị này</option>
       <option value="local">Bộ từ cá nhân · thiết bị này</option>
     </select>
     <p id="ws15ScopeStatus" role="status" aria-live="polite">Đang kiểm tra các nguồn từ vựng…</p>
+    <p id="ws17CloudCount" class="ws10-import-info" aria-live="polite">Đang tải bộ từ theo tài khoản…</p>
   </section>
   <section class="ws10-metrics" aria-label="Thống kê học tập">
     <article class="ws10-stat"><span class="ws10-stat-icon purple">▦</span><span class="ws10-stat-label">TỔNG SỐ THẺ TỪ</span><strong id="ws10Total">0</strong><small id="ws10TotalHint">Từ bộ Flashcard lưu trên thiết bị</small></article>

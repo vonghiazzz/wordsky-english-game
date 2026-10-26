@@ -78,18 +78,68 @@ function boot() {
   let remoteQueue = Promise.resolve(), accountSaving = false;
   let serverVocabularySummary = null;
   let serverCatalog=null,serverProgress={learned:{},error:null};
+  let personalCloud={kind:'checking',cards:[],actorId:null};
+  let personalCloudSaving=false;
+  const cloudCount=byId('ws17CloudCount');
+  function cloudView(){
+    if(personalCloud.kind!=='ready')return null;
+    const words=personalCloud.cards.map(c=>({key:'cloud:'+c.id,id:c.id,topic:c.topic,english:c.english,
+      ipa:c.ipa,meaning:c.meaning,example:c.example,translation:c.translation,version:c.version}));
+    const learned={};
+    for(const c of personalCloud.cards)if(c.remembered)learned['cloud:'+c.id]=true;
+    return {source:'personal-account',words,learned,initialized:true,error:null};
+  }
+  async function refreshPersonalCloud(){
+    try{
+      const auth=await learningApi('auth/me');
+      if(auth.actor?.role!=='player'||!auth.actor.id){
+        personalCloud={kind:'guest',cards:[],actorId:null};render();return;
+      }
+      const id=auth.actor.id;
+      // Clear any previous user's private data before reading the new account.
+      if(personalCloud.actorId&&personalCloud.actorId!==id)
+        personalCloud={kind:'checking',cards:[],actorId:null};
+      const result=await learningApi('learning/personal-vocabulary');
+      if(result.scope!=='personal-account'||!Array.isArray(result.cards))
+        throw Error('Dữ liệu bộ từ tài khoản không hợp lệ');
+      personalCloud={kind:'ready',cards:result.cards,actorId:id};
+    }catch(e){personalCloud={kind:'error',cards:[],actorId:null,message:e.message}}
+    render();
+  }
+  async function updatePersonalCloudCard(card,remembered){
+    if(personalCloudSaving||personalCloud.kind!=='ready'||!card.id)return;
+    personalCloudSaving=true;render();
+    try{
+      const auth=await learningApi('auth/me');
+      if(auth.actor?.role!=='player'||auth.actor.id!==personalCloud.actorId)
+        throw Error('Phiên đăng nhập đã thay đổi');
+      const result=await learningApi('learning/personal-vocabulary/'+encodeURIComponent(card.id),{
+        method:'PATCH',body:{topic:card.topic,english:card.english,ipa:card.ipa,
+        meaning:card.meaning,example:card.example,translation:card.translation,
+        remembered,expected_version:card.version,expected_actor_id:personalCloud.actorId}});
+      if(result.scope!=='personal-account'||result.card?.id!==card.id)
+        throw Error('Máy chủ chưa xác nhận thay đổi');
+      const pos=personalCloud.cards.findIndex(c=>c.id===card.id);
+      if(pos>=0)personalCloud.cards[pos]=result.card;
+      showNotice('Đã lưu tiến độ từ “'+card.english+'” theo tài khoản.');
+    }catch(e){showNotice('Chưa lưu vào tài khoản: '+e.message+'. Hãy tải lại dữ liệu nếu có xung đột.')}
+    finally{personalCloudSaving=false;render()}
+  }
   let selectedScope='auto',manualScope=false,serverCatalogError='';
   const scopeSelect=byId('ws15Scope');
   const scopeStatus=byId('ws15ScopeStatus');
   function scopeView(){
     const base=selectLearningView(state,account);
     const server=serverCatalogView(serverCatalog,serverProgress);
+    const cloud=cloudView();
     if(manualScope){
+      if(selectedScope==='personal-account'&&cloud)return cloud;
       if(selectedScope==='local')return base.source==='account'?{...state,source:'browser'}:base;
       if(selectedScope==='server'&&server)return server;
       if(selectedScope==='account'&&base.source==='account')return base;
     }
     if(base.source==='account')return base;
+    if(cloud&&cloud.words.length)return cloud;
     if(server&&!lastPersonalSelection(localStorage))return server;
     return base;
   }
@@ -324,11 +374,17 @@ function boot() {
   }
   function render() {
     const view = scopeView();
-    const isAccount = view.source === 'account',isServer=view.source === 'server';
+    const isAccount = view.source === 'account',isServer=view.source === 'server',isCloud=view.source==='personal-account';
+    scopeSelect.querySelector('option[value="personal-account"]').disabled=personalCloud.kind!=='ready';
+    cloudCount.textContent=personalCloud.kind==='ready'
+      ? personalCloud.cards.length+' từ cá nhân trên tài khoản · '+personalCloud.cards.filter(c=>c.remembered).length+' đã nhớ'
+      : personalCloud.kind==='guest'?'Chưa đăng nhập tài khoản cá nhân'
+      : personalCloud.kind==='error'?'Chưa tải được bộ từ cá nhân theo tài khoản':'Đang tải từ cá nhân theo tài khoản…';
     scopeSelect.querySelector('option[value="account"]').disabled=!isAccount&&account.kind!=='ready';
     scopeSelect.querySelector('option[value="server"]').disabled=!serverCatalog;
-    scopeSelect.value=isAccount?'account':isServer?'server':'local';
-    scopeStatus.textContent=isAccount?'Đang xem tiến độ PostgreSQL theo tài khoản.'
+    scopeSelect.value=isCloud?'personal-account':isAccount?'account':isServer?'server':'local';
+    scopeStatus.textContent=isCloud?'Bộ từ cá nhân theo tài khoản WordSky: dữ liệu đang hiển thị từ PostgreSQL, dùng chung giữa các trình duyệt.'
+      :isAccount?'Đang xem tiến độ PostgreSQL theo tài khoản.'
       :isServer?'Đang xem tiến độ UUID kho máy chủ lưu trên thiết bị này. '+serverCatalogError+
         ' Trình duyệt khác sẽ không có tiến độ này nếu chưa được đồng bộ vào tài khoản.'
       :'Đang xem bộ từ cá nhân trên thiết bị này. '+serverCatalogError+
@@ -343,31 +399,31 @@ function boot() {
         ? 'Đây là kho từ đang dùng để tính tiến độ tài khoản.'
         : isServer ? 'Số liệu đang hiển thị là tiến độ học kho máy chủ trên thiết bị này.'
         : 'Bộ Flashcard cá nhân là danh sách riêng; hệ thống không tự thay thế hoặc xóa tiến độ đã nhớ.');
-    byId('ws10SourceBadge').textContent = isAccount ? 'ACCOUNT · POSTGRESQL' : isServer?'SERVER · THIS DEVICE':'PERSONAL · THIS DEVICE';
-    byId('ws10HeroScope').textContent = isAccount ? 'ACCOUNT' : isServer?'SERVER · LOCAL':'PERSONAL · LOCAL';
-    byId('ws10StorageTitle').textContent = isAccount ? 'Tiến độ theo tài khoản đang đăng nhập'
+    byId('ws10SourceBadge').textContent = isCloud?'PERSONAL · ACCOUNT':isAccount ? 'ACCOUNT · POSTGRESQL' : isServer?'SERVER · THIS DEVICE':'PERSONAL · THIS DEVICE';
+    byId('ws10HeroScope').textContent = isCloud?'PERSONAL · CLOUD':isAccount ? 'ACCOUNT' : isServer?'SERVER · LOCAL':'PERSONAL · LOCAL';
+    byId('ws10StorageTitle').textContent = isCloud?'Bộ từ cá nhân theo tài khoản' : isAccount ? 'Tiến độ theo tài khoản đang đăng nhập'
       : isServer?'Kho từ máy chủ — tiến độ trên thiết bị':'Bộ từ cá nhân — tiến độ trên thiết bị';
-    byId('ws10StorageText').textContent = isAccount
+    byId('ws10StorageText').textContent = isCloud?'Những từ bạn tự quản lý và trạng thái đã nhớ được đọc/ghi theo tài khoản WordSky. Mở trình duyệt khác và đăng nhập cùng tài khoản để xem lại.' : isAccount
       ? 'Dữ liệu từ PostgreSQL theo tài khoản; có thể dùng trên trình duyệt khác khi đồng bộ thành công.'
       : (account.kind==='error'?'Chưa đồng bộ tài khoản: '+account.message+'. ':'') +
         (isServer?'Các từ lấy từ kho chung PostgreSQL nhưng dấu đã nhớ được lưu riêng theo UUID trong trình duyệt này.'
           :'Dấu đã nhớ của bộ Flashcard cá nhân chỉ lưu trong trình duyệt này.')+
         ' Không tự chia sẻ tiến độ giữa Chrome, Safari hoặc điện thoại.';
-    byId('ws10TotalHint').textContent = isAccount||isServer ? 'Từ đang bật trong kho từ máy chủ' : 'Từ bộ Flashcard cá nhân';
-    byId('ws10KnownHint').textContent = isAccount ? 'Đã nhớ theo tài khoản' : isServer?'Đã nhớ trên thiết bị (theo UUID)':'Đã nhớ trên thiết bị (bộ cá nhân)';
-    byId('ws10ReviewHint').textContent = isAccount ? 'Chưa học hoặc cần ôn theo tài khoản' : 'Chưa đánh dấu đã nhớ ở nguồn đang xem';
-    byId('ws10PercentHint').textContent = isAccount ? 'Tỷ lệ theo tài khoản' : 'Tỷ lệ trong nguồn từ vựng đang xem';
-    byId('ws10LibraryHint').textContent = isAccount ? 'Kho từ tài khoản — cập nhật PostgreSQL.'
+    byId('ws10TotalHint').textContent = isCloud?'Từ cá nhân trong PostgreSQL':isAccount||isServer ? 'Từ đang bật trong kho từ máy chủ' : 'Từ bộ Flashcard cá nhân';
+    byId('ws10KnownHint').textContent = isCloud?'Đã nhớ trong bộ từ cá nhân cloud':isAccount ? 'Đã nhớ theo tài khoản' : isServer?'Đã nhớ trên thiết bị (theo UUID)':'Đã nhớ trên thiết bị (bộ cá nhân)';
+    byId('ws10ReviewHint').textContent = isCloud?'Từ cá nhân chưa nhớ':isAccount ? 'Chưa học hoặc cần ôn theo tài khoản' : 'Chưa đánh dấu đã nhớ ở nguồn đang xem';
+    byId('ws10PercentHint').textContent = isCloud?'Tỷ lệ theo bộ từ cá nhân trong tài khoản':isAccount ? 'Tỷ lệ theo tài khoản' : 'Tỷ lệ trong nguồn từ vựng đang xem';
+    byId('ws10LibraryHint').textContent = isCloud?'Bộ từ riêng theo tài khoản — nút nhớ/cần ôn ghi PostgreSQL.' : isAccount ? 'Kho từ tài khoản — cập nhật PostgreSQL.'
       : isServer?'Kho từ máy chủ — thao tác ở đây chỉ đổi tiến độ UUID trên thiết bị.'
       : 'Bộ từ cá nhân — thao tác cập nhật trạng thái riêng trên thiết bị.';
-    byId('ws10WordsTitle').textContent = isAccount ? 'Kho từ theo tài khoản ✳' : isServer?'Kho từ máy chủ ✳':'Bộ từ cá nhân ✳';
+    byId('ws10WordsTitle').textContent = isCloud?'Bộ từ cá nhân theo tài khoản ✳':isAccount ? 'Kho từ theo tài khoản ✳' : isServer?'Kho từ máy chủ ✳':'Bộ từ cá nhân ✳';
     byId('ws10Total').textContent = total.toLocaleString('vi-VN');
     byId('ws10Known').textContent = known.toLocaleString('vi-VN');
     byId('ws10Review').textContent = review.toLocaleString('vi-VN');
     byId('ws10Percent').textContent = percent + '%';
     byId('ws10RingValue').textContent = percent + '%';
     byId('ws10Ring').style.setProperty('--value', String(percent));
-    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isAccount ? ' từ theo tài khoản' : isServer?' từ kho máy chủ đã nhớ trên thiết bị':' từ cá nhân đã nhớ trên thiết bị') : 'Chưa có từ vựng trong nguồn đang xem.';
+    byId('ws10RingCaption').textContent = total ? known + ' / ' + total + (isCloud?' từ cá nhân theo tài khoản':isAccount ? ' từ theo tài khoản' : isServer?' từ kho máy chủ đã nhớ trên thiết bị':' từ cá nhân đã nhớ trên thiết bị') : 'Chưa có từ vựng trong nguồn đang xem.';
     alert.hidden = !view.error;
     alert.textContent = view.error || '';
     const existingTopic = topicFilter.value;
@@ -401,10 +457,10 @@ function boot() {
       reviewBtn.setAttribute('aria-pressed', String(!known));
       knownBtn.setAttribute('aria-label', 'Đánh dấu đã nhớ: ' + card.english);
       reviewBtn.setAttribute('aria-label', 'Đánh dấu cần ôn: ' + card.english);
-      knownBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
-      reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || busy));
-      knownBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, true) : isServer ? updateServerCard(card,true) : updateCard(card,true));
-      reviewBtn.addEventListener('click', () => isAccount ? updateAccountCard(card, false) : isServer ? updateServerCard(card,false) : updateCard(card,false));
+      knownBtn.disabled = !!view.error || (isAccount && (accountSaving || busy)) || (isCloud && personalCloudSaving);
+      reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || busy)) || (isCloud && personalCloudSaving);
+      knownBtn.addEventListener('click', () => isCloud ? updatePersonalCloudCard(card,true) : isAccount ? updateAccountCard(card, true) : isServer ? updateServerCard(card,true) : updateCard(card,true));
+      reviewBtn.addEventListener('click', () => isCloud ? updatePersonalCloudCard(card,false) : isAccount ? updateAccountCard(card, false) : isServer ? updateServerCard(card,false) : updateCard(card,false));
       actions.append(knownBtn, reviewBtn);
       row.append(wordCol, meaning, actions);
       fragment.append(row);
@@ -462,11 +518,12 @@ function boot() {
       reload();
     }
   });
-  window.addEventListener('focus', () => {reload();refreshAccount();refreshServerCatalog()});
+  window.addEventListener('focus', () => {reload();refreshAccount();refreshServerCatalog();refreshPersonalCloud()});
   try{serverCatalog=loadCachedCatalog(localStorage)}catch{}
   reload();
   refreshAccount();
   refreshServerCatalog();
+  refreshPersonalCloud();
   // A public, read-only catalog count clarifies why a local 260-card deck can
   // differ from the 365-word server library while account sync is unavailable.
   fetch('/api/topics', {credentials:'same-origin',cache:'no-store'})
