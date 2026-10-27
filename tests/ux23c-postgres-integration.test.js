@@ -235,6 +235,115 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     if(oldFlag===undefined)delete process.env.WORDSKY_SRS_PREVIEW_ENABLED;
     else process.env.WORDSKY_SRS_PREVIEW_ENABLED=oldFlag;
    }
+
+   // UX-24B isolated PostgreSQL shadow table and atomic-write integration.
+   // Schema is NOT applied to either Supabase project by this test.
+   const migration24=readFileSync(new URL(
+    '../db/migrations/20261027_ux24b_shadow_srs_schedules.sql',import.meta.url),'utf8');
+   await sql(migration24);
+   const policy=await sql(
+    "SELECT relrowsecurity AS protected FROM pg_class WHERE oid='ws_user_srs_schedules'::regclass");
+   assert.equal(policy.rows[0].protected,true);
+   const oldShadow=process.env.WORDSKY_SRS_SHADOW_ENABLED;
+   try{
+    process.env.WORDSKY_SRS_SHADOW_ENABLED='true';
+    const versionOne=randomUUID(),firstCommand=command('shared',versionOne,true,0);
+    const secondCommand=command('shared',versionOne,false,0);
+    await sql('INSERT INTO ws_words(id,topic_id) VALUES($1,$2)',[versionOne,topic]);
+    const parallel=await Promise.allSettled([
+     recordUnifiedReview(userA,firstCommand),
+     recordUnifiedReview(userA,secondCommand)
+    ]);
+    assert.equal(parallel.filter(x=>x.status==='fulfilled').length,1);
+    assert.equal(parallel.filter(x=>x.status==='rejected'&&x.reason.status===409).length,1);
+    const winner=parallel[0].status==='fulfilled'?firstCommand:secondCommand;
+    let projected=await sql(
+     'SELECT * FROM ws_user_srs_schedules WHERE user_id=$1 AND source=$2 AND word_id=$3',
+     [userA,'shared',versionOne]);
+    assert.equal(projected.rows.length,1);
+    assert.equal(projected.rows[0].review_count,1);
+    assert.equal(projected.rows[0].remembered,winner.remembered);
+    assert.equal(projected.rows[0].policy_version,'ux24-fixed-v1');
+    const savedDue=String(projected.rows[0].due_at);
+    const replayed=await recordUnifiedReview(userA,winner);
+    assert.equal(replayed.replayed,true);
+    projected=await sql(
+     'SELECT review_count,due_at FROM ws_user_srs_schedules WHERE user_id=$1 AND source=$2 AND word_id=$3',
+     [userA,'shared',versionOne]);
+    assert.equal(projected.rows[0].review_count,1);
+    assert.equal(String(projected.rows[0].due_at),savedDue);
+    const nextReview=await recordUnifiedReview(userA,command('shared',versionOne,true,1));
+    assert.equal(nextReview.replayed,false);
+    projected=await sql(
+     'SELECT review_count,interval_days,due_at FROM ws_user_srs_schedules WHERE user_id=$1 AND source=$2 AND word_id=$3',
+     [userA,'shared',versionOne]);
+    assert.equal(projected.rows[0].review_count,2);
+    if(winner.remembered)
+     assert.equal(String(projected.rows[0].due_at),savedDue,
+      'early repeated success cannot inflate next due time');
+
+    // Personal words have a distinct source and are strictly account-scoped.
+    const ownPersonal=randomUUID();
+    await sql('INSERT INTO ws_personal_cards(id,user_id) VALUES($1,$2)',[ownPersonal,userA]);
+    await recordUnifiedReview(userA,command('personal',ownPersonal,false,0));
+    const personalShadow=await sql(
+     'SELECT review_count,remembered,interval_days FROM ws_user_srs_schedules '+
+     'WHERE user_id=$1 AND source=$2 AND word_id=$3',
+     [userA,'personal',ownPersonal]);
+    assert.equal(personalShadow.rows.length,1);
+    assert.equal(personalShadow.rows[0].review_count,1);
+    assert.equal(personalShadow.rows[0].remembered,false);
+    assert.equal(personalShadow.rows[0].interval_days,0);
+    await assert.rejects(recordUnifiedReview(userB,command('personal',ownPersonal,true,0)),
+     error=>error.status===404);
+    const leaked=await sql('SELECT count(*)::int AS n FROM ws_user_srs_schedules WHERE user_id=$1',[userB]);
+    assert.equal(leaked.rows[0].n,0);
+
+    // A failed SRS shadow write MUST abort the UX23 ledger/history/progress
+    // in the SAME transaction, so no half-accepted review can occur.
+    await sql(`
+     CREATE FUNCTION ux24_test_reject_shadow() RETURNS trigger LANGUAGE plpgsql AS $
+     BEGIN
+      IF NEW.word_id = '00000000-0000-4000-8000-000000000099'::uuid
+      THEN RAISE EXCEPTION 'injected shadow failure'; END IF;
+      RETURN NEW;
+     END $;
+     CREATE TRIGGER ux24_reject_shadow BEFORE INSERT OR UPDATE ON ws_user_srs_schedules
+       FOR EACH ROW EXECUTE FUNCTION ux24_test_reject_shadow();
+    `);
+    const rejectedWord='00000000-0000-4000-8000-000000000099';
+    await sql('INSERT INTO ws_words(id,topic_id) VALUES($1,$2)',[rejectedWord,topic]);
+    const rejectedCommand=command('shared',rejectedWord,true,0);
+    await assert.rejects(recordUnifiedReview(userA,rejectedCommand),/injected shadow failure/);
+    const rollback=await sql(
+     'SELECT '+
+     '(SELECT count(*)::int FROM ws_learning_review_requests WHERE user_id=$1 AND request_id=$2) AS ledger,'+
+     '(SELECT count(*)::int FROM ws_learning_flashcard_reviews WHERE user_id=$1 AND word_id=$3) AS events,'+
+     '(SELECT count(*)::int FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$3) AS progress,'+
+     '(SELECT count(*)::int FROM ws_user_srs_schedules WHERE user_id=$1 AND source=$4 AND word_id=$3) AS shadow',
+     [userA,rejectedCommand.request_id,rejectedWord,'shared']);
+    assert.deepEqual(rollback.rows[0],{ledger:0,events:0,progress:0,shadow:0});
+    await sql('DROP TRIGGER ux24_reject_shadow ON ws_user_srs_schedules');
+    await sql('DROP FUNCTION ux24_test_reject_shadow()');
+    const recovered=await recordUnifiedReview(userA,rejectedCommand);
+    assert.equal(recovered.replayed,false);
+    const recoveredRows=await sql(
+     'SELECT count(*)::int AS n FROM ws_user_srs_schedules WHERE user_id=$1 AND word_id=$2',
+     [userA,rejectedWord]);
+    assert.equal(recoveredRows.rows[0].n,1);
+
+    // Turning off the Preview shadow flag leaves accepted UX23 behavior
+    // unchanged, proving a missing schedule table cannot block Production.
+    process.env.WORDSKY_SRS_SHADOW_ENABLED='false';
+    const offWord=randomUUID();
+    await sql('INSERT INTO ws_words(id,topic_id) VALUES($1,$2)',[offWord,topic]);
+    await recordUnifiedReview(userA,command('shared',offWord,true,0));
+    const off=await sql('SELECT count(*)::int AS n FROM ws_user_srs_schedules WHERE word_id=$1',[offWord]);
+    assert.equal(off.rows[0].n,0);
+   }finally{
+    if(oldShadow===undefined)delete process.env.WORDSKY_SRS_SHADOW_ENABLED;
+    else process.env.WORDSKY_SRS_SHADOW_ENABLED=oldShadow;
+   }
   }finally{
    await new Promise(resolve=>server.close(resolve));
    if(oldSecret===undefined)delete process.env.SESSION_SECRET;
