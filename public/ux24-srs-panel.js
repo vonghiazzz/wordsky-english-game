@@ -89,6 +89,7 @@ function initSrs(){
    })),actorId);
    if(seq!==requested)return;
    received=data;
+   panel.hidden=false;
    const oldTopic=topic.value;
    topic.replaceChildren(make('option','Tất cả chủ đề'));
    topic.firstChild.value='';
@@ -102,6 +103,8 @@ function initSrs(){
   }catch(error){
    if(seq!==requested)return;
    received=null;
+   // Never show the experimental UI on Production or when the preview flag is off.
+   panel.hidden=error.status===404;
    if(error.status===404)showMessage('Lịch ôn thử nghiệm chưa được bật trên môi trường này.',true);
    else showMessage('Không tải được lịch ôn: '+error.message,true);
   }finally{
