@@ -10,8 +10,10 @@
 <link rel="stylesheet" href="/ux-design-system.css">
 <link rel="stylesheet" href="/ux02-home-nav.css">
 <link rel="stylesheet" href="/ux10-progress.css">
+<link rel="stylesheet" href="/ux24-srs-panel.css">
 <script src="/shared-nav.js" defer></script>
 <script type="module" src="/ux10-progress.js"></script>
+<script type="module" src="/ux24-srs-panel.js"></script>
 <script type="module" src="/ux18-personal-summary.js"></script>
 </head>
 <body class="ws10-page">
@@ -54,6 +56,28 @@
     <article class="ws10-stat"><span class="ws10-stat-icon blue">◴</span><span class="ws10-stat-label">TIẾN ĐỘ ĐÃ NHỚ</span><strong id="ws10Percent">0%</strong><small id="ws10PercentHint">Tỷ lệ trong bộ thẻ hiện tại</small></article>
   </section>
 
+  <section class="ws24-panel" id="ws24Srs" aria-labelledby="ws24Title" hidden>
+    <div class="ws10-section-top"><div><span class="ws10-overline">SMART REVIEW · SRS PREVIEW</span>
+      <h2 id="ws24Title">Ôn tập đúng thời điểm ✳</h2>
+      <p>Lịch ôn theo tài khoản PostgreSQL. Khác với nút “Cần ôn” trong thư viện, nhóm “Đến hạn” chỉ chứa các từ đến ngày cần ôn.</p>
+    </div><span class="ws10-count" id="ws24Count">—</span></div>
+    <div class="ws24-filters">
+      <label>Nhóm ôn <select id="ws24Status">
+        <option value="due">Đến hạn (Due)</option><option value="new">Từ mới (New)</option>
+        <option value="upcoming">Sắp đến hạn (Upcoming)</option>
+      </select></label>
+      <label>Chủ đề <select id="ws24Topic"><option value="">Tất cả chủ đề</option></select></label>
+      <button class="ws10-button ws10-secondary" id="ws24Reload" type="button">↻ Làm mới lịch</button>
+    </div>
+    <p id="ws24Summary" class="ws24-summary" role="status"></p>
+    <p id="ws24Notice" class="ws24-notice" role="status" aria-live="polite"></p>
+    <div id="ws24List" class="ws24-list" aria-live="off"></div>
+    <div class="ws24-pager">
+      <button class="ws10-button ws10-secondary" type="button" id="ws24Prev">← Trước</button>
+      <span id="ws24Page"></span>
+      <button class="ws10-button ws10-secondary" type="button" id="ws24Next">Sau →</button>
+    </div>
+  </section>
   <section class="ws10-library" aria-labelledby="ws10WordsTitle">
     <div class="ws10-section-top"><div><span class="ws10-overline">YOUR VOCABULARY</span><h2 id="ws10WordsTitle">Thư viện từ vựng <span>✳</span></h2><p id="ws10LibraryHint">Chọn “Đã nhớ” hoặc “Cần ôn” để cập nhật đúng trạng thái Flashcard của bạn.</p></div><span class="ws10-count" id="ws10Count">0 thẻ</span></div>
     <div class="ws10-filters"><label class="ws10-search"><span aria-hidden="true">⌕</span><input type="search" id="ws10Search" placeholder="Tìm từ tiếng Anh hoặc nghĩa tiếng Việt..." autocomplete="off" aria-label="Tìm kiếm từ vựng"></label><label class="ws10-filter"><span>Chủ đề</span><select id="ws10Topic"><option value="">Tất cả chủ đề</option></select></label><label class="ws10-filter"><span>Trạng thái</span><select id="ws10Status"><option value="all">Tất cả từ</option><option value="known">Đã nhớ</option><option value="review">Cần ôn</option></select></label></div>
