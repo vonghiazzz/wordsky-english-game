@@ -13,7 +13,7 @@ export function planThreeWayLegacyImport(snapshot,account){
  if(!Array.isArray(snapshot?.words)||!account||account.scope!=='unified-account'||
     !Array.isArray(account.words)||typeof account.actor_id!=='string')
   return {error:'Chưa xác minh đủ hai kho từ theo tài khoản. Không chuyển dữ liệu.',entries:[]};
- const candidates=new Map();
+ const candidates=new Map(),bySpelling=new Map();
  for(const word of account.words){
   if(!validCard(word)||!['shared','personal'].includes(word.source)||
      typeof word.id!=='string'||typeof word.reviewed!=='boolean')
@@ -21,6 +21,8 @@ export function planThreeWayLegacyImport(snapshot,account){
   const k=identity(word);
   if(!candidates.has(k))candidates.set(k,[]);
   candidates.get(k).push(word);
+  const spelling=word.english.normalize('NFC').trim().toLocaleLowerCase('en');
+  bySpelling.set(spelling,(bySpelling.get(spelling)||0)+1);
  }
  const entries=[],counts={
   shared:0,personal:0,newCards:0,reviewable:0,alreadyReviewed:0,
@@ -33,6 +35,9 @@ export function planThreeWayLegacyImport(snapshot,account){
   const matches=candidates.get(identity(word))||[];
   if(matches.length>1){counts.ambiguous++;continue;}
   if(!matches.length){
+   if(bySpelling.has(word.english.normalize('NFC').trim().toLocaleLowerCase('en'))){
+    counts.conflicts++;continue;
+   }
    entries.push({type:'create',word});
    counts.newCards++;continue;
   }
