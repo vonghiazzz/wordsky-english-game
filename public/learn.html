@@ -134,7 +134,7 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
  </div>
  </section>
 <nav class="tabs" aria-label="Chế độ học"><button class="tab active" id="flashTab" aria-selected="true">🃏 Flashcard</button><button class="tab" id="gameTab" aria-selected="false">🌠 Game chữ rơi</button><button class="tab" id="manageTab" aria-selected="false">⚙️ Quản lý từ vựng</button></nav>
-<section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="flashSource">Nguồn:</label><select id="flashSource" aria-label="Chọn kho Flashcard"><option value="account" disabled>Bộ từ tài khoản (đang tải)</option><option value="server" disabled>Kho từ máy chủ (đang tải)</option><option value="local" selected>Bộ từ trên thiết bị</option></select><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="refreshVocabulary" type="button">↻ Cập nhật từ mới</button><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng. Bộ từ máy chủ tự cập nhật khi mở trang; bộ từ cá nhân và tiến độ cũ không bị ghi đè.</p><p id="flashVocabularyStatus" class="section-sub" role="status" aria-live="polite">Đang tải danh mục từ vựng máy chủ…</p><p id="flashAccountStatus" class="section-sub" role="status" aria-live="polite">Đang kiểm tra bộ từ theo tài khoản…</p><div class="ws05-steps" aria-label="Hướng dẫn dùng Flashcard"><span><b>01</b> Chọn chủ đề</span><span><b>02</b> Lật thẻ xem nghĩa</span><span><b>03</b> Đánh dấu đã nhớ</span></div><div class="ws05-flash-readout" id="ws05FlashReadout" role="status" aria-live="off">Đang tải thông tin thẻ…</div><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button><form id="cambridgeLookupForm" class="cambridge-form" action="https://dictionary.cambridge.org/search/english/direct/" method="get" target="_blank" rel="noopener noreferrer" aria-label="Tra từ hiện tại trên Cambridge Dictionary"><input type="hidden" name="q" id="cambridgeTerm"><input type="hidden" name="utm_source" value="widget_searchbox_source"><input type="hidden" name="utm_medium" value="widget_searchbox"><input type="hidden" name="utm_campaign" value="widget_tracking"><button type="submit" class="secondary" id="cambridgeLookupSubmit" disabled>📖 Tra Cambridge ↗</button></form></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny" id="flashStorageHint">Tiến độ được lưu trên trình duyệt này.</p></div><a class="secondary" href="/progress.html" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">📊 Xem toàn bộ tiến độ</a><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
+<section class="panel" id="flashPanel"><div class="toolbar"><h2>🃏 Thẻ từ vựng</h2><div class="controls"><label for="flashSource">Nguồn:</label><select id="flashSource" aria-label="Chọn kho Flashcard"><option value="account" disabled>Từ của tôi (đang tải)</option><option value="server" disabled>Kho từ chung (đang tải)</option><option value="local" selected>Bộ Flashcard trên thiết bị (dữ liệu cũ)</option></select><label for="topic">Chủ đề:</label><select id="topic"></select><button class="smallbtn" id="refreshVocabulary" type="button">↻ Cập nhật từ mới</button><button class="smallbtn" id="shuffle">🔀 Trộn thẻ</button></div></div><p class="section-sub">Chạm vào thẻ để xem nghĩa, ví dụ và cách dùng. Bộ từ máy chủ tự cập nhật khi mở trang; bộ từ cá nhân và tiến độ cũ không bị ghi đè.</p><p id="flashVocabularyStatus" class="section-sub" role="status" aria-live="polite">Đang tải danh mục từ vựng máy chủ…</p><p id="flashAccountStatus" class="section-sub" role="status" aria-live="polite">Đang kiểm tra bộ từ theo tài khoản…</p><div class="ws05-steps" aria-label="Hướng dẫn dùng Flashcard"><span><b>01</b> Chọn chủ đề</span><span><b>02</b> Lật thẻ xem nghĩa</span><span><b>03</b> Đánh dấu đã nhớ</span></div><div class="ws05-flash-readout" id="ws05FlashReadout" role="status" aria-live="off">Đang tải thông tin thẻ…</div><div class="flash-layout"><div><div id="flashCard" class="flash-card" role="button" tabindex="0" aria-label="Lật thẻ từ vựng"><div class="flip-inner"><div class="face"><div>💡 ENGLISH</div><h3 id="word">Hello</h3><div class="ipa" id="ipa"></div><div class="hint">↻ Nhấn để lật thẻ</div></div><div class="face back"><div class="meaning" id="meaning"></div><div class="example" id="example"></div><div class="vi" id="translation"></div><div class="hint">↻ Nhấn để lật lại</div></div></div></div><div class="rowbtn"><button class="secondary" id="prev">← Trước</button><button class="primary" id="know">✓ Đã nhớ · Tiếp</button><button class="secondary" id="next">Tiếp →</button><form id="cambridgeLookupForm" class="cambridge-form" action="https://dictionary.cambridge.org/search/english/direct/" method="get" target="_blank" rel="noopener noreferrer" aria-label="Tra từ hiện tại trên Cambridge Dictionary"><input type="hidden" name="q" id="cambridgeTerm"><input type="hidden" name="utm_source" value="widget_searchbox_source"><input type="hidden" name="utm_medium" value="widget_searchbox"><input type="hidden" name="utm_campaign" value="widget_tracking"><button type="submit" class="secondary" id="cambridgeLookupSubmit" disabled>📖 Tra Cambridge ↗</button></form></div></div><aside class="statbox"><div><div class="tiny">TIẾN ĐỘ HỌC</div><div class="statnumber" id="flashCount">1 / 10</div><div class="progress"><span id="flashProgress"></span></div></div><div><div class="tiny">SỐ TỪ ĐÃ NHỚ</div><div class="statnumber" id="remembered">0</div><p class="tiny" id="flashStorageHint">Tiến độ được lưu trên trình duyệt này.</p></div><a class="secondary" href="/progress.html" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">📊 Xem toàn bộ tiến độ</a><button class="secondary" id="resetProgress">Ôn lại từ đầu</button></aside></div></section>
 <section class="panel hidden" id="gamePanel"><div class="toolbar"><h2>🌠 Bắt chữ rơi</h2><div class="controls"><label for="gameTopic">Chủ đề:</label><select id="gameTopic"></select><label for="gameMode">Chế độ:</label><select id="gameMode"><option value="letters">🔠 Bắt chữ cái</option><option value="typing">⚡ Gõ cả từ</option></select><label for="difficulty">Tốc độ:</label><select id="difficulty"><option value="easy">Dễ</option><option value="normal">Vừa</option><option value="hard">Khó</option></select><label for="wordLimit">Số từ:</label><input id="wordLimit" type="number" min="1" max="50" step="1" value="10" inputmode="numeric" aria-label="Số từ mỗi lượt chơi" style="width:77px"></div></div><div class="game-profile"><div class="name-field"><label for="playerName">👤 Tên người chơi</label><input id="playerName" type="text" maxlength="24" placeholder="Ví dụ: Nghĩa" autocomplete="nickname" aria-describedby="playerHelp"></div><p class="profile-help" id="playerHelp">Nhập tên trước khi bắt đầu. Điểm được ghi theo tên để hai người so tài trên cùng trình duyệt.</p></div>
 <aside class="ws05-game-intro" aria-label="Cấu hình chơi Chữ rơi"><div><strong>🎯 Chuẩn bị thử thách</strong><p>Chọn chủ đề, chế độ, tốc độ và số từ rồi nhấn Bắt đầu chơi. Chế độ Gõ cả từ dùng bàn phím native.</p></div><output class="ws05-config-chip" id="ws05GameConfig" aria-label="Cấu hình đang chọn">Đang tải cấu hình…</output></aside>
 <div id="gameRules" class="rule">🎯 <b>Bắt chữ cái:</b> Nhìn nghĩa tiếng Việt, chạm chữ cái đúng đang rơi hoặc nhấn phím A–Z. Chọn sai hoặc bỏ lỡ chữ đúng mất 1 tim.</div><div class="game-header"><div class="metric"><strong id="score">0</strong><span>Điểm</span></div><div class="metric"><strong id="hearts">❤️❤️❤️</strong><span>Máu</span></div><div class="metric"><strong id="round">0 / 10</strong><span>Số từ</span></div><div class="metric"><strong id="best">0</strong><span>Kỷ lục của bạn</span></div></div><div class="prompt" aria-live="polite"><div class="translation" id="clue">Bắt đầu trò chơi để nhận câu hỏi</div><div class="blanks" id="blanks">_ _ _ _ _</div></div><div class="game-area" id="gameArea" aria-label="Khu vực chữ rơi"><div class="typing-hud hidden" id="typingHud" aria-live="off"><span id="typingTime">⏱ --</span><span id="typingCount">✅ 0 từ đúng</span></div><button type="button" class="game-fullscreen" id="fullscreenGame" aria-label="Phóng to toàn màn hình game" title="Toàn màn hình">⛶</button><div class="typing-dock hidden" id="typingDock"><form class="typing-form" id="typingForm" autocomplete="off"><input id="typingAnswer" type="text" maxlength="45" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Nhập tiếng Anh rồi nhấn Enter…" aria-label="Nhập cả từ tiếng Anh" disabled></form></div><div class="cloud" style="left:10%;top:14%">☁</div><div class="cloud" style="right:10%;top:60%">☁</div><div id="gameOverlay" class="game-overlay"><div class="overlay-box"><h3 id="overlayTitle">Sẵn sàng chưa? 🚀</h3><p id="overlayText">Các từ vựng ngẫu nhiên đang chờ. Chạm vào chữ cái đang rơi hoặc dùng bàn phím để điền từ!</p><button class="primary" id="startGame">▶ Bắt đầu chơi</button></div></div></div><div class="game-footer"><div class="feedback" id="feedback" aria-live="polite"></div><div class="controls"><button class="secondary" id="pauseGame" disabled>⏸ Tạm dừng</button><button class="secondary" id="restartGame">↻ Chơi lại</button></div></div><p class="key-hint" id="gameHint">Mẹo: Trên điện thoại hãy chạm chữ cái. Trên máy tính có thể nhấn phím A–Z. Game tự dừng khi chuyển tab trình duyệt.</p>
@@ -269,6 +269,8 @@ function saveServerLearned(){
 let topic=Object.keys(DATA)[0],cards=[...DATA[topic]],cardIndex=0;
 let SERVER_DATA=null,ACCOUNT_DATA=null,flashSource='local';
 let ACCOUNT_WORD_IDS=new Map(),ACCOUNT_REMEMBERED={},accountReviewer=null,markingAccount=false;
+let ACCOUNT_SESSION=false,ACCOUNT_SHARED_PROGRESS=null,sharedReviewer=null,markingShared=false;
+function accountSharedMode(){return ACCOUNT_SESSION&&serverProgressMode()}
 function accountMode(){return flashSource==='account'&&ACCOUNT_DATA!==null}
 function accountProgressId(t,card){return ACCOUNT_WORD_IDS.get(t+'\u0000'+card[0].toLocaleLowerCase('en'))||null}
 function flashTopics(){return accountMode()?ACCOUNT_DATA:flashSource==='server'&&SERVER_DATA?SERVER_DATA:DATA;}
@@ -371,19 +373,25 @@ function renderCard(){
   $('flashProgress').style.width=c?((cardIndex+1)/cards.length*100)+'%':'0%';
   const server=serverProgressMode();
   const account=accountMode();
-  $('remembered').textContent=cards.filter(x=> account
-    ? ACCOUNT_REMEMBERED[accountProgressId(topic,x)]===true
-    : server ? serverLearned?.[serverProgressId(topic,x)]===true
-    : learned[key(topic,x[0])]===true
-  ).length;
+  $('remembered').textContent=accountSharedMode()&&ACCOUNT_SHARED_PROGRESS===null?'—':
+    cards.filter(x=> account
+      ? ACCOUNT_REMEMBERED[accountProgressId(topic,x)]===true
+      : accountSharedMode()?ACCOUNT_SHARED_PROGRESS?.[serverProgressId(topic,x)]===true
+      : server ? serverLearned?.[serverProgressId(topic,x)]===true
+      : learned[key(topic,x[0])]===true
+    ).length;
   $('flashStorageHint').textContent=account
-    ? 'Từ cá nhân và dấu đã nhớ được lưu theo tài khoản trong PostgreSQL. Đăng nhập trình duyệt khác để tiếp tục học.'
+    ? 'Từ của tôi: tiến độ lưu theo tài khoản PostgreSQL.'
+    : accountSharedMode() ? (ACCOUNT_SHARED_PROGRESS===null
+      ? 'Chưa tải được tiến độ tài khoản. Không ghi “Đã nhớ” vào dữ liệu thiết bị.'
+      : 'Kho từ chung: tiến độ lấy và lưu trực tiếp theo tài khoản PostgreSQL.')
     : server ? (serverLearned===null
-      ? 'Không đọc được trạng thái ghi nhớ kho máy chủ. Không ghi đè dữ liệu lỗi.'
-      : 'Kho từ máy chủ: trạng thái trên thiết bị theo UUID; cần đồng bộ riêng lên tài khoản.')
-    : 'Bộ Flashcard cũ: trạng thái ghi nhớ chỉ lưu trên trình duyệt này.';
+      ? 'Không đọc được tiến độ kho chung trên thiết bị; dữ liệu cũ được giữ nguyên.'
+      : 'Kho từ chung (khách): tiến độ chỉ nằm trên thiết bị.')
+    : 'Dữ liệu Flashcard cũ chỉ được lưu trong trình duyệt này.';
   for(const id of ['prev','know','next','shuffle','resetProgress'])$(id).disabled=!c;
-  if(server && serverLearned===null){$('know').disabled=true;$('resetProgress').disabled=true;}
+  if(server&&!ACCOUNT_SESSION&&serverLearned===null){$('know').disabled=true;$('resetProgress').disabled=true;}
+  if(accountSharedMode()){$('resetProgress').disabled=true;$('know').disabled=!c||markingShared||!sharedReviewer||ACCOUNT_SHARED_PROGRESS===null;}
   if(account){$('resetProgress').disabled=true;$('know').disabled=!c||markingAccount;}
 }
 function advance(n){if(!cards.length)return;cardIndex=(cardIndex+n+cards.length)%cards.length;renderCard()}
@@ -404,6 +412,20 @@ $('know').onclick=async()=>{
       note('Đã nhớ và lưu từ vào tài khoản WordSky.');
     }catch(e){note('Chưa lưu được lên tài khoản: '+e.message,true)}
     finally{markingAccount=false;renderCard()}
+    return;
+  }
+  if(accountSharedMode()){
+    if(markingShared||!sharedReviewer||ACCOUNT_SHARED_PROGRESS===null)return;
+    const selectedTopic=topic,currentWord=cards[cardIndex][0],id=serverProgressId(topic,cards[cardIndex]);
+    if(!id){note('Không tìm thấy UUID từ chung. Chưa lưu.',true);return;}
+    markingShared=true;renderCard();
+    try {
+      await sharedReviewer(id);
+      ACCOUNT_SHARED_PROGRESS[id]=true;
+      if(accountSharedMode()&&topic===selectedTopic&&cards[cardIndex]?.[0]===currentWord)advance(1);
+      note('Đã ghi nhớ và lưu từ chung vào tài khoản WordSky.');
+    }catch(e){note('Chưa lưu được tiến độ tài khoản: '+e.message,true);}
+    finally{markingShared=false;renderCard();}
     return;
   }
   const server=serverProgressMode();
@@ -427,7 +449,7 @@ window.addEventListener('wordsky:flashcard-sync-status',event=>{
   if(event.detail?.message)note(event.detail.message,!!event.detail.error);
 });
 $('resetProgress').onclick=()=>{
-  if(accountMode()){note('Để đổi trạng thái từng từ theo tài khoản, vào trang Từ cá nhân theo tài khoản.');return}
+  if(accountMode()||accountSharedMode()){note('Để đổi trạng thái từ theo tài khoản, vào My Learning.');return}
   const server=serverProgressMode();
   if(server&&serverLearned===null)return;
   const progress=server?serverLearned:learned;
@@ -832,7 +854,12 @@ window.WordSkyFlashcardCatalog={
       [w.topic+'\u0000'+w.card[0].toLocaleLowerCase('en'),w.word_id]
     ));
     const option=$('flashSource').querySelector('option[value="server"]');
-    option.disabled=false;option.textContent='Kho từ máy chủ ('+parsed.count+' từ)';
+    option.disabled=false;option.textContent='Kho từ chung ('+parsed.count+' từ)';
+    let savedChoice=null;
+    try{savedChoice=localStorage.getItem('wordsky_flashcard_source_v1')}catch{}
+    if(ACCOUNT_SESSION&&savedChoice!=='account'&&flashSource==='account'){
+      flashSource='server';$('flashSource').value='server';cardIndex=0;
+    }
     if((activate&&flashSource!=='account')||flashSource==='server'){
       flashSource='server';
       $('flashSource').value='server';
@@ -853,21 +880,45 @@ window.WordSkyFlashcardCatalog={
     }
     ACCOUNT_DATA=topics;ACCOUNT_WORD_IDS=byId;ACCOUNT_REMEMBERED=known;
     const option=$('flashSource').querySelector('option[value="account"]');
-    option.disabled=false;option.textContent='Từ cá nhân theo tài khoản ('+payload.words.length+' từ)';
+    option.disabled=false;option.textContent='Từ của tôi ('+payload.words.length+' từ)';
     if(activate||flashSource==='account'){flashSource='account';$('flashSource').value='account';cardIndex=0}
     renderSelectors();renderCard();
   },
   setAccountReviewer(fn){accountReviewer=fn},
+  setSharedReviewer(fn){sharedReviewer=fn;renderCard()},
+  setAccountSharedProgress(rows){
+    if(!Array.isArray(rows))throw Error('Tiến độ từ chung không hợp lệ');
+    ACCOUNT_SHARED_PROGRESS=Object.create(null);
+    for(const record of rows)if(record?.word_id&&record.remembered===true)
+      ACCOUNT_SHARED_PROGRESS[record.word_id]=true;
+    renderCard();
+  },
+  setAccountMode(active){
+    ACCOUNT_SESSION=active===true;
+    const legacy=$('flashSource').querySelector('option[value="local"]');
+    legacy.hidden=ACCOUNT_SESSION;legacy.disabled=ACCOUNT_SESSION;
+    $('manageTab').textContent=ACCOUNT_SESSION?'🗂 Dữ liệu cũ':'⚙️ Quản lý từ vựng';
+    if(ACCOUNT_SESSION&&flashSource==='local'){
+      flashSource=SERVER_DATA?'server':ACCOUNT_DATA?'account':'local';
+      $('flashSource').value=flashSource;cardIndex=0;
+    }
+    if(ACCOUNT_SESSION&&location.hash==='#manage'&&!new URLSearchParams(location.search).has('legacy')){
+      location.replace('/personal.html');return;
+    }
+    renderSelectors();renderCard();
+  },
   clearAccountCatalog(){
     ACCOUNT_DATA=null;ACCOUNT_WORD_IDS=new Map();ACCOUNT_REMEMBERED={};accountReviewer=null;
+    ACCOUNT_SHARED_PROGRESS=null;sharedReviewer=null;
     const option=$('flashSource').querySelector('option[value="account"]');
-    option.disabled=true;option.textContent='Từ cá nhân theo tài khoản (cần đăng nhập)';
+    option.disabled=true;option.textContent='Từ của tôi (cần đăng nhập)';
     if(flashSource==='account'){
       flashSource=SERVER_DATA?'server':'local';$('flashSource').value=flashSource;cardIndex=0;
     }
     renderSelectors();renderCard();
   },
   useSource(which){
+    if(ACCOUNT_SESSION&&which==='local')return;
     if(which!=='local'&&!(which==='server'&&SERVER_DATA)&&!(which==='account'&&ACCOUNT_DATA))return;
     flashSource=which;
     $('flashSource').value=which;
@@ -875,7 +926,7 @@ window.WordSkyFlashcardCatalog={
   },
   serverUnavailable(){
     if(SERVER_DATA)return;
-    $('flashSource').options[0].disabled=true;
+    $('flashSource').querySelector('option[value="server"]').disabled=true;
     if(flashSource==='server'){
       flashSource='local';
       $('flashSource').value='local';
