@@ -102,5 +102,5 @@ test('UX24 same canonical history yields same queue on multiple devices',()=>{
  const first=buildSrsQueue(cards,m,{now:T});
  const second=buildSrsQueue([...cards].reverse(),m,{now:T});
  assert.deepEqual(first,second,'sorting is independent of browser catalog order');
- assert.deepEqual(first.due.map(w=>w.id),['w1','w2']);
+ assert.deepEqual(first.due.map(w=>w.id),['w2','w1']); // oldest due first
 });
