@@ -42,9 +42,25 @@ test('UX24 success schedules deterministic intervals; a need-review resets the s
  assert.equal(relearn.due_at,'2026-10-30T00:02:00.000Z');
 });
 
-test('UX24 interval saturates rather than growing without bound',()=>{
- const history=Array.from({length:15},(_,i)=>
-  review('event-'+i,true,new Date(Date.parse(T)+i*24*3600*1000).toISOString()));
+test('UX24 early repeated clicks cannot inflate the schedule or streak',()=>{
+ const early=computeSrsState([
+  review('a',true,T),
+  review('b',true,'2026-10-27T00:01:00Z'),
+  review('c',true,'2026-10-27T00:02:00Z')
+ ],{now:T});
+ assert.equal(early.review_count,3);
+ assert.equal(early.consecutive_remembered,1);
+ assert.equal(early.interval_days,1);
+ assert.equal(early.due_at,'2026-10-28T00:00:00.000Z');
+});
+
+test('UX24 interval saturates after due-time successes rather than growing without bound',()=>{
+ const history=[];
+ let next=Date.parse(T);
+ for(let i=0;i<15;i++){
+  history.push(review('event-'+i,true,new Date(next).toISOString()));
+  next+=SRS_INTERVAL_DAYS[Math.min(i,SRS_INTERVAL_DAYS.length-1)]*24*3600*1000;
+ }
  const state=computeSrsState(history,{now:T});
  assert.equal(state.review_count,15);
  assert.equal(state.consecutive_remembered,15);
