@@ -75,3 +75,52 @@ export async function postAccountReview(wordId, remembered, expectedActorId) {
   if (saved.scope !== 'account' || saved.word_id !== wordId) throw new Error('Máy chủ chưa xác nhận bản ghi');
   return saved;
 }
+
+
+// UX-23B: pending transport operation IDs, NOT learning-progress state.
+// Keep the request ID through a transient network failure or same-tab reload.
+// One deliberate new action after success generates a new id.
+const pendingReviewIds=new Map();
+const reviewUuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
+const pendingKey=(actor,source,wordId,remembered)=>
+  'ws23-review:'+JSON.stringify([actor,source,wordId,remembered]);
+function readPendingId(key){
+ let id=pendingReviewIds.get(key);
+ if(!id){
+  try{id=sessionStorage.getItem(key)}catch{}
+ }
+ if(!reviewUuid.test(id||'')){
+  id=globalThis.crypto.randomUUID();
+  try{sessionStorage.setItem(key,id)}catch{}
+ }
+ pendingReviewIds.set(key,id);
+ return id;
+}
+function forgetPendingId(key){
+ pendingReviewIds.delete(key);
+ try{sessionStorage.removeItem(key)}catch{}
+}
+export async function postUnifiedAccountReview(source,wordId,remembered,expectedActorId){
+ if(!['shared','personal'].includes(source)||!reviewUuid.test(wordId)||
+    !reviewUuid.test(expectedActorId)||typeof remembered!=='boolean')
+  throw Error('Không hợp lệ: nguồn từ, tài khoản hoặc trạng thái ghi nhớ.');
+ const key=pendingKey(expectedActorId,source,wordId,remembered);
+ const request_id=readPendingId(key);
+ try{
+  const result=await learningApi('learning/reviews',{
+    method:'POST',body:{request_id,source,word_id:wordId,remembered,
+      expected_actor_id:expectedActorId}
+  });
+  if(result.scope!=='account-review'||result.source!==source||
+     result.word_id!==wordId||result.remembered!==remembered||
+     result.request_id!==request_id)
+    throw Error('Máy chủ chưa xác nhận chính xác lượt ôn.');
+  forgetPendingId(key);
+  return result;
+ }catch(error){
+  // A transient failure has an unknown outcome: preserve the UUID for retry.
+  // Definitive client errors do not represent an accepted review.
+  if([400,401,403,404,409].includes(error.status))forgetPendingId(key);
+  throw error;
+ }
+}

@@ -1,4 +1,4 @@
-import {learningApi} from './ux10-account-core.js';
+import {learningApi,postUnifiedAccountReview} from './ux10-account-core.js';
 import {readBrowserPersonal} from './ux18-personal-core.js';
 import {planThreeWayLegacyImport} from './ux21-legacy-reconciliation.js';
 
@@ -17,6 +17,12 @@ async function scopedRequest(path,options){
  const now=await getActor();
  if(!now||now.id!==actor?.id)throw Error('Tài khoản đã thay đổi; dừng thao tác để bảo vệ dữ liệu.');
  return learningApi(path,{...options,body:options?.body===undefined?undefined:{...options.body,expected_actor_id:actor.id}});
+}
+async function scopedUnifiedReview(wordId,remembered){
+ const current=await getActor();
+ if(!current||current.id!==actor?.id)
+  throw Error('Tài khoản đã thay đổi; không gửi lượt ôn sang tài khoản khác.');
+ return postUnifiedAccountReview('personal',wordId,remembered,actor.id);
 }
 async function load(){
  const ticket=++loadTicket;
@@ -81,8 +87,8 @@ function renderList(){
   details.append(title,caption);
   const controls=document.createElement('div');controls.className='word-controls';
   controls.append(
-   entry(word,'✓ Đã nhớ',()=>act(()=>scopedRequest('learning/personal/reviews',{method:'POST',body:{personal_word_id:word.id,remembered:true}}))),
-   entry(word,'↻ Cần ôn',()=>act(()=>scopedRequest('learning/personal/reviews',{method:'POST',body:{personal_word_id:word.id,remembered:false}}))),
+   entry(word,'✓ Đã nhớ',()=>act(()=>scopedUnifiedReview(word.id,true))),
+   entry(word,'↻ Cần ôn',()=>act(()=>scopedUnifiedReview(word.id,false))),
    entry(word,'Sửa',()=>{
     editing=word;
     for(const id of ids)el('personal'+id.charAt(0).toUpperCase()+id.slice(1)).value=word[id]||'';

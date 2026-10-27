@@ -46,6 +46,7 @@ test('UX19 UI treats unified account as one source, not local/browser views',()=
  assert.match(ui,/if\(unified\.kind==='error'/);
  assert.match(ui,/learning\/me\/summary/);
  assert.match(ui,/updateUnifiedCard\(card, true\)/);
- assert.match(ui,/personal_word_id:card\.personal_word_id/);
+ assert.match(ui,/card\.source==='shared'\?card\.word_id:card\.personal_word_id/);
+ assert.match(ui,/postUnifiedAccountReview\(card\.source,/);
  assert.match(html,/id="ws19AccountStatus"/);
 });
