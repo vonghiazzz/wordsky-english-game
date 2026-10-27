@@ -384,6 +384,38 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     await assert.rejects(markPersonalCard(userB,{personal_word_id:oldPersonal,remembered:true}),
      error=>error.status===404);
 
+    // UX24D Preview HTTP parity diagnostics: isolated to the cookie actor,
+    // no history payload and no ability to mutate schedules.
+    const oldSrsFlag=process.env.WORDSKY_SRS_PREVIEW_ENABLED;
+    try{
+     process.env.WORDSKY_SRS_PREVIEW_ENABLED='true';
+     const guestDiagnostic=await send(null,'GET','/api/learning/srs/diagnostics');
+     assert.equal(guestDiagnostic.status,401);
+     const diagnostics=await send(headersA,'GET','/api/learning/srs/diagnostics');
+     assert.equal(diagnostics.status,200,JSON.stringify(diagnostics.body));
+     assert.equal(diagnostics.body.scope,'account-srs-diagnostics');
+     assert.equal(diagnostics.body.actor_id,userA);
+     assert.ok(diagnostics.body.matched>=3);
+     assert.equal(diagnostics.body.mismatched,0);
+     assert.equal(diagnostics.body.orphaned,0);
+     assert.ok(diagnostics.body.missing>0,'old history must count as unmaterialized');
+     assert.equal(diagnostics.body.status,'partial');
+     assert.equal(diagnostics.body.words,undefined,'never leak account review history');
+     const other=await send(headersB,'GET',
+      '/api/learning/srs/diagnostics?user_id='+userA);
+     assert.equal(other.status,200);
+     assert.equal(other.body.actor_id,userB,'query must not impersonate another account');
+     assert.equal(other.body.materialized,0);
+     process.env.VERCEL_ENV='production';
+     const hidden=await send(headersA,'GET','/api/learning/srs/diagnostics');
+     assert.equal(hidden.status,404);
+     delete process.env.VERCEL_ENV;
+    }finally{
+     delete process.env.VERCEL_ENV;
+     if(oldSrsFlag===undefined)delete process.env.WORDSKY_SRS_PREVIEW_ENABLED;
+     else process.env.WORDSKY_SRS_PREVIEW_ENABLED=oldSrsFlag;
+    }
+
     // Turning off the Preview shadow flag leaves accepted UX23 behavior
     // unchanged, proving a missing schedule table cannot block Production.
     process.env.WORDSKY_SRS_SHADOW_ENABLED='false';

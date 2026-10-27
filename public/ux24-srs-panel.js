@@ -34,6 +34,8 @@ function initSrs(){
  const prev=document.getElementById('ws24Prev');
  const next=document.getElementById('ws24Next');
  const reload=document.getElementById('ws24Reload');
+ const audit=document.getElementById('ws24Audit');
+ const auditResult=document.getElementById('ws24AuditResult');
  const summary=document.getElementById('ws24Summary');
  let actorId=null,requested=0,pending=false,page=0,received=null;
  const showMessage=(message,error=false)=>{notice.textContent=message;notice.dataset.error=String(error);};
@@ -82,7 +84,9 @@ function initSrs(){
    if(auth.actor?.role!=='player'||!auth.actor.id)
     throw Error('Đăng nhập học viên để xem lịch ôn.');
    if(seq!==requested)return;
-   if(actorId&&actorId!==auth.actor.id){received=null;page=0;topic.value='';}
+   if(actorId&&actorId!==auth.actor.id){
+    received=null;page=0;topic.value='';auditResult.textContent='';
+   }
    actorId=auth.actor.id;
    const data=srsReviewCards(await learningApi(srsQuery({
     status:status.value,topic:topic.value,page
@@ -119,6 +123,7 @@ function initSrs(){
    if(auth.actor?.role!=='player'||auth.actor.id!==actorId)
     throw Error('Tài khoản đã thay đổi; hãy tải lại trước khi ôn.');
    await postUnifiedAccountReview(word.source,word.id,remembered,actorId,word.review_count);
+   auditResult.textContent='Đã có lượt học mới; bấm Kiểm tra đồng bộ để đối chiếu.';
    // Existing My Learning filters are preserved by its soft account refresh.
    window.dispatchEvent(new CustomEvent('wordsky:srs-review-saved',{detail:{actorId}}));
    showMessage('Đã lưu từ “'+word.english+'”. Lịch ôn đã được cập nhật.');
@@ -140,6 +145,24 @@ function initSrs(){
  prev.addEventListener('click',()=>{if(page>0){page--;refresh()}});
  next.addEventListener('click',()=>{if(received&&page+1<received.total_pages){page++;refresh()}});
  reload.addEventListener('click',()=>refresh());
+ audit.addEventListener('click',async()=>{
+  const clickedActor=actorId;
+  if(!clickedActor)return;
+  audit.disabled=true;
+  auditResult.textContent='Đang đối chiếu lịch ôn với lịch sử trên PostgreSQL…';
+  try{
+   const data=await learningApi('learning/srs/diagnostics');
+   if(data.scope!=='account-srs-diagnostics'||data.actor_id!==clickedActor)
+    throw Error('Phiên đăng nhập đã thay đổi; không hiển thị kết quả tài khoản khác.');
+   const matched=data.matched+'/'+data.materialized+' lịch đã lưu khớp';
+   auditResult.textContent=matched+
+     (data.missing?' · '+data.missing+' từ đã học chưa được tạo lịch lưu':'')+
+     (data.mismatched||data.orphaned?' · '+(data.mismatched+data.orphaned)+' lịch sai lệch':'')+
+     (data.status==='complete'?' · Hoàn tất':' · Tiếp tục theo dõi');
+  }catch(error){
+   auditResult.textContent='Chưa kiểm tra được lịch: '+error.message;
+  }finally{audit.disabled=false;}
+ });
  window.addEventListener('wordsky:my-learning-review-saved',()=>refresh());
  window.addEventListener('focus',()=>refresh());
  refresh();
