@@ -352,11 +352,16 @@ function boot() {
         throw Error('Nguồn từ không hợp lệ.');
       await postUnifiedAccountReview(card.source,
         card.source==='shared'?card.word_id:card.personal_word_id,
-        remembered,actorId);
+        remembered,actorId,card.review_count);
       await refreshUnified();
       showNotice('Đã lưu từ “'+card.english+'” theo tài khoản WordSky.');
     }catch(e){
-      showNotice('Chưa lưu được vào tài khoản: '+e.message);
+      if(e.status===409){
+        await refreshUnified();
+        showNotice(unified.kind==='ready'
+          ? 'Từ “'+card.english+'” đã thay đổi trên thiết bị khác. Đã tải trạng thái mới; xem lại và bấm xác nhận nếu muốn thay đổi.'
+          : 'Từ “'+card.english+'” đã thay đổi trên thiết bị khác. Chưa tải lại được dữ liệu, vui lòng thử tải lại trước khi thao tác.');
+      }else showNotice('Chưa lưu được vào tài khoản: '+e.message);
     }finally{unifiedSaving=false;render();}
   }
   const search = byId('ws10Search');
