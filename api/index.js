@@ -7,6 +7,7 @@ import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '..
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
 import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
 import {getAccountSrsQueue} from '../lib/srs-queue.js';
+import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
 
@@ -493,6 +494,13 @@ export default async function handler(req,res){
       return output(res,404,{error:'SRS thử nghiệm chưa được bật.'});
     const userId=mustPlayer(req).id;
     return output(res,200,await getAccountSrsQueue(userId,req.query||{}));
+  }
+  // UX-24D QA-only parity summary. No user_id accepted from query strings.
+  // Like the SRS queue, this route is NEVER exposed on Production.
+  if(method==='GET'&&key==='learning/srs/diagnostics'){
+    if(process.env.VERCEL_ENV==='production'||process.env.WORDSKY_SRS_PREVIEW_ENABLED!=='true')
+      return output(res,404,{error:'Kiểm tra SRS thử nghiệm chưa được bật.'});
+    return output(res,200,await getAccountSrsDiagnostics(mustPlayer(req).id));
   }
   // Only this bounded import route accepts larger payloads (20 complete cards).
   if(method==='POST'&&key==='learning/import/legacy/batch'){
