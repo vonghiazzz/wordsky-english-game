@@ -70,6 +70,12 @@ function node(tag, className, value) {
   if (value !== undefined) element.textContent = value;
   return element;
 }
+// Keep an explicitly selected topic across a transient account refresh.
+// Drop it only once a complete new vocabulary snapshot proves it unavailable.
+export function retainTopicFilterSelection(requested,topics,isLoading=false){
+  if(isLoading)return requested;
+  return topics.includes(requested)?requested:'';
+}
 function boot() {
   const byId = id => document.getElementById(id);
   const list = byId('ws10WordList');
@@ -82,9 +88,14 @@ function boot() {
   let selectedScope='auto',manualScope=false,serverCatalogError='';
   let unified={kind:'checking'},unifiedTicket=0,unifiedSaving=false;
   const unifiedStatus=byId('ws19AccountStatus');
-  async function refreshUnified() {
+  async function refreshUnified({preserveReadyActorId=null}={}) {
     const ticket=++unifiedTicket;
-    unified={kind:'checking'};render();
+    // After a confirmed account review, keep the current list rendered
+    // while reloading; otherwise a temporary empty list destroys scroll
+    // position and discards a learner's topic selection.
+    const preserveReady=unified.kind==='ready'&&
+      unified.actor.id===preserveReadyActorId;
+    if(!preserveReady){unified={kind:'checking'};render();}
     try {
       const auth=await learningApi('auth/me');
       if(auth.actor?.role!=='player'||!auth.actor?.id) {
@@ -94,6 +105,11 @@ function boot() {
         render();return;
       }
       const actorId=auth.actor.id;
+      if(preserveReady&&actorId!==preserveReadyActorId){
+        // The session has changed; do not display the previous account
+        // while loading the new user's data.
+        unified={kind:'checking'};render();
+      }
       const payload=await learningApi('learning/me/summary');
       const view=buildUnifiedAccountView(payload,actorId);
       const active=await learningApi('auth/me');
@@ -353,11 +369,11 @@ function boot() {
       await postUnifiedAccountReview(card.source,
         card.source==='shared'?card.word_id:card.personal_word_id,
         remembered,actorId,card.review_count);
-      await refreshUnified();
+      await refreshUnified({preserveReadyActorId:actorId});
       showNotice('Đã lưu từ “'+card.english+'” theo tài khoản WordSky.');
     }catch(e){
       if(e.status===409){
-        await refreshUnified();
+        await refreshUnified({preserveReadyActorId:actorId});
         showNotice(unified.kind==='ready'
           ? 'Từ “'+card.english+'” đã thay đổi trên thiết bị khác. Đã tải trạng thái mới; xem lại và bấm xác nhận nếu muốn thay đổi.'
           : 'Từ “'+card.english+'” đã thay đổi trên thiết bị khác. Chưa tải lại được dữ liệu, vui lòng thử tải lại trước khi thao tác.');
@@ -367,6 +383,7 @@ function boot() {
   const search = byId('ws10Search');
   const topicFilter = byId('ws10Topic');
   const statusFilter = byId('ws10Status');
+  let selectedTopicFilter=topicFilter.value;
   const alert = byId('ws10Alert');
   function readLocal() {
     try {
@@ -445,11 +462,15 @@ function boot() {
       : 'Chưa có từ vựng trong nguồn đang xem.';
     alert.hidden = !view.error;
     alert.textContent = view.error || '';
-    const existingTopic = topicFilter.value;
     const topics = [...new Set(view.words.map(word => word.topic))];
-    topicFilter.replaceChildren(new Option('Tất cả chủ đề', ''), ...topics.map(topic => new Option(topic, topic)));
-    if (topics.includes(existingTopic)) topicFilter.value = existingTopic;
-    const filtered = filterWords(view.words, view.learned, {query: search.value, topic: topicFilter.value, status: statusFilter.value});
+    selectedTopicFilter=retainTopicFilterSelection(selectedTopicFilter,topics,waitingAccount);
+    if(!waitingAccount){
+      topicFilter.replaceChildren(new Option('Tất cả chủ đề', ''), ...topics.map(topic => new Option(topic, topic)));
+      topicFilter.value=selectedTopicFilter;
+    } // During a transient loading/error state, do not replace the options:
+      // the next complete account snapshot restores the chosen topic.
+    const filtered = filterWords(view.words, view.learned,
+      {query:search.value,topic:selectedTopicFilter,status:statusFilter.value});
     byId('ws10Count').textContent = filtered.length.toLocaleString('vi-VN') + ' thẻ';
     list.replaceChildren();
     const empty = byId('ws10Empty');
@@ -530,7 +551,10 @@ function boot() {
     render();
   });
   for (const element of [search, topicFilter, statusFilter]) {
-    element.addEventListener(element === search ? 'input' : 'change', () => {state.visible = 60; render()});
+    element.addEventListener(element === search ? 'input' : 'change', () => {
+      if(element===topicFilter)selectedTopicFilter=topicFilter.value;
+      state.visible = 60; render();
+    });
   }
   byId('ws10More').addEventListener('click', () => {state.visible += 60; render()});
   window.addEventListener('storage', event => {
