@@ -2,7 +2,7 @@ name: WordSky Learning CI
 on:
   push:
     branches:
-      - feature/ux23c-review-version-conflicts
+      - 'feature/ux23c-*'
   pull_request:
     branches:
       - main
@@ -11,9 +11,23 @@ permissions:
   contents: read
 
 jobs:
-  unit-and-contract:
+  unit-and-postgres:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: wordsky
+          POSTGRES_PASSWORD: wordsky_ci_only
+          POSTGRES_DB: wordsky_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wordsky -d wordsky_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -24,4 +38,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run check
-      - run: npm test
+      - name: Run all tests (including isolated PostgreSQL concurrency)
+        run: npm test
+        env:
+          UX23C_TEST_DATABASE_URL: postgres://wordsky:wordsky_ci_only@127.0.0.1:5432/wordsky_test
