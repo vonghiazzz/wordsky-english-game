@@ -51,11 +51,13 @@ No migration or added table required. Existing UX-10 and UX-17 tables remain sou
   - All legacy localStorage JSON bytes stayed identical; browser 2 did not inherit browser 1's local data.
   - Zero JavaScript exceptions.
 - Temporary UX21 QA user deleted from isolated Preview by exact ID+username with FK cleanup.
+- Additional real Chromium + Preview PostgreSQL security/concurrency QA: **11/11 PASS**: rejected stale expected_actor_id (409) without writes; concurrent identical import produced exactly one reviewed row; concurrent new-word import created one personal card; an unrelated account could not read the owner's personal card; anonymous import was rejected (401). Both temporary QA users were deleted by exact IDs and usernames.
+- Total real Preview integration/security checks: **30/30 PASS**. All temporary QA accounts removed.
 
 ## Release checklist
 
 1. Keep PR Draft until reviewer examines identity/conflict decisions against representative real seed data (especially changed IPA, meaning and topic).
-2. Verify cross-account ownership and the actor pin on the import endpoint using automated negative HTTP tests on Preview.
+2. Cross-account ownership and actor pin were verified on live Preview; keep the negative cases in future permanent API regression tests.
 3. Confirm Production databases are on the same UX10/UX17 schema and no schema action is required.
 4. Do not automatically import the legacy deck: the user must explicitly open the archived-data panel and approve every batch.
 5. Separate approval before merging to main/releasing Production. Preserve existing 4 Production users, shared vocabulary and progress.
