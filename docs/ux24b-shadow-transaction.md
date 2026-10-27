@@ -17,7 +17,7 @@ The flag defaults OFF. Do not enable in Production. Before enabling on Preview, 
 
 ## Critical non-release gates
 - The Production UX-23 review ledger is STILL absent. That migration requires its own owner approval; no changes have been made to Production.
-- Legacy `recordFlashcardReview()` and `markPersonalCard()` create history without shadow writes. Consequently the shadow table **must not be used as the authoritative user-facing queue** until these writers are supported or retired.
+- Legacy `recordFlashcardReview()`, `markPersonalCard()`, and `importLegacyCard()` (including chunk imports) create history without shadow writes. Consequently the shadow table **must not be used as the authoritative user-facing queue** until all three writers are supported or retired. Import writes its progress row before the history event and must be brought under a compatible ordered, shadow-aware transaction before enabling materialized reads.
 - Shadow reconstruction is O(history per word) on accepted review. It is suitable for this limited test stage; benchmark and implement an incremental or background backfill plan before scaling.
 - Historical ambiguity (transaction timestamps and tie ordering) must be documented and resolved before claiming true accepted-event ordering. A deterministic replay is not the same as observing an exact historical commit order.
 - Compare shadow vs. full history on an isolated dataset, including deleted personal cards, legacy reviews and concurrent 409 requests. Do not assume 12 shared progress words represent the full set of production accounts.
