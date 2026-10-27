@@ -370,6 +370,7 @@ function boot() {
         card.source==='shared'?card.word_id:card.personal_word_id,
         remembered,actorId,card.review_count);
       await refreshUnified({preserveReadyActorId:actorId});
+      window.dispatchEvent(new CustomEvent('wordsky:my-learning-review-saved',{detail:{actorId}}));
       showNotice('Đã lưu từ “'+card.english+'” theo tài khoản WordSky.');
     }catch(e){
       if(e.status===409){
@@ -380,6 +381,10 @@ function boot() {
       }else showNotice('Chưa lưu được vào tài khoản: '+e.message);
     }finally{unifiedSaving=false;render();}
   }
+  window.addEventListener('wordsky:srs-review-saved',event=>{
+    if(unified.kind==='ready'&&unified.actor.id===event.detail?.actorId)
+      refreshUnified({preserveReadyActorId:unified.actor.id});
+  });
   const search = byId('ws10Search');
   const topicFilter = byId('ws10Topic');
   const statusFilter = byId('ws10Status');

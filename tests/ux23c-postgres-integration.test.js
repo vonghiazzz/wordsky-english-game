@@ -222,6 +222,17 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     assert.equal(otherSrs.status,200);
     assert.equal(otherSrs.body.actor_id,userB);
     assert.ok(!otherSrs.body.words.some(w=>w.id===dueWord));
+    const topicSlice=await send(headersA,'GET',
+     '/api/learning/srs/queue?status=new&topic=Test%20only&page=0&size=1');
+    assert.equal(topicSlice.status,200);
+    assert.equal(topicSlice.body.topic,'Test only');
+    assert.equal(topicSlice.body.words.length,1);
+    assert.equal(topicSlice.body.words[0].topic,'Test only');
+    assert.ok(topicSlice.body.topics.includes('Test only'));
+    const absentTopic=await send(headersA,'GET',
+     '/api/learning/srs/queue?status=due&topic=Not%20a%20topic&page=0&size=20');
+    assert.equal(absentTopic.status,200);
+    assert.equal(absentTopic.body.total,0,'topic filtering must happen before pagination');
     const invalid=await send(headersA,'GET','/api/learning/srs/queue?size=101');
     assert.equal(invalid.status,400);
     const afterSrs=await sql('SELECT count(*)::int as n FROM ws_learning_flashcard_reviews WHERE user_id=$1',[userA]);
@@ -331,6 +342,47 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
      'SELECT count(*)::int AS n FROM ws_user_srs_schedules WHERE user_id=$1 AND word_id=$2',
      [userA,rejectedWord]);
     assert.equal(recoveredRows.rows[0].n,1);
+
+    // Every active legacy review writer must keep the same account-scoped
+    // materialized schedule aligned with append-only history.
+    const {recordFlashcardReview}=await import('../lib/learning-progress.js');
+    const {markPersonalCard}=await import('../lib/personal-vocabulary.js');
+    const {importLegacyFlashcard}=await import('../lib/legacy-learning-import.js');
+    const oldShared=randomUUID(),oldPersonal=randomUUID(),imported=randomUUID();
+    await sql('INSERT INTO ws_words(id,topic_id,english,meaning) VALUES($1,$2,$3,$4)',
+      [oldShared,topic,'legacy unique','Legacy meaning']);
+    await sql('INSERT INTO ws_personal_cards(id,user_id,english,meaning) VALUES($1,$2,$3,$4)',
+      [oldPersonal,userA,'personal unique','Personal meaning']);
+    const legacySaved=await recordFlashcardReview(userA,{word_id:oldShared,remembered:true});
+    assert.equal(legacySaved.scope,'account');
+    const personalSaved=await markPersonalCard(userA,{personal_word_id:oldPersonal,remembered:false});
+    assert.equal(personalSaved.scope,'personal-account');
+    await sql('INSERT INTO ws_words(id,topic_id,english,meaning) VALUES($1,$2,$3,$4)',
+      [imported,topic,'imported unique','Imported meaning']);
+    const legacyImported=await importLegacyFlashcard(userA,{
+      card:{topic:'Test only',english:'imported unique',meaning:'Imported meaning',
+       ipa:'',example:'',translation:''},known:true
+    });
+    assert.equal(legacyImported.reviewed,true);
+    for(const [source,id] of [['shared',oldShared],['personal',oldPersonal],['shared',imported]]){
+      const result=await sql(
+        'SELECT review_count,policy_version FROM ws_user_srs_schedules '+
+        'WHERE user_id=$1 AND source=$2 AND word_id=$3',[userA,source,id]);
+      assert.equal(result.rows.length,1,'legacy writer must create a shadow: '+source);
+      assert.equal(result.rows[0].review_count,1);
+      assert.equal(result.rows[0].policy_version,'ux24-fixed-v1');
+    }
+    const importAgain=await importLegacyFlashcard(userA,{
+      card:{topic:'Test only',english:'imported unique',meaning:'Imported meaning',
+       ipa:'',example:'',translation:''},known:true
+    });
+    assert.equal(importAgain.reviewed,false,'repeating import must not re-review');
+    const importedState=await sql(
+      'SELECT review_count FROM ws_user_srs_schedules WHERE user_id=$1 AND word_id=$2',
+      [userA,imported]);
+    assert.equal(importedState.rows[0].review_count,1);
+    await assert.rejects(markPersonalCard(userB,{personal_word_id:oldPersonal,remembered:true}),
+     error=>error.status===404);
 
     // Turning off the Preview shadow flag leaves accepted UX23 behavior
     // unchanged, proving a missing schedule table cannot block Production.

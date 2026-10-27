@@ -1,0 +1,27 @@
+.ws24-panel{margin:25px 0;padding:clamp(18px,3vw,30px);background:linear-gradient(145deg,rgba(27,44,80,.96),rgba(20,27,52,.98));border:1px solid #43587b;border-radius:22px;box-shadow:0 12px 42px #0003}
+.ws24-panel[hidden]{display:none!important}
+.ws24-panel .ws10-section-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.ws24-panel h2{margin:5px 0 8px;font-size:clamp(22px,2.6vw,30px);color:#f1fbff}
+.ws24-panel p{color:#b7c7df;line-height:1.55}
+.ws24-filters{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:20px 0 12px}
+.ws24-filters label{display:flex;flex-direction:column;gap:6px;color:#cbd7e9;font-size:13px;min-width:min(100%,180px);flex:1}
+.ws24-filters select{border:1px solid #536b96;background:#162342;color:white;min-height:41px;border-radius:10px;padding:8px}
+.ws24-filters button{min-height:41px}
+.ws24-summary{font-weight:600;color:#8fe1d3!important}
+.ws24-notice{margin:10px 0;font-size:13px}
+.ws24-notice[data-error="true"]{color:#ffa7ad!important}
+.ws24-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,275px),1fr));gap:12px}
+.ws24-card{display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:16px;border:1px solid #344e77;border-radius:15px;background:#12203d}
+.ws24-card-body{display:flex;flex-direction:column;gap:4px}
+.ws24-card-body strong{font-size:20px;color:#f4fbff}
+.ws24-card-body span,.ws24-card-body small{color:#a7b8d6;font-size:12px}
+.ws24-card-body p{margin:4px 0;color:#e2e9f6}
+.ws24-card-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.ws24-action{min-height:39px;flex:1;border:1px solid #55709c;border-radius:10px;background:#21345a;color:#ecf8ff;cursor:pointer;padding:8px}
+.ws24-action:hover{background:#2a4774}
+.ws24-action:disabled{opacity:.55;cursor:wait}
+.ws24-empty{grid-column:1/-1;padding:16px;border:1px dashed #3b5075;border-radius:12px}
+.ws24-pager{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}
+.ws24-pager span{font-size:13px;color:#a7b8d6}
+.ws24-pager button:disabled{opacity:.55}
+@media(max-width:560px){.ws24-filters label{flex-basis:100%}.ws24-pager{gap:8px}}
