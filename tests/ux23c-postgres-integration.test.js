@@ -302,12 +302,12 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     // A failed SRS shadow write MUST abort the UX23 ledger/history/progress
     // in the SAME transaction, so no half-accepted review can occur.
     await sql(`
-     CREATE FUNCTION ux24_test_reject_shadow() RETURNS trigger LANGUAGE plpgsql AS $
+     CREATE FUNCTION ux24_test_reject_shadow() RETURNS trigger LANGUAGE plpgsql AS $body$
      BEGIN
       IF NEW.word_id = '00000000-0000-4000-8000-000000000099'::uuid
       THEN RAISE EXCEPTION 'injected shadow failure'; END IF;
       RETURN NEW;
-     END $;
+     END $body$;
      CREATE TRIGGER ux24_reject_shadow BEFORE INSERT OR UPDATE ON ws_user_srs_schedules
        FOR EACH ROW EXECUTE FUNCTION ux24_test_reject_shadow();
     `);
