@@ -15,9 +15,9 @@ test('UX18 account personal Flashcards use distinct source and PostgreSQL identi
 });
 test('UX18 login switching fails closed and cannot mark local progress',()=>{
  assert.match(module,/active.actor.id!==id/);
- assert.match(module,/postUnifiedAccountReview\('personal',wordId,true,id\)/);
+ assert.match(module,/postUnifiedAccountReview\('personal',wordId,true,id,/);
  assert.match(module,/host.clearAccountCatalog\(\)/);
- assert.match(module,/postUnifiedAccountReview\('shared',wordId,true,id\)/);
+ assert.match(module,/postUnifiedAccountReview\('shared',wordId,true,id,/);
  assert.match(learn,/if\(accountMode\(\)\)\{/);
  assert.match(learn,/return;\s*\}\s*const server=serverProgressMode\(\)/);
 });

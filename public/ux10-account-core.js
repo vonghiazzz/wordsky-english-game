@@ -84,33 +84,48 @@ const pendingReviewIds=new Map();
 const reviewUuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const pendingKey=(actor,source,wordId,remembered)=>
   'ws23-review:'+JSON.stringify([actor,source,wordId,remembered]);
-function readPendingId(key){
- let id=pendingReviewIds.get(key);
- if(!id){
-  try{id=sessionStorage.getItem(key)}catch{}
+function readPendingCommand(key,expectedReviewCount){
+ let pending=pendingReviewIds.get(key);
+ if(!pending){
+  try{
+   const raw=sessionStorage.getItem(key);
+   if(raw){
+    if(reviewUuid.test(raw)) pending={request_id:raw,expected_review_count:expectedReviewCount};
+    else pending=JSON.parse(raw);
+   }
+  }catch{}
  }
- if(!reviewUuid.test(id||'')){
-  id=globalThis.crypto.randomUUID();
-  try{sessionStorage.setItem(key,id)}catch{}
+ if(!pending||!reviewUuid.test(pending.request_id)||
+    (pending.expected_review_count!==undefined&&
+     (!Number.isSafeInteger(pending.expected_review_count)||pending.expected_review_count<0))){
+  pending={request_id:globalThis.crypto.randomUUID(),expected_review_count:expectedReviewCount};
  }
- pendingReviewIds.set(key,id);
- return id;
+ // A retry after an unknown network outcome keeps the ORIGINAL observed
+ // version, even if another device has since changed the word.
+ pendingReviewIds.set(key,pending);
+ try{sessionStorage.setItem(key,JSON.stringify(pending))}catch{}
+ return pending;
 }
 function forgetPendingId(key){
  pendingReviewIds.delete(key);
  try{sessionStorage.removeItem(key)}catch{}
 }
-export async function postUnifiedAccountReview(source,wordId,remembered,expectedActorId){
+export async function postUnifiedAccountReview(source,wordId,remembered,expectedActorId,expectedReviewCount){
  if(!['shared','personal'].includes(source)||!reviewUuid.test(wordId)||
     !reviewUuid.test(expectedActorId)||typeof remembered!=='boolean')
   throw Error('Không hợp lệ: nguồn từ, tài khoản hoặc trạng thái ghi nhớ.');
+ if(expectedReviewCount!==undefined&&
+    (!Number.isSafeInteger(expectedReviewCount)||expectedReviewCount<0))
+  throw Error('Phiên bản tiến độ học tập không hợp lệ.');
  const key=pendingKey(expectedActorId,source,wordId,remembered);
- const request_id=readPendingId(key);
+ const pending=readPendingCommand(key,expectedReviewCount);
+ const request_id=pending.request_id;
  try{
-  const result=await learningApi('learning/reviews',{
-    method:'POST',body:{request_id,source,word_id:wordId,remembered,
-      expected_actor_id:expectedActorId}
-  });
+  const payload={request_id,source,word_id:wordId,remembered,
+    expected_actor_id:expectedActorId};
+  if(pending.expected_review_count!==undefined)
+    payload.expected_review_count=pending.expected_review_count;
+  const result=await learningApi('learning/reviews',{method:'POST',body:payload});
   if(result.scope!=='account-review'||result.source!==source||
      result.word_id!==wordId||result.remembered!==remembered||
      result.request_id!==request_id)
@@ -118,8 +133,8 @@ export async function postUnifiedAccountReview(source,wordId,remembered,expected
   forgetPendingId(key);
   return result;
  }catch(error){
-  // A transient failure has an unknown outcome: preserve the UUID for retry.
-  // Definitive client errors do not represent an accepted review.
+  // An uncertain network result must retain BOTH UUID and observed version.
+  // A definitive 409 is never silently retried against fresh progress.
   if([400,401,403,404,409].includes(error.status))forgetPendingId(key);
   throw error;
  }

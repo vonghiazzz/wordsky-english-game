@@ -22,7 +22,9 @@ async function scopedUnifiedReview(wordId,remembered){
  const current=await getActor();
  if(!current||current.id!==actor?.id)
   throw Error('Tài khoản đã thay đổi; không gửi lượt ôn sang tài khoản khác.');
- return postUnifiedAccountReview('personal',wordId,remembered,actor.id);
+ const progress=account.progress.find(item=>item.personal_word_id===wordId);
+ const observedCount=progress?.review_count??0;
+ return postUnifiedAccountReview('personal',wordId,remembered,actor.id,observedCount);
 }
 async function load(){
  const ticket=++loadTicket;
@@ -65,7 +67,14 @@ async function act(operation){
  try{
   await operation();
   await load();
- }catch(e){message('Không thể lưu: '+e.message+'. Kiểm tra tài khoản và tải lại trước khi thử tiếp.',true)}
+ }catch(e){
+  if(e.status===409){
+   await load();
+   message(initialized
+    ? 'Từ đã thay đổi trên thiết bị khác. Đã tải lại trạng thái mới; hãy xem và xác nhận lần nữa.'
+    : 'Từ đã thay đổi trên thiết bị khác. Chưa tải lại được, vui lòng kiểm tra kết nối.',true);
+  }else message('Không thể lưu: '+e.message+'. Kiểm tra tài khoản và tải lại trước khi thử tiếp.',true);
+ }
  finally{busy=false;render()}
 }
 function entry(word,label,onClick,style=''){

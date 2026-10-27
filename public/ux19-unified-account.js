@@ -12,6 +12,8 @@ export function buildUnifiedAccountView(result,expectedActorId) {
      typeof item.topic!=='string'||typeof item.english!=='string'||
      ['ipa','meaning','example','translation'].some(field=>typeof item[field]!=='string')||
      typeof item.remembered!=='boolean'||typeof item.reviewed!=='boolean'||
+     !Number.isSafeInteger(item.review_count)||item.review_count<0||
+     item.reviewed!==(item.review_count>0)||
      item.remembered&&!item.reviewed)throw Error('Có thẻ không hợp lệ trong My Learning.');
   const key=item.source+':'+item.id;
   if(ids.has(key))throw Error('My Learning chứa ID bị lặp.');
@@ -22,7 +24,8 @@ export function buildUnifiedAccountView(result,expectedActorId) {
   const word={key,source:item.source,word_id:item.source==='shared'?item.id:undefined,
    personal_word_id:item.source==='personal'?item.id:undefined,
    topic:item.topic,english:item.english,ipa:item.ipa,meaning:item.meaning,
-   example:item.example,translation:item.translation,reviewed:item.reviewed};
+   example:item.example,translation:item.translation,reviewed:item.reviewed,
+   review_count:item.review_count};
   if(item.remembered)learned[key]=true;
   words.push(word);
  }

@@ -5,7 +5,8 @@ import {buildUnifiedAccountView} from '../public/ux19-unified-account.js';
 import {summarize,filterWords} from '../public/ux10-progress.js';
 const id1='00000000-0000-4000-8000-000000000001',id2='00000000-0000-4000-8000-000000000002';
 const card=(source,id,remembered,reviewed)=>({source,id,topic:'Food',english:'apple',
-  ipa:'',meaning:'Táo',example:'',translation:'',remembered,reviewed});
+  ipa:'',meaning:'Táo',example:'',translation:'',remembered,reviewed,
+  review_count:reviewed?1:0});
 const data={scope:'unified-account',actor_id:'user-A',
   words:[card('shared',id1,true,true),card('personal',id2,false,true),
     card('personal',id1,false,false)],

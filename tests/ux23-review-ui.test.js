@@ -46,10 +46,10 @@ test('UX23B screens use one review transport, not two different account review A
  const flash=readFileSync(new URL('../public/ux18-flash-sync.js',import.meta.url),'utf8');
  const dashboard=readFileSync(new URL('../public/ux10-progress.js',import.meta.url),'utf8');
  const manager=readFileSync(new URL('../public/ux18-personal.js',import.meta.url),'utf8');
- assert.match(flash,/postUnifiedAccountReview\('shared',wordId,true,id\)/);
- assert.match(flash,/postUnifiedAccountReview\('personal',wordId,true,id\)/);
+ assert.match(flash,/postUnifiedAccountReview\('shared',wordId,true,id,/);
+ assert.match(flash,/postUnifiedAccountReview\('personal',wordId,true,id,/);
  assert.match(dashboard,/postUnifiedAccountReview\(card\.source,/);
- assert.match(manager,/postUnifiedAccountReview\('personal',wordId,remembered,actor\.id\)/);
+ assert.match(manager,/postUnifiedAccountReview\('personal',wordId,remembered,actor\.id,/);
  assert.match(manager,/scopedUnifiedReview\(word\.id,true\)/);
  assert.match(manager,/scopedUnifiedReview\(word\.id,false\)/);
  assert.doesNotMatch(manager,/scopedRequest\('learning\/personal\/reviews'/);
