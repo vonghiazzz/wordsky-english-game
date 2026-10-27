@@ -40,10 +40,10 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
      personal_word_id uuid NOT NULL REFERENCES ws_personal_cards(id), remembered boolean NOT NULL,
      review_count integer NOT NULL DEFAULT 1, last_reviewed_at timestamptz NOT NULL,
      PRIMARY KEY(user_id,personal_word_id));
-   CREATE TABLE ws_learning_flashcard_reviews(user_id uuid NOT NULL REFERENCES ws_users(id),
+   CREATE TABLE ws_learning_flashcard_reviews(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid NOT NULL REFERENCES ws_users(id),
      word_id uuid NOT NULL REFERENCES ws_words(id), remembered boolean NOT NULL,
      reviewed_at timestamptz NOT NULL);
-   CREATE TABLE ws_personal_card_reviews(user_id uuid NOT NULL REFERENCES ws_users(id),
+   CREATE TABLE ws_personal_card_reviews(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid NOT NULL REFERENCES ws_users(id),
      personal_word_id uuid NOT NULL REFERENCES ws_personal_cards(id),
      remembered boolean NOT NULL, reviewed_at timestamptz NOT NULL);
   `);
