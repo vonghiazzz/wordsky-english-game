@@ -41,10 +41,12 @@
 <section class="panel" id="personalImport" hidden>
 <details id="legacyImportDetails">
 <summary>Nhập dữ liệu Flashcard cũ trên thiết bị</summary>
-<p>WordSky kiểm tra <strong>cả kho từ chung và từ cá nhân</strong> trước khi chuyển. Từ khớp được gắn với UUID sẵn có; từ thật sự mới mới được thêm vào kho cá nhân. Trùng khác nội dung hoặc mơ hồ sẽ bỏ qua để bạn xem lại. Không ghi đè kết quả đã học, kể cả trạng thái “Cần ôn”.</p><p>Mỗi lần xác nhận chuyển tối đa 20 thao tác. Nguồn cũ trên thiết bị được giữ nguyên.</p>
+<p>WordSky kiểm tra <strong>cả kho từ chung và từ cá nhân</strong> trước khi chuyển. Từ khớp được gắn với UUID sẵn có; từ thật sự mới mới được thêm vào kho cá nhân. Trùng khác nội dung hoặc mơ hồ sẽ bỏ qua để bạn xem lại. Không ghi đè kết quả đã học, kể cả trạng thái “Cần ôn”.</p><p><strong>Một lần xác nhận cho toàn bộ dữ liệu hợp lệ.</strong> Hệ thống tự xử lý theo lô tối đa 20 thẻ, báo tiến độ và có thể tiếp tục nếu bị gián đoạn. Không cần bấm chuyển nhiều lần.</p>
 <p>Đã nhớ trên thiết bị: <strong id="personalLocal">—</strong></p>
 <p id="personalImportDetail" role="status"></p>
-<button type="button" class="primary" id="personalImportButton">Chuyển tối đa 20 thẻ</button>
+<button type="button" class="primary" id="personalImportButton">Đồng bộ toàn bộ từ hợp lệ</button>
+<progress id="personalImportProgress" max="100" value="0" hidden aria-label="Tiến độ đồng bộ từ cũ"></progress>
+<p id="personalImportLive" role="status" aria-live="polite" hidden></p>
 <p class="footnote">Dữ liệu <code>wordsky_vocab_v2</code> và <code>wordsky_learned</code> của thiết bị được giữ nguyên sau khi chuyển.</p>
 <a href="/learn.html?legacy=1#manage">Xem / sao lưu bộ từ cũ trên thiết bị →</a>
 </details>

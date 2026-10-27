@@ -124,10 +124,10 @@ test('UX21 UI only invokes safe import API after opt-in and preflight revalidati
  const html=readFileSync(new URL('../public/personal.html',import.meta.url),'utf8');
  assert.match(ui,/planThreeWayLegacyImport\(snapshot,unifiedSnapshot\)/);
  assert.match(ui,/learning\/me\/summary/);
- assert.match(ui,/window.confirm\('Chuyển '/);
- assert.match(ui,/plan.entries.slice\(0,20\)/);
- assert.match(ui,/signature\(latest.entries.slice\(0,20\)\)!==signature\(batch\)/);
- assert.match(ui,/learning\/import\/legacy/);
+ assert.match(ui,/window.confirm\('Đồng bộ TẤT CẢ '/);
+ assert.match(ui,/all.slice\(offset,offset\+20\)/);
+ assert.match(ui,/signature\(latest.entries\)!==signature\(all\)/);
+ assert.match(ui,/learning\/import\/legacy\/batch/);
  assert.doesNotMatch(ui,/localStorage.setItem/);
  assert.match(html,/kho từ chung và từ cá nhân/);
  assert.match(html,/href="\/learn.html\?legacy=1#manage"/);

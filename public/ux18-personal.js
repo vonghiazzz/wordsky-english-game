@@ -123,7 +123,7 @@ function render(){
   '; thẻ sai định dạng: '+c.invalid+
   '. '+plan.entries.length+' thao tác đủ điều kiện. Các trường hợp xung đột không tự ghi.';
  el('personalImportButton').disabled=busy||!!plan.error||plan.entries.length===0;
- el('personalImportButton').textContent='Chuyển tối đa '+Math.min(20,plan.entries.length)+' thao tác an toàn';
+ el('personalImportButton').textContent='Đồng bộ toàn bộ '+plan.entries.length+' thao tác an toàn';
 }
 el('personalForm').addEventListener('submit',event=>{
  event.preventDefault();
@@ -143,49 +143,70 @@ el('personalImportButton').addEventListener('click',async()=>{
  snapshot=readBrowserPersonal(localStorage);
  const plan=planThreeWayLegacyImport(snapshot,unifiedSnapshot);
  if(plan.error||!plan.entries.length)return;
- const batch=plan.entries.slice(0,20);
- if(!window.confirm('Chuyển '+batch.length+
-    ' thao tác đã đối chiếu với KHO TỪ CHUNG và TỪ CÁ NHÂN lên tài khoản? '+
-    'Không ghi đè quyết định học đã có, không xóa dữ liệu thiết bị.'))return;
+ const all=plan.entries;
+ const total=all.length;
+ if(!window.confirm('Đồng bộ TẤT CẢ '+total+' thao tác đủ điều kiện chỉ với một lần xác nhận? '+
+   'WordSky sẽ tự chia thành các lô nhỏ, so khớp lại trên PostgreSQL và bỏ qua từ trùng hoặc tiến độ đã có. '+
+   'KHÔNG xóa/sửa bộ từ trên thiết bị.'))return;
+ const expectedActor=actor.id,deviceSignature=JSON.stringify(snapshot.words);
+ let completed=0,created=0,reviewed=0,skipped=0,error='';
+ const progress=el('personalImportProgress'),status=el('personalImportLive');
  busy=true;render();
- let completed=0,created=0,reviewed=0,skipped=0,fail='';
+ progress.hidden=false;progress.max=total;progress.value=0;
+ status.hidden=false;status.textContent='Đang kiểm tra dữ liệu trước khi chuyển…';
  try{
   const same=await getActor();
-  if(!same||same.id!==actor.id)throw Error('Tài khoản đã thay đổi.');
+  if(!same||same.id!==expectedActor)throw Error('Tài khoản đã thay đổi.');
   const fresh=await learningApi('learning/me/summary');
-  if(fresh.scope!=='unified-account'||fresh.actor_id!==actor.id)
+  if(fresh.scope!=='unified-account'||fresh.actor_id!==expectedActor)
    throw Error('Không xác minh được dữ liệu tài khoản mới nhất.');
   const current=readBrowserPersonal(localStorage);
+  if(current.error||JSON.stringify(current.words)!==deviceSignature)
+   throw Error('Bộ từ thiết bị vừa thay đổi; vui lòng xem lại trước khi chuyển.');
   const latest=planThreeWayLegacyImport(current,fresh);
   if(latest.error)throw Error(latest.error);
   const signature=entries=>JSON.stringify(entries.map(x=>[x.type,x.id||null,x.word]));
-  if(signature(latest.entries.slice(0,20))!==signature(batch))
-   throw Error('Kho từ hoặc dữ liệu thiết bị vừa thay đổi; tải lại và xác nhận lần nữa.');
-  for(const entry of batch){
-   try{
-    const saved=await scopedRequest('learning/import/legacy',{
-     method:'POST',body:{card:{
-      topic:entry.word.topic,english:entry.word.english,ipa:entry.word.ipa,
-      meaning:entry.word.meaning,example:entry.word.example,
-      translation:entry.word.translation
-     },known:entry.word.known}
-    });
-    if(saved.scope!=='legacy-import'||!['created','reviewed',
-       'already-reviewed','already-present','conflict','ambiguous'].includes(saved.status))
-     throw Error('Máy chủ chưa xác nhận thao tác chuyển từ.');
-    if(saved.status==='created')created++;
-    if(saved.reviewed===true)reviewed++;
-    if(['conflict','ambiguous','already-reviewed','already-present'].includes(saved.status))skipped++;
-    completed++;
-   }catch(e){fail=e.message;break;}
+  if(signature(latest.entries)!==signature(all))
+   throw Error('Kho từ tài khoản vừa thay đổi; vui lòng kiểm tra lại trước khi chuyển.');
+  // 20 cards per transaction/API call, but a single confirmation for the full import.
+  for(let offset=0;offset<total;offset+=20){
+   if(JSON.stringify(readBrowserPersonal(localStorage).words)!==deviceSignature)
+    throw Error('Bộ từ trên thiết bị đã thay đổi trong khi đồng bộ.');
+   const group=all.slice(offset,offset+20);
+   const result=await scopedRequest('learning/import/legacy/batch',{
+    method:'POST',
+    body:{cards:group.map(entry=>({
+      card:{topic:entry.word.topic,english:entry.word.english,
+        ipa:entry.word.ipa,meaning:entry.word.meaning,
+        example:entry.word.example,translation:entry.word.translation},
+      known:entry.word.known
+    }))}
+   });
+   if(result.scope!=='legacy-import-batch'||result.processed!==group.length||
+      !result.counts||Object.values(result.counts).some(n=>!Number.isInteger(n)||n<0))
+    throw Error('Máy chủ chưa xác nhận lô chuyển dữ liệu.');
+   completed+=result.processed;
+   created+=result.counts.created;
+   reviewed+=result.counts.reviewed;
+   skipped+=result.counts.alreadyReviewed+result.counts.alreadyPresent+
+      result.counts.conflict+result.counts.ambiguous;
+   progress.value=completed;
+   status.textContent='Đã xử lý '+completed+' / '+total+
+     ' thao tác. Có thể tiếp tục học khi hoàn tất.';
   }
- }catch(e){fail=e.message}
+ }catch(e){error=e.message||'Không thể đồng bộ dữ liệu';}
  finally{
-  busy=false;await load();
-  message('Đã đối chiếu '+completed+'/'+batch.length+' thao tác: '+
-    created+' từ mới, '+reviewed+' lượt ghi nhớ mới, '+skipped+
-    ' thao tác bỏ qua an toàn.'+(fail?' Dừng: '+fail:'')+
-    ' Bộ từ cũ trên thiết bị không bị thay đổi.',!!fail);
+  busy=false;
+  // Any completed chunk is already committed; retry after failure is safe.
+  await load();
+  status.textContent=error
+    ?'Đã xác nhận '+completed+'/'+total+' thao tác. Có thể bấm đồng bộ lại sau khi kiểm tra lỗi.'
+    :'Đã xử lý '+completed+'/'+total+' thao tác đủ điều kiện.';
+  message('Đã xử lý '+completed+'/'+total+' thao tác: '+
+   created+' từ cá nhân mới, '+reviewed+' lượt ghi nhớ mới, '+
+   skipped+' thao tác bỏ qua an toàn.'+
+   (error?' Dừng do lỗi: '+error+'. Các lô đã xác nhận sẽ không bị nhập trùng khi thử lại.':'')+
+   ' Bộ Flashcard trên thiết bị vẫn được giữ nguyên.',!!error);
  }
 });
 window.addEventListener('focus',()=>{if(!busy)load()});
