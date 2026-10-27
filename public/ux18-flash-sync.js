@@ -5,6 +5,7 @@ const host=window.WordSkyFlashcardCatalog;
 if(host){
  let loadedActorId=null;
  let syncing=false;
+ let sharedVersions=new Map(),personalVersions=new Map();
  const notice=document.getElementById('flashAccountStatus');
  const describe=(message,warning=false)=>{
    if(notice){notice.textContent=message;notice.dataset.warning=String(warning)}
@@ -33,13 +34,25 @@ if(host){
      if(latest.actor?.role!=='player'||latest.actor.id!==id)
        throw Error('Phiên đăng nhập đã thay đổi khi tải dữ liệu học tập.');
      const pref=(()=>{try{return localStorage.getItem('wordsky_flashcard_source_v1')}catch{return null}})();
+     sharedVersions=new Map(shared.words.map(p=>[p.word_id,p.review_count]));
+     personalVersions=new Map(data.progress.map(p=>[p.personal_word_id,p.review_count]));
      host.setAccountCatalog(data,{activate:pref==='account'});
      host.setAccountSharedProgress(shared.words);
      host.setSharedReviewer(async wordId=>{
        const active=await learningApi('auth/me');
        if(active.actor?.role!=='player'||active.actor.id!==id)
          throw Error('Phiên đăng nhập đã thay đổi. Không ghi sang tài khoản khác.');
-       const saved=await postUnifiedAccountReview('shared',wordId,true,id);
+       const observed=sharedVersions.get(wordId)??0;
+       let saved;
+       try{saved=await postUnifiedAccountReview('shared',wordId,true,id,observed)}
+       catch(e){
+         if(e.status===409){
+           await sync();
+           throw Error('Từ chung đã thay đổi trên thiết bị khác. Vui lòng xem lại trạng thái và bấm xác nhận lần nữa.');
+         }
+         throw e;
+       }
+       sharedVersions.set(wordId,observed+1);
        if(saved.scope!=='account-review'||saved.source!=='shared'||saved.word_id!==wordId||saved.remembered!==true)
          throw Error('Máy chủ chưa xác nhận tiến độ từ chung');
        return saved;
@@ -49,7 +62,17 @@ if(host){
        const active=await learningApi('auth/me');
        if(active.actor?.role!=='player'||active.actor.id!==id)
          throw Error('Phiên đăng nhập đã thay đổi. Không ghi sang tài khoản khác.');
-       const saved=await postUnifiedAccountReview('personal',wordId,true,id);
+       const observed=personalVersions.get(wordId)??0;
+       let saved;
+       try{saved=await postUnifiedAccountReview('personal',wordId,true,id,observed)}
+       catch(e){
+         if(e.status===409){
+           await sync();
+           throw Error('Từ cá nhân đã thay đổi trên thiết bị khác. Vui lòng xem lại trạng thái và bấm xác nhận lần nữa.');
+         }
+         throw e;
+       }
+       personalVersions.set(wordId,observed+1);
        if(saved.scope!=='account-review'||saved.source!=='personal'||saved.word_id!==wordId||saved.remembered!==true)
          throw Error('Chưa xác nhận được trạng thái đã nhớ');
        return saved;
