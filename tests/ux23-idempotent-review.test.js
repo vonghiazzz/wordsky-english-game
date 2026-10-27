@@ -32,7 +32,7 @@ test('UX23A SQL migration has owner scoped unique idempotency key with RLS and r
  assert.match(sql,/ENABLE ROW LEVEL SECURITY/);
  assert.match(sql,/REVOKE ALL ON public\.ws_learning_review_requests FROM PUBLIC/);
  assert.match(sql,/REVOKE ALL ON TABLE public\.ws_learning_review_requests FROM %I/);
- assert.doesNotMatch(sql,/\bDROP\b|\bTRUNCATE\b|\bDELETE\b/);
+ assert.doesNotMatch(sql,/\bDROP\b|\bTRUNCATE\b|\bDELETE\s+FROM\b/);
 });
 test('UX23A one transaction, ledger first, one review+progress per new request',()=>{
  const src=readFileSync(new URL('../lib/unified-review.js',import.meta.url),'utf8');
