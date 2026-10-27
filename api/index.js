@@ -6,6 +6,7 @@ import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
 import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
+import {getAccountSrsQueue} from '../lib/srs-queue.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
 
@@ -485,6 +486,14 @@ export default async function handler(req,res){
   }
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
   if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
+  // UX-24 prototype is intentionally disabled on Production, even if a
+  // Production environment variable is accidentally set.
+  if(method==='GET'&&key==='learning/srs/queue'){
+    if(process.env.VERCEL_ENV==='production'||process.env.WORDSKY_SRS_PREVIEW_ENABLED!=='true')
+      return output(res,404,{error:'SRS thử nghiệm chưa được bật.'});
+    const userId=mustPlayer(req).id;
+    return output(res,200,await getAccountSrsQueue(userId,req.query||{}));
+  }
   // Only this bounded import route accepts larger payloads (20 complete cards).
   if(method==='POST'&&key==='learning/import/legacy/batch'){
     const userId=mustPlayer(req).id,input=body(req,96000);
