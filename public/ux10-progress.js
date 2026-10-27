@@ -352,7 +352,7 @@ function boot() {
         throw Error('Nguồn từ không hợp lệ.');
       await postUnifiedAccountReview(card.source,
         card.source==='shared'?card.word_id:card.personal_word_id,
-        remembered,actorId);
+        remembered,actorId,card.version);
       await refreshUnified();
       showNotice('Đã lưu từ “'+card.english+'” theo tài khoản WordSky.');
     }catch(e){

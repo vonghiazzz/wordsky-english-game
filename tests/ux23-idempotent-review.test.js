@@ -5,7 +5,7 @@ import {validateUnifiedReview} from '../lib/unified-review.js';
 
 const request_id='11111111-1111-4111-8111-111111111111';
 const word_id='22222222-2222-4222-8222-222222222222';
-const input={request_id,word_id,source:'shared',remembered:false};
+const input={request_id,word_id,source:'shared',remembered:false,expected_version:0};
 
 test('UX23A account review requires stable request_id and an explicit remembered boolean',()=>{
  assert.deepEqual(validateUnifiedReview(input),input);
@@ -15,7 +15,8 @@ test('UX23A account review requires stable request_id and an explicit remembered
   null,[],{}, {...input,request_id:'bad'}, {...input,request_id:undefined},
   {...input,word_id:'Food:apple'}, {...input,source:'device'},
   {...input,source:'game'}, {...input,remembered:'true'},
-  {...input,remembered:1}, {...input,remembered:undefined}
+  {...input,remembered:1}, {...input,remembered:undefined}, {...input,expected_version:-1},
+  {...input,expected_version:undefined}
  ])assert.throws(()=>validateUnifiedReview(wrong));
 });
 test('UX23A request UUID normalized for equivalent string representations',()=>{
@@ -42,13 +43,14 @@ test('UX23A one transaction, ledger first, one review+progress per new request',
  assert.match(src,/saved\.source!==request\.source/);
  assert.match(src,/saved\.word_id!==request\.word_id/);
  assert.match(src,/saved\.remembered!==request\.remembered/);
+ assert.match(src,/saved\.expected_version!==request\.expected_version/);
  assert.match(src,/request_id đã được dùng cho một thao tác học khác/);
  assert.match(src,/replayed:true/);
  assert.match(src,/replayed:false/);
  assert.match(src,/ws_learning_flashcard_reviews/);
  assert.match(src,/ws_personal_card_reviews/);
- assert.match(src,/ws_learning_word_progress\.review_count\+1/);
- assert.match(src,/ws_personal_card_progress\.review_count\+1/);
+ assert.match(src,/progressTable+'\.review_count\+1/);
+ assert.match(src,/RETURNING review_count/);
 });
 test('UX23A account actor validated by session before mutation, no user ID from client',()=>{
  const api=readFileSync(new URL('../api/index.js',import.meta.url),'utf8');

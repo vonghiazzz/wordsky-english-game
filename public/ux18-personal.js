@@ -22,7 +22,14 @@ async function scopedUnifiedReview(wordId,remembered){
  const current=await getActor();
  if(!current||current.id!==actor?.id)
   throw Error('Tài khoản đã thay đổi; không gửi lượt ôn sang tài khoản khác.');
- return postUnifiedAccountReview('personal',wordId,remembered,actor.id);
+ const progress=account.progress.find(p=>p.personal_word_id===wordId);
+ const expectedVersion=progress?.review_count??0;
+ try{
+  return await postUnifiedAccountReview('personal',wordId,remembered,actor.id,expectedVersion);
+ }catch(e){
+  if(e.status===409)await load();
+  throw e;
+ }
 }
 async function load(){
  const ticket=++loadTicket;
