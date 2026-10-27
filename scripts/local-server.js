@@ -7,7 +7,7 @@ http.createServer(async(req,res)=>{
   if(url.pathname==='/api'||url.pathname.startsWith('/api/')){
    let parts=[];for await(const x of req){parts.push(x);if(parts.reduce((a,b)=>a+b.length,0)>16000){res.writeHead(413);res.end('Request too large');return}}
    const raw=Buffer.concat(parts).toString();try{req.body=raw?JSON.parse(raw):{}}catch{req.body=raw}
-   req.query={rest:url.pathname.replace(/^\/api\/?/,'')};await handler(req,res);return;
+   req.query={...Object.fromEntries(url.searchParams),rest:url.pathname.replace(/^\/api\/?/,'')};await handler(req,res);return;
   }
   let rel=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname.slice(1));
   const target=path.resolve(pub,rel);
