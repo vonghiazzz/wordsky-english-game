@@ -222,6 +222,17 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     assert.equal(otherSrs.status,200);
     assert.equal(otherSrs.body.actor_id,userB);
     assert.ok(!otherSrs.body.words.some(w=>w.id===dueWord));
+    const topicSlice=await send(headersA,'GET',
+     '/api/learning/srs/queue?status=new&topic=Test%20only&page=0&size=1');
+    assert.equal(topicSlice.status,200);
+    assert.equal(topicSlice.body.topic,'Test only');
+    assert.equal(topicSlice.body.words.length,1);
+    assert.equal(topicSlice.body.words[0].topic,'Test only');
+    assert.ok(topicSlice.body.topics.includes('Test only'));
+    const absentTopic=await send(headersA,'GET',
+     '/api/learning/srs/queue?status=due&topic=Not%20a%20topic&page=0&size=20');
+    assert.equal(absentTopic.status,200);
+    assert.equal(absentTopic.body.total,0,'topic filtering must happen before pagination');
     const invalid=await send(headersA,'GET','/api/learning/srs/queue?size=101');
     assert.equal(invalid.status,400);
     const afterSrs=await sql('SELECT count(*)::int as n FROM ws_learning_flashcard_reviews WHERE user_id=$1',[userA]);
