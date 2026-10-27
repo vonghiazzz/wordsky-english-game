@@ -419,6 +419,19 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     // UX24E read-only dry-run, then transactional backfill from real history.
     // This must preserve existing SRS rows, reconcile historical legacy events,
     // remain idempotent, and never write to a remote database.
+    // PostgreSQL clock_timestamp() records microseconds, but the Node pg
+    // driver and the canonical SRS rule normalize instants to milliseconds.
+    // A historical backfill must preserve that same convention, or the
+    // persist-vs-history parity check reports false mismatches.
+    const preciseWord=randomUUID();
+    await sql('INSERT INTO ws_words(id,topic_id) VALUES($1,$2)',[preciseWord,topic]);
+    await sql('INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
+      'VALUES($1,$2,true,$3::timestamptz)',
+      [userA,preciseWord,'2026-10-27T07:00:00.123456Z']);
+    await sql('INSERT INTO ws_learning_word_progress '+
+      '(user_id,word_id,remembered,review_count,last_reviewed_at) '+
+      'VALUES($1,$2,true,1,$3::timestamptz)',
+      [userA,preciseWord,'2026-10-27T07:00:00.123456Z']);
     const {backfillAccountSrs}=await import('../lib/srs-backfill.js');
     const rowsBefore=await sql(
       'SELECT count(*)::int AS n FROM ws_user_srs_schedules WHERE user_id=$1',[userA]);
@@ -454,6 +467,13 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
       'WHERE user_id=$1 AND source=$2 AND word_id=$3',
       [userA,'shared',versionOne,oldLast.rows[0].last_event_id]);
     assert.equal((await backfillAccountSrs(userA)).ready_to_insert,0);
+    const preciseSchedule=await sql(
+      'SELECT last_reviewed_at,due_at FROM ws_user_srs_schedules WHERE user_id=$1 AND word_id=$2',
+      [userA,preciseWord]);
+    assert.equal(new Date(preciseSchedule.rows[0].last_reviewed_at).toISOString(),
+      '2026-10-27T07:00:00.123Z');
+    assert.equal(new Date(preciseSchedule.rows[0].due_at).toISOString(),
+      '2026-10-28T07:00:00.123Z');
 
     // Turning off the Preview shadow flag leaves accepted UX23 behavior
     // unchanged, proving a missing schedule table cannot block Production.
