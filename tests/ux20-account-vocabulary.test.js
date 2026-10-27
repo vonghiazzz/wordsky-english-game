@@ -20,7 +20,7 @@ test('UX20 server-account reviews wait for PostgreSQL success before showing kno
  assert.ok(learn.includes('ACCOUNT_SHARED_PROGRESS[id]=true'));
  assert.ok(learn.includes("if(accountMode()||accountSharedMode())"));
  assert.ok(sync.includes("learning/flashcards/progress"));
- assert.ok(sync.includes('postAccountReview(wordId,true,id)'));
+ assert.ok(sync.includes("postUnifiedAccountReview('shared',wordId,true,id)"));
  assert.ok(sync.includes('latest.actor.id!==id'));
 });
 test('UX20 data archive accessible without modifying old browser Flashcards',()=>{

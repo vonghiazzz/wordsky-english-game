@@ -1,5 +1,5 @@
 /* WordSky UX-10: browser-only local progress and separately authenticated account progress. */
-import {loadAccount,learningApi,postAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
+import {loadAccount,learningApi,postAccountReview,postUnifiedAccountReview,exactCatalogMatch,eligibleImports} from './ux10-account-core.js';
 import {selectLearningView} from './ux11-dashboard-model.js';
 import {publicVocabularySummary} from './ux12-catalog-summary.js';
 import {SERVER_PROGRESS_KEY,SOURCE_PREFERENCE_KEY,parseServerProgress,serverCatalogView,saveServerProgress,loadCachedCatalog,validateAndCacheCatalog,lastPersonalSelection} from './ux15-dashboard-data.js';
@@ -348,16 +348,11 @@ function boot() {
       const auth=await learningApi('auth/me');
       if(auth.actor?.role!=='player'||auth.actor.id!==actorId)
         throw Error('Tài khoản đã thay đổi. Không lưu sang tài khoản khác.');
-      if(card.source==='shared') {
-        await postAccountReview(card.word_id,remembered,actorId);
-      } else if(card.source==='personal') {
-        const saved=await learningApi('learning/personal/reviews',{
-          method:'POST',body:{personal_word_id:card.personal_word_id,
-            remembered,expected_actor_id:actorId}
-        });
-        if(saved.scope!=='personal-account'||saved.personal_word_id!==card.personal_word_id||
-           saved.remembered!==remembered)throw Error('Máy chủ chưa xác nhận kết quả học.');
-      } else throw Error('Nguồn từ không hợp lệ.');
+      if(card.source!=='shared'&&card.source!=='personal')
+        throw Error('Nguồn từ không hợp lệ.');
+      await postUnifiedAccountReview(card.source,
+        card.source==='shared'?card.word_id:card.personal_word_id,
+        remembered,actorId);
       await refreshUnified();
       showNotice('Đã lưu từ “'+card.english+'” theo tài khoản WordSky.');
     }catch(e){

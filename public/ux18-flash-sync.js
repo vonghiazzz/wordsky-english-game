@@ -1,6 +1,6 @@
 /* Account personal Flashcards are server-owned and never write to browser-local
  * wordsky_learned or wordsky_server_learned_v1. */
-import {learningApi,postAccountReview} from './ux10-account-core.js';
+import {learningApi,postUnifiedAccountReview} from './ux10-account-core.js';
 const host=window.WordSkyFlashcardCatalog;
 if(host){
  let loadedActorId=null;
@@ -39,8 +39,8 @@ if(host){
        const active=await learningApi('auth/me');
        if(active.actor?.role!=='player'||active.actor.id!==id)
          throw Error('Phiên đăng nhập đã thay đổi. Không ghi sang tài khoản khác.');
-       const saved=await postAccountReview(wordId,true,id);
-       if(saved.scope!=='account'||saved.word_id!==wordId||saved.remembered!==true)
+       const saved=await postUnifiedAccountReview('shared',wordId,true,id);
+       if(saved.scope!=='account-review'||saved.source!=='shared'||saved.word_id!==wordId||saved.remembered!==true)
          throw Error('Máy chủ chưa xác nhận tiến độ từ chung');
        return saved;
      });
@@ -49,10 +49,8 @@ if(host){
        const active=await learningApi('auth/me');
        if(active.actor?.role!=='player'||active.actor.id!==id)
          throw Error('Phiên đăng nhập đã thay đổi. Không ghi sang tài khoản khác.');
-       const saved=await learningApi('learning/personal/reviews',{
-         method:'POST',body:{personal_word_id:wordId,remembered:true,expected_actor_id:id}
-       });
-       if(saved.scope!=='personal-account'||saved.personal_word_id!==wordId||saved.remembered!==true)
+       const saved=await postUnifiedAccountReview('personal',wordId,true,id);
+       if(saved.scope!=='account-review'||saved.source!=='personal'||saved.word_id!==wordId||saved.remembered!==true)
          throw Error('Chưa xác nhận được trạng thái đã nhớ');
        return saved;
      });

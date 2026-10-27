@@ -6,6 +6,7 @@ import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
 import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
+import {recordUnifiedReview} from '../lib/unified-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
 
 const AUTH_COOKIE='ws_auth';
@@ -467,6 +468,13 @@ export default async function handler(req,res){
   if(!['GET','POST','PATCH','DELETE'].includes(req.method))return output(res,405,{error:'Phương thức không được hỗ trợ'});
   if(req.method!=='GET'&&!sameOrigin(req))return output(res,403,{error:'Invalid origin'});
   const r=requestSegments=route(req),method=req.method,key=r.join('/');
+  if(method==='POST'&&key==='learning/reviews'){
+    const userId=mustPlayer(req).id,review=body(req);
+    if(review.expected_actor_id!==undefined&&review.expected_actor_id!==userId)
+      throw fail('Tài khoản đã thay đổi; không ghi kết quả sang tài khoản khác',409);
+    const result=await recordUnifiedReview(userId,review);
+    return output(res,result.replayed?200:201,result);
+  }
   if(method==='POST'&&key==='learning/flashcards/reviews'){
     const userId=mustPlayer(req).id,review=body(req);
     // Optional actor pin protects against login/logout between client verification
