@@ -8,9 +8,9 @@ const word_id='22222222-2222-4222-8222-222222222222';
 const input={request_id,word_id,source:'shared',remembered:false};
 
 test('UX23A account review requires stable request_id and an explicit remembered boolean',()=>{
- assert.deepEqual(validateUnifiedReview(input),input);
+ assert.deepEqual(validateUnifiedReview(input),{...input,expected_review_count:null});
  assert.deepEqual(validateUnifiedReview({...input,source:'personal',remembered:true}),
-  {...input,source:'personal',remembered:true});
+  {...input,source:'personal',remembered:true,expected_review_count:null});
  for(const wrong of [
   null,[],{}, {...input,request_id:'bad'}, {...input,request_id:undefined},
   {...input,word_id:'Food:apple'}, {...input,source:'device'},
