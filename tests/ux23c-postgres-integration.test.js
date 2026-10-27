@@ -125,7 +125,8 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     for await(const piece of req)buffers.push(piece);
     const input=Buffer.concat(buffers).toString('utf8');
     req.body=input?JSON.parse(input):{};
-    req.query={rest:new URL(req.url,'http://127.0.0.1').pathname.slice(5)};
+    const parsedUrl=new URL(req.url,'http://127.0.0.1');
+    req.query={...Object.fromEntries(parsedUrl.searchParams),rest:parsedUrl.pathname.slice(5)};
     await handler(req,res);
    }catch(error){
     res.statusCode=500;
@@ -189,6 +190,51 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     'SELECT count(*)::int as n FROM ws_learning_flashcard_reviews WHERE user_id=$1 AND word_id=$2',
     [userA,newWord]);
    assert.equal(httpCounts.rows[0].n,2,'only two accepted HTTP actions append history');
+
+   // UX-24 preview-only read API: the handler must not reveal account
+   // history to guests or cross-account callers, or mutate any review rows.
+   const disabled=await send(headersA,'GET','/api/learning/srs/queue');
+   assert.equal(disabled.status,404);
+   const oldFlag=process.env.WORDSKY_SRS_PREVIEW_ENABLED;
+   try{
+    process.env.WORDSKY_SRS_PREVIEW_ENABLED='true';
+    const unknown=await send(null,'GET','/api/learning/srs/queue');
+    assert.equal(unknown.status,401);
+    const dueWord=randomUUID(),untouched=randomUUID();
+    await sql('INSERT INTO ws_words(id,topic_id) VALUES ($1,$3),($2,$3)',[dueWord,untouched,topic]);
+    const dueAction=await send(headersA,'POST','/api/learning/reviews',{
+     ...command('shared',dueWord,false,0),expected_actor_id:userA});
+    assert.equal(dueAction.status,201);
+    const beforeSrs=await sql('SELECT count(*)::int as n FROM ws_learning_flashcard_reviews WHERE user_id=$1',[userA]);
+    const dueQueue=await send(headersA,'GET','/api/learning/srs/queue?status=due&page=0&size=100');
+    assert.equal(dueQueue.status,200,JSON.stringify(dueQueue.body));
+    assert.equal(dueQueue.body.actor_id,userA);
+    assert.equal(dueQueue.body.scope,'account-srs');
+    assert.ok(dueQueue.body.words.some(w=>w.id===dueWord&&w.status==='due'));
+    const newQueue=await send(headersA,'GET','/api/learning/srs/queue?status=new&page=0&size=1');
+    assert.equal(newQueue.status,200);
+    assert.equal(newQueue.body.words.length,1);
+    assert.ok(newQueue.body.total>=1);
+    const complete=await send(headersA,'GET','/api/learning/srs/queue?status=new&page=0&size=100');
+    assert.equal(complete.status,200);
+    assert.ok(complete.body.words.some(w=>w.id===untouched));
+    const otherSrs=await send(headersB,'GET','/api/learning/srs/queue?status=due');
+    assert.equal(otherSrs.status,200);
+    assert.equal(otherSrs.body.actor_id,userB);
+    assert.ok(!otherSrs.body.words.some(w=>w.id===dueWord));
+    const invalid=await send(headersA,'GET','/api/learning/srs/queue?size=101');
+    assert.equal(invalid.status,400);
+    const afterSrs=await sql('SELECT count(*)::int as n FROM ws_learning_flashcard_reviews WHERE user_id=$1',[userA]);
+    assert.equal(afterSrs.rows[0].n,beforeSrs.rows[0].n,'read-only API must not append history');
+    process.env.VERCEL_ENV='production';
+    const prodDisabled=await send(headersA,'GET','/api/learning/srs/queue');
+    assert.equal(prodDisabled.status,404,'never expose experimental SRS on Production');
+    delete process.env.VERCEL_ENV;
+   }finally{
+    delete process.env.VERCEL_ENV;
+    if(oldFlag===undefined)delete process.env.WORDSKY_SRS_PREVIEW_ENABLED;
+    else process.env.WORDSKY_SRS_PREVIEW_ENABLED=oldFlag;
+   }
   }finally{
    await new Promise(resolve=>server.close(resolve));
    if(oldSecret===undefined)delete process.env.SESSION_SECRET;
