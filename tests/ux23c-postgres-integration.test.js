@@ -125,7 +125,7 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
     for await(const piece of req)buffers.push(piece);
     const input=Buffer.concat(buffers).toString('utf8');
     req.body=input?JSON.parse(input):{};
-    req.query={rest:new URL(req.url,'http://127.0.0.1').pathname.replace(/^\\/api\\/?/,'')};
+    req.query={rest:new URL(req.url,'http://127.0.0.1').pathname.slice(5)};
     await handler(req,res);
    }catch(error){
     res.statusCode=500;
