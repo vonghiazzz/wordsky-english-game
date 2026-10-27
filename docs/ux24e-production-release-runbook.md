@@ -4,6 +4,8 @@
 - Production Supabase `ilyhbhoqswsioxxpuvcb`: **4 users, 365 active shared words, 54 shared and 1 personal review events**, 31 shared and 1 personal progress rows. Zero count discrepancies or orphan progress histories observed in the read-only preflight.
 - Production **does not yet have** `public.ws_learning_review_requests` (UX23A ledger) or `public.ws_user_srs_schedules` (UX24B materialization table).
 - Both tables exist only on isolated Preview Supabase `zbdnvvvdjxmdurucfjpe`.
+- **Preview historical backfill completed and independently verified**: 8 legacy shared-word schedules inserted under a single account row lock, with rollback on precondition failures. Afterward 17/17 schedule rows match the full existing histories, with 0 unmaterialized historical words and 0 mismatched fields (27 Oct 2026). All legacy review events used `clock_timestamp()` with microseconds, so the backfill normalizes to the SRS JS policy's millisecond precision (`date_trunc('milliseconds', reviewed_at)`). This was a manual Preview-only SQL backfill; the repo's Preview CLI remains available as a repeatable implementation and is tested in isolated PostgreSQL.
+- The Production event count is live and may increase while learners use the site; the last read-only check observed 56 events on 33 word/account combinations, including 1 personal card, with no history/progress mismatches. Do not treat an older snapshot count as the release-time truth.
 - UX24A user-facing queue derives dates from complete append-only history, not the shadow table; this remains authoritative pending policy validation.
 
 ## Changes in this PR
