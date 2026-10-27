@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import http from 'node:http';
 
 // This test refuses all remote databases, including Supabase Preview.
 // It runs only against the ephemeral PostgreSQL service in GitHub Actions.
@@ -23,8 +24,13 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
    CREATE TABLE ws_users(id uuid PRIMARY KEY);
    CREATE TABLE ws_topics(id uuid PRIMARY KEY, title text NOT NULL, enabled boolean NOT NULL DEFAULT true);
    CREATE TABLE ws_words(id uuid PRIMARY KEY, topic_id uuid NOT NULL REFERENCES ws_topics(id),
-     enabled boolean NOT NULL DEFAULT true);
+     english text NOT NULL DEFAULT 'test word', ipa text NOT NULL DEFAULT '',
+     meaning text NOT NULL DEFAULT '', example text NOT NULL DEFAULT '',
+     translation text NOT NULL DEFAULT '', enabled boolean NOT NULL DEFAULT true);
    CREATE TABLE ws_personal_cards(id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES ws_users(id),
+     topic text NOT NULL DEFAULT 'Test', english text NOT NULL DEFAULT 'test word',
+     ipa text NOT NULL DEFAULT '',meaning text NOT NULL DEFAULT '',
+     example text NOT NULL DEFAULT '',translation text NOT NULL DEFAULT '',
      deleted_at timestamptz);
    CREATE TABLE ws_learning_word_progress(user_id uuid NOT NULL REFERENCES ws_users(id),
      word_id uuid NOT NULL REFERENCES ws_words(id), remembered boolean NOT NULL,
@@ -107,6 +113,88 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
   assert.equal(rows.rows[0].n,1);
   rows=await sql('SELECT count(*)::int AS n FROM ws_learning_review_requests WHERE user_id=$1',[userB]);
   assert.equal(rows.rows[0].n,1,'rejected cross-owner request leaves no ledger entry');
+  // Actual HTTP handler with two independent clients (same signed-in actor).
+  // No remote website, credential, or production data is involved.
+  const oldSecret=process.env.SESSION_SECRET;
+  process.env.SESSION_SECRET='ux23c-ci-only-ephemeral-secret-not-used-in-production';
+  const {issueSession}=await import('../lib/security.js');
+  const {default:handler}=await import('../api/index.js');
+  const server=http.createServer(async(req,res)=>{
+   try{
+    const buffers=[];
+    for await(const piece of req)buffers.push(piece);
+    const input=Buffer.concat(buffers).toString('utf8');
+    req.body=input?JSON.parse(input):{};
+    req.query={rest:new URL(req.url,'http://127.0.0.1').pathname.replace(/^\\/api\\/?/,'')};
+    await handler(req,res);
+   }catch(error){
+    res.statusCode=500;
+    res.setHeader('content-type','application/json');
+    res.end(JSON.stringify({error:'Test HTTP adapter failure'}));
+   }
+  });
+  try{
+   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+   const base='http://127.0.0.1:'+server.address().port;
+   const cookieFor=id=>'ws_auth='+issueSession({role:'player',id},process.env.SESSION_SECRET);
+   const send=async(cookie,method,path,data)=>{
+    const response=await fetch(base+path,{
+     method,headers:{...(cookie?{cookie}:{}) ,...(data?{'content-type':'application/json'}:{})},
+     body:data?JSON.stringify(data):undefined
+    });
+    return {status:response.status,body:await response.json()};
+   };
+   const newWord=randomUUID();
+   await sql('INSERT INTO ws_words(id,topic_id) VALUES ($1,$2)',[newWord,topic]);
+   const one=command('shared',newWord,true,0);
+   const two=command('shared',newWord,false,0);
+   const headersA=cookieFor(userA),headersB=cookieFor(userB);
+   const [first,second]=await Promise.all([
+    send(headersA,'POST','/api/learning/reviews',{...one,expected_actor_id:userA}),
+    send(headersA,'POST','/api/learning/reviews',{...two,expected_actor_id:userA})
+   ]);
+   assert.deepEqual([first.status,second.status].sort(),[201,409]);
+   const acceptedHttp=first.status===201?one:two;
+   const repeated=await send(headersA,'POST','/api/learning/reviews',
+    {...acceptedHttp,expected_actor_id:userA});
+   assert.equal(repeated.status,200);
+   assert.equal(repeated.body.replayed,true);
+   const snapshot=await send(headersA,'GET','/api/learning/me/summary');
+   assert.equal(snapshot.status,200);
+   assert.equal(snapshot.body.scope,'unified-account');
+   assert.equal(snapshot.body.actor_id,userA);
+   const observed=snapshot.body.words.find(x=>x.source==='shared'&&x.id===newWord);
+   assert.equal(observed.review_count,1);
+   assert.equal(observed.remembered,acceptedHttp.remembered);
+   const newDecision=await send(headersA,'POST','/api/learning/reviews',{
+    ...command('shared',newWord,!acceptedHttp.remembered,observed.review_count),
+    expected_actor_id:userA
+   });
+   assert.equal(newDecision.status,201);
+   const changedActor=await send(headersA,'POST','/api/learning/reviews',{
+    ...command('shared',newWord,true,2),expected_actor_id:userB
+   });
+   assert.equal(changedActor.status,409,'actor pin forbids switching account');
+   const guest=await send(null,'POST','/api/learning/reviews',command('shared',newWord,true,0));
+   assert.equal(guest.status,401);
+   const otherAccount=await send(headersB,'GET','/api/learning/me/summary');
+   assert.equal(otherAccount.status,200);
+   assert.equal(otherAccount.body.actor_id,userB);
+   const isolated=otherAccount.body.words.find(x=>x.source==='shared'&&x.id===newWord);
+   assert.equal(isolated.review_count,0,'another actor cannot view account A progress');
+   const blockedPersonal=await send(headersB,'POST','/api/learning/reviews',
+    {...command('personal',personal,true),expected_actor_id:userB});
+   assert.equal(blockedPersonal.status,404);
+   const httpCounts=await sql(
+    'SELECT count(*)::int as n FROM ws_learning_flashcard_reviews WHERE user_id=$1 AND word_id=$2',
+    [userA,newWord]);
+   assert.equal(httpCounts.rows[0].n,2,'only two accepted HTTP actions append history');
+  }finally{
+   await new Promise(resolve=>server.close(resolve));
+   if(oldSecret===undefined)delete process.env.SESSION_SECRET;
+   else process.env.SESSION_SECRET=oldSecret;
+  }
+
  }finally{
   await getPool().end();
  }
