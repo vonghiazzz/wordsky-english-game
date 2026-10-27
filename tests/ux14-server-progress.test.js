@@ -14,7 +14,7 @@ test('UX14 server Flashcards track UUIDs in a separate browser key',()=>{
   assert.match(html,/const progress=server\?serverLearned:learned/);
   assert.match(html,/server\?saveServerLearned\(\):saveLearned\(\)/);
   assert.match(html,/serverLearned\?\.\[serverProgressId\(topic,x\)\]/);
-  assert.match(html,/Kho từ máy chủ: trạng thái trên thiết bị theo UUID/);
+  assert.match(html,/Kho từ chung \(khách\): tiến độ chỉ nằm trên thiết bị/);
 });
 test('UX14 original legacy progress keys and personal manager remain untouched by server learning',()=>{
   assert.match(html,/const STORE='wordsky_vocab_v2'/);
@@ -28,12 +28,12 @@ test('UX14 original legacy progress keys and personal manager remain untouched b
 test('UX14 server resets are local-only and preserve account review history',()=>{
   assert.match(html,/const marks=cards\.map\(c=>server\?serverProgressId\(topic,c\):key\(topic,c\[0\]\)\)/);
   assert.match(html,/Đã ôn lại từ đầu trên thiết bị\. Tiến độ tài khoản không bị thay đổi/);
-  assert.match(html,/if\(server && serverLearned===null\)/);
+  assert.match(html,/if\(server&&!ACCOUNT_SESSION&&serverLearned===null\)/);
   assert.doesNotMatch(html,/DELETE FROM ws_learning_word_progress/);
 });
 test('UX14 refuses to rewrite malformed existing server progress',()=>{
   assert.match(html,/serverLearned=null/);
-  assert.match(html,/Không đọc được trạng thái ghi nhớ kho máy chủ/);
+  assert.match(html,/Không đọc được tiến độ kho chung trên thiết bị/);
   assert.match(html,/if\(server&&serverLearned===null\)return/);
   assert.match(html,/if\(!safeStorage\.write\(SERVER_PROGRESS,JSON\.stringify\(serverLearned\)\)\)/);
 });

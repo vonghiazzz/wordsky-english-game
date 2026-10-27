@@ -19,7 +19,7 @@
 <section class="metrics" aria-label="Tiến độ từ cá nhân">
 <div><small>TỪ CÁ NHÂN TRONG TÀI KHOẢN</small><strong id="personalTotal">—</strong></div>
 <div><small>ĐÃ NHỚ TRONG TÀI KHOẢN</small><strong id="personalKnown">—</strong></div>
-<div><small>ĐÃ NHỚ TRÊN THIẾT BỊ CHƯA CHUYỂN</small><strong id="personalLocal">—</strong></div>
+
 </section>
 <section class="panel" id="personalAccount" hidden>
 <div class="heading"><div><h2>Kho từ cá nhân trên tài khoản</h2><p>Chỉ bạn mới có thể thêm, sửa, xóa và đánh dấu nhớ những thẻ này.</p></div><button type="button" id="personalReload">↻ Tải lại</button></div>
@@ -39,11 +39,15 @@
 <div id="personalList" class="word-list"></div>
 </section>
 <section class="panel" id="personalImport" hidden>
-<h2>Chuyển Flashcard cũ từ thiết bị</h2>
-<p>Chỉ chuyển khi bạn bấm xác nhận. Mỗi lần tối đa 20 thẻ. Từ trùng nhưng khác nội dung sẽ được bỏ qua; trạng thái đã lưu của tài khoản không bị ghi đè.</p>
+<details id="legacyImportDetails">
+<summary>Nhập dữ liệu Flashcard cũ trên thiết bị</summary>
+<p>Chỉ chuyển khi bạn bấm xác nhận. Mỗi lần tối đa 20 thao tác. Từ trùng nhưng khác nội dung sẽ được bỏ qua; trạng thái đã lưu của tài khoản không bị ghi đè.</p>
+<p>Đã nhớ trên thiết bị: <strong id="personalLocal">—</strong></p>
 <p id="personalImportDetail" role="status"></p>
 <button type="button" class="primary" id="personalImportButton">Chuyển tối đa 20 thẻ</button>
 <p class="footnote">Dữ liệu <code>wordsky_vocab_v2</code> và <code>wordsky_learned</code> của thiết bị được giữ nguyên sau khi chuyển.</p>
+<a href="/learn.html?legacy=1#manage">Xem / sao lưu bộ từ cũ trên thiết bị →</a>
+</details>
 </section>
 <footer><a href="/learn.html#manage">Bộ Flashcard trên thiết bị</a> · <a href="/progress.html">My Learning</a></footer>
 </main></body></html>
