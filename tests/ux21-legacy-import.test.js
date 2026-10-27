@@ -130,4 +130,5 @@ test('UX21 UI only invokes safe import API after opt-in and preflight revalidati
  assert.match(ui,/learning\/import\/legacy/);
  assert.doesNotMatch(ui,/localStorage.setItem/);
  assert.match(html,/kho từ chung và từ cá nhân/);
+ assert.match(html,/href="\/learn.html\?legacy=1#manage"/);
 });
