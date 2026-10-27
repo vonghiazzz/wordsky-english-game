@@ -391,10 +391,17 @@ function renderCard(){
     : 'Dữ liệu Flashcard cũ chỉ được lưu trong trình duyệt này.';
   for(const id of ['prev','know','next','shuffle','resetProgress'])$(id).disabled=!c;
   if(server&&!ACCOUNT_SESSION&&serverLearned===null){$('know').disabled=true;$('resetProgress').disabled=true;}
+  if(ACCOUNT_SESSION&&flashSource==='local'){$('know').disabled=true;$('resetProgress').disabled=true;}
   if(accountSharedMode()){$('resetProgress').disabled=true;$('know').disabled=!c||markingShared||!sharedReviewer||ACCOUNT_SHARED_PROGRESS===null;}
   if(account){$('resetProgress').disabled=true;$('know').disabled=!c||markingAccount;}
 }
 function advance(n){if(!cards.length)return;cardIndex=(cardIndex+n+cards.length)%cards.length;renderCard()}
+$('manageTab').addEventListener('click',event=>{
+  if(ACCOUNT_SESSION&&!new URLSearchParams(location.search).has('legacy')){
+    event.preventDefault();event.stopImmediatePropagation();
+    location.assign('/personal.html');
+  }
+},true);
 $('flashCard').addEventListener('click',()=>{if(cards.length)$('flashCard').classList.toggle('flipped')});
 $('flashCard').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('flashCard').click()}});
 $('prev').onclick=()=>advance(-1);$('next').onclick=()=>advance(1);
