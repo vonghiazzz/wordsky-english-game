@@ -9,7 +9,7 @@ UX-23C merged, but the Production database is still missing the UX-23A review-re
 - Signed-in account review history (shared and personal, scoped by authenticated `user_id`) is the conceptual input to SRS. Browser localStorage, server vocabulary catalog, and idempotency-operation ledger are **not** the canonical review history.
 - The existing `remembered` boolean is a learner-selected state, **not a measured test score**. Calling a card `remembered` does not prove long-term mastery.
 - The new algorithm is an explicitly provisional, simple fixed-interval heuristic; **not FSRS and not a validated personalized forgetting model**.
-- `remembered=true` advances a consecutive-remembered streak. Review intervals: **1, 3, 7, 14, 30, 60, 90 days**, with a cap of 90 days. `remembered=false` resets that streak and makes the card due immediately.
+- `remembered=true` starts a success streak or advances it **only when the word is due**. An early repeated click remains in review history but cannot extend due time or inflate the interval. Review intervals: **1, 3, 7, 14, 30, 60, 90 days**, with a cap of 90 days. `remembered=false` resets that streak and makes the card due immediately.
 - A word with no review history is **new**, not **due**. A due word is one that has a review event and whose `due_at` is at or before the evaluation instant.
 - All scheduling compares absolute UTC instants. Store UTC `timestamptz`; show local dates in the UI (e.g., Asia/Ho_Chi_Minh) without changing evaluation semantics.
 - The input uses append-only history rows `{id, remembered, reviewed_at}`, ordered deterministically by `reviewed_at ASC, id ASC`. Equal timestamps use event ID as a deterministic tie-break; commit order cannot be recovered from timestamps alone.
