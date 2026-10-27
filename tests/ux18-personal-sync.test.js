@@ -45,9 +45,9 @@ test('UX18 account page uses authenticated mutations, manual confirmation and cl
  const source=readFileSync(new URL('../public/progress.html',import.meta.url),'utf8');
  assert.match(js,/learningApi\('auth\/me'\)/);
  assert.match(js,/expected_actor_id:actor.id/);
- assert.match(js,/window.confirm\('Chuyển '/);
- assert.match(js,/plan.entries.slice\(0,20\)/);
- assert.match(js,/learning\/personal\/reviews/);
+ assert.match(js,/window.confirm\('Đồng bộ TẤT CẢ '/);
+ assert.match(js,/all.slice\(offset,offset\+20\)/);
+ assert.match(js,/learning\/import\/legacy\/batch/);
  assert.match(html,/id="personalImportButton"/);
  assert.match(html,/id="personalForm"/);
  assert.match(source,/id="ws18AccountSummary"/);
