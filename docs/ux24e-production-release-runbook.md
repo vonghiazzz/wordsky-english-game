@@ -57,3 +57,17 @@ With a verified Preview-only connection in local environment:
 - Preview dry-run/apply and authenticated two-browser QA pass. A successful CI run alone does **not** prove browser acceptance.
 - A separate, explicit owner authorization for Production migrations, backfill and flag activation is recorded.
 - No automatic merge or Production changes are authorized by this PR.
+
+
+## Connection capacity preflight - 28 October 2026
+
+- Vercel logs reported EMAXCONNSESSION: Supabase session pooler
+  reached its 15-client limit.
+- Vercel Preview and Production now use a maximum of one PostgreSQL
+  client per serverless instance, with a 1-second idle timeout.
+- Local and CI retain the existing five-client pool.
+- This reduces connection pressure but is not a global connection cap.
+- Production database connection strings and SRS release flags
+  remain unchanged.
+- Validate a TLS-secured transaction-pooler strategy before
+  high-traffic rollout.
