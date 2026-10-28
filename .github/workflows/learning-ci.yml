@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'feature/ux23c-*'
+      - 'dev/local-first-srs'
   pull_request:
     branches:
       - main
@@ -42,3 +43,152 @@ jobs:
         run: npm test
         env:
           UX23C_TEST_DATABASE_URL: postgres://wordsky:wordsky_ci_only@127.0.0.1:5432/wordsky_test
+
+  browser-srs-e2e:
+    needs: unit-and-postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: wordsky_test
+          POSTGRES_PASSWORD: wordsky_local_only
+          POSTGRES_DB: wordsky_v6_test
+        ports:
+          - 5547:5432
+        options: >-
+          --health-cmd "pg_isready -U wordsky_test -d wordsky_v6_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://wordsky_test:wordsky_local_only@127.0.0.1:5547/wordsky_v6_test
+      APP_ORIGIN: http://localhost:3000
+      WORDSKY_SRS_PREVIEW_ENABLED: 'true'
+      WORDSKY_SRS_SHADOW_ENABLED: 'true'
+      PGSSLMODE: disable
+      PORT: '3000'
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install pinned Playwright browsers
+        run: npx --no-install playwright install --with-deps chromium firefox
+
+      - name: Initialize isolated PostgreSQL schema
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import pg from 'pg';
+
+          const url = new URL(process.env.DATABASE_URL);
+          assert.equal(url.hostname, '127.0.0.1');
+          assert.equal(url.port, '5547');
+          assert.equal(url.pathname, '/wordsky_v6_test');
+
+          const db = new pg.Client({
+            connectionString: url.toString(),
+            ssl: false
+          });
+
+          const migrations = [
+            'db/schema.sql',
+            'db/migrations/20261021_150000_wordsky_cefr_review.sql',
+            'db/migrations/20261022_gameplay_round_settings.sql',
+            'db/migrations/20261023_220000_match_solo.sql',
+            'db/migrations/20261024_100000_bomb_solo.sql',
+            'db/migrations/20261024_110000_car_solo.sql',
+            'db/migrations/20261024_160000_room_fast_forward.sql',
+            'db/migrations/20261025_ux10_flashcard_progress.sql',
+            'db/migrations/20261026_ux17_personal_vocabulary.sql',
+            'db/migrations/20261027_ux23_idempotent_review_requests.sql',
+            'db/migrations/20261027_ux24b_shadow_srs_schedules.sql'
+          ];
+
+          await db.connect();
+          try {
+            const result = await db.query(
+              'SELECT current_database() AS name'
+            );
+            assert.equal(result.rows[0].name, 'wordsky_v6_test');
+
+            for (const file of migrations) {
+              await db.query(readFileSync(file, 'utf8'));
+              console.log('Applied isolated fixture: ' + file);
+            }
+          } finally {
+            await db.end();
+          }
+          JS
+
+          node scripts/seed.js
+
+      - name: Run account sync and browser SRS acceptance
+        run: |
+          set -euo pipefail
+
+          SESSION_SECRET="$(openssl rand -hex 32)"             node scripts/local-server.js             > "$RUNNER_TEMP/wordsky-api.log" 2>&1 &
+
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          ready=0
+          for i in $(seq 1 40); do
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat "$RUNNER_TEMP/wordsky-api.log"
+              exit 1
+            fi
+
+            if curl -fsS               'http://127.0.0.1:3000/api/topics'               >/dev/null 2>&1; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            tail -n 50 "$RUNNER_TEMP/wordsky-api.log"
+            exit 1
+          fi
+
+          node scripts/local-srs-smoke.mjs
+          node scripts/local-ui-e2e.mjs
+
+      - name: Verify temporary QA account cleanup
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import pg from 'pg';
+
+          const db = new pg.Client({
+            connectionString: process.env.DATABASE_URL,
+            ssl: false
+          });
+
+          await db.connect();
+          try {
+            const {rows} = await db.query(`
+              SELECT count(*)::int AS n
+              FROM ws_users
+            `);
+            assert.equal(rows[0].n, 0);
+            console.log('PASS: No temporary QA accounts remain');
+          } finally {
+            await db.end();
+          }
+          JS

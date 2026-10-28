@@ -38,3 +38,25 @@ test('Missing DATABASE_URL returns 503 before any network calls', () => {
     if (previous !== undefined) process.env.DATABASE_URL = previous;
   }
 });
+
+
+test('Vercel serverless pools use one connection', () => {
+  for (const mode of ['preview', 'production']) {
+    const cfg = buildPgConfig(pooler, fakeCA, {VERCEL_ENV: mode});
+    assert.equal(cfg.max, 1);
+    assert.equal(cfg.idleTimeoutMillis, 1000);
+    assert.equal(cfg.connectionTimeoutMillis, 8000);
+    assert.equal(cfg.ssl.rejectUnauthorized, true);
+  }
+});
+
+test('Local and CI PostgreSQL retain existing pool limits', () => {
+  const cfg = buildPgConfig(
+    'postgresql://localhost:5547/wordsky_v6_test',
+    null,
+    {}
+  );
+  assert.equal(cfg.max, 5);
+  assert.equal(cfg.idleTimeoutMillis, 10000);
+  assert.equal(cfg.ssl, false);
+});

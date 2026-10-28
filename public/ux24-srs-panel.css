@@ -25,3 +25,15 @@
 .ws24-pager span{font-size:13px;color:#a7b8d6}
 .ws24-pager button:disabled{opacity:.55}
 @media(max-width:560px){.ws24-filters label{flex-basis:100%}.ws24-pager{gap:8px}}
+
+/* UX-24H: Upcoming action clarity and mobile wrapping */
+.ws24-early-hint{
+ display:block;
+ color:#8fe1d3!important;
+ line-height:1.5;
+}
+.ws24-card-buttons .ws24-action{
+ min-width:min(100%,145px);
+ line-height:1.35;
+ overflow-wrap:anywhere;
+}
