@@ -8,6 +8,7 @@ import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCa
 import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
 import {getAccountSrsQueue} from '../lib/srs-queue.js';
 import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
+import {srsEnabled} from '../lib/srs-release-gates.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
 
@@ -487,10 +488,10 @@ export default async function handler(req,res){
   }
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
   if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
-  // UX-24 prototype is intentionally disabled on Production, even if a
-  // Production environment variable is accidentally set.
+  // UX-24 Production requires two explicitly enabled release flags.
+  // Preview flags cannot unlock Production.
   if(method==='GET'&&key==='learning/srs/queue'){
-    if(process.env.VERCEL_ENV==='production'||process.env.WORDSKY_SRS_PREVIEW_ENABLED!=='true')
+    if(!srsEnabled())
       return output(res,404,{error:'SRS thử nghiệm chưa được bật.'});
     const userId=mustPlayer(req).id;
     return output(res,200,await getAccountSrsQueue(userId,req.query||{}));
@@ -498,7 +499,7 @@ export default async function handler(req,res){
   // UX-24D QA-only parity summary. No user_id accepted from query strings.
   // Like the SRS queue, this route is NEVER exposed on Production.
   if(method==='GET'&&key==='learning/srs/diagnostics'){
-    if(process.env.VERCEL_ENV==='production'||process.env.WORDSKY_SRS_PREVIEW_ENABLED!=='true')
+    if(!srsEnabled())
       return output(res,404,{error:'Kiểm tra SRS thử nghiệm chưa được bật.'});
     return output(res,200,await getAccountSrsDiagnostics(mustPlayer(req).id));
   }
