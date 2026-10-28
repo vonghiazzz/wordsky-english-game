@@ -21,6 +21,13 @@ export function srsReviewCards(payload,actorId){
  }
  return payload;
 }
+export function srsActionLabels(status){
+ if(status==='scheduled')return [
+  ['↻ Cần ôn ngay',false],
+  ['✓ Ôn sớm (giữ nguyên lịch)',true]
+ ];
+ return [['✓ Đã nhớ',true],['↻ Cần ôn',false]];
+}
 const make=(tag,text,classname)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(classname)el.className=classname;return el;};
 function initSrs(){
  const panel=document.getElementById('ws24Srs');
@@ -61,8 +68,12 @@ function initSrs(){
     ? 'Đến hạn: '+new Date(word.due_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})
     : 'Từ chưa học');
    content.append(heading,subtitle,meaning,due);
+   if(word.status==='scheduled')
+    content.append(make('small',
+     'Ôn sớm ghi nhận lượt nhớ nhưng không đổi ngày ôn tiếp theo.',
+     'ws24-early-hint'));
    const buttons=make('div',undefined,'ws24-card-buttons');
-   for(const [title,remembered] of [['✓ Đã nhớ',true],['↻ Cần ôn',false]]){
+   for(const [title,remembered] of srsActionLabels(word.status)){
     const button=make('button',title,'ws24-action');
     button.type='button';button.disabled=pending;
     button.setAttribute('aria-label',title+': '+word.english);
@@ -126,7 +137,9 @@ function initSrs(){
    auditResult.textContent='Đã có lượt học mới; bấm Kiểm tra đồng bộ để đối chiếu.';
    // Existing My Learning filters are preserved by its soft account refresh.
    window.dispatchEvent(new CustomEvent('wordsky:srs-review-saved',{detail:{actorId}}));
-   showMessage('Đã lưu từ “'+word.english+'”. Lịch ôn đã được cập nhật.');
+   showMessage(word.status==='scheduled'&&remembered
+    ? 'Đã ghi nhận ôn sớm từ “'+word.english+'”. Ngày ôn tiếp theo được giữ nguyên.'
+    : 'Đã lưu từ “'+word.english+'”. Lịch ôn đã được cập nhật.');
    pending=false;
    await refresh({keepMessage:true});
   }catch(error){
