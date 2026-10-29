@@ -122,10 +122,11 @@ test('UX30 account reset is isolated to Admin route; app checks player cookie ve
  assert.match(api,/key==='admin\/users'/);
  assert.match(api,/r\[3\]==='reset-password'/);
  assert.match(api,/verifyPassword\(pass,process\.env\.ADMIN_PASSWORD_HASH\)/);
- assert.match(api,/const a=await actor\(req\)/);
- assert.match(api,/async function mustPlayer\(req\)/);
+ assert.match(api,/const a=actor\(req\)/);
+ assert.match(api,/function mustPlayer\(req\)/);
  assert.match(api,/session_version:sessionVersion/);
- assert.match(api,/async function authorizeSolo/);
+ assert.match(api,/req\._wsPlayerSessionValid=isSessionVersionCurrent|req\._wsPlayerSessionValid=Boolean/);
+ assert.match(api,/function authorizeSolo/);
  assert.match(gui,/href="\/admin-users\.html"/);
  assert.match(html,/id="auAdminPassword"/);
  assert.match(html,/id="auConfirmUsername"/);
