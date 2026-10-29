@@ -10,6 +10,7 @@ import {getAccountSrsQueue} from '../lib/srs-queue.js';
 import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
+import {getFinishedRunWrongWords,getAccountGameMistakeNotebook} from '../lib/game-mistakes.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
 
 const AUTH_COOKIE='ws_auth';
@@ -460,7 +461,8 @@ async function playSolo(req,runId,answer,lookupAttemptId){
   if(JSON.stringify(state)!==before)await db.query(`UPDATE ws_solo_runs SET state=$1::jsonb,status=$2,score=$3,health=$4,correct=$5,mistakes=$6,
    finished_at=CASE WHEN $2='PLAYING' THEN finished_at ELSE coalesce(finished_at,now()) END WHERE id=$7`,
    [JSON.stringify(state),state.status,state.score,state.health,state.correct,state.mistakes,runId]);
-  return {runId,round:soloPublicRound(rec,state),game:publicState(state,now),result,duplicate,...(attempt?{attempt}:{})};
+  const reviewWords=state.status==='PLAYING'?undefined:await getFinishedRunWrongWords(db,state);
+  return {runId,round:soloPublicRound(rec,state),game:publicState(state,now),result,duplicate,...(attempt?{attempt}:{}),...(reviewWords?{reviewWords}:{})};
  });
 }
 
@@ -486,6 +488,7 @@ export default async function handler(req,res){
       throw fail('Tài khoản đã thay đổi; không gửi tiến độ sang người dùng khác',409);
     return output(res,201,await recordFlashcardReview(userId,review));
   }
+  if(method==='GET'&&key==='learning/game-mistakes')return output(res,200,await getAccountGameMistakeNotebook(mustPlayer(req).id));
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
   if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
   // UX-24 Production requires two explicitly enabled release flags.
