@@ -1,7 +1,7 @@
 import {learningApi} from './ux10-account-core.js';
 
 // UX29: Insights are ephemeral client projections of server-owned review history.
-// Never use localStorage, user-supplied actor IDs or inferred mastery scores.
+// Never persist client progress or infer mastery scores from review decisions.
 const $=id=>document.getElementById(id);
 let days=7,sequence=0,actorId=null;
 const num=value=>Number.isSafeInteger(value)&&value>=0;
