@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="robots" content="noindex,nofollow">
+ <title>Quản lý người dùng · WordSky Admin</title>
+ <link rel="stylesheet" href="/admin-users.css">
+ <script src="/admin-users.js" type="module"></script>
+</head>
+<body>
+<main class="admin-users-layout">
+ <header class="au-header">
+  <div><span class="au-eyebrow">WORDSKY · ADMIN</span>
+   <h1>Quản lý người dùng</h1>
+   <p>Tìm kiếm tài khoản và đặt lại mật khẩu học viên an toàn, không ảnh hưởng tiến độ học.</p>
+  </div>
+  <a href="/#admin" class="au-back">← Quay về Admin</a>
+ </header>
+ <p id="auAuth" class="au-alert" role="status" aria-live="polite">Đang xác minh quyền Admin…</p>
+ <section id="auApp" class="au-panel" hidden aria-labelledby="auUsersTitle">
+  <div class="au-bar">
+   <div><span class="au-eyebrow">TÀI KHOẢN HỌC VIÊN</span><h2 id="auUsersTitle">Danh sách tài khoản</h2></div>
+   <form id="auSearchForm" role="search">
+    <label for="auSearch">Tìm tài khoản</label>
+    <div class="au-search-row"><input id="auSearch" name="q" maxlength="64" placeholder="Username hoặc tên hiển thị" autocomplete="off">
+     <button type="submit">Tìm kiếm</button></div>
+   </form>
+  </div>
+  <p class="au-status" id="auListStatus" role="status" aria-live="polite"></p>
+  <div id="auUsers" class="au-list" aria-live="polite"></div>
+  <nav class="au-pages" aria-label="Phân trang người dùng">
+   <button type="button" id="auPrev">← Trước</button>
+   <span id="auPage">1 / 1</span>
+   <button type="button" id="auNext">Sau →</button>
+  </nav>
+ </section>
+ <p class="au-note">Mật khẩu cũ không thể xem lại. Mỗi lần đặt lại phải xác thực mật khẩu Admin, được ghi nhật ký và làm mất hiệu lực phiên đăng nhập cũ của học viên.</p>
+</main>
+<dialog id="auDialog" aria-labelledby="auDialogTitle">
+ <form id="auResetForm" autocomplete="off">
+  <h2 id="auDialogTitle">Đặt lại mật khẩu</h2>
+  <p id="auSelected" class="au-selected"></p>
+  <p class="au-note">Xác nhận đúng người học trước khi thay đổi. Không gửi mật khẩu qua tin nhắn hoặc đăng vào nơi công khai.</p>
+  <label for="auConfirmUsername">Nhập chính xác username để xác nhận</label>
+  <input id="auConfirmUsername" name="confirm_username" required autocomplete="off" spellcheck="false">
+  <label for="auNewPassword">Mật khẩu mới (12–128 ký tự, có chữ và số)</label>
+  <input id="auNewPassword" name="new_password" type="password" minlength="12" maxlength="128" required autocomplete="new-password">
+  <label for="auConfirmPassword">Nhập lại mật khẩu mới</label>
+  <input id="auConfirmPassword" name="confirm_password" type="password" minlength="12" maxlength="128" required autocomplete="new-password">
+  <label for="auAdminPassword">Xác thực bằng mật khẩu Admin hiện tại</label>
+  <input id="auAdminPassword" name="admin_password" type="password" required autocomplete="current-password">
+  <p class="au-status" id="auResetStatus" role="status" aria-live="polite"></p>
+  <div class="au-actions">
+   <button type="button" id="auCancel" class="au-muted">Hủy</button>
+   <button type="submit" id="auSubmit" class="au-danger">Xác nhận đặt lại</button>
+  </div>
+ </form>
+</dialog>
+</body>
+</html>
