@@ -1,7 +1,7 @@
 -- UX30 — Admin user management password reset and revocable player sessions.
--- Additive. Apply on isolated Preview FIRST, before deploying the updated API.
+-- Additive. Supabase migration runner owns the transaction; no embedded BEGIN/COMMIT.
+-- Apply only on isolated Preview FIRST, before deploying updated API.
 -- Do not run on Production until manual release approval and verified backup.
-BEGIN;
 ALTER TABLE public.ws_users
  ADD COLUMN IF NOT EXISTS session_version integer NOT NULL DEFAULT 0,
  ADD COLUMN IF NOT EXISTS password_changed_at timestamptz;
@@ -27,4 +27,3 @@ BEGIN
  END LOOP;
 END
 $ux30$;
-COMMIT;
