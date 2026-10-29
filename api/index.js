@@ -11,7 +11,7 @@ import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
 import {getFinishedRunWrongWords,getAccountGameMistakeNotebook} from '../lib/game-mistakes.js';
-import {syncFinishedSoloReview} from '../lib/auto-game-review.js';
+import {syncFinishedSoloReview,syncRecentSoloReviews} from '../lib/auto-game-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
 
 const AUTH_COOKIE='ws_auth';
@@ -504,6 +504,12 @@ export default async function handler(req,res){
     if(review.expected_actor_id!==undefined&&review.expected_actor_id!==userId)
       throw fail('Tài khoản đã thay đổi; không gửi tiến độ sang người dùng khác',409);
     return output(res,201,await recordFlashcardReview(userId,review));
+  }
+  if(method==='POST'&&key==='learning/game-mistakes/sync'){
+    const userId=mustPlayer(req).id,input=body(req);
+    if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)
+      throw fail('Tài khoản đã thay đổi; không đồng bộ từ của người khác',409);
+    return output(res,200,await syncRecentSoloReviews(userId));
   }
   if(method==='GET'&&key==='learning/game-mistakes')return output(res,200,await getAccountGameMistakeNotebook(mustPlayer(req).id));
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
