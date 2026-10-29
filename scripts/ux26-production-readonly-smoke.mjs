@@ -22,9 +22,13 @@ const paths = [
 function log(label) { console.log('PASS: ' + label); }
 function tapCounter() {
   const Base = window.AudioContext || window.webkitAudioContext;
-  window.__ux26Smoke = {starts: 0, supported: !!Base};
+  window.__ux26Smoke = {starts: 0, supported: !!Base, contexts: []};
   if (!Base) return;
   class MeasuredContext extends Base {
+    constructor(...args) {
+      super(...args);
+      window.__ux26Smoke.contexts.push(this);
+    }
     createOscillator() {
       const oscillator = super.createOscillator();
       const start = oscillator.start.bind(oscillator);
@@ -61,7 +65,9 @@ try {
   }
 
   chrome = await chromium.launch({headless: true});
-  fox = await firefox.launch({headless: true});
+  // CI headless runners have no audio output device; grant Firefox WebAudio permission
+  // explicitly so this tests native oscillator scheduling, not OS autoplay policy.
+  fox = await firefox.launch({headless: true, firefoxUserPrefs: {'media.autoplay.default': 0}});
   for (const [name, browser] of [['Chromium', chrome], ['Firefox', fox]]) {
     const ctx = await browser.newContext({viewport: {width: 390, height: 844}});
     const mutations = [];
@@ -90,7 +96,16 @@ try {
     await page.locator('[data-ws-audio-music]').click();
     await page.waitForFunction(() => window.WordSkyAudio?.getState().unlocked, null, {timeout: 10000});
     await page.evaluate(() => window.WordSkyAudio.setScene('MATCH', true));
-    await page.waitForFunction(() => window.__ux26Smoke?.starts > 0, null, {timeout: 10000});
+    try {
+      await page.waitForFunction(() => window.__ux26Smoke?.starts > 0, null, {timeout: 10000});
+    } catch (error) {
+      const diagnostics = await page.evaluate(() => ({
+        audio: window.WordSkyAudio?.getState(),
+        contexts: window.__ux26Smoke?.contexts.map(ctx => ({state:ctx.state, time:ctx.currentTime})),
+        starts: window.__ux26Smoke?.starts
+      }));
+      throw new Error(name + ': Arena WebAudio did not schedule notes: ' + JSON.stringify(diagnostics), {cause:error});
+    }
     s = await page.evaluate(() => window.WordSkyAudio.getState());
     assert.equal(s.scene, 'MATCH', name + ': track not activated');
     log(name + ': real WebAudio scheduled original MATCH music');
