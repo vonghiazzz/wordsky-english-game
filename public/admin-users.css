@@ -1,0 +1,39 @@
+*{box-sizing:border-box}html{background:#0b1326;color:#eaf4ff;color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{margin:0;line-height:1.55}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}a{color:inherit;text-decoration:none}
+.admin-users-layout{max-width:1100px;margin:0 auto;padding:clamp(18px,4vw,36px) clamp(12px,4vw,28px) 56px}
+.au-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:23px}
+.au-eyebrow{font-size:11px;color:#a4f4d8;letter-spacing:1.5px;font-weight:900}
+.au-header h1{font-size:clamp(25px,4.6vw,40px);line-height:1.2;margin:8px 0;color:#fff}
+.au-header p{max-width:680px;color:#b8c9e2;font-size:14px;margin:0}
+.au-back{display:inline-flex;border-radius:10px;border:1px solid #567293;padding:10px 14px;min-height:44px;align-items:center;font-size:13px;white-space:nowrap}
+.au-back:hover{background:#203553}
+.au-panel{padding:clamp(14px,3vw,25px);background:#172843;border:1px solid #3a5678;border-radius:20px;box-shadow:0 12px 38px #040d1c66}
+.au-panel[hidden]{display:none!important}
+.au-bar{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.au-bar h2{margin:7px 0;font-size:21px;letter-spacing:-.35px}
+#auSearchForm{width:min(100%,460px)}
+label{display:block;color:#d6e5f7;font-size:12px;font-weight:800;margin:10px 0 7px}
+.au-search-row{display:flex;gap:8px}
+input{background:#0d2039;border:1px solid #5b7294;border-radius:10px;color:#f5fcff;min-height:44px;width:100%;min-width:0;padding:10px 12px}
+input::placeholder{color:#8199b6}input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #baf4dd;outline-offset:2px}
+.au-search-row button,.au-pages button,.au-actions button,.au-user button{background:#29466a;border:1px solid #607ca3;color:#f6fbff;border-radius:10px;padding:10px 13px;min-height:44px;font-size:12px;font-weight:800}
+.au-search-row button:hover,.au-pages button:hover,.au-user button:hover{background:#355b85}
+.au-alert{padding:14px 16px;border:1px solid #476486;background:#1b3550;border-radius:12px;color:#c3d7ee}
+.au-alert[data-error="true"]{color:#ffd1c5;border-color:#895a59}
+.au-status{min-height:20px;margin:17px 0 10px;color:#aec6e1;font-size:12px}
+.au-list{display:grid;gap:9px}
+.au-user{background:#1d3452;border:1px solid #496483;border-radius:13px;display:flex;justify-content:space-between;align-items:center;gap:15px;padding:13px 16px}
+.au-user>div{min-width:0}
+.au-user strong{display:block;font-size:16px;color:#fff;overflow-wrap:anywhere}
+.au-user small{color:#aebfda;font-size:12px;overflow-wrap:anywhere}
+.au-pages{margin:19px 0 0;display:flex;justify-content:flex-end;align-items:center;gap:14px;font-size:12px}
+.au-note{margin:17px 0 0;font-size:12px;color:#abbdd5;line-height:1.7}
+dialog{color:#f4f8ff;max-height:92vh;overflow-y:auto;width:min(95vw,530px);padding:22px;border:1px solid #6983a7;border-radius:20px;background:#162942;box-shadow:0 25px 90px #000b}
+dialog::backdrop{background:#050a16bf}
+dialog h2{margin:0;font-size:21px}
+dialog label{margin-top:15px}
+dialog .au-selected{font-size:15px;color:#b6f5d9;font-weight:800;overflow-wrap:anywhere}
+.au-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:17px}
+.au-actions .au-danger{border-color:#b87f87;background:#733547}
+.au-actions .au-danger:hover{background:#94465a}
+.au-actions .au-muted{background:transparent}
+@media(max-width:540px){.au-search-row{flex-wrap:wrap}.au-search-row button{width:100%}.au-user{flex-direction:column;align-items:stretch}.au-user button{width:100%}.au-pages{justify-content:space-between}.au-actions button{flex:1}dialog{padding:17px}}
