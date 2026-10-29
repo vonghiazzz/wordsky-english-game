@@ -46,6 +46,6 @@
 .ws24-advanced>summary:hover{color:#e5f8ff}
 .ws24-advanced>button{margin:8px 0}
 @media(max-width:560px){
- .ws24-filters #ws24Reload,.ws24-filters #ws24Practice{flex:1 1 calc(50% - 8px);min-width:145px}
+ .ws24-filters #ws24Reload,.ws24-filters #ws24Practice{flex:1 1 calc(50% - 8px);min-width:0;font-size:12px;padding-inline:6px}
  .ws24-filters .ws24-practice{padding-inline:12px}
 }
