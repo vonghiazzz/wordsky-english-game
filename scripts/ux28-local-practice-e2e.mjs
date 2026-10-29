@@ -30,7 +30,8 @@ async function createAccount(){
 async function createFinishedRun(userId,ids,mode){
  const state={mode,status:'FAILED',score:0,health:0,correct:0,mistakes:1,
   wrongWordIds:ids,startedAt:Date.now()-60000,endsAt:Date.now()-30000,
-  pairs:[],distractors:[]};
+  // A terminal BOMB run still needs bombs for publicState() rendering.
+  pairs:[],distractors:[],bombs:[],levels:[],index:0};
  const r=await db.query(
   'INSERT INTO ws_solo_runs (user_id,access_token_hash,client_fingerprint_hash,'+
   'mode,difficulty,duration_seconds,question_count,points_per_correct,penalty,'+
