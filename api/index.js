@@ -45,8 +45,15 @@ function adminUsersService(){
  return createAdminUsersService({
   db:getPool(),
   requireAdmin:async req=>({...mustAdmin(req),username:String(process.env.ADMIN_USERNAME||'owner').toLowerCase()}),
-  verifyAdminPassword:async(_actor,pass)=>Boolean(process.env.ADMIN_PASSWORD_HASH)&&
-    verifyPassword(pass,process.env.ADMIN_PASSWORD_HASH),
+  verifyAdminPassword:async(_actor,pass,req)=>{
+   const ip=ipOf(req);
+   await throttle(ip);
+   const accepted=Boolean(process.env.ADMIN_PASSWORD_HASH)&&
+    verifyPassword(pass,process.env.ADMIN_PASSWORD_HASH);
+   if(!accepted)await sql('INSERT INTO ws_login_failures(remote_ip) VALUES($1)',[ip]);
+   else await sql('DELETE FROM ws_login_failures WHERE remote_ip=$1',[ip]);
+   return accepted;
+  },
   hashPassword,verifyPassword,expectedOrigin:a
  });
 }
