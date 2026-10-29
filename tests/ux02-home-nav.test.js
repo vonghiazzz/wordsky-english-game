@@ -47,8 +47,9 @@ test('Two disclosures handle keyboard, focus, active state and Escape',()=>{
  assert.match(nav,/const wasInProgress=/);
  assert.match(nav,/else if\(wasInProgress\)progressToggle\.focus\(\)/);
  assert.match(nav,/setProgressOpen\(false\)/);
- assert.match(nav,/progressToggle\.classList\.toggle\('is-active',active==='attendance'\|\|active==='rank'\|\|active==='learning-progress'\|\|active==='game-mistakes'\)/);
+ assert.match(nav,/progressToggle\.classList\.toggle\('is-active',active==='attendance'\|\|active==='rank'\|\|active==='learning-progress'\|\|active==='game-mistakes'\|\|active==='mistake-practice'\)/);
  assert.match(nav,/url:'\/mistakes\.html'/);
+ assert.match(nav,/url:'\/practice\.html'/);
  assert.match(nav,/ws-dock-hidden/);
  assert.match(nav,/ws-mobile-dock-visible/);
  assert.match(nav,/window\.addEventListener\('popstate'/);
