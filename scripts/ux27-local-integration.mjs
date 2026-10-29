@@ -91,6 +91,10 @@ try {
 
  const noAuth=await unauth.request.get(BASE+'/api/learning/game-mistakes');
  assert.equal(noAuth.status(),401);
+ const noAuthSync=await unauth.request.post(BASE+'/api/learning/game-mistakes/sync',{
+   headers:{origin:BASE},data:{expected_actor_id:userA.id}
+ });
+ assert.equal(noAuthSync.status(),401);
  pass('notebook rejects guests');
 
  const a=await getNotebook(owner1),a2=await getNotebook(owner2),b=await getNotebook(other);
@@ -111,6 +115,11 @@ try {
  assert.equal(ownRun.status(),200,await ownRun.text());
  const ownResult=await ownRun.json();
  assert.deepEqual(ownResult.reviewWords.map(w=>w.word_id),[wordA.id]);
+ assert.equal(ownResult.reviewSync.status,'synced');
+ await wait(async()=>{
+   const rows=await db.query('SELECT remembered,review_count FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',[userA.id,wordA.id]);
+   return rows.rows[0]?.remembered===false&&rows.rows[0]?.review_count===1;
+ });
  const steal=await other.request.get(BASE+'/api/solo/runs/'+runA);
  assert.equal(steal.status(),401);
  pass('run details are private to the correct account');
@@ -126,6 +135,14 @@ try {
  assert.equal(await pageB.locator('[data-word-id="'+wordA.id+'"]').count(),0);
  await pageB.locator('[data-word-id="'+wordB.id+'"]').waitFor();
  pass('Chromium/Firefox account notebook UI stays isolated across devices');
+ for(const page of [page1,page2,pageB]){
+   assert.equal(await page.locator('[data-review-word]').count(),0,'no manual per-word review buttons');
+   assert.equal(await page.locator('.ws27-crumb').count(),0,'no raw breadcrumb links below navigation');
+ }
+ await page1.locator('[data-word-id="'+wordA.id+'"] .ws27-state-due').waitFor();
+ await pageB.locator('[data-word-id="'+wordB.id+'"] .ws27-state-due').waitFor();
+ pass('auto-queued Need Review on both signed-in accounts without clicks');
+
 
  for (const width of [360,390]) {
   await page1.setViewportSize({width,height:800});
@@ -149,21 +166,25 @@ try {
  await page1.locator('#ws27Search').fill('');
  pass('mobile layout at 360/390px and mode/search filters');
 
- await page1.locator('[data-word-id="'+wordA.id+'"] [data-review-word]').click();
- await wait(async()=>{
-  const p=await db.query('SELECT review_count,remembered FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',
-   [userA.id,wordA.id]);
-  return p.rows[0]?.review_count===1&&p.rows[0]?.remembered===false;
- });
+ // The notebook reconciles unfinished historical enrollments automatically,
+ // and repeated GET/POST requests must not append duplicate learning events.
+ const replays=await Promise.all([owner1.request.post(BASE+'/api/learning/game-mistakes/sync',{
+   headers:{origin:BASE},data:{expected_actor_id:userA.id}
+ }),owner2.request.post(BASE+'/api/learning/game-mistakes/sync',{
+   headers:{origin:BASE},data:{expected_actor_id:userA.id}
+ })]);
+ for(const response of replays){
+   assert.equal(response.status(),200,await response.text());
+   assert.equal((await response.json()).newly_queued,0);
+ }
  await page2.locator('#ws27Reload').click();
- await page2.waitForFunction(id=>{
-  const card=document.querySelector('[data-word-id="'+id+'"]');
-  return card?.textContent?.includes('Đã ôn 1 lần');
- },wordA.id);
- pass('explicit Need Review updates account history and appears on second browser');
+ await page2.locator('[data-word-id="'+wordA.id+'"] .ws27-state-due').waitFor();
+ pass('no manual action, account SRS is visible on both browsers and replays are idempotent');
 
  const ledger=await db.query('SELECT count(*)::int n FROM ws_learning_review_requests WHERE user_id=$1',[userA.id]);
  assert.equal(ledger.rows[0].n,1);
+ const history=await db.query('SELECT count(*)::int n FROM ws_learning_flashcard_reviews WHERE user_id=$1 AND word_id=$2',[userA.id,wordA.id]);
+ assert.equal(history.rows[0].n,1);
  const foreignCommand=await other.request.post(BASE+'/api/learning/reviews',{
   headers:{origin:BASE},
   data:{
@@ -174,8 +195,55 @@ try {
  assert.equal(foreignCommand.status(),409);
  const otherProgress=await db.query('SELECT count(*)::int AS n FROM ws_learning_word_progress WHERE user_id=$1',
   [userB.id]);
- assert.equal(otherProgress.rows[0].n,0);
- pass('actor pin rejects cross-account writes before SRS history is created');
+ assert.equal(otherProgress.rows[0].n,1,'other account has its own automatic word B, not user A');
+ pass('actor pin rejects cross-account writes');
+ const foreignSync=await other.request.post(BASE+'/api/learning/game-mistakes/sync',{
+  headers:{origin:BASE},data:{expected_actor_id:userA.id}
+ });
+ assert.equal(foreignSync.status(),409);
+
+ // After a learner explicitly marks a word remembered, a replay of their older
+ // completed game must NOT force it back into "needs review".
+ const remember=await owner1.request.post(BASE+'/api/learning/reviews',{
+   headers:{origin:BASE},
+   data:{request_id:randomUUID(),source:'shared',word_id:wordA.id,
+     remembered:true,expected_review_count:1,expected_actor_id:userA.id}
+ });
+ assert.equal(remember.status(),201,await remember.text());
+ const replayRun=await owner1.request.get(BASE+'/api/solo/runs/'+runA);
+ assert.equal(replayRun.status(),200);
+ const progress=await db.query(
+   'SELECT review_count,remembered FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',
+   [userA.id,wordA.id]
+ );
+ assert.deepEqual({n:progress.rows[0].review_count,remembered:progress.rows[0].remembered},
+   {n:2,remembered:true});
+ pass('a newer learner review wins over replaying an older game');
+
+ // A real PLAYING-to-TIMEOUT transition through the authorized Solo route
+ // must queue another word without visiting the notebook or clicking anything.
+ const {createState}=await import('../lib/game.js');
+ const state=createState({
+   mode:'MATCH',difficulty:'EASY',question_count:3,duration_seconds:20,
+   points_per_correct:100,penalty:25
+ },[...vocab.rows].map(w=>({...w,meaning:'Test'})),Date.now()-40000,Date.now()-1000);
+ state.wrongWordIds=[wordC.id];
+ const pendingRun=await createRun(userA.id,[]);
+ await db.query(
+   "UPDATE ws_solo_runs SET status='PLAYING',finished_at=NULL,state=$1::jsonb WHERE id=$2",
+   [JSON.stringify(state),pendingRun]
+ );
+ const terminal=await owner1.request.get(BASE+'/api/solo/runs/'+pendingRun);
+ assert.equal(terminal.status(),200,await terminal.text());
+ const result=await terminal.json();
+ assert.equal(result.game.status,'TIMEOUT');
+ assert.equal(result.reviewSync.status,'synced');
+ assert.equal(result.reviewSync.newly_queued,1);
+ await wait(async()=>{
+   const p=await db.query('SELECT remembered,review_count FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',[userA.id,wordC.id]);
+   return p.rows[0]?.remembered===false&&p.rows[0]?.review_count===1;
+ });
+ pass('Solo server terminal GET auto-enqueues newly missed word without a client confirmation');
 
  await Promise.all([owner1.close(),owner2.close(),other.close(),unauth.close()]);
  console.log('\nUX27 LOCAL ACCOUNT / BROWSER QA: PASS');
