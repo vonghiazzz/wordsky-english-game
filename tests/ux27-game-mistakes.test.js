@@ -109,7 +109,7 @@ test('UX27 API binds the account from the session and reveals run words only aft
 
 test('UX27 notebook automatically syncs SRS, has no manual per-word confirmation',()=>{
  assert.match(html,/\/ux27-results\.css/);
- assert.match(app,/href="\/mistakes\.html"/);
+ assert.doesNotMatch(app,/href="\/mistakes\.html"/);
  assert.match(page,/data-ws-page="progress"/);
  assert.match(page,/id="ws27Account"/);
  assert.match(ui,/learning\/game-mistakes\/sync/);
@@ -117,7 +117,8 @@ test('UX27 notebook automatically syncs SRS, has no manual per-word confirmation
  assert.doesNotMatch(ui,/markNeedsReview|data-review-word|Cần ôn ngay/);
  assert.match(ui,/credentials: 'same-origin'/);
  assert.doesNotMatch(ui,/localStorage/);
- assert.match(read('public/progress.html'),/href="\/mistakes\.html"/);
+ assert.doesNotMatch(read('public/progress.html'),/href="\/mistakes\.html"/);
+ assert.match(read('public/progress.html'),/id="ws24Practice"/);
  assert.match(learn,/WordSkyFlashcardCatalog/,'existing Learn flows must remain available');
 });
 
@@ -134,7 +135,7 @@ test('UX27 Solo result includes only server-returned words, escaping untrusted H
  assert.match(result,/Từ cần ôn sau lượt này/);
  assert.match(result,/&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
  assert.doesNotMatch(result,/<script>alert\(1\)<\/script>/);
- assert.match(result,/href="\/mistakes\.html"/);
+ assert.match(result,/href="\/progress\.html"/);
 });
 
 
