@@ -113,9 +113,9 @@ try{
  chrome=await chromium.launch({headless:true});
  fox=await firefox.launch({headless:true});
  const ctxA=await chrome.newContext({viewport:{width:360,height:800}});
- const ctxA2=await firefox.newContext({viewport:{width:390,height:844}});
+ const ctxA2=await fox.newContext({viewport:{width:390,height:844}});
  const ctxB=await chrome.newContext({viewport:{width:390,height:844}});
- const ctxGuest=await firefox.newContext();
+ const ctxGuest=await fox.newContext();
  await Promise.all([login(ctxA,owner),login(ctxA2,owner),login(ctxB,other)]);
 
  const guest=await ctxGuest.newPage();
