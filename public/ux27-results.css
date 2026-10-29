@@ -1,0 +1,10 @@
+/* UX27: post-run wrong words, scoped to results only. */
+.solo-game-shell .ws27-run-words{margin:18px 0 4px;padding:15px 17px;background:#142d44;border:1px solid #4c7794;border-radius:15px;color:#ecf9ff}
+.solo-game-shell .ws27-run-words h4{font-size:15px;margin:0 0 10px;color:#a6f0da}
+.solo-game-shell .ws27-run-words ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.solo-game-shell .ws27-run-words li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#1a3654;border-radius:9px;padding:9px 11px;font-size:13px}
+.solo-game-shell .ws27-run-words li strong{color:#fff;font-size:15px}
+.solo-game-shell .ws27-run-words li span{color:#c6eadf}
+.solo-game-shell .ws27-run-words li small{margin-left:auto;color:#aabed8}
+.solo-game-shell .ws27-run-words>a{display:inline-flex;margin-top:12px;color:#b9f4e5;min-height:40px;align-items:center;font-weight:700;font-size:13px}
+@media(max-width:480px){.solo-game-shell .ws27-run-words{padding:12px}.solo-game-shell .ws27-run-words li{align-items:flex-start}.solo-game-shell .ws27-run-words li small{margin-left:0}}
