@@ -9,18 +9,18 @@
 ## Scope for this PR
 1. **MATCH Solo**: mark the selected English word when the player picks a mismatched Vietnamese option. Repeated attempts within one run are deduplicated. A word remains in the list even if subsequently matched correctly.
 2. **BOMB Solo**: mark actual exploded bombs with known server-side word IDs. Auto-typed guesses without a matching bomb are not counted as errors. Do not mark bombs that have not spawned.
-3. **CAR Solo**: mark the selected safe-lane word when a manually selected lane gets an incorrect typed answer. Auto-check guesses, blocked lanes and timeouts have no unambiguous target word, so do not manufacture one.
+3. **CAR Solo**: mark the selected safe-lane word for an explicit incorrect typed answer. Auto-check guesses and blocked lanes have no unambiguous target word. **UX27.1 also gathers ALL safe-lane words in a timed-out stage as unanswered practice words** in a separate `missedPracticeWordIds` array, clearly distinguished from graded errors and hidden during active play.
 4. The **terminal run** includes `reviewWords` (English, Vietnamese meaning, topic, optional CEFR/IPA), but only after run authorization and terminal reconciliation. **Never reveal those answers while PLAYING**.
 5. `GET /api/learning/game-mistakes`: signed-in learner only; actor is taken from the WordSky session, not supplied query or request body. Aggregates completed Solo run JSONB (up to 200 most-recent distinct words) and current actual review_count, excluding disabled vocabulary. Guests cannot use the account notebook.
-6. `/mistakes.html`: synced account notebook, search/mode filters, link from My Learning and Solo results. **"Cần ôn ngay"** explicitly calls existing idempotent `POST /api/learning/reviews` with `remembered:false`, `expected_review_count` and `expected_actor_id`. Do not update SRS on gameplay automatically.
+6. `/mistakes.html`: synced account notebook, search/mode filters, link from My Learning and Solo results. **UX27.1 automatically marks identified failed/unanswered practice words as `remembered:false`** after a finished account-owned run; no per-word confirmation button. Existing review history, progress, and gated SRS shadow are written transactionally using deterministic per-(run,word) request IDs. `POST /api/learning/game-mistakes/sync` backfills eligible older terminal runs for that signed-in actor only (up to 20 recent runs per request).
 
 ## Known boundaries
 - Only Solo `MATCH`/`BOMB`/`CAR` for games started **after release**; old runs cannot be accurately reconstructed.
 - Only runs started while authenticated are automatically synchronized across the user's browsers. Anonymous runs are still visible immediately after a terminal result in their authorized browser, but are not auto-assigned to an account later.
 - Multiplayer rooms and Falling Words are intentionally not included.
 - Stored numbers represent the **count of runs containing a wrong word**, not raw failed keystrokes.
-- Only identifiable mistakes are saved. CAR timeout / obstacle penalties and BOMB incomplete guesses are deliberately excluded. 
-- A lost HTTP response can be retried with the same request_id while the notebook page remains open; refreshing after an uncertain request requires reloading current state first.
+- Identifiable mistakes are saved; CAR timeout additionally saves the safe-lane *practice options* separately, never labels them as a proven wrong typed answer. Obstacle penalties and incomplete BOMB guesses remain excluded. 
+- SRS automatic enrollment is server-driven and idempotent. On failure, the finished game remains saved and an authorized result re-read or account notebook sync can retry. Newer explicit human reviews always take precedence over an older game.
 - No changes to Session Secret, token logic, leaderboard, XP, or DB migrations.
 
 ## Regression / security checks
@@ -31,7 +31,7 @@ npm test
 node scripts/ux27-local-integration.mjs
 ```
 
-Local E2E creates two disposable accounts and synthetic finished Solo runs **only in a CI-local PostgreSQL 17 database**, checks same-account cross-browser visibility and isolation across accounts, verifies per-run owner authorization, and confirms that an explicit Need Review writes the existing idempotent ledger once. All QA data is deleted afterward.
+Local E2E creates two disposable accounts and synthetic finished Solo runs **only in a CI-local PostgreSQL 17 database**, checks cross-browser visibility/actor isolation, runs terminal state reconciliation, confirms automatic ledger/progress updates once, validates repeat requests never double-add, and ensures a newer learner review is not overwritten by an older game. All QA data is deleted afterward.
 
 ## Release gates
 - [ ] Unit / integration / browser CI green.
