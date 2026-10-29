@@ -1,49 +1,64 @@
-# UX28 — Focused Mistake Recall Practice
+# UX28.1 — One "Luyện từ" button in My Learning
 
-## Problem / source of truth
-UX27 reliably adds identifiable wrong Solo vocabulary to the correct WordSky learner's
-PostgreSQL account, but the mistake notebook is primarily a **list**. Learners still
-lack a fast practice path that tests active recall and records the result.
+## User decision / UI source of truth
+The learner does **not** need separate shortcuts for "Sổ từ cần ôn",
+"Luyện từ sai", or duplicate mistake counters. The existing **My Learning
+SRS group** already shows all study cards and their due/new/upcoming status.
 
-Use existing APIs and tables, **not a second progress system**:
-- Auth: \`GET /api/auth/me\`.
-- Account mistakes: \`GET /api/learning/game-mistakes\`.
-- Existing UX27 account backfill: \`POST /api/learning/game-mistakes/sync\`.
-- Idempotent UX23 review: \`POST /api/learning/reviews\` through
-  \`postUnifiedAccountReview\`, with request_id, actor pin and observed review_count.
-- Existing SRS queue and optional, correctly gated SRS shadow read the same history.
+**Only one practice CTA is visible on My Learning**:
+\`↻ Làm mới lịch\` | \`✦ Luyện từ\` (adjacent in the SRS filter toolbar).
 
-No schema migration, Vercel env change, new external dependencies, background task
-or new account database. Offline progress is never reported as synchronized.
+The advanced \`Kiểm tra đồng bộ\` control remains under a collapsed
+\`<details>\` section, not alongside the learning CTA.
 
-## UX28 scope
-- Account-only \`/practice.html\`, linked from notebook, My Learning, site nav,
-  and Solo post-run results.
-- Study Vietnamese **meaning** → type English. Grade exact normalized spelling
-  (case-insensitive and excess spaces normalized, but no fuzzy typo guesses).
-- Filter to **currently marked needing review** (default), optionally **all
-  vocabulary previously missed**; filter by MATCH/BOMB/CAR and 5/10/20 word cap.
-  A direct word link works only for a word in the signed-in actor's notebook.
-- A quiz shows one card at a time; reveal English only after the learner submits.
-  The browser fetch includes the English answer for client-side grading; this is
-  learning practice, not an anti-cheat competitive game.
-- Press "Không nhớ" to record an explicit \`remembered:false\` event, or type
-  the exact answer to record \`remembered:true\`. Only **server-confirmed**
-  events advance the session and summary.
-- On a lost HTTP response retry the exact same pending command ID, avoiding
-  double reviews; after a definitive 409/actor mismatch stop the session and
-  refresh account data rather than overwrite a newer action.
-- A session is ephemeral and cannot resume exactly after hard refresh. Durable
-  review events always remain in PostgreSQL.
-- Browser focus/visibility checks session actor to prevent stale account content.
+The My Learning hero retains Flashcard and personal-vocabulary management,
+but no extra mistake/practice shortcuts. The shared Progress dropdown exposes
+only My Learning (plus Attendance and Ranking). Solo results point to
+My Learning, rather than creating another route to practice. The legacy
+\`/mistakes.html\` still works when opened by saved links; its data and API
+are not deleted, but its practice shortcut has been retired.
 
-## Security and release gates
-- The server still authorizes actor and word ID against account ownership.
-- No query/body parameter can select another account's notebook.
-- No API secrets or raw credentials in client files or CI.
-- Backend review is the existing account-scoped \`shared\` review transaction.
-- CI: \`npm run check\`, \`npm test\`, isolated Postgres17 + real Chromium/Firefox
-  login and mobile 360px; cross-device sync, actor isolation, lost-response replay,
-  conflicting review_count and SRS shadow consistency.
-- No access to Production PostgreSQL from browser tests; no Production writes.
-- Human mobile touch/keyboard QA recommended prior to merge.
+## Product behavior
+1. User signs in, opens \`/progress.html\`, chooses **Nhóm ôn**
+   (Đến hạn/Từ mới/Sắp đến hạn) and optional **Chủ đề**.
+2. **Luyện từ** passes the exact selected status/topic in encoded URL params
+   to \`/practice.html\`. There is no redundant card-count dashboard, setup
+   form, filter or second Start button.
+3. \`/practice.html\` reads the **same account SRS queue** as the My Learning
+   list (\`GET /api/learning/srs/queue\`, status/topic/page=0/size=100), then
+   starts an active-recall session with up to **10 words** from that group.
+   Items missing a Vietnamese meaning are skipped.
+4. The learner sees Vietnamese meaning, types English, receives
+   exact-normalized correctness feedback, and writes exactly one
+   account review only after the server acknowledges it.
+5. Both \`shared\` and \`personal\` card sources are handled by the existing
+   idempotent UX23 \`postUnifiedAccountReview\` and SRS schedule.
+6. If the selected group has no study words, show a helpful empty state
+   and send the learner back to My Learning to choose another group.
+
+## Safety and semantics
+- SRS and account review history remain the *single source of truth*.
+  No DB migration, bulk mutation, or new storage is added.
+- Choosing "Sắp đến hạn" permits explicit **early practice**; when the
+  learner answers correctly, the backend existing SRS policy preserves
+  the original due date.
+- Server-authorized \`actor_id\`, account switch checks and expected
+  review_count protect against wrong-account data and 409 concurrent edits.
+- On uncertain HTTP response, retry the same idempotent request ID.
+  Never treat a pending network write as a committed review.
+- Don't rely on visible card totals to choose another user's data.
+- The SRS endpoint is already feature-gated by WordSky. If unavailable,
+  no action is offered and a legacy direct link shows an error.
+- UX27 automatic Solo mistake tracking remains intact. Those items join
+  the normal My Learning SRS queue, rather than a separate practice bank.
+
+## Release QA
+- Unit tests: URL parsing, SRS queue actor/policy/source validation, single CTA
+  and no duplicate links, word-level typed grading.
+- Isolated PostgreSQL17 + Chromium/Firefox E2E: CTA next to Refresh on
+  360px mobile, same actor queue on two browsers, other actor isolation,
+  accepted/retried review, due/upcoming separation, personal card
+  source, SRS materialization and 409 conflict handling.
+- Production schema and user progress are untouched by CI.
+- Release via reviewed PR and verified Vercel Production; observe runtime logs
+  before concluding success. Manual mobile keyboard QA remains recommended.
