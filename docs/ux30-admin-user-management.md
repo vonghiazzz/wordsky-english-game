@@ -60,6 +60,9 @@ to open \`/admin-users.html\`.
 ## Database / deployment sequencing (IMPORTANT)
 - Additive migration:
   \`db/migrations/20261029_ux30_admin_users_password_reset.sql\`.
+- Supabase manages migration transactions automatically. Do not place
+  explicit BEGIN/COMMIT in UX30 SQL: partial commits could leave schema and
+  migration-history inconsistent. Apply Preview first using migration runner.
 - Adds \`session_version DEFAULT 0\` and \`password_changed_at\` to
   \`public.ws_users\`. Adds audit table and index; enables RLS and revokes
   Data API roles for audit table.
