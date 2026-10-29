@@ -11,9 +11,11 @@
 <link rel="stylesheet" href="/ux02-home-nav.css">
 <link rel="stylesheet" href="/ux10-progress.css">
 <link rel="stylesheet" href="/ux24-srs-panel.css">
+<link rel="stylesheet" href="/ux29-insights.css">
 <script src="/shared-nav.js" defer></script>
 <script type="module" src="/ux10-progress.js"></script>
 <script type="module" src="/ux24-srs-panel.js"></script>
+<script type="module" src="/ux29-insights.js"></script>
 <script type="module" src="/ux18-personal-summary.js"></script>
 </head>
 <body class="ws10-page">
@@ -80,6 +82,46 @@
       <button class="ws10-button ws10-secondary" type="button" id="ws24Prev">← Trước</button>
       <span id="ws24Page"></span>
       <button class="ws10-button ws10-secondary" type="button" id="ws24Next">Sau →</button>
+    </div>
+  </section>
+  <section class="ws29-panel" id="ws29Insights" aria-labelledby="ws29Title" hidden>
+    <header class="ws29-head">
+      <div class="ws29-head-copy">
+        <span class="ws10-overline">LEARNING INSIGHTS · TỪ POSTGRESQL</span>
+        <h2 id="ws29Title">Nhìn lại hành trình <span aria-hidden="true">✳</span></h2>
+        <p>Hoạt động ôn từ, những từ thường đánh dấu Cần ôn và các trận Solo đã hoàn thành.</p>
+      </div>
+      <div class="ws29-switch" role="group" aria-label="Khoảng thời gian thống kê">
+        <button type="button" class="ws29-period is-active" id="ws29Days7" data-days="7" aria-pressed="true">7 ngày</button>
+        <button type="button" class="ws29-period" id="ws29Days30" data-days="30" aria-pressed="false">30 ngày</button>
+      </div>
+    </header>
+    <p class="ws29-note" id="ws29Status" role="status" aria-live="polite">Đang lấy số liệu học tập…</p>
+    <div id="ws29Content" hidden>
+      <div class="ws29-kpis" aria-label="Thống kê theo tài khoản">
+        <article class="ws29-kpi"><span>LƯỢT ÔN TRONG KỲ</span><strong id="ws29Reviews">0</strong><small>Gồm Flashcard và luyện từ</small></article>
+        <article class="ws29-kpi"><span>CHỌN “ĐÃ NHỚ”</span><strong id="ws29Remembered">—</strong><small id="ws29RememberedHint">Tỷ lệ lượt đánh dấu nhớ</small></article>
+        <article class="ws29-kpi"><span>NGÀY CÓ HOẠT ĐỘNG</span><strong id="ws29ActiveDays">0</strong><small id="ws29ActiveHint">Ngày có ôn hoặc chơi Solo</small></article>
+        <article class="ws29-kpi"><span>ĐANG CẦN ÔN</span><strong id="ws29CurrentNeed">0</strong><small>Tổng hiện tại theo tài khoản</small></article>
+      </div>
+      <div class="ws29-body">
+        <div class="ws29-trend">
+          <div class="ws29-section-head">
+            <div><h3>Hoạt động theo ngày</h3><p id="ws29Range">7 ngày gần đây · Giờ Việt Nam</p></div>
+          </div>
+          <div class="ws29-legend"><span><i class="ws29-legend-review" aria-hidden="true"></i> Lượt ôn</span><span><i class="ws29-legend-solo" aria-hidden="true"></i> Solo kết thúc</span></div>
+          <div class="ws29-chart-scroll" role="region" aria-label="Biểu đồ hoạt động học tập" tabindex="0">
+            <div id="ws29Chart" class="ws29-chart" role="list" aria-label="Số lượt ôn và trận Solo theo ngày"></div>
+          </div>
+          <p class="ws29-explainer" id="ws29SoloModes">MATCH 0 · BOMB 0 · CAR 0</p>
+        </div>
+        <div class="ws29-focus">
+          <div class="ws29-section-head"><div><h3>Từ nên chú ý</h3><p>Các từ hiện cần ôn và được đánh dấu Cần ôn nhiều trong kỳ.</p></div></div>
+          <div id="ws29Words" class="ws29-word-list"></div>
+          <p id="ws29Empty" class="ws29-empty" hidden>Chưa có từ đang cần chú ý trong khoảng thời gian này.</p>
+        </div>
+      </div>
+      <p class="ws29-footnote">Các lượt “Đã nhớ/Cần ôn” là dấu mốc ghi nhận của người học và game Solo, không phải điểm chính xác bài thi. Thống kê từ lịch sử PostgreSQL theo ngày Việt Nam; không cộng điểm Arena.</p>
     </div>
   </section>
   <section class="ws10-library" aria-labelledby="ws10WordsTitle">
