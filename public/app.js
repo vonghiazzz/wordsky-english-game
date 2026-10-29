@@ -153,7 +153,7 @@ function soloResultMarkup(g,rd,mode){
    knownWords.map(w=>'<li><strong>'+escapeHtml(w.english)+'</strong><span>'+escapeHtml(w.meaning)+
     '</span><small>'+escapeHtml(w.topic||'')+'</small>'+
     (w.reason==='unanswered'?'<em>Chặng CAR chưa trả lời</em>':'')+'</li>').join('')+
-   '</ul><a href="/mistakes.html">📖 Xem sổ từ cần ôn →</a></div>':'';
+   '</ul></div>':'';
  const nextText=knownWords===null
   ?'Ôn Flashcard theo chủ đề. Danh sách từ trả lời sai trong lượt chưa được hệ thống cung cấp.'
   :knownWords.length
@@ -164,9 +164,9 @@ function soloResultMarkup(g,rd,mode){
  const syncStatus=g.reviewSync?.status;
  const autoNotice=knownWords?.length?
    syncStatus==='synced'?
-    '<p class="ws27-run-status">✓ Tự động đồng bộ với My Learning. Mở Sổ từ cần ôn để xem trên mọi thiết bị.</p>':
+    '<p class="ws27-run-status">✓ Tự động đồng bộ với My Learning. Xem Nhóm ôn trên mọi thiết bị.</p>':
    syncStatus==='pending'?
-    '<p class="ws27-run-status pending">⚠ Chưa hoàn tất đồng bộ. Tải lại kết quả trận hoặc mở Sổ từ cần ôn để thử lại.</p>':
+    '<p class="ws27-run-status pending">⚠ Chưa hoàn tất đồng bộ. Tải lại kết quả trận hoặc mở My Learning để thử lại.</p>':
    syncStatus==='guest'?
     '<p class="ws27-run-status pending">Đây là lượt khách. Đăng nhập trước khi chơi để tự lưu từ vào tài khoản.</p>':'':'';
 
@@ -175,7 +175,7 @@ function soloResultMarkup(g,rd,mode){
  <dl class="ws04-metrics"><div><dt>Điểm</dt><dd>${fmt(score)}</dd></div><div><dt>Đã hoàn thành</dt><dd>${correct}<small> / ${target} ${unit}</small></dd></div><div><dt>${mistakeLabel}</dt><dd>${mistakes}</dd></div></dl>
  <div class="ws04-progress-title"><span>Tiến độ hoàn thành</span><strong>${percent}%</strong></div>
  <div class="ws04-progress" role="progressbar" aria-label="Mục hoàn thành" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${correct}"><span style="width:${percent}%"></span></div>
- ${wrongList}${autoNotice}<div class="ws04-next"><p><strong>Tiếp tục ghi nhớ từ vựng</strong><span>${nextText}</span></p><a class="btn ghost ws04-learn" href="/practice.html">✦ Luyện từ sai →</a></div>
+ ${wrongList}${autoNotice}<div class="ws04-next"><p><strong>Tiếp tục ghi nhớ từ vựng</strong><span>${nextText}</span></p><a class="btn ghost ws04-learn" href="/progress.html">↗ My Learning</a></div>
  </section>`;
 }
 function renderSoloCarGame(){

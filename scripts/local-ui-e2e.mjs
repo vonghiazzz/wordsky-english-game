@@ -227,6 +227,7 @@ try {
 
   pass('Upcoming early review preserves PostgreSQL due date');
 
+  await B.locator('.ws24-advanced > summary').click();
   await B.locator('#ws24Audit').click();
 
   await B.waitForFunction(() =>

@@ -41,6 +41,7 @@ function initSrs(){
  const prev=document.getElementById('ws24Prev');
  const next=document.getElementById('ws24Next');
  const reload=document.getElementById('ws24Reload');
+ const practice=document.getElementById('ws24Practice');
  const audit=document.getElementById('ws24Audit');
  const auditResult=document.getElementById('ws24AuditResult');
  const summary=document.getElementById('ws24Summary');
@@ -55,6 +56,9 @@ function initSrs(){
   prev.disabled=pending||!data||page===0;
   next.disabled=pending||!data||page+1>=data.total_pages;
   reload.disabled=pending;
+  practice.disabled=pending||!data||!actorId||data.total===0;
+  practice.title=!data||!actorId?'Chờ xác nhận lịch ôn':data.total===0?
+    'Nhóm ôn hiện tại chưa có từ để luyện':'Luyện các từ trong nhóm ôn đang chọn';
   if(!data)return;
   summary.textContent='Cần ôn '+data.summary.due+' · Sắp đến hạn '+data.summary.upcoming+
     ' · Từ mới '+data.summary.new+' · Tổng '+data.summary.total;
@@ -158,6 +162,11 @@ function initSrs(){
  prev.addEventListener('click',()=>{if(page>0){page--;refresh()}});
  next.addEventListener('click',()=>{if(received&&page+1<received.total_pages){page++;refresh()}});
  reload.addEventListener('click',()=>refresh());
+ practice.addEventListener('click',()=>{
+   if(pending||!actorId||!received?.total)return;
+   const params=new URLSearchParams({status:status.value,topic:topic.value});
+   window.location.assign('/practice.html?'+params.toString());
+ });
  audit.addEventListener('click',async()=>{
   const clickedActor=actorId;
   if(!clickedActor)return;
