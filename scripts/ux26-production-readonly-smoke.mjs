@@ -67,7 +67,7 @@ try {
   chrome = await chromium.launch({headless: true});
   // CI headless runners have no audio output device; grant Firefox WebAudio permission
   // explicitly so this tests native oscillator scheduling, not OS autoplay policy.
-  fox = await firefox.launch({headless: true, firefoxUserPrefs: {'media.autoplay.default': 0}});
+  fox = await firefox.launch({headless: true, firefoxUserPrefs: {'media.autoplay.default': 0, 'media.cubeb.backend': 'null'}});
   for (const [name, browser] of [['Chromium', chrome], ['Firefox', fox]]) {
     const ctx = await browser.newContext({viewport: {width: 390, height: 844}});
     const mutations = [];
