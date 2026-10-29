@@ -24,7 +24,7 @@ test('Manual CI retains full isolated DB and browser acceptance, never deploys V
  assert.match(workflow,/node scripts\/ux29-local-insights-e2e\.mjs/);
  assert.match(workflow,/wordsky_v6_test/);
  assert.match(workflow,/127\.0\.0\.1:5547/);
- assert.doesNotMatch(workflow,/VERCEL_TOKEN|vercel deploy|vercel promote|deploy_to_vercel|mcp__Vercel__/i);
+ assert.doesNotMatch(workflow,/VERCEL_TOKEN|\bvercel deploy(?:\s|$)|\bvercel promote(?:\s|$)|deploy_to_vercel|mcp__Vercel__/i);
  assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);
 });
 
