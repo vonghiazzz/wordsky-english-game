@@ -24,7 +24,7 @@
       <span class="ws10-eyebrow"><span class="ws10-orb"></span> MY LEARNING DASHBOARD</span>
       <h1>Mỗi từ mới.<br><em>Một bước tiến.</em></h1>
       <p>Nhìn lại những từ bạn đã ghi nhớ, tìm từ cần ôn và tiếp tục hành trình học tiếng Anh theo nhịp riêng.</p>
-      <div class="ws10-actions"><a class="ws10-button ws10-primary" href="/learn.html#flash">↗ Tiếp tục Flashcard</a><a class="ws10-button ws10-secondary" href="/personal.html">Quản lý từ của tôi</a><a class="ws10-button ws10-secondary" href="/mistakes.html">📖 Sổ từ sai sau game</a><a class="ws10-button ws10-secondary" href="/practice.html">✦ Luyện từ sai</a></div>
+      <div class="ws10-actions"><a class="ws10-button ws10-primary" href="/learn.html#flash">↗ Tiếp tục Flashcard</a><a class="ws10-button ws10-secondary" href="/personal.html">Quản lý từ của tôi</a></div>
     </div>
     <div class="ws10-hero-figure">
       <div class="ws10-figure-top"><span>✦ LEARNING JOURNEY</span><span class="ws10-device" id="ws10HeroScope">LOCAL</span></div>
@@ -67,10 +67,13 @@
       </select></label>
       <label>Chủ đề <select id="ws24Topic"><option value="">Tất cả chủ đề</option></select></label>
       <button class="ws10-button ws10-secondary" id="ws24Reload" type="button">↻ Làm mới lịch</button>
-      <button class="ws10-button ws10-secondary" id="ws24Audit" type="button">✓ Kiểm tra đồng bộ</button>
+      <button class="ws10-button ws10-primary ws24-practice" id="ws24Practice" type="button" disabled>✦ Luyện từ</button>
     </div>
     <p id="ws24Summary" class="ws24-summary" role="status"></p>
-    <p id="ws24AuditResult" class="ws24-summary" role="status" aria-live="polite"></p>
+    <details class="ws24-advanced"><summary>Kiểm tra đồng bộ</summary>
+      <button class="ws10-button ws10-secondary" id="ws24Audit" type="button">✓ Đối chiếu lịch ôn</button>
+      <p id="ws24AuditResult" class="ws24-summary" role="status" aria-live="polite"></p>
+    </details>
     <p id="ws24Notice" class="ws24-notice" role="status" aria-live="polite"></p>
     <div id="ws24List" class="ws24-list" aria-live="off"></div>
     <div class="ws24-pager">
