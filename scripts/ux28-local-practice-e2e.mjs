@@ -221,6 +221,20 @@ try{
  assert.equal(afterConflict.remembered,false);
  pass('stale browser gets 409 and never overwrites the newer account review');
 
+ // Exiting immediately after a saved review (before clicking Next) must
+ // include that review in the partial session summary.
+ await pA.goto(ORIGIN+'/practice.html?word='+expectedFirst.id);
+ await pA.locator('#ws28Setup').waitFor({state:'visible'});
+ await pA.locator('#ws28Start').click();
+ await pA.locator('#ws28Play').waitFor({state:'visible'});
+ await pA.locator('#ws28Skip').click();
+ await pA.locator('#ws28Next').waitFor({state:'visible'});
+ await pA.locator('#ws28Exit').click();
+ await pA.locator('#ws28Done').waitFor({state:'visible'});
+ assert.equal(await pA.locator('#ws28DoneTotal').textContent(),'1');
+ assert.equal(await pA.locator('#ws28CorrectCount').textContent(),'0');
+ pass('partial session exit counts exactly one confirmed SRS review');
+
  // Reauth in another tab invalidates the old actor-scoped screen.
  await login(contextA,userB);
  await pA.goto(ORIGIN+'/practice.html');
