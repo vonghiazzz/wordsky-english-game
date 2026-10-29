@@ -180,6 +180,10 @@
       if(button)markNeedsReview(button.dataset.reviewWord,button);
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)load()});
+    // Cookies can change in another tab without triggering local storage events.
+    // Revalidate actor ownership whenever the learner returns to this page.
+    window.addEventListener('focus',()=>{if(!document.hidden)load()});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
     load();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
