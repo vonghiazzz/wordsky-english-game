@@ -79,7 +79,7 @@ test('UX28 is reachable from notebook, My Learning, results and shared progress 
 test('UX28 only saves confirmed recall through existing idempotent account review API',()=>{
  const ui=src('public/ux28-practice.js');
  assert.match(ui,/postUnifiedAccountReview\(/);
- assert.match(ui,/auth\.actor\?\.id!==activeActor/);
+ assert.match(ui,/auth\.actor\.id!==activeActor/);
  assert.match(ui,/if\(attempt\.correct\)correctCount\+\+/);
  assert.match(ui,/attempt\.confirmed=true/);
  assert.match(ui,/await loadAccount\('Lịch sử đã thay đổi/);
