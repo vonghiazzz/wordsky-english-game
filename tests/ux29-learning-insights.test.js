@@ -13,7 +13,7 @@ const dates=days=>Array.from({length:days},(_,i)=>{
 });
 const fixture=(days=7)=>({
  actorId:actor,days,asOf:'2026-10-29T11:17:00Z',today:'2026-10-29',
- daily:dates(days).map(day=>({day,reviews:0,marked_remembered:0,marked_need_review:0,solo_runs:0})),
+ daily:dates(days).map((day,i)=>({day,reviews:0,marked_remembered:0,marked_need_review:0,solo_runs:i===days-1?1:0})),
  current:{current_known:5,current_need_review:3},
  focus:[{source:'shared',word_id:randomUUID(),english:'apple',meaning:'táo',topic:'Food',
   need_review_marks:2,review_events:3,last_reviewed_at:'2026-10-29T10:00:00Z'}],
@@ -61,6 +61,7 @@ test('UX29 zero-history user shows zero activities and no artificial recall rate
  const data=fixture(30);
  data.focus=[];
  data.solo=[];
+ data.daily.at(-1).solo_runs=0;
  const report=summarizeLearningInsights(data);
  assert.equal(report.daily.length,30);
  assert.equal(report.summary.remembered_mark_rate,null);
