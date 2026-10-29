@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1226">
+<meta name="description" content="Sổ từ sai WordSky: xem lại từ cần học sau game Solo và ôn theo tài khoản.">
+<title>Sổ từ cần ôn sau game · WordSky</title>
+<link rel="stylesheet" href="/shared-nav.css">
+<link rel="stylesheet" href="/ux-design-system.css">
+<link rel="stylesheet" href="/ux27-mistakes.css">
+<script src="/shared-nav.js" defer></script>
+<script type="module" src="/ux27-mistakes.js"></script>
+</head>
+<body>
+<div id="wsSharedNav" data-ws-page="progress"></div>
+<main class="ws27-shell">
+<nav class="ws27-crumb" aria-label="Đường dẫn"><a href="/">WordSky</a><span>/</span><a href="/progress.html">My Learning</a><span>/</span><strong>Sổ từ sai</strong></nav>
+<header class="ws27-hero">
+ <div class="ws27-hero-label">WORDSKY · LEARN FROM PLAY</div>
+ <h1>Sai một lần.<br><em>Nhớ lâu hơn.</em></h1>
+ <p>Sổ ghi các từ bạn thực sự trả lời sai trong MATCH, BOMB và CAR Solo. Dữ liệu gắn với tài khoản WordSky, không phụ thuộc thiết bị.</p>
+ <div class="ws27-hero-actions"><a href="/#solo" class="ws27-primary">🎮 Chơi MATCH</a><a href="/progress.html" class="ws27-secondary">↗ Mở My Learning</a></div>
+</header>
+<section class="ws27-panel" aria-labelledby="ws27Title">
+ <div class="ws27-heading"><div><span class="ws27-kicker">ACCOUNT VOCABULARY</span><h2 id="ws27Title">Sổ từ cần ôn</h2><p id="ws27Scope">Chỉ tổng hợp các lượt Solo chơi khi đã đăng nhập, từ khi UX27 được triển khai.</p></div><button type="button" id="ws27Reload" class="ws27-secondary">↻ Đồng bộ</button></div>
+ <p id="ws27Status" class="ws27-status" role="status" aria-live="polite">Đang xác minh phiên đăng nhập…</p>
+ <div id="ws27Guest" class="ws27-empty" hidden><h3>🔒 Đăng nhập để lưu từ sai theo tài khoản</h3><p>Chơi không đăng nhập vẫn xem được từ sai ngay sau trận trên thiết bị đó, nhưng không tự gán những lượt cũ cho một tài khoản.</p><a href="/#home" class="ws27-primary">Về WordSky để đăng nhập →</a></div>
+ <div id="ws27Account" hidden>
+  <div class="ws27-metrics" aria-label="Tổng hợp từ sai"><div><small>TỪ CẦN XEM LẠI</small><strong id="ws27Total">0</strong></div><div><small>LƯỢT CHƠI TỪNG GẶP KHÓ</small><strong id="ws27Misses">0</strong></div><div><small>ĐÃ TỪNG ÔN</small><strong id="ws27Reviewed">0</strong></div></div>
+  <div class="ws27-filters"><label>Tìm từ hoặc nghĩa<input id="ws27Search" type="search" placeholder="Ví dụ: badminton, cầu lông" autocomplete="off"></label><label>Lọc trò chơi<select id="ws27Mode"><option value="">Tất cả</option><option value="MATCH">MATCH</option><option value="BOMB">BOMB</option><option value="CAR">CAR</option></select></label></div>
+  <p id="ws27Count" class="ws27-count"></p>
+  <div id="ws27List" class="ws27-list"></div>
+  <div id="ws27Empty" class="ws27-empty" hidden><h3>🌟 Chưa có từ sai được ghi nhận</h3><p>Thử một lượt MATCH/BOMB/CAR khi đã đăng nhập, rồi quay lại sau khi kết thúc trận.</p></div>
+ </div>
+</section>
+<section class="ws27-explainer" aria-labelledby="ws27How"><h2 id="ws27How">Ôn sai đúng cách</h2><p>Danh sách từ sai <strong>không tự sửa tiến độ hay lịch SRS</strong>. Chỉ khi bạn bấm <strong>“Cần ôn ngay”</strong>, WordSky mới lưu một lượt review theo tài khoản và cập nhật My Learning. Bấm lại sau lỗi mạng sẽ dùng cùng mã yêu cầu để tránh ghi trùng.</p><p>Hệ thống chỉ ghi từ có thể xác định chính xác: ghép sai MATCH, bom thật sự bỏ lỡ trong BOMB, hoặc chọn đúng làn nhưng nhập sai từ trong CAR. Các chặng hết giờ, va chạm và chuỗi gõ tự động không khớp không được suy đoán thành từ sai. Chữ rơi và phòng thi chưa thuộc UX27.</p></section>
+<footer class="ws27-footer"><a href="/progress.html">My Learning</a><span>·</span><a href="/personal.html">Từ cá nhân</a><span>·</span><a href="/">WordSky Arena</a></footer>
+</main>
+</body></html>
