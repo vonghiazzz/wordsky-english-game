@@ -119,7 +119,7 @@ function renderSoloSetup(){
  <div class="solo-rule-card"><strong>Luật chơi</strong>${bomb?'<span>+100 điểm khi gỡ đúng</span><span>Bom quá hạn mất 1 tim</span><span>Từ chưa hoàn chỉnh không bị phạt</span>':'<span>+100 điểm/cặp đúng</span><span>−25 điểm và −1 tim khi ghép sai</span>'}<span>Hết 3 tim hoặc hết giờ: kết thúc</span></div>
  <button type="submit" class="btn primary span2">Bắt đầu chơi →</button></form>
  ${soloSetupError?`<div class="game-status bad" role="alert">${escapeHtml(soloSetupError)} <button type="button" class="btn small ghost" id="${bomb?'soloBombStartRetry':'soloStartRetry'}">Thử lại</button></div>`:''}
- <p class="small-note solo-disclaimer">Lượt Solo không cộng XP và không ảnh hưởng bảng xếp hạng giải đấu.</p></div>`;
+ <p class="small-note solo-disclaimer">Lượt Solo không cộng XP hoặc điểm giải đấu. Đăng nhập trước khi chơi để tự lưu từ sai vào My Learning.</p></div>`;
 }
 function renderSoloCarSetup(){
  const host=soloHost('CAR','SetupPane');if(!host||soloGame)return;
