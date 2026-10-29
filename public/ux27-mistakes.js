@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const pending = new Map();
+  let lastSyncedActor = null;
+  let lastSyncedAt = 0;
   let actorId = null;
   let words = [];
   let generation = 0;
@@ -76,19 +77,18 @@
       if(Number(word.review_count||0)>0)addMeta(tags,'Đã ôn '+word.review_count+' lần');
       description.append(tags);
       const actions=make('div','ws27-word-actions');
-      const button=make('button','ws27-primary','↻ Cần ôn ngay');
-      button.type='button';
-      button.dataset.reviewWord=String(word.word_id);
-      button.setAttribute('aria-label','Đánh dấu cần ôn: '+word.english);
-      const link=make('a','','Mở My Learning');
+      const needsReview=word.remembered===false&&Number(word.review_count||0)>0;
+      const state=make('span','ws27-state '+(needsReview?'ws27-state-due':'ws27-state-neutral'),
+        needsReview?'✓ Đã tự thêm vào Cần ôn':word.remembered?'✓ Đã nhớ sau lần ôn':'↻ Chưa có lượt ôn');
+      const link=make('a','ws27-review-link','Xem trong My Learning');
       link.href='/progress.html';
-      actions.append(button,link);
+      actions.append(state,link);
       card.append(description,actions);
       host.append(card);
     }
   }
 
-  async function load() {
+  async function load(forceSync=false) {
     const ticket=++generation;
     $('ws27Account').hidden=true;
     $('ws27Guest').hidden=true;
@@ -99,14 +99,26 @@
       const id=session?.actor?.role==='player'?session.actor.id:null;
       if(!id) {
         actorId=null;
-        pending.clear();
+        lastSyncedActor=null;
         words=[];
         $('ws27Guest').hidden=false;
         message('Hãy đăng nhập học viên trên WordSky để mở sổ từ sai của tài khoản.');
         return;
       }
-      if(actorId && actorId!==id)pending.clear();
+      if(actorId && actorId!==id){lastSyncedActor=null;lastSyncedAt=0;}
       actorId=id;
+      let syncError='';
+      // Automatically reconcile completed games from before this patch.
+      // One actor-pinned, idempotent POST; no per-word confirmation needed.
+      if(forceSync||lastSyncedActor!==id||Date.now()-lastSyncedAt>60000){
+        try{
+          const synced=await api('learning/game-mistakes/sync',{
+            method:'POST',body:{expected_actor_id:id}
+          });
+          if(synced.actor_id!==id)throw Error('Kết quả đồng bộ không đúng tài khoản');
+          lastSyncedActor=id;lastSyncedAt=Date.now();
+        }catch(error){syncError=error.message||'Không đồng bộ được lịch ôn';}
+      }
       const result=await api('learning/game-mistakes');
       if(ticket!==generation)return;
       if(result?.scope!=='account-game-mistakes'||result.actor_id!==id||
@@ -120,11 +132,13 @@
       $('ws27Account').hidden=false;
       $('ws27Total').textContent=words.length+(result.has_more?'+':'');
       $('ws27Misses').textContent=words.reduce((sum,w)=>sum+Number(w.mistake_runs||0),0);
-      $('ws27Reviewed').textContent=words.filter(w=>Number(w.review_count||0)>0).length;
+      $('ws27Reviewed').textContent=words.filter(w=>w.remembered===false&&Number(w.review_count||0)>0).length;
       $('ws27Scope').textContent='Từ sai của tài khoản hiện tại · PostgreSQL · Chỉ Solo MATCH/BOMB/CAR từ UX27. Tối đa '+result.limit+' từ gần đây.';
       render();
-      message('Đã đồng bộ '+words.length+' từ với tài khoản WordSky.'+
-        (result.has_more?' Đang hiển thị '+result.limit+' từ gần đây.':''),'success');
+      message(syncError
+        ?'Đã tải '+words.length+' từ. Chưa xác minh đồng bộ tự động: '+syncError
+        :'Đã tự đồng bộ '+words.length+' từ với tài khoản WordSky. Từ cần ôn được đánh dấu tự động sau trận.'+
+         (result.has_more?' Hiển thị '+result.limit+' từ gần đây.':''),syncError?'error':'success');
     } catch(error) {
       if(ticket!==generation)return;
       $('ws27Account').hidden=true;
@@ -133,52 +147,10 @@
     }
   }
 
-  async function markNeedsReview(wordId, button) {
-    if(!actorId)return;
-    const row=words.find(w=>w.word_id===wordId);
-    if(!row || button.disabled)return;
-    button.disabled=true;
-    let request=pending.get(wordId);
-    try {
-      const session=await api('auth/me');
-      if(session?.actor?.role!=='player'||session.actor.id!==actorId)
-        throw Object.assign(Error('Tài khoản đã thay đổi. Tải lại trước khi ghi kết quả.'),{status:409});
-      if(!request) {
-        if(!globalThis.crypto?.randomUUID)throw Error('Trình duyệt cần HTTPS để lưu review an toàn');
-        request={
-          request_id:crypto.randomUUID(),source:'shared',word_id:wordId,
-          remembered:false,expected_review_count:Number(row.review_count||0),
-          expected_actor_id:actorId
-        };
-        pending.set(wordId,request);
-      }
-      const result=await api('learning/reviews',{method:'POST',body:request});
-      if(result.actor_id && result.actor_id!==actorId)
-        throw Object.assign(Error('Phản hồi không khớp tài khoản'),{status:409});
-      pending.delete(wordId);
-      await load();
-      message(result.replayed
-        ?'Yêu cầu đánh dấu từ đã được xử lý trước đó, không ghi trùng.'
-        :'Đã đánh dấu “Cần ôn”. Mở My Learning để xem lịch SRS.','success');
-    } catch(error) {
-      if(error.status===409||error.status===401) {
-        pending.delete(wordId);
-        await load();
-      }
-      message(error.message||'Chưa xác nhận được kết quả. Có thể thử lại cùng yêu cầu.','error');
-    } finally {
-      button.disabled=false;
-    }
-  }
-
   function boot() {
-    $('ws27Reload').addEventListener('click',load);
+    $('ws27Reload').addEventListener('click',()=>load(true));
     $('ws27Search').addEventListener('input',render);
     $('ws27Mode').addEventListener('change',render);
-    $('ws27List').addEventListener('click',event=>{
-      const button=event.target.closest?.('button[data-review-word]');
-      if(button)markNeedsReview(button.dataset.reviewWord,button);
-    });
     window.addEventListener('pageshow',event=>{if(event.persisted)load()});
     // Cookies can change in another tab without triggering local storage events.
     // Revalidate actor ownership whenever the learner returns to this page.

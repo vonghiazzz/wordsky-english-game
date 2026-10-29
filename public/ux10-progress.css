@@ -48,3 +48,6 @@
 
 /* UX-19: respect native hidden on legacy scope panels when account sync is ready. */
 .ws10-page [hidden]{display:none!important}
+
+/* UX27.1: the shared site navigation replaces duplicate breadcrumb links. */
+.ws10-container{padding-top:clamp(18px,3vw,32px)}

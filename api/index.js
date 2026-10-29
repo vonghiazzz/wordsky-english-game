@@ -11,6 +11,7 @@ import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
 import {getFinishedRunWrongWords,getAccountGameMistakeNotebook} from '../lib/game-mistakes.js';
+import {syncFinishedSoloReview,syncRecentSoloReviews} from '../lib/auto-game-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
 
 const AUTH_COOKIE='ws_auth';
@@ -423,7 +424,7 @@ function sameAttemptContent(a,b){
 }
 async function playSolo(req,runId,answer,lookupAttemptId){
  if(badId(runId))throw fail('ID lượt chơi không hợp lệ');
- return transaction(async db=>{
+ const saved=await transaction(async db=>{
   const q=await db.query(`SELECT id,user_id,access_token_hash,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,state
    FROM ws_solo_runs WHERE id=$1 FOR UPDATE`,[runId]);
   if(!q.rows.length)throw fail('Không tìm thấy lượt chơi Solo',404);
@@ -462,8 +463,24 @@ async function playSolo(req,runId,answer,lookupAttemptId){
    finished_at=CASE WHEN $2='PLAYING' THEN finished_at ELSE coalesce(finished_at,now()) END WHERE id=$7`,
    [JSON.stringify(state),state.status,state.score,state.health,state.correct,state.mistakes,runId]);
   const reviewWords=state.status==='PLAYING'?undefined:await getFinishedRunWrongWords(db,state);
-  return {runId,round:soloPublicRound(rec,state),game:publicState(state,now),result,duplicate,...(attempt?{attempt}:{}),...(reviewWords?{reviewWords}:{})};
+  return {runId,round:soloPublicRound(rec,state),game:publicState(state,now),result,duplicate,
+    ... (attempt?{attempt}:{}),...(reviewWords?{reviewWords}:{}),
+    ownerForAutoReview:rec.user_id||null};
  });
+ // Gameplay commits before the independent SRS update. The owner is derived
+ // from the authorized run, never from client-supplied IDs.
+ const {ownerForAutoReview,...reply}=saved;
+ if(reply.game.status==='PLAYING')return reply;
+ if(!ownerForAutoReview)return {...reply,reviewSync:{status:'guest'}};
+ try {
+  const reviewSync=await syncFinishedSoloReview(ownerForAutoReview,runId);
+  return {...reply,reviewSync};
+ } catch(error) {
+  console.error('UX27 automatic review enqueue failed; retry on next authorized read:',
+    error?.code||error?.message||'unknown');
+  // A transient review failure must not undo an already completed Solo run.
+  return {...reply,reviewSync:{status:'pending',newly_queued:0}};
+ }
 }
 
 export default async function handler(req,res){
@@ -487,6 +504,12 @@ export default async function handler(req,res){
     if(review.expected_actor_id!==undefined&&review.expected_actor_id!==userId)
       throw fail('Tài khoản đã thay đổi; không gửi tiến độ sang người dùng khác',409);
     return output(res,201,await recordFlashcardReview(userId,review));
+  }
+  if(method==='POST'&&key==='learning/game-mistakes/sync'){
+    const userId=mustPlayer(req).id,input=body(req);
+    if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)
+      throw fail('Tài khoản đã thay đổi; không đồng bộ từ của người khác',409);
+    return output(res,200,await syncRecentSoloReviews(userId));
   }
   if(method==='GET'&&key==='learning/game-mistakes')return output(res,200,await getAccountGameMistakeNotebook(mustPlayer(req).id));
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.

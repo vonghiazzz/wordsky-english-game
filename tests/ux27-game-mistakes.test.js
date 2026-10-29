@@ -9,6 +9,7 @@ import {
 import {
   validWrongWordIds, getFinishedRunWrongWords
 } from '../lib/game-mistakes.js';
+import {gameReviewRequestId} from '../lib/auto-game-review.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const app=read('public/app.js'),html=read('public/index.html'),learn=read('public/learn.html');
@@ -70,7 +71,10 @@ test('UX27 CAR records only an explicit wrong selected lane, not a guessed timeo
  const fresh=createState(rd,pools,1000000);
  reconcile(fresh,rd,1009000);
  assert.equal(fresh.mistakes,1);
- assert.deepEqual(fresh.wrongWordIds,[],'timeout cannot be attributed to one of multiple safe lanes');
+ assert.deepEqual(fresh.wrongWordIds,[],'timeouts are not graded as explicit mistakes');
+ assert.ok(fresh.missedPracticeWordIds.length>0,'safe CAR words not answered should become practice candidates');
+ assert.ok(fresh.levels[0].lanes.filter(l=>l.kind!=='BLOCKED').every(l=>fresh.missedPracticeWordIds.includes(l.wordId)));
+ assert.equal(publicState(fresh,1009000).missedPracticeWordIds,undefined);
 });
 
 test('UX27 validates archived IDs, never queries active runs, and preserves exact word order',async()=>{
@@ -88,25 +92,29 @@ test('UX27 validates archived IDs, never queries active runs, and preserves exac
  const ended=await getFinishedRunWrongWords(db,{status:'FAILED',wrongWordIds:[id,second]});
  assert.equal(queries,1);
  assert.equal(ended[0].word_id,id);
+ assert.equal(ended[0].reason,'incorrect');
+ assert.deepEqual(validWrongWordIds({wrongWordIds:[id],missedPracticeWordIds:[id,second]}),[id,second]);
  assert.deepEqual(await getFinishedRunWrongWords(db,{status:'COMPLETED'}),[]);
  assert.equal(queries,1);
 });
 
 test('UX27 API binds the account from the session and reveals run words only after terminal',()=>{
  assert.match(api,/getAccountGameMistakeNotebook\(mustPlayer\(req\)\.id\)/);
+ assert.match(api,/syncFinishedSoloReview\(ownerForAutoReview,runId\)/);
+ assert.match(api,/syncRecentSoloReviews\(userId\)/);
  assert.match(api,/state\.status==='PLAYING'\?undefined:await getFinishedRunWrongWords\(db,state\)/);
  assert.match(api,/authorizeSolo\(req,rec\)/);
  assert.doesNotMatch(api,/learning\/game-mistakes[\s\S]{0,100}req\.query\.user_id/);
 });
 
-test('UX27 notebook links, explicit opt-in SRS and front-end actor pin are present',()=>{
+test('UX27 notebook automatically syncs SRS, has no manual per-word confirmation',()=>{
  assert.match(html,/\/ux27-results\.css/);
  assert.match(app,/href="\/mistakes\.html"/);
  assert.match(page,/data-ws-page="progress"/);
  assert.match(page,/id="ws27Account"/);
- assert.match(ui,/expected_actor_id:actorId/);
- assert.match(ui,/expected_review_count:Number\(row\.review_count\|\|0\)/);
- assert.match(ui,/remembered:false/);
+ assert.match(ui,/learning\/game-mistakes\/sync/);
+ assert.match(ui,/expected_actor_id:id/);
+ assert.doesNotMatch(ui,/markNeedsReview|data-review-word|Cần ôn ngay/);
  assert.match(ui,/credentials: 'same-origin'/);
  assert.doesNotMatch(ui,/localStorage/);
  assert.match(read('public/progress.html'),/href="\/mistakes\.html"/);
@@ -123,8 +131,33 @@ test('UX27 Solo result includes only server-returned words, escaping untrusted H
  const result=vm.runInNewContext(app.slice(start,end)+
    '\nsoloResultMarkup(fixture,{question_count:3},"MATCH")',
    {fixture,fmt:n=>String(n),escapeHtml});
- assert.match(result,/Từ cần luyện lại trong lượt này/);
+ assert.match(result,/Từ cần ôn sau lượt này/);
  assert.match(result,/&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
  assert.doesNotMatch(result,/<script>alert\(1\)<\/script>/);
  assert.match(result,/href="\/mistakes\.html"/);
+});
+
+
+test('UX27.1 auto-review request UUID is deterministic, scoped to run and word',()=>{
+ const run=randomUUID(),w1=randomUUID(),w2=randomUUID();
+ const first=gameReviewRequestId(run,w1);
+ assert.match(first,/^[a-f0-9]{8}-[a-f0-9]{4}-5[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
+ assert.equal(gameReviewRequestId(run,w1),first);
+ assert.notEqual(gameReviewRequestId(run,w2),first);
+ assert.notEqual(gameReviewRequestId(randomUUID(),w1),first);
+});
+
+test('UX27.1 CAR missed lanes display honest unanswered label, no live answer leak',()=>{
+ const start=app.indexOf('function soloResultMarkup(');
+ const end=app.indexOf('function renderSoloCarGame(){',start);
+ const escapeHtml=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ const fixture={mode:'CAR',score:0,correct:0,mistakes:1,status:'FAILED',
+   reviewSync:{status:'synced',newly_queued:1},
+   reviewWords:[{english:'apple',meaning:'Táo',topic:'Food',reason:'unanswered'}]};
+ const result=vm.runInNewContext(app.slice(start,end)+
+   '\nsoloResultMarkup(fixture,{question_count:3},"CAR")',
+   {fixture,fmt:n=>String(n),escapeHtml});
+ assert.match(result,/Chặng CAR chưa trả lời/);
+ assert.match(result,/Tự động đồng bộ với My Learning/);
+ assert.doesNotMatch(result,/đánh dấu “Cần ôn”/);
 });

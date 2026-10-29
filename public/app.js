@@ -119,7 +119,7 @@ function renderSoloSetup(){
  <div class="solo-rule-card"><strong>Luật chơi</strong>${bomb?'<span>+100 điểm khi gỡ đúng</span><span>Bom quá hạn mất 1 tim</span><span>Từ chưa hoàn chỉnh không bị phạt</span>':'<span>+100 điểm/cặp đúng</span><span>−25 điểm và −1 tim khi ghép sai</span>'}<span>Hết 3 tim hoặc hết giờ: kết thúc</span></div>
  <button type="submit" class="btn primary span2">Bắt đầu chơi →</button></form>
  ${soloSetupError?`<div class="game-status bad" role="alert">${escapeHtml(soloSetupError)} <button type="button" class="btn small ghost" id="${bomb?'soloBombStartRetry':'soloStartRetry'}">Thử lại</button></div>`:''}
- <p class="small-note solo-disclaimer">Lượt Solo không cộng XP và không ảnh hưởng bảng xếp hạng giải đấu.</p></div>`;
+ <p class="small-note solo-disclaimer">Lượt Solo không cộng XP hoặc điểm giải đấu. Đăng nhập trước khi chơi để tự lưu từ sai vào My Learning.</p></div>`;
 }
 function renderSoloCarSetup(){
  const host=soloHost('CAR','SetupPane');if(!host||soloGame)return;
@@ -134,7 +134,7 @@ function renderSoloCarSetup(){
  <div class="solo-rule-card"><strong>Luật chơi</strong><span>5 làn · mỗi chặng có 8 giây</span><span>Gõ từ của làn nào, xe tự sang làn đó</span><span>Làn thường +100 · ⭐ +150 · ×2 +200</span><span>Đang gõ hoặc gõ sai không bị trừ điểm</span><span>Hết giờ mỗi chặng mất 1 tim</span><span>3 tim hết hoặc hết giờ sẽ kết thúc</span></div>
  <button class="btn primary span2" type="submit">🏁 Bắt đầu lái →</button></form>
  ${soloSetupError?`<div role="alert" class="game-status bad">${escapeHtml(soloSetupError)} <button type="button" id="soloCarStartRetry" class="btn small ghost">Thử lại</button></div>`:''}
- <p class="small-note">Máy chủ kiểm tra CEFR APPROVED theo từng cấp trước khi tạo lượt. Solo không cộng XP hay điểm giải đấu.</p></div>`;
+ <p class="small-note">Máy chủ kiểm tra CEFR APPROVED trước khi tạo lượt. Solo không cộng XP. Đăng nhập trước khi chơi để tự lưu từ cần ôn.</p></div>`;
 }
 function soloResultMarkup(g,rd,mode){
  // Display only server-returned public state; do not infer answered word identities.
@@ -149,29 +149,39 @@ function soloResultMarkup(g,rd,mode){
  const mistakeLabel=mode==='CAR'?'Lượt bị phạt':mode==='BOMB'?'Bom quá hạn':'Lần ghép sai';
  const knownWords=Array.isArray(g.reviewWords)?g.reviewWords:null;
  const wrongList=knownWords?.length?
-   '<div class="ws27-run-words"><h4>📖 Từ cần luyện lại trong lượt này ('+knownWords.length+')</h4><ul>'+
+   '<div class="ws27-run-words"><h4>📖 Từ cần ôn sau lượt này ('+knownWords.length+')</h4><ul>'+
    knownWords.map(w=>'<li><strong>'+escapeHtml(w.english)+'</strong><span>'+escapeHtml(w.meaning)+
-    '</span><small>'+escapeHtml(w.topic||'')+'</small></li>').join('')+
-   '</ul><a href="/mistakes.html">Mở sổ từ sai theo tài khoản →</a></div>':'';
+    '</span><small>'+escapeHtml(w.topic||'')+'</small>'+
+    (w.reason==='unanswered'?'<em>Chặng CAR chưa trả lời</em>':'')+'</li>').join('')+
+   '</ul><a href="/mistakes.html">📖 Xem sổ từ cần ôn →</a></div>':'';
  const nextText=knownWords===null
   ?'Ôn Flashcard theo chủ đề. Danh sách từ trả lời sai trong lượt chưa được hệ thống cung cấp.'
   :knownWords.length
-  ?'Xem lại các từ trên, sau đó mở sổ từ sai để đánh dấu “Cần ôn”. Chơi khi đang đăng nhập để đồng bộ trên mọi thiết bị.'
+  ?'Xem lại các từ trên. Khi đăng nhập, WordSky tự đưa chúng vào Cần ôn, không cần bấm từng thẻ.'
   :mistakes>0
-  ?'Có lần sai hoặc mất tim nhưng không xác định được từ cụ thể; hệ thống không tự đoán đáp án sai.'
-  :'Không phát hiện từ sai có thể ghi nhận trong lượt này.';
+  ?'Có lượt bị phạt không gắn được với một từ cụ thể; hệ thống không tạo từ sai giả.'
+  :'Không phát hiện từ nào cần ôn thêm trong lượt này.';
+ const syncStatus=g.reviewSync?.status;
+ const autoNotice=knownWords?.length?
+   syncStatus==='synced'?
+    '<p class="ws27-run-status">✓ Tự động đồng bộ với My Learning. Mở Sổ từ cần ôn để xem trên mọi thiết bị.</p>':
+   syncStatus==='pending'?
+    '<p class="ws27-run-status pending">⚠ Chưa hoàn tất đồng bộ. Tải lại kết quả trận hoặc mở Sổ từ cần ôn để thử lại.</p>':
+   syncStatus==='guest'?
+    '<p class="ws27-run-status pending">Đây là lượt khách. Đăng nhập trước khi chơi để tự lưu từ vào tài khoản.</p>':'':'';
+
  return `<section class="ws04-result" aria-label="Kết quả ${mode} Solo">
  <div class="ws04-heading"><span class="ws04-kicker">KẾT QUẢ · ${mode} SOLO</span><h3>${state[0]}</h3><p>${state[1]}</p></div>
  <dl class="ws04-metrics"><div><dt>Điểm</dt><dd>${fmt(score)}</dd></div><div><dt>Đã hoàn thành</dt><dd>${correct}<small> / ${target} ${unit}</small></dd></div><div><dt>${mistakeLabel}</dt><dd>${mistakes}</dd></div></dl>
  <div class="ws04-progress-title"><span>Tiến độ hoàn thành</span><strong>${percent}%</strong></div>
  <div class="ws04-progress" role="progressbar" aria-label="Mục hoàn thành" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${correct}"><span style="width:${percent}%"></span></div>
- ${wrongList}<div class="ws04-next"><p><strong>Tiếp tục ghi nhớ từ vựng</strong><span>${nextText}</span></p><a class="btn ghost ws04-learn" href="/mistakes.html">Sổ từ sai →</a></div>
+ ${wrongList}${autoNotice}<div class="ws04-next"><p><strong>Tiếp tục ghi nhớ từ vựng</strong><span>${nextText}</span></p><a class="btn ghost ws04-learn" href="/mistakes.html">Sổ từ sai →</a></div>
  </section>`;
 }
 function renderSoloCarGame(){
   syncWordSkyArenaAudio();
  const host=soloHost('CAR','GamePane'),setup=soloHost('CAR','SetupPane');if(!host||!setup||!soloGame)return;
- const g={...soloGame.game,reviewWords:soloGame.reviewWords},rd=soloGame.round,ended=g.status!=='PLAYING',answer=host.querySelector('#soloCarAnswer')?.value||'';
+ const g={...soloGame.game,reviewWords:soloGame.reviewWords,reviewSync:soloGame.reviewSync},rd=soloGame.round,ended=g.status!=='PLAYING',answer=host.querySelector('#soloCarAnswer')?.value||'';
  setup.classList.add('hidden');host.classList.remove('hidden');
  const lanes=g.level?.lanes||[];
  const symbol=kind=>kind==='BLOCKED'?'🧱':kind==='BONUS'?'⭐':kind==='DOUBLE'?'×2':'·';
@@ -232,7 +242,7 @@ function renderSoloGame(){
  const mode=soloGame?.game?.mode;if(!mode)return;if(mode==='CAR')return renderSoloCarGame();const setup=soloHost(mode,'SetupPane'),host=soloHost(mode,'GamePane');if(!setup||!host)return;
  const existingBombAnswer=host.querySelector('#soloBombAnswer')?.value||'',oldFocus=document.activeElement?.id;
  setup.classList.add('hidden');host.classList.remove('hidden');
- const g={...soloGame.game,reviewWords:soloGame.reviewWords},rd=soloGame.round,ended=g.status!=='PLAYING',bomb=mode==='BOMB';
+ const g={...soloGame.game,reviewWords:soloGame.reviewWords,reviewSync:soloGame.reviewSync},rd=soloGame.round,ended=g.status!=='PLAYING',bomb=mode==='BOMB';
  const resultLabel=g.status==='COMPLETED'?(bomb?'🎉 Đã gỡ toàn bộ bom!':'🎉 Hoàn thành tất cả cặp!'):g.status==='FAILED'?'💔 Bạn đã hết tim.':g.status==='TIMEOUT'?'⌛ Đã hết thời gian.':'';
  host.innerHTML=`<div class="game-shell solo-game-shell ${bomb?'solo-bomb-shell':''}"><div class="game-bar"><strong>${bomb?'💣 BOMB':'🔗 MATCH'} Solo</strong><span class="counter" id="${bomb?'soloBombScore':'soloScore'}">${fmt(g.score)} ĐIỂM</span><span id="${bomb?'soloBombHealth':'soloHealth'}">❤️ ${g.health}/3</span><span>⏱ <span id="${bomb?'soloBombCountdown':'soloCountdown'}">${formatCountdown(secLeft(g.endsAt))}</span></span></div>
  <div class="solo-progress" role="progressbar" aria-label="${bomb?'Tiến độ gỡ bom':'Tiến độ ghép cặp'}" aria-valuemin="0" aria-valuemax="${rd.question_count}" aria-valuenow="${g.correct}"><span style="width:${Math.round(100*g.correct/Math.max(1,rd.question_count))}%"></span></div>
