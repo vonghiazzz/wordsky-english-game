@@ -134,7 +134,7 @@ function renderSoloCarSetup(){
  <div class="solo-rule-card"><strong>Luật chơi</strong><span>5 làn · mỗi chặng có 8 giây</span><span>Gõ từ của làn nào, xe tự sang làn đó</span><span>Làn thường +100 · ⭐ +150 · ×2 +200</span><span>Đang gõ hoặc gõ sai không bị trừ điểm</span><span>Hết giờ mỗi chặng mất 1 tim</span><span>3 tim hết hoặc hết giờ sẽ kết thúc</span></div>
  <button class="btn primary span2" type="submit">🏁 Bắt đầu lái →</button></form>
  ${soloSetupError?`<div role="alert" class="game-status bad">${escapeHtml(soloSetupError)} <button type="button" id="soloCarStartRetry" class="btn small ghost">Thử lại</button></div>`:''}
- <p class="small-note">Máy chủ kiểm tra CEFR APPROVED theo từng cấp trước khi tạo lượt. Solo không cộng XP hay điểm giải đấu.</p></div>`;
+ <p class="small-note">Máy chủ kiểm tra CEFR APPROVED trước khi tạo lượt. Solo không cộng XP. Đăng nhập trước khi chơi để tự lưu từ cần ôn.</p></div>`;
 }
 function soloResultMarkup(g,rd,mode){
  // Display only server-returned public state; do not infer answered word identities.
