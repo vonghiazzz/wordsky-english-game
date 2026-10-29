@@ -37,3 +37,15 @@
  line-height:1.35;
  overflow-wrap:anywhere;
 }
+
+/* UX28.1: one primary practice action beside Refresh in My Learning. */
+.ws24-filters .ws24-practice{white-space:nowrap;min-height:44px;padding-inline:20px}
+.ws24-filters .ws24-practice:disabled{opacity:.55;cursor:not-allowed}
+.ws24-advanced{margin:5px 0 9px;font-size:12px;color:#a6b9d4}
+.ws24-advanced>summary{cursor:pointer;display:inline-flex;align-items:center;min-height:35px;color:#b1c8e2}
+.ws24-advanced>summary:hover{color:#e5f8ff}
+.ws24-advanced>button{margin:8px 0}
+@media(max-width:560px){
+ .ws24-filters #ws24Reload,.ws24-filters #ws24Practice{flex:1 1 calc(50% - 8px);min-width:145px}
+ .ws24-filters .ws24-practice{padding-inline:12px}
+}
