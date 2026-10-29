@@ -6,7 +6,7 @@ import {
 // UX28: The server remains the only source of truth. The browser holds only
 // transient questions, user input and in-flight idempotent commands.
 const $=id=>document.getElementById(id);
-let actorId=null,library=[],quiz=[],index=0,correctCount=0;
+let actorId=null,library=[],quiz=[],index=0,correctCount=0,confirmedCount=0;
 let pendingAttempt=null,saving=false,loading=0;
 const deepLink=new URLSearchParams(window.location.search).get('word')||'';
 
@@ -42,7 +42,7 @@ function noWords(message){
 async function loadAccount(message=''){
   const ticket=++loading;
   actorId=null;
-  library=[];quiz=[];index=0;pendingAttempt=null;saving=false;correctCount=0;
+  library=[];quiz=[];index=0;pendingAttempt=null;saving=false;correctCount=0;confirmedCount=0;
   view('');$('ws28ActorState').textContent='Đang xác minh tài khoản';
   notice('Đang lấy sổ từ sai từ PostgreSQL…');
   try{
@@ -149,6 +149,7 @@ async function saveAttempt(){
     if(actorId!==activeActor||pendingAttempt!==attempt)return;
     // Only an acknowledged transaction counts toward the session result.
     attempt.confirmed=true;
+    confirmedCount++;
     attempt.word.review_count++;
     attempt.word.remembered=attempt.correct;
     if(attempt.correct)correctCount++;
@@ -200,7 +201,7 @@ async function startPractice(){
     }
     const settings=allFilters();
     quiz=selectRecallWords(library,settings);
-    index=0;correctCount=0;
+    index=0;correctCount=0;confirmedCount=0;
     if(!quiz.length){
       noWords(deepLink?
         'Từ bạn chọn không có trong sổ của tài khoản hiện tại.':
@@ -216,12 +217,12 @@ async function startPractice(){
 function showSummary(partial=false){
   view('Done');
   $('ws28CorrectCount').textContent=String(correctCount);
-  $('ws28DoneTotal').textContent=String(index);
+  $('ws28DoneTotal').textContent=String(confirmedCount);
   $('ws28DoneTitle').textContent=partial?'Đã lưu kết quả những từ vừa luyện':'Bạn đã hoàn thành phiên luyện!';
   $('ws28DoneMessage').textContent=partial
     ?'Bạn có thể luyện tiếp bất kỳ lúc nào. Những lượt đã lưu không bị mất.'
-    :'Đã lưu '+index+' lượt ôn vào PostgreSQL. Nhớ đúng '+correctCount+' từ, còn '+
-      (index-correctCount)+' từ cần luyện thêm. Lịch My Learning lấy từ cùng lịch sử này.';
+    :'Đã lưu '+confirmedCount+' lượt ôn vào PostgreSQL. Nhớ đúng '+correctCount+' từ, còn '+
+      (confirmedCount-correctCount)+' từ cần luyện thêm. Lịch My Learning lấy từ cùng lịch sử này.';
   notice('Phiên ôn đã kết thúc. Tiến độ được lưu theo tài khoản.','success');
 }
 async function validateIdentity(){
