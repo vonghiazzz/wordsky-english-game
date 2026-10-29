@@ -33,15 +33,12 @@ function route(req){
 }
 function body(req,maxLength=REQ_MAX){let b=req.body??{};if(typeof b==='string'){if(b.length>maxLength)throw fail('Dữ liệu quá dài',413);try{b=JSON.parse(b)}catch{throw fail('JSON không hợp lệ')}};if(!b||typeof b!=='object'||Array.isArray(b)||JSON.stringify(b).length>maxLength)throw fail('Dữ liệu không hợp lệ',413);return b}
 function rawActor(req){return parseSession(parseCookie(req.headers.cookie,AUTH_COOKIE),secret())}
-async function actor(req){
+function actor(req){
  const claim=rawActor(req);
- if(claim?.role!=='player')return claim;
- if(!Number.isSafeInteger(claim.session_version)||claim.session_version<0)return null;
- const result=await sql('SELECT session_version FROM public.ws_users WHERE id=$1',[claim.id]);
- return result.rows[0]&&isSessionVersionCurrent(claim,result.rows[0])?claim:null;
+ return claim?.role==='player'?(req._wsPlayerSessionValid?claim:null):claim;
 }
-function mustAdmin(req){const a=rawActor(req);if(a?.role!=='admin'||a.id!=='owner')throw fail('Bạn cần đăng nhập quản trị',401);return a}
-async function mustPlayer(req){const a=await actor(req);if(a?.role!=='player')throw fail('Đăng nhập học viên để sử dụng tính năng này',401);return a}
+function mustAdmin(req){const a=actor(req);if(a?.role!=='admin'||a.id!=='owner')throw fail('Bạn cần đăng nhập quản trị',401);return a}
+function mustPlayer(req){const a=actor(req);if(a?.role!=='player')throw fail('Đăng nhập học viên để sử dụng tính năng này',401);return a}
 function adminUsersService(){
  const a=process.env.APP_ORIGIN||
   (process.env.VERCEL_URL?'https://'+process.env.VERCEL_URL:null);
@@ -81,7 +78,7 @@ async function signUp(req,res){
  try{const row=await sql('INSERT INTO ws_users(username,display_name,password_hash) VALUES($1,$2,$3) RETURNING id,session_version',[u,name,pass]);setAuth(res,'player',row.rows[0].id,row.rows[0].session_version);return {success:true,username:u}}catch(e){if(e.code==='23505')throw fail('Tên đăng nhập đã tồn tại',409);throw e}
 }
 async function checkin(req){
- const a=await mustPlayer(req);
+ const a=mustPlayer(req);
  const f=await sql("SELECT enabled FROM ws_features WHERE feature_key='ATTENDANCE'");if(f.rows[0]?.enabled===false)throw fail('Chức năng chuyên cần đang tạm dừng',403);
  return transaction(async db=>{
   const r=await db.query('SELECT * FROM ws_users WHERE id=$1 FOR UPDATE',[a.id]);if(!r.rows.length)throw fail('Tài khoản không tồn tại',401);const p=r.rows[0];
@@ -253,7 +250,7 @@ async function joinRoom(req,res,code){code=code.toUpperCase();if(!/^[A-Z0-9]{5,1
  const ip=ipOf(req);const failed=await sql("SELECT count(*)::int n FROM ws_join_failures WHERE remote_ip=$1 AND attempted_at>now()-interval '15 minutes'",[ip]);if(failed.rows[0].n>=12)throw fail('Nhập sai mật khẩu quá nhiều. Thử lại sau 15 phút.',429);
  if(!verifyPassword(b.password,ev.password_hash)){await sql('INSERT INTO ws_join_failures(remote_ip) VALUES($1)',[ip]);throw fail('Sai mật khẩu phòng',401)}
  await sql('DELETE FROM ws_join_failures WHERE remote_ip=$1',[ip]);
- const u=await actor(req);let display=allowedUser(b.name);const r=await transaction(async db=>{
+ const u=actor(req);let display=allowedUser(b.name);const r=await transaction(async db=>{
   const evr=await db.query('SELECT * FROM ws_events WHERE id=$1 FOR UPDATE',[ev.id]);if(evr.rows[0].status!=='OPEN')throw fail('Phòng đã khóa',409);
   if(u?.role==='player'){const existing=await db.query('SELECT id,display_name FROM ws_participants WHERE event_id=$1 AND user_id=$2',[ev.id,u.id]);if(existing.rows.length)return existing.rows[0]}
   const count=await db.query('SELECT count(*)::int n FROM ws_participants WHERE event_id=$1',[ev.id]);if(count.rows[0].n>=ev.max_players)throw fail('Phòng đã đủ số người',409);
@@ -264,7 +261,7 @@ async function joinRoom(req,res,code){code=code.toUpperCase();if(!/^[A-Z0-9]{5,1
  res.setHeader('set-cookie',cook);return {success:true,participant_id:r.id,name:r.display_name,code};
 }
 async function membership(req,event){
- const a=await actor(req);if(a?.role==='admin')return {admin:true};
+ const a=actor(req);if(a?.role==='admin')return {admin:true};
  const g=parseSession(parseCookie(req.headers.cookie,guestCookie(event.join_code)),secret());
  if(!g||g.role!=='guest'||g.event!==event.id||badId(g.id))throw fail('Bạn chưa tham gia phòng này',401);
  const row=await sql('SELECT * FROM ws_participants WHERE id=$1 AND event_id=$2',[g.id,event.id]);if(!row.rows.length)throw fail('Phiên tham gia không hợp lệ',401);
@@ -347,7 +344,7 @@ async function playRound(req,code,runId,answer){const e=await eventInfo(code.toU
  const {roundId,...publicResponse}=response;
  return publicResponse;
 }
-async function playerStats(req){const user=await playerRow((await mustPlayer(req)).id);const today=new Date().toISOString().slice(0,10);return {...user,rank:rankForXp(user.xp),today};}
+async function playerStats(req){const user=await playerRow(mustPlayer(req).id);const today=new Date().toISOString().slice(0,10);return {...user,rank:rankForXp(user.xp),today};}
 async function globalRank(){const r=await sql('SELECT id,display_name,xp,streak FROM ws_users ORDER BY xp DESC,created_at ASC LIMIT 100');return r.rows.map((u,i)=>({...u,rank:rankForXp(u.xp),position:i+1}))}
 
 function soloRound(mode,input){
@@ -373,7 +370,7 @@ async function startSolo(req,res,mode){
  if(!['MATCH','BOMB','CAR'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
  const round=soloRound(mode,body(req));
  const signingSecret=secret();if(!signingSecret||signingSecret.length<32)throw fail('Máy chủ chưa cấu hình SESSION_SECRET an toàn',503);
- const owner=await actor(req);const identity=soloGuestIdentity(req,signingSecret);const accessHash=hashToken(identity.token);const now=Date.now();
+ const owner=actor(req);const identity=soloGuestIdentity(req,signingSecret);const accessHash=hashToken(identity.token);const now=Date.now();
  const fingerprintHash=hashToken(signingSecret+':'+ipOf(req));
  const created=await transaction(async db=>{
   const feature=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[mode]);
@@ -401,8 +398,8 @@ async function startSolo(req,res,mode){
  res.setHeader('set-cookie',cookie(SOLO_COOKIE,issueSession({role:'guest',scope:'solo',token:identity.token},signingSecret,SOLO_COOKIE_MAX_AGE),SOLO_COOKIE_MAX_AGE));
  return {runId:created.id,round:soloPublicRound(round,created.state),game:publicState(created.state,now)};
 }
-async function authorizeSolo(req,run){
- const a=await actor(req);
+function authorizeSolo(req,run){
+ const a=actor(req);
  if(run.user_id){
   if(a?.role==='player'&&a.id===run.user_id)return;
   throw fail('Phiên chơi Solo không thuộc tài khoản hiện tại',401);
@@ -448,7 +445,7 @@ async function playSolo(req,runId,answer,lookupAttemptId){
   const q=await db.query(`SELECT id,user_id,access_token_hash,mode,topic_id,difficulty,duration_seconds,question_count,points_per_correct,penalty,state
    FROM ws_solo_runs WHERE id=$1 FOR UPDATE`,[runId]);
   if(!q.rows.length)throw fail('Không tìm thấy lượt chơi Solo',404);
-  const rec=q.rows[0];await authorizeSolo(req,rec);
+  const rec=q.rows[0];authorizeSolo(req,rec);
   if(answer){
    const feature=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[rec.mode]);
    if(feature.rows[0]?.enabled===false)throw fail(`Chế độ ${rec.mode} hiện đang tạm dừng`,403);
@@ -510,15 +507,25 @@ export default async function handler(req,res){
   if(!['GET','POST','PATCH','DELETE'].includes(req.method))return output(res,405,{error:'Phương thức không được hỗ trợ'});
   if(req.method!=='GET'&&!sameOrigin(req))return output(res,403,{error:'Invalid origin'});
   const r=requestSegments=route(req),method=req.method,key=r.join('/');
+  // UX30: validate a signed player cookie against the live DB once per request.
+  // Existing synchronous mustPlayer()/actor() callers then reuse this decision.
+  // No cookie without a matching current session_version may access account data.
+  const playerClaim=rawActor(req);
+  if(playerClaim?.role==='player'){
+   const current=Number.isSafeInteger(playerClaim.session_version)&&playerClaim.session_version>=0
+    ?await sql('SELECT session_version FROM public.ws_users WHERE id=$1',[playerClaim.id])
+    :{rows:[]};
+   req._wsPlayerSessionValid=Boolean(current.rows[0]&&isSessionVersionCurrent(playerClaim,current.rows[0]));
+  }
   if(method==='POST'&&key==='learning/reviews'){
-    const userId=(await mustPlayer(req)).id,review=body(req);
+    const userId=mustPlayer(req).id,review=body(req);
     if(review.expected_actor_id!==undefined&&review.expected_actor_id!==userId)
       throw fail('Tài khoản đã thay đổi; không ghi kết quả sang tài khoản khác',409);
     const result=await recordUnifiedReview(userId,review);
     return output(res,result.replayed?200:201,result);
   }
   if(method==='POST'&&key==='learning/flashcards/reviews'){
-    const userId=(await mustPlayer(req)).id,review=body(req);
+    const userId=mustPlayer(req).id,review=body(req);
     // Optional actor pin protects against login/logout between client verification
     // and POST, especially during batch import from local Flashcards.
     if(review.expected_actor_id!==undefined&&review.expected_actor_id!==userId)
@@ -526,21 +533,21 @@ export default async function handler(req,res){
     return output(res,201,await recordFlashcardReview(userId,review));
   }
   if(method==='POST'&&key==='learning/game-mistakes/sync'){
-    const userId=(await mustPlayer(req)).id,input=body(req);
+    const userId=mustPlayer(req).id,input=body(req);
     if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)
       throw fail('Tài khoản đã thay đổi; không đồng bộ từ của người khác',409);
     return output(res,200,await syncRecentSoloReviews(userId));
   }
-  if(method==='GET'&&key==='learning/game-mistakes')return output(res,200,await getAccountGameMistakeNotebook((await mustPlayer(req)).id));
+  if(method==='GET'&&key==='learning/game-mistakes')return output(res,200,await getAccountGameMistakeNotebook(mustPlayer(req).id));
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
-  if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary((await mustPlayer(req)).id));
-  if(method==='GET'&&key==='learning/insights')return output(res,200,await getAccountLearningInsights((await mustPlayer(req)).id,req.query||{}));
+  if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
+  if(method==='GET'&&key==='learning/insights')return output(res,200,await getAccountLearningInsights(mustPlayer(req).id,req.query||{}));
   // UX-24 Production requires two explicitly enabled release flags.
   // Preview flags cannot unlock Production.
   if(method==='GET'&&key==='learning/srs/queue'){
     if(!srsEnabled())
       return output(res,404,{error:'SRS thử nghiệm chưa được bật.'});
-    const userId=(await mustPlayer(req)).id;
+    const userId=mustPlayer(req).id;
     return output(res,200,await getAccountSrsQueue(userId,req.query||{}));
   }
   // UX-24D QA-only parity summary. No user_id accepted from query strings.
@@ -548,44 +555,44 @@ export default async function handler(req,res){
   if(method==='GET'&&key==='learning/srs/diagnostics'){
     if(!srsEnabled())
       return output(res,404,{error:'Kiểm tra SRS thử nghiệm chưa được bật.'});
-    return output(res,200,await getAccountSrsDiagnostics((await mustPlayer(req)).id));
+    return output(res,200,await getAccountSrsDiagnostics(mustPlayer(req).id));
   }
   // Only this bounded import route accepts larger payloads (20 complete cards).
   if(method==='POST'&&key==='learning/import/legacy/batch'){
-    const userId=(await mustPlayer(req)).id,input=body(req,96000);
+    const userId=mustPlayer(req).id,input=body(req,96000);
     if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)
       throw fail('Tài khoản đã thay đổi',409);
     return output(res,200,await importLegacyBatch(userId,input));
   }
   if(method==='POST'&&key==='learning/import/legacy'){
-    const input=body(req),userId=(await mustPlayer(req)).id;
+    const input=body(req),userId=mustPlayer(req).id;
     if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)
       throw fail('Tài khoản đã thay đổi',409);
     return output(res,200,await importLegacyFlashcard(userId,input));
   }
-  if(method==='GET'&&key==='learning/personal')return output(res,200,await listPersonalVocabulary((await mustPlayer(req)).id));
+  if(method==='GET'&&key==='learning/personal')return output(res,200,await listPersonalVocabulary(mustPlayer(req).id));
   if(method==='POST'&&key==='learning/personal'){
-    const input=body(req),userId=(await mustPlayer(req)).id;
+    const input=body(req),userId=mustPlayer(req).id;
     if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
     return output(res,201,await addPersonalCard(userId,input));
   }
   if(method==='POST'&&key==='learning/personal/reviews'){
-    const input=body(req),userId=(await mustPlayer(req)).id;
+    const input=body(req),userId=mustPlayer(req).id;
     if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
     return output(res,201,await markPersonalCard(userId,input));
   }
   if(method==='PATCH'&&r.length===3&&r[0]==='learning'&&r[1]==='personal'){
-    const input=body(req),userId=(await mustPlayer(req)).id;
+    const input=body(req),userId=mustPlayer(req).id;
     if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
     return output(res,200,await updatePersonalCard(userId,r[2],input));
   }
   if(method==='DELETE'&&r.length===3&&r[0]==='learning'&&r[1]==='personal'){
-    const input=body(req),userId=(await mustPlayer(req)).id;
+    const input=body(req),userId=mustPlayer(req).id;
     if(input.expected_actor_id!==undefined&&input.expected_actor_id!==userId)throw fail('Tài khoản đã thay đổi',409);
     return output(res,200,await deletePersonalCard(userId,r[2],input.revision));
   }
-  if(method==='GET'&&key==='learning/flashcards/progress')return output(res,200,await getFlashcardProgress((await mustPlayer(req)).id));
-  if(method==='GET'&&key==='learning/flashcards/catalog'){await mustPlayer(req);return output(res,200,await getFlashcardCatalog());}
+  if(method==='GET'&&key==='learning/flashcards/progress')return output(res,200,await getFlashcardProgress(mustPlayer(req).id));
+  if(method==='GET'&&key==='learning/flashcards/catalog'){mustPlayer(req);return output(res,200,await getFlashcardCatalog());}
   // Enabled vocabulary is public to all learners, including guests.
   // No user progress, credentials, or CEFR moderation metadata is exposed.
   if(method==='GET'&&key==='learning/vocabulary')return output(res,200,await getFlashcardCatalog());
@@ -593,7 +600,7 @@ export default async function handler(req,res){
   if(method==='POST'&&key==='auth/login')return output(res,200,await signIn(req,res));
   if(method==='POST'&&key==='auth/signup')return output(res,201,await signUp(req,res));
   if(method==='POST'&&key==='auth/logout'){res.setHeader('set-cookie',cookie(AUTH_COOKIE,'',0));return output(res,200,{ok:true})}
-  if(method==='GET'&&key==='auth/me'){const a=await actor(req);return output(res,200,{actor:a?.role==='player'?{...a,profile:await playerRow(a.id)}:a||null})}
+  if(method==='GET'&&key==='auth/me'){const a=actor(req);return output(res,200,{actor:a?.role==='player'?{...a,profile:await playerRow(a.id)}:a||null})}
   if(method==='POST'&&key==='attendance/checkin')return output(res,200,await checkin(req));
   if(method==='GET'&&key==='attendance/me')return output(res,200,await playerStats(req));
   if(method==='GET'&&key==='rankings')return output(res,200,{players:await globalRank()});
