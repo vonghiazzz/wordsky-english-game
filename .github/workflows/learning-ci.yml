@@ -170,6 +170,7 @@ jobs:
           node scripts/local-ui-e2e.mjs
           node scripts/ux26-browser-audio-qa.mjs
           node scripts/ux27-local-integration.mjs
+          node scripts/ux28-local-practice-e2e.mjs
 
       - name: Verify temporary QA account cleanup
         run: |
