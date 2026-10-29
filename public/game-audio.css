@@ -1,0 +1,29 @@
+/* UX26 shared audio toolbar: in the visible game setup, never on top of typing fields. */
+.ws-audio-panel{
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;
+  margin:12px 0 2px;padding:10px 12px;max-width:100%;
+  background:rgba(18,35,65,.9);border:1px solid #46678c;border-radius:12px;
+  color:#e8f2ff;font-size:13px;line-height:1.4;
+}
+.ws-audio-title{font-weight:800;white-space:nowrap}
+.ws-audio-panel button{
+  appearance:none;cursor:pointer;border:1px solid #7d9dc0;background:#294667;
+  color:#f2faff;border-radius:9px;padding:7px 10px;min-height:36px;
+  font:inherit;font-weight:650;white-space:nowrap;
+}
+.ws-audio-panel button[aria-pressed="false"]{background:#18283d;color:#bbcbdc}
+.ws-audio-panel button:focus-visible,.ws-audio-panel input:focus-visible{
+  outline:3px solid #f7d477;outline-offset:2px;
+}
+.ws-audio-panel button:disabled{opacity:.5;cursor:not-allowed}
+.ws-audio-volume{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.ws-audio-volume input{width:95px;max-width:24vw;min-width:60px;accent-color:#8cddce;cursor:pointer}
+.ws-audio-panel output{font-size:12px;min-width:29px}
+.ws-audio-panel small{flex-basis:100%;color:#bccce0;font-size:11px}
+#gamePanel .toolbar .ws-audio-panel{flex-basis:100%;width:100%;box-sizing:border-box}
+@media(max-width:520px){
+  .ws-audio-panel{gap:7px;padding:9px}
+  .ws-audio-panel button{padding:7px 8px;font-size:12px}
+  .ws-audio-volume input{width:75px}
+  .ws-audio-title{width:100%}
+}
