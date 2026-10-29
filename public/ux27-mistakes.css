@@ -51,3 +51,12 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .ws27-explainer h2{margin:0 0 9px;font-size:19px}
 .ws27-footer{justify-content:center;padding-top:15px}
 @media(max-width:650px){.ws27-shell{padding-top:14px}.ws27-metrics{gap:7px}.ws27-metrics>div{padding:12px 9px}.ws27-metrics small{font-size:10px}.ws27-word{grid-template-columns:1fr}.ws27-word-actions{display:flex;flex-wrap:wrap}.ws27-word-actions>*{flex:1}.ws27-filters label,.ws27-filters label:last-child{flex:1 1 100%}}
+
+/* UX27.1: compact post-game links and automatic review statuses. */
+.ws27-shell{padding-top:clamp(18px,3vw,32px)}
+.ws27-word-actions{min-width:188px;max-width:230px}
+.ws27-state{display:flex;align-items:center;justify-content:center;text-align:center;min-height:42px;padding:9px 12px;border-radius:11px;border:1px solid #647996;font-size:12px;font-weight:800;line-height:1.4;color:#d0e4fa;background:#25364e}
+.ws27-state-due{background:#154d46;border-color:#419e86;color:#c9ffed}
+.ws27-review-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #5877a2;border-radius:11px;background:#223756;color:#f0f7ff!important;font-weight:750;text-decoration:none!important;padding:10px 13px}
+.ws27-review-link:hover{background:#335075;color:#fff!important}
+@media(max-width:650px){.ws27-word-actions{min-width:0;max-width:none;width:100%}.ws27-word-actions>*{flex:1 1 145px}.ws27-hero{margin-top:0}}
