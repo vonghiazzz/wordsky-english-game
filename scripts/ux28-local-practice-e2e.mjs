@@ -74,8 +74,8 @@ async function group(page,status,topic=''){
  await page.locator('#ws24Srs').waitFor({state:'visible'});
  await page.locator('#ws24Status').selectOption(status);
  if(topic){
-  await page.locator('#ws24Topic option').filter({hasText:topic}).first().waitFor();
-  await page.locator('#ws24Topic').selectOption({label:topic});
+  await page.waitForFunction(value=>[...document.querySelector('#ws24Topic').options].some(option=>option.value===value),topic);
+  await page.locator('#ws24Topic').selectOption(topic);
  }
  await page.locator('#ws24Practice').waitFor({state:'visible'});
  await page.waitForFunction(()=>{
