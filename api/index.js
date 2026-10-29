@@ -6,6 +6,7 @@ import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
 import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
+import {getAccountLearningInsights} from '../lib/learning-insights.js';
 import {getAccountSrsQueue} from '../lib/srs-queue.js';
 import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
@@ -514,6 +515,7 @@ export default async function handler(req,res){
   if(method==='GET'&&key==='learning/game-mistakes')return output(res,200,await getAccountGameMistakeNotebook(mustPlayer(req).id));
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
   if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
+  if(method==='GET'&&key==='learning/insights')return output(res,200,await getAccountLearningInsights(mustPlayer(req).id,req.query||{}));
   // UX-24 Production requires two explicitly enabled release flags.
   // Preview flags cannot unlock Production.
   if(method==='GET'&&key==='learning/srs/queue'){
