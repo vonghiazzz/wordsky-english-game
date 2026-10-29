@@ -739,7 +739,7 @@ function spawn(){
   el.style.left=x+'px';el.style.transform='translateY(-55px)';el.onclick=()=>pick(item);area.append(el);state.letters.push(item)
 }
 function remove(item){item.el.remove();state.letters=state.letters.filter(x=>x!==item)}
-function hit(){window.WordSkyAudio?.cue('damage');state.lives--;updateHUD();if(state.lives<=0){endGame(false);return true}return false}
+function hit(){state.lives--;updateHUD();if(state.lives<=0){endGame(false);return true}window.WordSkyAudio?.cue('damage');return false}
 function pick(item){
   if(!state.running||state.paused||state.locked||state.mode!=='letters')return;
   const expected=state.answer[state.index];remove(item);
@@ -762,7 +762,7 @@ function submitWholeWord(e){
    if(state.fallWords.length===0&&state.nextSpawn<state.pool.length){spawnFallingWord();state.typingElapsed=0}
    updateTypingHUD();focusTypingInput();return
  }
- $('feedback').textContent='❌ Chưa khớp thẻ nào đang rơi. Thử lại nhé!';
+ window.WordSkyAudio?.cue('wrong');$('feedback').textContent='❌ Chưa khớp thẻ nào đang rơi. Thử lại nhé!';
  if(!isMobileTyping()){$('typingAnswer').select();focusTypingInput()}
 }
 $('typingForm').addEventListener('submit',submitWholeWord);
