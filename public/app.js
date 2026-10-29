@@ -21,8 +21,9 @@ const $screen=n=>$('screen-'+n);
 function navigate(name,{fromHistory=false}={}){
  if(!['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'].includes(name))return;
  if(!fromHistory&&location.hash!=='#'+name)history.pushState(null,'','#'+name);
- if(name===screen){window.dispatchEvent(new Event('wordsky:route'));return}
+ if(name===screen){syncWordSkyArenaAudio();window.dispatchEvent(new Event('wordsky:route'));return}
  screen=name;
+  window.WordSkyAudio?.setScene(null,false);
  document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id==='screen-'+name));
  document.querySelectorAll('[data-screen]').forEach(e=>e.classList.toggle('active',e.dataset.screen===name));
  window.dispatchEvent(new Event('wordsky:route'));
@@ -84,6 +85,22 @@ const soloModeForScreen=()=>screen==='solo-car'?'CAR':screen==='solo-bomb'?'BOMB
 const soloRunKey=mode=>mode==='CAR'?'wordsky_solo_car_run':mode==='BOMB'?'wordsky_solo_bomb_run':'wordsky_solo_run';
 const soloPendingKey=mode=>mode==='CAR'?'wordsky_solo_car_pending':mode==='BOMB'?'wordsky_solo_bomb_pending':'wordsky_solo_pending';
 const soloHost=(mode,kind)=>$(mode==='CAR'?'soloCar'+kind:mode==='BOMB'?'soloBomb'+kind:'solo'+kind);
+// UX26: sound effects follow authoritative server transitions.
+let wsAudioStatusKey='';
+function syncWordSkyArenaAudio(){
+ const g=screen==='rooms'?game?.game:soloGame?.game;
+ const allowed=screen==='rooms'||['solo','solo-bomb','solo-car'].includes(screen);
+ window.WordSkyAudio?.setScene(allowed&&g?.status==='PLAYING'?g.mode:null,allowed&&g?.status==='PLAYING');
+}
+function wsAudioStateCue(before,after){
+ if(!before||!after)return;
+ const key=[screen,after.status,after.index,after.score,after.health].join(':');
+ if(key===wsAudioStatusKey)return;
+ wsAudioStatusKey=key;
+ if(after.status!=='PLAYING'&&before.status==='PLAYING')window.WordSkyAudio?.cue(after.status==='COMPLETED'?'win':'lose');
+ else if(after.health<before.health)window.WordSkyAudio?.cue('damage');
+ else if(after.score>before.score)window.WordSkyAudio?.cue('correct');
+}
 function activateSoloScreen(mode){
  if(soloGame?.game?.mode&&soloGame.game.mode!==mode){soloGame=null;soloPending=null;selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloSetupError=''}
  renderSolo();if(!soloGame)restoreSoloRun(mode);
@@ -139,6 +156,7 @@ function soloResultMarkup(g,rd,mode){
  </section>`;
 }
 function renderSoloCarGame(){
+  syncWordSkyArenaAudio();
  const host=soloHost('CAR','GamePane'),setup=soloHost('CAR','SetupPane');if(!host||!setup||!soloGame)return;
  const g=soloGame.game,rd=soloGame.round,ended=g.status!=='PLAYING',answer=host.querySelector('#soloCarAnswer')?.value||'';
  setup.classList.add('hidden');host.classList.remove('hidden');
@@ -197,6 +215,7 @@ function soloPairsMarkup(g){
  return `<div class="pair-grid"><div class="pair-col" role="group" aria-labelledby="soloEnglishHeading"><h3 id="soloEnglishHeading">English</h3>${g.pairs.map(p=>`<button type="button" data-solo-pair-left="${p.id}" aria-pressed="${selectedSoloEnglish===p.id}" class="pairbtn ${p.matched?'matched':''} ${selectedSoloEnglish===p.id?'selected':''} ${stateClass('leftId',p.id)}" ${(p.matched||soloPending)?'disabled aria-disabled="true"':''}>${escapeHtml(p.english)}</button>`).join('')}</div><div class="pair-col" role="group" aria-labelledby="soloMeaningHeading"><h3 id="soloMeaningHeading">Nghĩa tiếng Việt</h3>${right.map(p=>`<button type="button" data-solo-pair-right="${p.id}" class="pairbtn ${p.matched?'matched':''} ${stateClass('rightId',p.id)}" ${(p.matched||soloPending)?'disabled aria-disabled="true"':''}>${escapeHtml(p.meaning)}</button>`).join('')}</div></div>`;
 }
 function renderSoloGame(){
+  syncWordSkyArenaAudio();
  const mode=soloGame?.game?.mode;if(!mode)return;if(mode==='CAR')return renderSoloCarGame();const setup=soloHost(mode,'SetupPane'),host=soloHost(mode,'GamePane');if(!setup||!host)return;
  const existingBombAnswer=host.querySelector('#soloBombAnswer')?.value||'',oldFocus=document.activeElement?.id;
  setup.classList.add('hidden');host.classList.remove('hidden');
@@ -213,6 +232,7 @@ function renderSoloGame(){
 }
 function renderSolo(){if(soloGame)renderSoloGame();else renderSoloSetup()}
 async function beginSolo(mode,config){
+  window.WordSkyAudio?.unlock();
  if(soloBusy||soloPending)return;soloBusy=true;lastSoloConfig={mode,config};soloSetupError='';const button=soloHost(mode,'SetupPane')?.querySelector('form button[type="submit"]');if(button){button.disabled=true;button.textContent='⏳ Đang tạo lượt…'}
  try{soloGame=await api(`solo/${mode.toLowerCase()}/start`,{method:'POST',body:config});localTimeOffset=Number(soloGame.game?.now||Date.now())-Date.now();sessionStore.setItem(soloRunKey(mode),soloGame.runId);selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';renderSoloGame();soloHost(mode,'GamePane')?.scrollIntoView({behavior:'auto',block:'start'});focusGameplayInput($('soloBombAnswer')||$('soloCarAnswer'));}
  catch(e){soloSetupError=e.message;toast(e.message,true);renderSoloSetup()}finally{soloBusy=false}
@@ -228,7 +248,7 @@ async function acceptSoloAnswer(out,pending){
  if(out.game?.mode==='CAR'&&out.result?.laneSafe&&out.result?.wordCorrect&&soloGame?.runId===out.runId){
   await animateCarCrossing(out.result.laneFrom??soloGame.game.carLane??2,out.result.laneTo??pending.lane??2,{stageSelector:'.solo-car-stage',vehicleSelector:'#soloCarVehicle'});
  }
- clearSoloPending();soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();selectedSoloEnglish=null;
+ wsAudioStateCue(soloGame?.game,out.game);clearSoloPending();soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();selectedSoloEnglish=null;
  if(out.game.mode==='CAR'){
   const input=$('soloCarAnswer');if(out.result?.wordCorrect&&input?.value.trim()===pending.answer)input.value='';
   if(out.result?.laneSafe&&out.result?.wordCorrect)soloCarLastAuto='';
@@ -269,10 +289,10 @@ async function submitSoloAnswer(payload){
 }
 async function refreshSoloGame(){
  if(!soloGame||soloBusy||soloPending||soloGame.game.status!=='PLAYING')return;
- try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game,lostHealth=out.game.health<before.health;soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(lostHealth)soloFeedback=out.game.mode==='CAR'?'⌛ Trễ chặng! Mất 1 tim.':'💥 Bom quá hạn! Mất 1 tim.';if(out.game.mode==='BOMB'&&out.game.status==='PLAYING'&&syncSoloBombArena()){}else if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health||out.game.index!==before.index)renderSoloGame();}
+ try{const out=await api(`solo/runs/${soloGame.runId}`);const before=soloGame.game,lostHealth=out.game.health<before.health;wsAudioStateCue(before,out.game);soloGame=out;localTimeOffset=Number(out.game?.now||Date.now())-Date.now();if(lostHealth)soloFeedback=out.game.mode==='CAR'?'⌛ Trễ chặng! Mất 1 tim.':'💥 Bom quá hạn! Mất 1 tim.';if(out.game.mode==='BOMB'&&out.game.status==='PLAYING'&&syncSoloBombArena()){}else if(out.game.status!==before.status||out.game.score!==before.score||out.game.health!==before.health||out.game.index!==before.index)renderSoloGame();}
  catch(e){if(e.message.includes('Phiên chơi Solo')||e.message.includes('Không tìm thấy'))resetSolo(false);else if(['solo','solo-bomb','solo-car'].includes(screen))toast(e.message,true)}
 }
-function resetSolo(render=true){const mode=soloGame?.game?.mode||soloModeForScreen();soloGame=null;selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';clearSoloPending(mode);sessionStore.removeItem(soloRunKey(mode));soloHost(mode,'GamePane')?.classList.add('hidden');if(render)renderSoloSetup()}
+function resetSolo(render=true){window.WordSkyAudio?.setScene(null,false);const mode=soloGame?.game?.mode||soloModeForScreen();soloGame=null;selectedSoloEnglish=null;soloCarLastAuto='';soloFeedback='';soloPairFeedback=null;soloBombLastAttempt='';clearSoloPending(mode);sessionStore.removeItem(soloRunKey(mode));soloHost(mode,'GamePane')?.classList.add('hidden');if(render)renderSoloSetup()}
 async function restoreSoloRun(mode=soloModeForScreen()){
  const id=sessionStore.getItem(soloRunKey(mode));if(!/^[0-9a-f-]{36}$/i.test(id||''))return;
  restoreStoredSoloPending(id,mode);
@@ -312,6 +332,7 @@ function renderRoom(){if(!room)return;$('roomPane').classList.remove('mobile-rou
  if(game&&active?.id===game.round?.id)renderGame();
 }
 async function startRound(){
+  window.WordSkyAudio?.unlock();
  if(!room||!roomCode||gameBusy)return;
  const active=currentRoundFromEvent(room.event);if(!active){toast('Chưa đến giờ vòng thi',true);return}
  gameBusy=true;gameRevision++;const button=$('startRoundButton');if(button){button.disabled=true;button.textContent='⏳ Đang vào vòng thi...'}
@@ -324,7 +345,7 @@ async function startRound(){
  finally{gameBusy=false;if(game?.game?.mode==='CAR')queueCarAutoCheck('room',180)}
 }
 async function refreshGame(){if(!game||!roomCode)return;
- const revision=gameRevision;try{const before=game.game;const answer=await api(`rooms/${roomCode}/runs/${game.runId}`);if(!game||gameBusy||revision!==gameRevision)return;if(before.mode==='BOMB'&&answer.game.health<before.health)feedback='💥 Bom nổ! -1 tim';if(before.mode==='CAR'&&answer.game.health<before.health)feedback='⌛ Trễ chặng! -1 tim';game.game=answer.game;
+ const revision=gameRevision;try{const before=game.game;const answer=await api(`rooms/${roomCode}/runs/${game.runId}`);if(!game||gameBusy||revision!==gameRevision)return;if(before.mode==='BOMB'&&answer.game.health<before.health)feedback='💥 Bom nổ! -1 tim';if(before.mode==='CAR'&&answer.game.health<before.health)feedback='⌛ Trễ chặng! -1 tim';wsAudioStateCue(before,answer.game);game.game=answer.game;
   const fingerprint=g=>JSON.stringify([g.mode,g.status,g.score,g.health,g.correct,g.mistakes,g.index,g.bombs?.map(b=>b.id)]);
   if(game.game.mode==='BOMB'&&before.mode==='BOMB'&&before.status==='PLAYING'&&game.game.status==='PLAYING'&&syncBombArena()){
    // A bomb spawn or timeout must not unmount the input or reset animations.
@@ -357,7 +378,7 @@ async function submitGameAnswer(payload){
    if(game?.runId!==runId)return;
    carLastAuto='';
   }
-  game.game=answer.game;
+  wsAudioStateCue(before,answer.game);game.game=answer.game;
   if(game.game.mode==='CAR'){
    if(answer.result?.auto&&!answer.result?.wordCorrect){feedback='';return}
    if(answer.result?.wordCorrect===false){feedback='❌ Sai từ!'}
@@ -502,6 +523,7 @@ async function checkBombAnswer(){
  }
 }
 function renderGame(){
+  syncWordSkyArenaAudio();
  const host=$('liveGame');if(!host||!game)return;host.classList.toggle('game-expanded',gameExpanded&&['BOMB','CAR'].includes(game.game.mode));
  const existingBombAnswer=host.querySelector('#bombAnswer')?.value||'';
  const existingCarAnswer=host.querySelector('#carAnswer')?.value||'';
@@ -590,7 +612,7 @@ function updateCountdowns(){
   const hint=$('carReadyHint');if(hint)hint.textContent=remaining?'Chờ '+remaining+'s trước chặng tiếp theo':'Sẵn sàng';const clock=$('carStepTimer');if(clock)clock.textContent='⏱ Còn '+Math.max(0,Math.ceil(((game.game.stepDeadlineAt||game.game.endsAt)-Date.now()-localTimeOffset)/1000))+'s để qua chặng';
  }
 }
-function leaveRoom(){gameExpanded=false;roomCode='';sessionStore.removeItem('wordsky_room_code');room=null;game=null;$('roomPane').classList.add('hidden');$('joinRoomPane').classList.remove('hidden');}
+function leaveRoom(){window.WordSkyAudio?.setScene(null,false);gameExpanded=false;roomCode='';sessionStore.removeItem('wordsky_room_code');room=null;game=null;$('roomPane').classList.add('hidden');$('joinRoomPane').classList.remove('hidden');}
 // Admin
 let carFeatureEnabled=false;
 const initialRounds=()=>['MATCH','BOMB',...(carFeatureEnabled?['CAR']:[])].map((mode,i)=>({mode,difficulty:'NORMAL',duration_seconds:mode==='BOMB'?120:90,question_count:mode==='CAR'?12:8,points_per_correct:100,penalty:25,weight:1,topic_id:mode==='CAR'?null:topics[0]?.id||null,bomb_fall_seconds:16,bomb_batch_size:2,bomb_spawn_interval_seconds:9,car_step_seconds:8}));

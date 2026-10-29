@@ -115,6 +115,8 @@ body:has(.game-area.fullscreen-fallback){overflow:hidden}
 <link rel="stylesheet" href="/ux-design-system.css" />
 <link rel="stylesheet" href="/ux02-home-nav.css" />
 <link rel="stylesheet" href="/ux05-learn.css" />
+<link rel="stylesheet" href="/game-audio.css" />
+<script src="/game-audio.js" defer></script>
 <script src="/shared-nav.js" defer></script>
 </head>
 <body class="ws05-learn"><div id="wsSharedNav" data-ws-page="learn"></div><main class="container">
@@ -484,6 +486,7 @@ function showTab(which,{fromRoute=false}={}){
   if(which==='manage')renderManager();
   const hash='#'+which;
   if(!fromRoute&&location.hash!==hash)history.pushState(null,'',hash);
+  window.WordSkyAudio?.setScene('FALLING',which==='game'&&state.running&&!state.paused);
   window.dispatchEvent(new Event('wordsky:route'));
 }
 $('flashTab').onclick=()=>showTab('flash');
@@ -686,7 +689,8 @@ function start(){
  if(!name){note('Vui lòng nhập tên người chơi (1–24 ký tự) trước khi bắt đầu.',true);$('playerName').focus();return}
  if(state.raf)cancelAnimationFrame(state.raf);clearScene();setupPool();
  if(!state.pool.length){state.running=false;$('pauseGame').disabled=true;showOverlay('Chưa có thẻ 🃏','Chủ đề này chưa có từ vựng. Vào Quản lý để thêm thẻ rồi quay lại chơi.','Thử lại');return}
- state.player=name;state.mode=$('gameMode').value;safeStorage.write(PLAYER_KEY,name);
+ window.WordSkyAudio?.unlock();window.WordSkyAudio?.setScene('FALLING',true);
+  state.player=name;state.mode=$('gameMode').value;safeStorage.write(PLAYER_KEY,name);
  state.score=0;state.correct=0;state.lives=3;state.round=-1;state.running=true;state.paused=false;state.locked=false;state.last=0;state.spawnId=0;state.spawnElapsed=0;state.nextSpawn=0;state.resolved=0;state.typingElapsed=0;
  $('playerName').value=name;$('playerName').disabled=true;$('gameMode').disabled=true;$('difficulty').disabled=true;$('wordLimit').disabled=true;
  $('gameOverlay').classList.add('hidden');$('pauseGame').disabled=false;$('pauseGame').textContent='⏸ Tạm dừng';displayGameMode();
@@ -699,17 +703,19 @@ function start(){
  state.raf=requestAnimationFrame(tick)
 }
 function endGame(won){
+  window.WordSkyAudio?.setScene(null,false);window.WordSkyAudio?.cue(won?'win':'lose');
   state.running=false;state.paused=false;cancelAnimationFrame(state.raf);state.raf=0;clearScene();setTypingEnabled(false);displayGameMode();
   $('pauseGame').disabled=true;$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false;$('wordLimit').disabled=false;
   updateHUD();recordScore();
   const total=state.pool.length;showOverlay(won?'🎉 Hoàn thành!':'💫 Hết lượt rồi!',`${state.player} đạt ${state.score} điểm · đúng ${state.correct}/${total} từ. Điểm đã được lưu vào bảng xếp hạng của chế độ ${state.mode==='typing'?'Gõ cả từ':'Bắt chữ cái'}.`,'↻ Chơi lại')
 }
 function pause(auto=false){
-  if(!state.running)return;state.paused=!state.paused;displayGameMode();
+  if(!state.running)return;state.paused=!state.paused;displayGameMode();window.WordSkyAudio?.setScene('FALLING',!state.paused);if(!state.paused)window.WordSkyAudio?.unlock();
   if(state.paused){cancelAnimationFrame(state.raf);state.raf=0;setTypingEnabled(false);showOverlay('⏸ Đang tạm dừng',auto?'Game tự tạm dừng khi chuyển màn hình.':'Chơi tiếp khi bạn sẵn sàng.','▶ Tiếp tục');$('pauseGame').textContent='▶ Tiếp tục'}
   else{$('gameOverlay').classList.add('hidden');$('pauseGame').textContent='⏸ Tạm dừng';state.last=0;setTypingEnabled(state.mode==='typing');state.raf=requestAnimationFrame(tick);if(state.mode==='typing')focusTypingInput()}
 }
 function resetGameSettings(){
+  window.WordSkyAudio?.setScene(null,false);
  if(state.running){state.running=false;state.paused=false;cancelAnimationFrame(state.raf);state.raf=0;clearScene();$('pauseGame').disabled=true;setTypingEnabled(false);$('playerName').disabled=false;$('gameMode').disabled=false;$('difficulty').disabled=false;$('wordLimit').disabled=false}
  displayGameMode();$('score').textContent='0';$('hearts').textContent='❤️❤️❤️';$('round').textContent='0 / '+(Number($('wordLimit').value)||10);$('feedback').textContent='';$('clue').textContent='Bắt đầu để nhận câu hỏi';$('blanks').textContent='_ _ _ _ _';$('typingTime').textContent='⏱ --';$('typingCount').textContent='✅ 0 từ đúng';renderScores();
  showOverlay('🌠 Sẵn sàng chưa?',state.mode==='typing'?'Nhập tên rồi gõ tiếng Anh của các thẻ đang rơi.':'Nhập tên, chọn chủ đề và sẵn sàng bắt chữ!','▶ Bắt đầu chơi')
@@ -733,11 +739,11 @@ function spawn(){
   el.style.left=x+'px';el.style.transform='translateY(-55px)';el.onclick=()=>pick(item);area.append(el);state.letters.push(item)
 }
 function remove(item){item.el.remove();state.letters=state.letters.filter(x=>x!==item)}
-function hit(){state.lives--;updateHUD();if(state.lives<=0){endGame(false);return true}return false}
+function hit(){window.WordSkyAudio?.cue('damage');state.lives--;updateHUD();if(state.lives<=0){endGame(false);return true}return false}
 function pick(item){
   if(!state.running||state.paused||state.locked||state.mode!=='letters')return;
   const expected=state.answer[state.index];remove(item);
-  if(item.char===expected){state.index++;advanceSymbols();state.score+=10;$('feedback').textContent='✅ Chính xác! +10 điểm';drawBlanks();updateHUD();
+  if(item.char===expected){window.WordSkyAudio?.cue('correct');state.index++;advanceSymbols();state.score+=10;$('feedback').textContent='✅ Chính xác! +10 điểm';drawBlanks();updateHUD();
     if(state.index>=state.answer.length){state.locked=true;state.score+=30;state.correct++;updateHUD();$('feedback').textContent='🌟 Hoàn thành từ! +30 điểm';nextWord()}
   }else{$('feedback').textContent=`❌ Cần chữ ${expected}, không phải ${item.char}`;hit()}
 }
@@ -750,7 +756,7 @@ function submitWholeWord(e){
    const item=matches.sort((a,b)=>b.y-a.y)[0];
    const remaining=Math.max(0,(item.floor-item.y)/(item.floor-44));
    const bonus=Math.max(0,Math.min(100,Math.floor(remaining*100))),earned=100+bonus;
-   removeFallingWord(item);state.resolved++;state.correct++;state.score+=earned;
+   window.WordSkyAudio?.cue('correct');removeFallingWord(item);state.resolved++;state.correct++;state.score+=earned;
    $('typingAnswer').value='';$('feedback').textContent='✅ Chính xác! +'+earned+' điểm';updateHUD();
    if(state.resolved>=state.pool.length){endGame(true);return}
    if(state.fallWords.length===0&&state.nextSpawn<state.pool.length){spawnFallingWord();state.typingElapsed=0}
