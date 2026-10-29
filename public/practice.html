@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1226">
+<meta name="description" content="WordSky: luyện gõ lại các từ từng sai trong Solo, đồng bộ kết quả theo tài khoản và lịch SRS.">
+<title>Luyện từ sai · WordSky</title>
+<link rel="stylesheet" href="/shared-nav.css">
+<link rel="stylesheet" href="/ux-design-system.css">
+<link rel="stylesheet" href="/ux28-practice.css">
+<script src="/shared-nav.js" defer></script>
+<script type="module" src="/ux28-practice.js"></script>
+</head>
+<body class="ws28-page">
+<div id="wsSharedNav" data-ws-page="progress"></div>
+<main class="ws28-shell">
+<header class="ws28-hero">
+  <div class="ws28-eyebrow"><span aria-hidden="true">✦</span> WORDSKY / FOCUSED RECALL</div>
+  <h1>Từ từng sai.<br><em>Giờ mình nhớ.</em></h1>
+  <p>Không chỉ đọc đáp án: hãy nhìn nghĩa tiếng Việt, tự gõ tiếng Anh, rồi để WordSky kiểm tra và lưu kết quả vào My Learning của đúng tài khoản.</p>
+  <div class="ws28-nav-actions">
+    <a class="ws28-link" href="/mistakes.html">📖 Sổ từ cần ôn</a>
+    <a class="ws28-link" href="/progress.html">↗ My Learning</a>
+  </div>
+</header>
+
+<section class="ws28-panel" aria-label="Luyện từ sai theo tài khoản">
+  <div class="ws28-section-heading">
+    <div><span class="ws28-overline">RECALL PRACTICE</span><h2>Phiên luyện của bạn</h2></div>
+    <span class="ws28-account" id="ws28ActorState">Đang xác minh tài khoản</span>
+  </div>
+  <p class="ws28-message" role="status" aria-live="polite" id="ws28Notice">Đang tải dữ liệu từ máy chủ…</p>
+
+  <div id="ws28Guest" class="ws28-empty" hidden>
+    <h3>🔒 Đăng nhập học viên để luyện từ sai</h3>
+    <p>Không lấy kết quả của tài khoản khác hoặc dữ liệu lưu riêng trên thiết bị. Hãy đăng nhập rồi quay lại trang này.</p>
+    <a class="ws28-primary" href="/#home">Về WordSky để đăng nhập</a>
+  </div>
+
+  <section id="ws28Setup" aria-labelledby="ws28SetupTitle" hidden>
+    <h3 id="ws28SetupTitle">Chọn phiên luyện</h3>
+    <div class="ws28-stats">
+      <div><small>ĐÃ TỪNG GẶP KHÓ</small><strong id="ws28Total">0</strong></div>
+      <div><small>ĐANG CẦN ÔN</small><strong id="ws28Needed">0</strong></div>
+      <div><small>TÀI KHOẢN</small><strong class="ws28-sync" id="ws28Synced">Đã đồng bộ</strong></div>
+    </div>
+    <form id="ws28StartForm" class="ws28-setup-form">
+      <label for="ws28Scope">Nhóm từ
+        <select id="ws28Scope">
+          <option value="needed">Ưu tiên từ cần ôn</option>
+          <option value="all">Tất cả từ từng sai</option>
+        </select>
+      </label>
+      <label for="ws28Mode">Trò chơi đã gặp
+        <select id="ws28Mode">
+          <option value="">MATCH · BOMB · CAR</option>
+          <option value="MATCH">MATCH</option>
+          <option value="BOMB">BOMB</option>
+          <option value="CAR">CAR</option>
+        </select>
+      </label>
+      <label for="ws28Limit">Số từ mỗi phiên
+        <select id="ws28Limit">
+          <option value="5">5 từ</option>
+          <option value="10" selected>10 từ</option>
+          <option value="20">20 từ</option>
+        </select>
+      </label>
+      <button type="submit" class="ws28-primary" id="ws28Start">Bắt đầu luyện →</button>
+    </form>
+    <p class="ws28-hint" id="ws28SetupHint">Mỗi từ chỉ xuất hiện một lần trong phiên. Nếu có ít từ hơn mức chọn, phiên luyện sẽ tự rút ngắn.</p>
+    <div id="ws28NoWords" class="ws28-empty" hidden>
+      <h3>Chưa có từ phù hợp để luyện</h3>
+      <p>Hãy thử chọn “Tất cả từ từng sai”, đổi bộ lọc game hoặc chơi Solo khi đã đăng nhập.</p>
+      <a class="ws28-link" href="/#solo">🎮 Đi tới MATCH Solo</a>
+    </div>
+  </section>
+
+  <section id="ws28Play" aria-labelledby="ws28PlayTitle" hidden>
+    <div class="ws28-progress-heading">
+      <div><span class="ws28-overline">ACTIVE RECALL</span><h3 id="ws28PlayTitle">Tự nhớ từ tiếng Anh</h3></div>
+      <span id="ws28Position" class="ws28-counter">1 / 10</span>
+    </div>
+    <div class="ws28-track" role="progressbar" aria-label="Tiến độ phiên luyện" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="ws28Progress"><span id="ws28ProgressFill"></span></div>
+    <div class="ws28-question">
+      <div class="ws28-tags" id="ws28Tags"></div>
+      <p class="ws28-question-label">Nghĩa tiếng Việt</p>
+      <h3 id="ws28Meaning"></h3>
+      <p class="ws28-prompt">Bạn nhớ từ hoặc cụm từ tiếng Anh nào?</p>
+    </div>
+    <form id="ws28AnswerForm" class="ws28-answer-form">
+      <label for="ws28Answer">Viết từ tiếng Anh</label>
+      <input id="ws28Answer" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" maxlength="120" placeholder="Gõ từ tiếng Anh tại đây…">
+      <div class="ws28-answer-actions">
+        <button type="submit" class="ws28-primary" id="ws28Check">Kiểm tra câu trả lời</button>
+        <button type="button" class="ws28-secondary" id="ws28Skip">Không nhớ · xem đáp án</button>
+      </div>
+    </form>
+    <div class="ws28-feedback" id="ws28Feedback" hidden>
+      <strong id="ws28Verdict"></strong>
+      <p id="ws28CorrectWord"></p>
+      <p id="ws28Example"></p>
+    </div>
+    <div class="ws28-after" id="ws28After" hidden>
+      <button type="button" id="ws28Next" class="ws28-primary">Tiếp tục →</button>
+      <button type="button" id="ws28Retry" class="ws28-secondary" hidden>↻ Thử lưu kết quả</button>
+    </div>
+    <div class="ws28-escape"><button type="button" id="ws28Exit" class="ws28-text-button">Kết thúc phiên tại đây</button></div>
+  </section>
+
+  <section id="ws28Done" aria-labelledby="ws28DoneTitle" hidden>
+    <div class="ws28-finish-icon" aria-hidden="true">✦</div>
+    <span class="ws28-overline">SESSION COMPLETE</span>
+    <h3 id="ws28DoneTitle">Bạn đã hoàn thành phiên luyện!</h3>
+    <div class="ws28-done-score"><strong id="ws28CorrectCount">0</strong><span>/</span><strong id="ws28DoneTotal">0</strong><small>từ nhớ chính xác</small></div>
+    <p id="ws28DoneMessage">Kết quả đã được đồng bộ vào My Learning.</p>
+    <div class="ws28-finish-actions">
+      <button type="button" id="ws28Again" class="ws28-primary">↻ Luyện một phiên khác</button>
+      <a href="/progress.html" class="ws28-secondary">Xem lịch ôn SRS →</a>
+      <a href="/mistakes.html" class="ws28-secondary">Mở Sổ từ cần ôn</a>
+    </div>
+  </section>
+</section>
+
+<p class="ws28-notes">Chấm theo từ tiếng Anh trong kho WordSky (không phân biệt chữ hoa và khoảng trắng thừa). Câu sai được lưu là <strong>Cần ôn</strong>; câu đúng được lưu là <strong>Đã nhớ</strong>. Mỗi câu chỉ ghi một lượt review sau khi bạn xác nhận, không cộng điểm Arena.</p>
+</main>
+</body>
+</html>

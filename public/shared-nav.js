@@ -12,6 +12,7 @@
   {key:'game',label:'Chữ rơi',url:'/learn.html#game'},
   {key:'learning-progress',label:'My Learning',url:'/progress.html'},
   {key:'game-mistakes',label:'Sổ từ cần ôn',url:'/mistakes.html'},
+  {key:'mistake-practice',label:'Luyện từ sai',url:'/practice.html'},
   {key:'solo',label:'Chơi Solo',url:'/#solo',arena:'solo'},
   {key:'solo-bomb',label:'BOMB Solo',url:'/#solo-bomb',arena:'solo-bomb'},
   {key:'solo-car',label:'CAR Solo',url:'/#solo-car',arena:'solo-car'},
@@ -37,6 +38,7 @@
     <span class="ws-nav-games-caption">THÀNH TÍCH</span>
     ${navLink(menuItems.find(item=>item.key==='learning-progress'))}
     ${navLink(menuItems.find(item=>item.key==='game-mistakes'))}
+    ${navLink(menuItems.find(item=>item.key==='mistake-practice'))}
     ${navLink(menuItems.find(item=>item.key==='attendance'))}
     ${navLink(menuItems.find(item=>item.key==='rank'))}
    </div>
@@ -90,7 +92,7 @@
  }
  function activeKey(){
   const hash=window.location.hash.replace(/^#/,'').toLowerCase();
-  if(isProgress)return window.location.pathname==='/mistakes.html'?'game-mistakes':'learning-progress';
+  if(isProgress)return window.location.pathname==='/practice.html'?'mistake-practice':window.location.pathname==='/mistakes.html'?'game-mistakes':'learning-progress';
   if(isLearn)return hash==='game'?'game':'flash';
   return ['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'].includes(hash)?hash:'home';
  }
@@ -102,14 +104,14 @@
    if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
   }
   gamesToggle.classList.toggle('is-active',gameKeys.has(active)&&active!=='rooms');
-  progressToggle.classList.toggle('is-active',active==='attendance'||active==='rank'||active==='learning-progress'||active==='game-mistakes');
+  progressToggle.classList.toggle('is-active',active==='attendance'||active==='rank'||active==='learning-progress'||active==='game-mistakes'||active==='mistake-practice');
   // Hide the bottom dock in games/room to keep typing and Ready controls uncovered.
   const dockHidden=isLearn?active==='game':!isProgress&&['solo','solo-bomb','solo-car','rooms'].includes(active);
   mount.classList.toggle('ws-dock-hidden',dockHidden);
   document.body.classList.toggle('ws-mobile-dock-visible',!dockHidden);
   for(const a of mount.querySelectorAll('[data-ws-dock]')){
    const key=a.dataset.wsDock;
-   const current=key==='solo'?gameKeys.has(active)&&active!=='rooms':key==='attendance'?['attendance','rank','learning-progress','game-mistakes'].includes(active):key===active;
+   const current=key==='solo'?gameKeys.has(active)&&active!=='rooms':key==='attendance'?['attendance','rank','learning-progress','game-mistakes','mistake-practice'].includes(active):key===active;
    a.classList.toggle('is-active',current);
    if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
   }

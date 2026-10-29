@@ -80,8 +80,8 @@
       const needsReview=word.remembered===false&&Number(word.review_count||0)>0;
       const state=make('span','ws27-state '+(needsReview?'ws27-state-due':'ws27-state-neutral'),
         needsReview?'✓ Đã tự thêm vào Cần ôn':word.remembered?'✓ Đã nhớ sau lần ôn':'↻ Chưa có lượt ôn');
-      const link=make('a','ws27-review-link','Xem trong My Learning');
-      link.href='/progress.html';
+      const link=make('a','ws27-review-link','Luyện từ này →');
+      link.href='/practice.html?word='+encodeURIComponent(word.word_id);
       actions.append(state,link);
       card.append(description,actions);
       host.append(card);
