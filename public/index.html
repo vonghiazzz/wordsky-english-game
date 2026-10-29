@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/ux03-game-library.css" />
 <link rel="stylesheet" href="/ux04-results.css" />
 <link rel="stylesheet" href="/ux06-admin.css" />
+<link rel="stylesheet" href="/game-audio.css" />
 </head>
 <body>
 <div class="aurora"></div>
@@ -99,6 +100,7 @@
 <div class="modal-wrap hidden" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle"><div class="modal-backdrop" data-close="auth"></div><div class="modal"><button class="close" data-close="auth" aria-label="Đóng">✕</button><div class="mini">WORDSKY ACCOUNT</div><h2 id="authTitle">Đăng nhập</h2><p class="modal-help">Đăng nhập để tích điểm chuyên cần. Chưa có tài khoản? Chọn đăng ký bên dưới.</p><div class="tabs-small"><button id="loginTab" class="on" type="button">Đăng nhập</button><button id="signupTab" type="button">Đăng ký</button></div><form id="authForm" class="form-stack"><label>Tên đăng nhập<input name="username" type="text" minlength="3" maxlength="24" autocomplete="username" required placeholder="vd: player_nghia"></label><label id="displayNameLabel" class="hidden">Tên hiển thị<input name="display_name" maxlength="40" placeholder="Tên trên bảng xếp hạng"></label><label>Mật khẩu<input name="password" type="password" minlength="8" autocomplete="current-password" required placeholder="Ít nhất 8 ký tự"></label><button class="btn primary" type="submit">Tiếp tục →</button></form><div class="form-message" id="authMessage"></div></div></div>
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 <script src="/shared-nav.js" defer></script>
+<script src="/game-audio.js" defer></script>
 <script src="/app.js" defer></script>
 <script src="/ux03-game-library.js" defer></script>
 <script src="/ux06-admin.js" defer></script>
