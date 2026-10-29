@@ -1,4 +1,4 @@
-/* UX27: user-owned game mistakes from PostgreSQL, never localStorage as SoT. */
+/* UX27: user-owned game mistakes read exclusively from PostgreSQL. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
