@@ -49,5 +49,5 @@ test('UX29 release checklist never asserts an unverified Preview or Production i
  assert.match(policy,/\*\*UX29 was not live at that time\.\*\*/);
  assert.match(policy,/Never count an older Preview as evidence/);
  assert.match(policy,/presence\s*\n\s*does \*\*not prove\*\*/);
- assert.match(policy,/Do not\s*\n\s*probe it by creating trial deployments/);
+ assert.match(policy,/do not\s*\n\s*probe it by creating trial deployments/);
 });
