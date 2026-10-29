@@ -127,6 +127,28 @@ try {
  await pageB.locator('[data-word-id="'+wordB.id+'"]').waitFor();
  pass('Chromium/Firefox account notebook UI stays isolated across devices');
 
+ for (const width of [360,390]) {
+  await page1.setViewportSize({width,height:800});
+  const metrics=await page1.evaluate(()=>{
+   const element=document.querySelector('#ws27Account .ws27-word');
+   const box=element.getBoundingClientRect();
+   return {
+    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    left:box.left,right:box.right
+   };
+  });
+  assert.ok(metrics.overflow<=1,
+    'UX27 mobile horizontal overflow at '+width+'px: '+JSON.stringify(metrics));
+  assert.ok(metrics.left>=-1&&metrics.right<=width+1,'UX27 card clipped at '+width+'px');
+ }
+ await page1.locator('#ws27Mode').selectOption('CAR');
+ assert.equal(await page1.locator('[data-word-id="'+wordA.id+'"]').count(),0);
+ await page1.locator('#ws27Mode').selectOption('MATCH');
+ await page1.locator('#ws27Search').fill(wordA.english);
+ await page1.locator('[data-word-id="'+wordA.id+'"]').waitFor({state:'visible'});
+ await page1.locator('#ws27Search').fill('');
+ pass('mobile layout at 360/390px and mode/search filters');
+
  await page1.locator('[data-word-id="'+wordA.id+'"] [data-review-word]').click();
  await wait(async()=>{
   const p=await db.query('SELECT review_count,remembered FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',
