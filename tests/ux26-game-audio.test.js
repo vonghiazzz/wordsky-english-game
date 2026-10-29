@@ -34,7 +34,8 @@ function createAudioHarness(supported = true) {
     hidden: false,
     readyState: 'loading',
     addEventListener(key, fn) { handlers[key] = fn; },
-    querySelector() { return null; }
+    querySelector() { return null; },
+    getElementById() { return null; }
   };
   const window = {
     AudioContext: supported ? Context : undefined,
@@ -84,4 +85,56 @@ test('UX26: navigation, games and feedback hook to audio state changes', () => {
   assert.match(learn, /window\.WordSkyAudio\?\.cue\(won\?'win':'lose'\)/);
   assert.match(learn, /window\.WordSkyAudio\?\.cue\('damage'\)/);
   assert.match(learn, /window\.WordSkyAudio\?\.cue\('correct'\)/);
+});
+
+
+test('UX26: restores context from back-forward cache without losing preferences', async () => {
+  const h = createAudioHarness();
+  h.audio.setScene('CAR', true);
+  h.audio.unlock();
+  assert.equal(h.audio.getState().unlocked, true);
+  h.handlers.pagehide({persisted: true});
+  assert.equal(h.audio.getState().unlocked, true);
+  assert.ok(h.contextEvents.includes('suspend'));
+  h.handlers.pageshow({persisted: true});
+  await Promise.resolve();
+  assert.ok(h.contextEvents.includes('resume'));
+  assert.equal(h.audio.getState().scene, 'CAR');
+});
+
+test('UX26: browser tabs share audio preferences but never force autoplay', () => {
+  const h = createAudioHarness();
+  const key = 'wordsky_audio_v1_';
+  h.saves.set(key + 'music', 'false');
+  h.handlers.storage({key: key + 'music'});
+  assert.equal(h.audio.getState().music, false);
+  h.saves.set(key + 'effects', 'false');
+  h.handlers.storage({key: key + 'effects'});
+  assert.equal(h.audio.getState().effects, false);
+  h.saves.set(key + 'volume', '0');
+  h.handlers.storage({key: key + 'volume'});
+  assert.equal(h.audio.getState().volume, 0);
+  h.audio.setScene('BOMB', true);
+  assert.equal(h.audio.getState().unlocked, false);
+  assert.equal(h.calls.includes('oscillator'), false);
+});
+
+test('UX26: hide tab suspends music and returns to visible state safely', async () => {
+  const h = createAudioHarness();
+  h.audio.setScene('MATCH', true);
+  h.audio.unlock();
+  h.doc.hidden = true;
+  h.handlers.visibilitychange();
+  assert.ok(h.contextEvents.includes('suspend'));
+  h.doc.hidden = false;
+  h.handlers.visibilitychange();
+  await Promise.resolve();
+  assert.ok(h.contextEvents.includes('resume'));
+});
+
+test('UX26: Falling Words wrong answer has SFX; last-heart loss does not double-play damage', () => {
+  assert.match(learn, /WordSkyAudio\?\.cue\('wrong'\)/);
+  const lastHeart = learn.match(/function hit\(\)\{[^\n]+\}/)?.[0] || '';
+  assert.ok(lastHeart.indexOf('endGame(false)') < lastHeart.indexOf("cue('damage')"),
+    'Last heart should trigger lose cue instead of both lose and damage');
 });

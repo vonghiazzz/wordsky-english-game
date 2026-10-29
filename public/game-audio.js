@@ -101,9 +101,10 @@
     unlocked = true;
     try {
       const resuming = context.resume();
-      if (resuming && typeof resuming.then === 'function') resuming.then(syncMusic, () => {});
+      // Start once per gesture, after browsers actually resume the context.
+      if (context.state === 'running') syncMusic();
+      else Promise.resolve(resuming).then(syncMusic, () => {});
     } catch {}
-    syncMusic();
     return true;
   }
   function setScene(name, active) {
@@ -205,15 +206,40 @@
       stopTimer();
       if (context && context.state === 'running') Promise.resolve(context.suspend()).catch(() => {});
     } else if (context && unlocked) {
-      Promise.resolve(context.resume()).then(syncMusic, () => {});
+      try { Promise.resolve(context.resume()).then(syncMusic, () => {}); } catch {}
     }
   });
+  // Settings are browser-local, shared across Arena/Learn tabs on the same origin.
+  window.addEventListener('storage', event => {
+    if (!event.key || !event.key.startsWith(KEY)) return;
+    if (event.key === KEY + 'music') prefs.music = read('music') !== 'false';
+    if (event.key === KEY + 'effects') prefs.effects = read('effects') !== 'false';
+    if (event.key === KEY + 'volume') {
+      const stored = read('volume');
+      const value = Number(stored);
+      prefs.volume = stored !== null && Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 35;
+      if (master) master.gain.value = prefs.volume / 100;
+    }
+    syncMusic();
+    renderControls();
+  });
   window.addEventListener('wordsky:route', refreshPosition);
-  window.addEventListener('pagehide', () => {
+  window.addEventListener('pagehide', event => {
     stopTimer();
+    if (context && event.persisted) {
+      // Back-forward cache: keep the unlockable context for pageshow.
+      if (context.state === 'running') Promise.resolve(context.suspend()).catch(() => {});
+      return;
+    }
     if (context) Promise.resolve(context.close()).catch(() => {});
     context = null;
     unlocked = false;
+  });
+  window.addEventListener('pageshow', event => {
+    refreshPosition();
+    if (event.persisted && context && unlocked && !document.hidden) {
+      try { Promise.resolve(context.resume()).then(syncMusic, () => {}); } catch {}
+    }
   });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refreshPosition, {once: true});
   else refreshPosition();
