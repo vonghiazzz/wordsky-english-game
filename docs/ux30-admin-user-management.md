@@ -25,7 +25,7 @@ to open \`/admin-users.html\`.
   Reset additionally requires a **fresh valid Admin password** in request
   body and strict trusted Origin, not an arbitrary request Host header.
 - New player login/signup sessions carry the database \`session_version\`.
-  All uses of the player session go through async actor validation; every
+  The handler checks the database session version once per request; every
   protected read/write, authenticated Solo association, room membership and
   \`auth/me\` reject stale tokens by comparing against the user's
   current database \`session_version\`.
@@ -35,6 +35,9 @@ to open \`/admin-users.html\`.
 - Older **player login cookies that lack session_version will be rejected**.
   On first deployment with this contract, active learners must sign in again.
   Inform users ahead of Production release.
+- Wrong Admin step-up passwords count against the existing IP-based login
+  failure throttle (10 attempts / 15 minutes). A successful verification
+  clears that IP's failures.
 - Each target can have at most **three resets per hour** (enforced by the
   durable audit table while holding the target row lock).
 - Password policy: **12–128 characters**, includes a letter and a digit,
