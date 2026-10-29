@@ -34,7 +34,8 @@ function createAudioHarness(supported = true) {
     hidden: false,
     readyState: 'loading',
     addEventListener(key, fn) { handlers[key] = fn; },
-    querySelector() { return null; }
+    querySelector() { return null; },
+    getElementById() { return null; }
   };
   const window = {
     AudioContext: supported ? Context : undefined,
