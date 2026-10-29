@@ -20,7 +20,7 @@ function request(path,cookie) {
 const missingTable=Object.assign(new Error('relation "ws_learning_word_progress" does not exist'),{code:'42P01'});
 pg.Pool.prototype.query=async function(){throw missingTable};
 test('Production missing UX10 progress table returns fail-closed HTTP 503, not ReferenceError',async()=>{
- const cookie='ws_auth='+issueSession({role:'player',id:'00000000-0000-4000-8000-000000000001'},secret);
+ const cookie='ws_auth='+issueSession({role:'player',id:'00000000-0000-4000-8000-000000000001',session_version:0},secret);
  const result=await request('learning/flashcards/progress',cookie);
  assert.equal(result.status,503);
  assert.deepEqual(result.body,{error:'Đồng bộ tài khoản chưa được bật trên database này.'});
