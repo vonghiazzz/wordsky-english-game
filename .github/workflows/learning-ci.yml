@@ -1,5 +1,13 @@
 name: WordSky Learning CI
 on:
+  # Manual rerun of full isolated QA for one exact reviewed main commit.
+  # This workflow NEVER deploys to Vercel.
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: 'Full 40-character commit SHA of the current main HEAD'
+        required: true
+        type: string
   push:
     branches:
       - 'feature/ux23c-*'
@@ -37,6 +45,33 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Verify exact main commit for manual release QA
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'expected_sha must be exactly 40 lowercase hexadecimal characters.'
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo 'Manual release QA must run on main.'
+            exit 1
+          fi
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          if [[ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]] || [[ "$GITHUB_SHA" != "$EXPECTED_SHA" ]]; then
+            echo 'Checked-out main SHA differs from requested candidate. Stop.'
+            exit 1
+          fi
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const config=JSON.parse(readFileSync('vercel.json','utf8'));
+          assert.equal(config.git?.deploymentEnabled,false,
+            'Manual QA requires Git-triggered Vercel deployments disabled');
+          console.log('PASS: exact main candidate; no Vercel auto-deployment');
+          JS
       - run: npm ci --ignore-scripts
       - run: npm run check
       - name: Run all tests (including isolated PostgreSQL concurrency)
