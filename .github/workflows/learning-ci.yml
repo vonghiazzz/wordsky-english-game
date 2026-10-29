@@ -175,6 +175,11 @@ jobs:
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
             exit 1
           fi
+          if ! node scripts/ux29-local-insights-e2e.mjs; then
+            echo 'UX29 isolated backend diagnostics (last 80 lines):'
+            tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
+            exit 1
+          fi
 
       - name: Verify temporary QA account cleanup
         run: |
