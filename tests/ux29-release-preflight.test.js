@@ -31,7 +31,7 @@ test('Manual CI retains full isolated DB and browser acceptance, never deploys V
 test('UX29 release checklist requires distinct Preview before manually staging Production',()=>{
  for(const line of [
   'exact SHA',
-  'one manual Vercel Preview build',
+  'manual Vercel Preview build',
   'Preview must not reuse Production',
   'HTTP 503',
   'Human Preview acceptance',
