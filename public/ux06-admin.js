@@ -29,7 +29,7 @@
    section.setAttribute('aria-label','Lối tắt quản trị WordSky');
    section.innerHTML=`<div class="ws06-overview-heading"><div><h2>Trung tâm điều hành</h2><p>Chọn khu vực cần làm việc. Các thao tác quan trọng vẫn được xử lý và kiểm tra quyền bởi máy chủ.</p></div><span class="ws06-private-label">● Khu vực quản trị</span></div>
    <div class="ws06-quick-grid">${choices.map(item=>`<button type="button" class="ws06-quick" data-ws06-open="${item.key}" aria-pressed="false"><span class="ws06-quick-icon" aria-hidden="true">${item.icon}</span><strong>${item.title}</strong><span class="ws06-quick-desc">${item.desc}</span><span class="ws06-quick-link">Mở khu vực →</span></button>`).join('')}</div>
-   <div class="ws06-workflow"><div><strong>Kiểm duyệt từ vựng trước khi mở thi đấu</strong><p>Ưu tiên từ CEFR APPROVED để đáp ứng yêu cầu cấp độ, nhất là các vòng CAR.</p></div><button type="button" class="ws06-review" data-ws06-review>Đến kiểm duyệt CEFR →</button></div>`;
+   <div class="ws06-workflow"><div><strong>Kiểm duyệt từ vựng trước khi mở thi đấu</strong><p>Ưu tiên từ CEFR APPROVED để đáp ứng yêu cầu cấp độ, nhất là các vòng CAR.</p></div><div class="ws06-workflow-actions"><button type="button" class="ws06-review" data-ws06-review>Đến kiểm duyệt CEFR →</button><a class="ws06-review" href="/admin-users.html">👥 Quản lý người dùng →</a></div></div>`;
    host.insertBefore(section,tabs);
   }
   sync();

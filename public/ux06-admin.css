@@ -36,3 +36,6 @@
 @media(max-width:700px){#screen-admin .ws06-quick-grid{grid-template-columns:1fr;gap:10px}#screen-admin .ws06-quick{min-height:0;gap:6px;padding:16px}#screen-admin .ws06-quick-desc{flex:initial}#screen-admin .ws06-workflow{align-items:stretch;flex-direction:column}#screen-admin .ws06-review{width:100%}#screen-admin .admin-panel .form-grid{grid-template-columns:minmax(0,1fr)}#screen-admin .admin-panel .form-grid .span2{grid-column:1}}
 @media(max-width:390px){#screen-admin .ws06-page-title{padding-top:21px}#screen-admin .ws06-private-label{font-size:10px}#screen-admin .ws06-quick strong{font-size:17px}#screen-admin #adminContent>.panel-tabs{gap:6px}}
 @media(prefers-reduced-motion:reduce){#screen-admin .ws06-quick{transition:none}#screen-admin .ws06-quick:hover{transform:none}}
+
+#screen-admin .ws06-workflow-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+@media(max-width:700px){#screen-admin .ws06-workflow-actions{flex-direction:column;align-items:stretch}#screen-admin .ws06-workflow-actions .ws06-review{width:100%}}

@@ -152,7 +152,8 @@ jobs:
             'db/migrations/20261025_ux10_flashcard_progress.sql',
             'db/migrations/20261026_ux17_personal_vocabulary.sql',
             'db/migrations/20261027_ux23_idempotent_review_requests.sql',
-            'db/migrations/20261027_ux24b_shadow_srs_schedules.sql'
+            'db/migrations/20261027_ux24b_shadow_srs_schedules.sql',
+            'db/migrations/20261029_ux30_admin_users_password_reset.sql'
           ];
 
           await db.connect();
@@ -177,7 +178,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          SESSION_SECRET="$(openssl rand -hex 32)"             node scripts/local-server.js             > "$RUNNER_TEMP/wordsky-api.log" 2>&1 &
+          ADMIN_PASSWORD_HASH="$(node --input-type=module -e "import {hashPassword} from './lib/security.js';process.stdout.write(hashPassword('WordSkyAdminQa_2026!'))")" \
+          ADMIN_USERNAME="owner" \
+          SESSION_SECRET="$(openssl rand -hex 32)" \
+          node scripts/local-server.js > "$RUNNER_TEMP/wordsky-api.log" 2>&1 &
 
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
@@ -212,6 +216,11 @@ jobs:
           fi
           if ! node scripts/ux29-local-insights-e2e.mjs; then
             echo 'UX29 isolated backend diagnostics (last 80 lines):'
+            tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
+            exit 1
+          fi
+          if ! node scripts/ux30-admin-users-e2e.mjs; then
+            echo 'UX30 isolated Admin backend diagnostics (last 80 lines):'
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
             exit 1
           fi

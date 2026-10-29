@@ -1,5 +1,6 @@
 // WordSky V4 server-side API. Vercel Node Function, PostgreSQL as durable source of truth.
-import {sql,transaction} from '../lib/db.js';
+import {sql,transaction,getPool} from '../lib/db.js';
+import {createAdminUsersService,isSessionVersionCurrent} from '../lib/admin-users-service.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
@@ -31,11 +32,33 @@ function route(req){
  return s.split('/').filter(Boolean).map(decodeURIComponent);
 }
 function body(req,maxLength=REQ_MAX){let b=req.body??{};if(typeof b==='string'){if(b.length>maxLength)throw fail('Dữ liệu quá dài',413);try{b=JSON.parse(b)}catch{throw fail('JSON không hợp lệ')}};if(!b||typeof b!=='object'||Array.isArray(b)||JSON.stringify(b).length>maxLength)throw fail('Dữ liệu không hợp lệ',413);return b}
-function actor(req){return parseSession(parseCookie(req.headers.cookie,AUTH_COOKIE),secret())}
+function rawActor(req){return parseSession(parseCookie(req.headers.cookie,AUTH_COOKIE),secret())}
+function actor(req){
+ const claim=rawActor(req);
+ return claim?.role==='player'?(req._wsPlayerSessionValid?claim:null):claim;
+}
 function mustAdmin(req){const a=actor(req);if(a?.role!=='admin'||a.id!=='owner')throw fail('Bạn cần đăng nhập quản trị',401);return a}
 function mustPlayer(req){const a=actor(req);if(a?.role!=='player')throw fail('Đăng nhập học viên để sử dụng tính năng này',401);return a}
+function adminUsersService(){
+ const a=process.env.APP_ORIGIN||
+  (process.env.VERCEL_URL?'https://'+process.env.VERCEL_URL:null);
+ return createAdminUsersService({
+  db:getPool(),
+  requireAdmin:async req=>({...mustAdmin(req),username:String(process.env.ADMIN_USERNAME||'owner').toLowerCase()}),
+  verifyAdminPassword:async(_actor,pass,req)=>{
+   const ip=ipOf(req);
+   await throttle(ip);
+   const accepted=Boolean(process.env.ADMIN_PASSWORD_HASH)&&
+    verifyPassword(pass,process.env.ADMIN_PASSWORD_HASH);
+   if(!accepted)await sql('INSERT INTO ws_login_failures(remote_ip) VALUES($1)',[ip]);
+   else await sql('DELETE FROM ws_login_failures WHERE remote_ip=$1',[ip]);
+   return accepted;
+  },
+  hashPassword,verifyPassword,expectedOrigin:a
+ });
+}
 async function playerRow(id){const {rows}=await sql('SELECT id,username,display_name,xp,streak,last_checkin FROM ws_users WHERE id=$1',[id]);if(!rows.length)throw fail('Tài khoản không tồn tại',401);return rows[0]}
-const setAuth=(res,role,id)=>{const maxAge=role==='admin'?12*3600:7*24*3600;res.setHeader('set-cookie',cookie(AUTH_COOKIE,issueSession({role,id},secret(),maxAge),maxAge))};
+const setAuth=(res,role,id,sessionVersion)=>{const maxAge=role==='admin'?12*3600:7*24*3600;const claims=role==='player'?{role,id,session_version:sessionVersion}:{role,id};res.setHeader('set-cookie',cookie(AUTH_COOKIE,issueSession(claims,secret(),maxAge),maxAge))};
 const allowedUser=(v)=>{let s=normalizeName(v,40);if(s.length<2)throw fail('Tên hiển thị tối thiểu 2 ký tự');return s};
 async function throttle(ip){const c=await sql("SELECT count(*)::int AS n FROM ws_login_failures WHERE remote_ip=$1 AND attempted_at>now()-interval '15 minutes'",[ip]);if(c.rows[0].n>=10)throw fail('Đăng nhập quá nhiều lần. Thử lại sau 15 phút.',429)}
 const ipOf=req=>String(req.headers['x-real-ip']||req.socket?.remoteAddress||'unknown').slice(0,70);
@@ -46,20 +69,20 @@ async function signIn(req,res){
   if(process.env.ADMIN_PASSWORD_HASH)passOk=verifyPassword(b.password,process.env.ADMIN_PASSWORD_HASH);
   role='admin';id='owner';
  }else{
-  const r=await sql('SELECT id,password_hash FROM ws_users WHERE username=$1',[u]);row=r.rows[0];
+  const r=await sql('SELECT id,password_hash,session_version FROM ws_users WHERE username=$1',[u]);row=r.rows[0];
   // Hash a dummy when account doesn't exist to reduce username enumeration.
   passOk=verifyPassword(b.password,row?.password_hash||'scrypt:01234567890123456789012345678901:'+('00'.repeat(64)));
   id=row?.id;
  }
  if(!passOk){await sql('INSERT INTO ws_login_failures(remote_ip) VALUES ($1)',[ip]);throw fail('Sai tên đăng nhập hoặc mật khẩu',401)}
  await sql('DELETE FROM ws_login_failures WHERE remote_ip=$1',[ip]);
- setAuth(res,role,id);return {success:true,role};
+ setAuth(res,role,id,row?.session_version);return {success:true,role};
 }
 async function signUp(req,res){
  const f=await sql("SELECT enabled FROM ws_features WHERE feature_key='SIGNUP'");if(f.rows[0]?.enabled===false)throw fail('Hệ thống đang tạm đóng đăng ký',403);
  const b=body(req);const u=username(b.username);if(u===String(process.env.ADMIN_USERNAME||'owner').toLowerCase())throw fail('Tên đăng nhập đã được sử dụng');
  const name=allowedUser(b.display_name||u);const pass=hashPassword(b.password);
- try{const row=await sql('INSERT INTO ws_users(username,display_name,password_hash) VALUES($1,$2,$3) RETURNING id',[u,name,pass]);setAuth(res,'player',row.rows[0].id);return {success:true,username:u}}catch(e){if(e.code==='23505')throw fail('Tên đăng nhập đã tồn tại',409);throw e}
+ try{const row=await sql('INSERT INTO ws_users(username,display_name,password_hash) VALUES($1,$2,$3) RETURNING id,session_version',[u,name,pass]);setAuth(res,'player',row.rows[0].id,row.rows[0].session_version);return {success:true,username:u}}catch(e){if(e.code==='23505')throw fail('Tên đăng nhập đã tồn tại',409);throw e}
 }
 async function checkin(req){
  const a=mustPlayer(req);
@@ -491,6 +514,16 @@ export default async function handler(req,res){
   if(!['GET','POST','PATCH','DELETE'].includes(req.method))return output(res,405,{error:'Phương thức không được hỗ trợ'});
   if(req.method!=='GET'&&!sameOrigin(req))return output(res,403,{error:'Invalid origin'});
   const r=requestSegments=route(req),method=req.method,key=r.join('/');
+  // UX30: validate a signed player cookie against the live DB once per request.
+  // Existing synchronous mustPlayer()/actor() callers then reuse this decision.
+  // No cookie without a matching current session_version may access account data.
+  const playerClaim=rawActor(req);
+  if(playerClaim?.role==='player'){
+   const current=Number.isSafeInteger(playerClaim.session_version)&&playerClaim.session_version>=0
+    ?await sql('SELECT session_version FROM public.ws_users WHERE id=$1',[playerClaim.id])
+    :{rows:[]};
+   req._wsPlayerSessionValid=Boolean(current.rows[0]&&isSessionVersionCurrent(playerClaim,current.rows[0]));
+  }
   if(method==='POST'&&key==='learning/reviews'){
     const userId=mustPlayer(req).id,review=body(req);
     if(review.expected_actor_id!==undefined&&review.expected_actor_id!==userId)
@@ -585,6 +618,19 @@ export default async function handler(req,res){
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSolo(req,r[2]));
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='attempts'&&r[4]&&r.length===5)return output(res,200,await playSolo(req,r[2],undefined,r[4]));
   if(method==='POST'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='answer'&&r.length===4)return output(res,200,await playSolo(req,r[2],body(req)));
+  if(method==='GET'&&key==='admin/users'){
+   const params=new URL(req.url||'/','http://local').searchParams;
+   const page=params.get('page')??'0',size=params.get('size')??'20';
+   if(!/^(0|[1-9][0-9]{0,4})$/.test(page)||!/^[1-9][0-9]{0,1}$/.test(size))
+    throw fail('Phân trang không hợp lệ',400);
+   return output(res,200,await adminUsersService().listUsers(req,{
+    q:params.get('q')??'',page:Number(page),size:Number(size)
+   }));
+  }
+  if(method==='POST'&&r[0]==='admin'&&r[1]==='users'&&r[3]==='reset-password'&&r.length===4){
+   const result=await adminUsersService().resetPassword(req,r[2],body(req,4096));
+   return output(res,200,result);
+  }
   if(method==='GET'&&key==='admin/topics'){mustAdmin(req);return output(res,200,{topics:await fetchTopics(true)})}
   if(method==='POST'&&key==='admin/topics'){
    mustAdmin(req);const b=body(req),title=normalizeName(b.title,80);if(title.length<2)throw fail('Tên chủ đề tối thiểu 2 ký tự');

@@ -29,6 +29,7 @@ const resetHarness=(ids=[runId])=>{enabled=true;rateCount=0;stored=null;runs=new
 pg.Pool.prototype.connect=async function(){
  return {async query(text,params=[]){
   log.push(text);
+  if(text.startsWith('SELECT session_version FROM public.ws_users WHERE id='))return {rows:[{session_version:0}]};
   if(text.startsWith('SELECT enabled FROM ws_features WHERE feature_key='))return {rows:[{enabled}]};
   if(text.startsWith('SELECT t.id,t.title,t.enabled,'))return {rows:[{id:topicId,title:'School',enabled:true,word_count:12,approved_a2:12,approved_bonus:0,approved_double:0}]};
   if(text.startsWith('SELECT id,title,enabled FROM ws_topics'))return {rows:[{id:topicId,title:'School',enabled:true}]};
@@ -163,13 +164,13 @@ test('guest cookie is HttpOnly, SameSite Strict, Secure on HTTPS, tamper-proof a
 
 test('signed-in player can resume without Solo cookie and auth session stays separate',async()=>{
  resetHarness();const playerId='88888888-8888-4888-8888-888888888888';
- const authCookie='ws_auth='+issueSession({role:'player',id:playerId},secret,60);
+ const authCookie='ws_auth='+issueSession({role:'player',id:playerId,session_version:0},secret,60);
  const started=await request('POST','solo/match/start',{cookie:authCookie,body:{difficulty:'EASY',question_count:3,duration_seconds:60}});
  assert.equal(started.status,201);assert.equal(stored.user_id,playerId);assert.match(started.headers['set-cookie'],/^ws_solo=/);
  assert.equal((await request('GET','solo/runs/'+runId,{cookie:authCookie})).status,200);
  const soloCookie=started.headers['set-cookie'].split(';')[0];
  assert.equal((await request('GET','solo/runs/'+runId,{cookie:soloCookie})).status,401);
- const otherPlayer='ws_auth='+issueSession({role:'player',id:'88888888-8888-4888-8888-888888888889'},secret,60);
+ const otherPlayer='ws_auth='+issueSession({role:'player',id:'88888888-8888-4888-8888-888888888889',session_version:0},secret,60);
  assert.equal((await request('GET','solo/runs/'+runId,{cookie:otherPlayer+'; '+soloCookie})).status,401);
 });
 

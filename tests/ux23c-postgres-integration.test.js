@@ -21,7 +21,7 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
   // Minimal FK-compatible fixture: the production migration itself supplies
   // the review ledger, including its RLS/GRANT restrictions.
   await sql(`
-   CREATE TABLE ws_users(id uuid PRIMARY KEY);
+   CREATE TABLE ws_users(id uuid PRIMARY KEY, session_version integer NOT NULL DEFAULT 0);
    CREATE TABLE ws_topics(id uuid PRIMARY KEY, title text NOT NULL, enabled boolean NOT NULL DEFAULT true);
    CREATE TABLE ws_words(id uuid PRIMARY KEY, topic_id uuid NOT NULL REFERENCES ws_topics(id),
      english text NOT NULL DEFAULT 'test word', ipa text NOT NULL DEFAULT '',
@@ -137,7 +137,7 @@ test('UX23C real PostgreSQL serializes conflicting cross-device reviews and retr
   try{
    await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
    const base='http://127.0.0.1:'+server.address().port;
-   const cookieFor=id=>'ws_auth='+issueSession({role:'player',id},process.env.SESSION_SECRET);
+   const cookieFor=id=>'ws_auth='+issueSession({role:'player',id,session_version:0},process.env.SESSION_SECRET);
    const send=async(cookie,method,path,data)=>{
     const response=await fetch(base+path,{
      method,headers:{...(cookie?{cookie}:{}) ,...(data?{'content-type':'application/json'}:{})},

@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS ws_users (
  username text NOT NULL UNIQUE CHECK (username = lower(username)),
  display_name text NOT NULL CHECK (char_length(display_name) BETWEEN 1 AND 40),
  password_hash text NOT NULL,
+ session_version integer NOT NULL DEFAULT 0 CHECK(session_version >= 0),
+ password_changed_at timestamptz,
  xp integer NOT NULL DEFAULT 0 CHECK (xp >= 0),
  streak integer NOT NULL DEFAULT 0 CHECK (streak >= 0),
  last_checkin date,
@@ -181,3 +183,26 @@ BEGIN
   END LOOP;
 END
 $ux10$;
+
+
+-- UX30: administrative password resets only through authenticated server API.
+CREATE TABLE IF NOT EXISTS ws_admin_password_reset_audit (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ admin_username text NOT NULL,
+ target_user_id uuid NOT NULL REFERENCES ws_users(id) ON DELETE CASCADE,
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ws_admin_password_reset_audit_user_time
+ ON ws_admin_password_reset_audit(target_user_id,created_at DESC);
+ALTER TABLE ws_admin_password_reset_audit ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON ws_admin_password_reset_audit FROM PUBLIC;
+DO $ux30$
+DECLARE access_role text;
+BEGIN
+ FOREACH access_role IN ARRAY ARRAY['anon','authenticated'] LOOP
+  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname=access_role) THEN
+   EXECUTE format('REVOKE ALL ON TABLE public.ws_admin_password_reset_audit FROM %I',access_role);
+  END IF;
+ END LOOP;
+END
+$ux30$;
