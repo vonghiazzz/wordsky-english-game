@@ -215,8 +215,9 @@
     if (event.key === KEY + 'music') prefs.music = read('music') !== 'false';
     if (event.key === KEY + 'effects') prefs.effects = read('effects') !== 'false';
     if (event.key === KEY + 'volume') {
-      const value = Number(read('volume'));
-      prefs.volume = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 35;
+      const stored = read('volume');
+      const value = Number(stored);
+      prefs.volume = stored !== null && Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 35;
       if (master) master.gain.value = prefs.volume / 100;
     }
     syncMusic();
