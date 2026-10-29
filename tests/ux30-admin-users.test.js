@@ -134,3 +134,17 @@ test('UX30 account reset is isolated to Admin route; app checks player cookie ve
  assert.match(db,/ENABLE ROW LEVEL SECURITY/);
  assert.doesNotMatch(readFileSync(new URL('../public/admin-users.js',import.meta.url),'utf8'),/localStorage|sessionStorage|innerHTML/);
 });
+
+
+test('UX30 migration stays atomic in the Supabase migration runner',()=>{
+ const sql=readFileSync(new URL('../db/migrations/20261029_ux30_admin_users_password_reset.sql',import.meta.url),'utf8');
+ // Supabase wraps migrations in a transaction. Embedded COMMIT could persist
+ // half the schema while the migration runner reports a failed version.
+ assert.doesNotMatch(sql,/^\s*(?:BEGIN|COMMIT|ROLLBACK)\s*;/im);
+ assert.match(sql,/ADD COLUMN IF NOT EXISTS session_version integer NOT NULL DEFAULT 0/);
+ assert.match(sql,/ADD COLUMN IF NOT EXISTS password_changed_at timestamptz/);
+ assert.match(sql,/CREATE TABLE IF NOT EXISTS public\.ws_admin_password_reset_audit/);
+ assert.match(sql,/ENABLE ROW LEVEL SECURITY/);
+ assert.match(sql,/REVOKE ALL ON public\.ws_admin_password_reset_audit FROM PUBLIC/);
+ assert.match(sql,/GRANT|REVOKE ALL ON TABLE public\.ws_admin_password_reset_audit FROM %I/);
+});
