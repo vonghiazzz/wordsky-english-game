@@ -65,6 +65,7 @@ function closeAuth(){$('authModal').classList.add('hidden')}
 function setLoginMode(m){loginMode=m;$('loginTab').classList.toggle('on',m==='login');$('signupTab').classList.toggle('on',m==='signup');$('authTitle').textContent=m==='login'?'Đăng nhập':'Tạo tài khoản';$('displayNameLabel').classList.toggle('hidden',m!=='signup');$('authForm').elements.password.autocomplete=m==='login'?'current-password':'new-password';}
 async function refreshSession(){try{const x=await api('auth/me');session=x.actor}catch{session=null}
  $('accountButton').innerHTML=session?`${escapeHtml(session.role==='admin'?'⚙ Quản trị viên':session.profile?.display_name||session.id)} <span>↗</span>`:'Đăng nhập <span>↗</span>';
+ $('accountButton').setAttribute('aria-label',session?.role==='player'?'Mở tài khoản và đổi mật khẩu':session?.role==='admin'?'Quản trị viên - đăng xuất':'Đăng nhập');
  window.WordSkyNav?.setAdmin(session?.role==='admin');
  if(session?.role==='player'&&$('joinForm'))$('joinForm').elements.name.value=session.profile?.display_name||'';
 }
@@ -1060,7 +1061,12 @@ async function manageVocabulary(type,id){
  const button=event.target.closest('button,[data-screen],[data-close]');if(!button)return;
  if(button.dataset.screen){event.preventDefault();navigate(button.dataset.screen);return}
  if(button.dataset.close==='auth'){closeAuth();return}
- if(button.id==='accountButton'){if(session){if(confirm('Bạn muốn đăng xuất?'))await logout()}else openAuth();return}
+ if(button.id==='accountButton'){
+  if(session?.role==='player'){location.assign('/account.html');return}
+  if(session){if(confirm('Bạn muốn đăng xuất?'))await logout()}
+  else openAuth();
+  return;
+ }
  if(button.id==='loginTab'){setLoginMode('login');return}
  if(button.id==='signupTab'){setLoginMode('signup');return}
  if(button.id==='attendanceLogin'||button.id==='adminLoginBtn'){setLoginMode('login');openAuth();return}
