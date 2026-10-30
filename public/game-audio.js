@@ -6,7 +6,8 @@
     MATCH: {ms: 380, wave: 'triangle', notes: [64, 67, 71, 74, 72, 69, 67, 64, 62, 67, 69, 71, 67, 64, 62, 59], bass: [48, 45, 50, 43]},
     BOMB: {ms: 280, wave: 'sine', notes: [48, 0, 55, 48, 49, 0, 55, 49, 50, 0, 57, 50, 47, 0, 54, 47], bass: [36, 37, 38, 35]},
     CAR: {ms: 220, wave: 'triangle', notes: [52, 59, 64, 67, 55, 62, 67, 71, 57, 64, 69, 72, 55, 62, 67, 74], bass: [40, 43, 45, 43]},
-    FALLING: {ms: 340, wave: 'sine', notes: [72, 76, 79, 76, 74, 77, 81, 77, 71, 74, 79, 74, 69, 72, 76, 72], bass: [48, 50, 53, 45]}
+    FALLING: {ms: 340, wave: 'sine', notes: [72, 76, 79, 76, 74, 77, 81, 77, 71, 74, 79, 74, 69, 72, 76, 72], bass: [48, 50, 53, 45]},
+    MATRIX: {ms: 320, wave: 'triangle', notes: [60, 64, 67, 71, 69, 65, 62, 67, 72, 67, 64, 60, 65, 69, 67, 62], bass: [45, 48, 43, 50]}
   });
   const CUES = Object.freeze({
     correct: [[76, 0, 0.11], [81, 0.09, 0.18]],
@@ -198,6 +199,8 @@
       mount(gameScreens.includes(current.id) ? current.querySelector('.page-title') : null);
       return;
     }
+    const matrix = document.getElementById('matrixAudio');
+    if (matrix) { mount(matrix); return; }
     const learn = document.getElementById('gamePanel');
     mount(learn && !learn.classList.contains('hidden') ? learn.querySelector('.toolbar') : null);
   }
