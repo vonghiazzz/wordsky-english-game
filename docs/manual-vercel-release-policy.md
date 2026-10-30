@@ -54,3 +54,21 @@
 - Pull-request CI remains enabled and passes.
 - No Vercel deployment is created solely from pushes/PR merges after policy merge.
 - For the next feature, the QA Preview is manually created from an exact SHA; the Production deployment is only created after successful QA.
+
+## Pinned Node.js 24 release gate (UX32)
+
+- Vercel supports Node 26 and automatically selects it when an open-ended
+  `engines.node` range such as `>=22` allows the latest major version.
+- Set `package.json` and `package-lock.json` root engines to `24.x`;
+  `.nvmrc` to `24`; and both PR CI jobs plus the read-only smoke
+  workflow to `node-version: '24'`.
+- Keep the Vercel project setting `nodeVersion=24.x`; `package.json`
+  overrides that setting, so an open-ended range is insufficient.
+- Confirm GitHub unit/PostgreSQL and Chromium/Firefox browser jobs PASS
+  on the exact candidate SHA before spending **one** manual Preview build.
+- Verify the Preview build logs and function runtime show Node.js 24; a
+  successful deployment is not proof of runtime or account behavior.
+- This change is runtime-only; it introduces no schema migration and
+  must not change Production data, customer passwords or access tokens.
+- The existing UX30 Production database migration is separately required
+  before the new Admin/player session API can be released.
