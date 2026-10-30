@@ -49,7 +49,6 @@
 .matrix-result{margin-top:23px;border-color:#4d8a84}
 .matrix-result h2{color:#a2ffe2}
 .matrix-result-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:20px}
-.matrix-result-actions a{color:#a7e7ff;text-decoration:underline;font-weight:800}
 .matrix-wrong-words h3{margin:20px 0 10px}
 .matrix-review-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
 .matrix-review-list>div{display:flex;flex-direction:column;gap:4px;padding:11px 12px;background:#102b43;border:1px solid #477b89;border-radius:10px}
