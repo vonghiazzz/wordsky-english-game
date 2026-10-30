@@ -19,8 +19,8 @@ test('base schema and original additive migration define constrained Solo runs',
  }
  assert.match(migration,/CHECK\(mode='MATCH'\)/);
  assert.match(migration,/question_count BETWEEN 3 AND 20/);
- assert.match(schema,/CHECK\(mode IN \('MATCH','BOMB','CAR','MATRIX'\)\)/);
- assert.match(schema,/question_count BETWEEN 3 AND 30/);
+ assert.match(schema,/CHECK\(mode IN \('MATCH','BOMB','CAR','MATRIX','MEMORY'\)\)/);
+ assert.match(schema,/question_count BETWEEN 3 AND 128/);
  assert.doesNotMatch(migration,/^\s*(?:DROP|TRUNCATE|DELETE)\b/im);
 });
 
@@ -41,7 +41,7 @@ test('local database setup applies both idempotent Solo migrations',()=>{
 
 const carMigration=fs.readFileSync(new URL('../db/migrations/20261024_110000_car_solo.sql',import.meta.url),'utf8');
 test('CAR Solo migration preserves MATCH/BOMB data and validates new constraint',()=>{
- assert.match(schema,/CHECK\(mode IN \('MATCH','BOMB','CAR','MATRIX'\)\)/);
+ assert.match(schema,/CHECK\(mode IN \('MATCH','BOMB','CAR','MATRIX','MEMORY'\)\)/);
  assert.match(carMigration,/CHECK \(mode IN \('MATCH','BOMB','CAR'\)\) NOT VALID/);
  assert.match(carMigration,/VALIDATE CONSTRAINT ws_solo_runs_mode_check/);
  assert.match(carMigration,/ENABLE ROW LEVEL SECURITY/);

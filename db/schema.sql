@@ -57,11 +57,11 @@ CREATE TABLE IF NOT EXISTS ws_rounds (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  event_id uuid NOT NULL REFERENCES ws_events(id) ON DELETE CASCADE,
  position integer NOT NULL CHECK(position BETWEEN 1 AND 12),
- mode text NOT NULL CHECK(mode IN ('MATCH','BOMB','CAR')),
+ mode text NOT NULL CHECK(mode IN ('MATCH','BOMB','CAR','MATRIX','MEMORY')),
  topic_id uuid REFERENCES ws_topics(id),
  difficulty text NOT NULL CHECK(difficulty IN ('EASY','NORMAL','HARD')),
- duration_seconds integer NOT NULL CHECK(duration_seconds BETWEEN 20 AND 600),
- question_count integer NOT NULL CHECK(question_count BETWEEN 3 AND 30),
+ duration_seconds integer NOT NULL CHECK(duration_seconds BETWEEN 20 AND 1800),
+ question_count integer NOT NULL CHECK(question_count BETWEEN 3 AND 128),
  points_per_correct integer NOT NULL CHECK(points_per_correct BETWEEN 10 AND 1000),
  penalty integer NOT NULL CHECK(penalty BETWEEN 0 AND 1000),
  weight integer NOT NULL CHECK(weight BETWEEN 1 AND 10),
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS ws_solo_runs (
  user_id uuid REFERENCES ws_users(id) ON DELETE SET NULL,
  access_token_hash text NOT NULL,
  client_fingerprint_hash text NOT NULL,
- mode text NOT NULL DEFAULT 'MATCH' CHECK(mode IN ('MATCH','BOMB','CAR','MATRIX')),
+ mode text NOT NULL DEFAULT 'MATCH' CHECK(mode IN ('MATCH','BOMB','CAR','MATRIX','MEMORY')),
  topic_id uuid REFERENCES ws_topics(id) ON DELETE SET NULL,
  difficulty text NOT NULL CHECK(difficulty IN ('EASY','NORMAL','HARD')),
  duration_seconds integer NOT NULL CHECK(duration_seconds BETWEEN 20 AND 1800),
@@ -132,12 +132,12 @@ CREATE TABLE IF NOT EXISTS ws_login_failures (
 CREATE INDEX IF NOT EXISTS ws_login_failures_recent ON ws_login_failures(remote_ip, attempted_at DESC);
 
 CREATE TABLE IF NOT EXISTS ws_features (
- feature_key text PRIMARY KEY CHECK(feature_key IN ('MATCH','BOMB','CAR','MATRIX','ATTENDANCE','SIGNUP')),
+ feature_key text PRIMARY KEY CHECK(feature_key IN ('MATCH','BOMB','CAR','MATRIX','MEMORY','ATTENDANCE','SIGNUP')),
  enabled boolean NOT NULL DEFAULT true,
  updated_at timestamptz NOT NULL DEFAULT now()
 );
 INSERT INTO ws_features(feature_key,enabled)
-VALUES ('MATCH',true),('BOMB',true),('CAR',true),('MATRIX',false),('ATTENDANCE',true),('SIGNUP',true)
+VALUES ('MATCH',true),('BOMB',true),('CAR',true),('MATRIX',false),('MEMORY',false),('ATTENDANCE',true),('SIGNUP',true)
 ON CONFLICT(feature_key) DO NOTHING;
 CREATE TABLE IF NOT EXISTS ws_join_failures (
  remote_ip text NOT NULL,

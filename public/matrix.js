@@ -1,244 +1,225 @@
-/* UX33 MATRIX Solo: server-authoritative scoring, idempotent attempts.
- * Never save score, answers, or bilingual mappings to local storage.
- * Only run IDs and in-flight attempt IDs are kept in sessionStorage.
- */
+/* UX34 MATRIX + MEMORY Solo. Server-authoritative scoring, reveals and receipts. */
 (() => {
  'use strict';
  const $=id=>document.getElementById(id);
- const RUN_KEY='wordsky_ux33_matrix_run';
- const PENDING_KEY='wordsky_ux33_matrix_pending';
- let current=null,chosen=null,pending=null,busy=false,offset=0;
- let flash=[],flashCorrect=false,flashUntil=0;
- const safe=value=>String(value??'').replace(/[&<>"']/g,char=>({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
- }[char]));
+ const MODE=document.body.dataset.matrixMode==='MEMORY'?'MEMORY':'MATRIX';
+ const MEMORY=MODE==='MEMORY';
+ const RUN_KEY=MEMORY?'wordsky_ux34_memory_run':'wordsky_ux33_matrix_run';
+ const PENDING_KEY=MEMORY?'wordsky_ux34_memory_pending':'wordsky_ux33_matrix_pending';
+ const DEFAULT_TIME={MATRIX:{6:360,10:720,12:1200},MEMORY:{6:180,10:360,12:600}};
+ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const audio=()=>window.WordSkyAudio;
- const store=(key,value)=>{
-  try{if(value===null)sessionStorage.removeItem(key);
-   else sessionStorage.setItem(key,JSON.stringify(value));}catch{}
- };
+ const save=(key,value)=>{try{if(value==null)sessionStorage.removeItem(key);else sessionStorage.setItem(key,JSON.stringify(value))}catch{}};
  const read=key=>{try{return JSON.parse(sessionStorage.getItem(key)||'null')}catch{return null}};
- async function request(path,options={}){
-  const response=await fetch('/api/'+path,{
-   credentials:'same-origin',cache:'no-store',
-   headers:{'Content-Type':'application/json'},...options
-  });
-  let value=null;
-  try{value=await response.json()}catch{}
-  if(!response.ok)throw new Error(value?.error||'Không thể kết nối máy chủ WordSky');
-  return value;
+ let current=null,selected=null,pending=null,busy=false,offset=0,wrongTimer=null,clockBusy=false,restoreStarted=false;
+ let statusText='',statusError=false;
+ async function api(path,options={}){
+  const res=await fetch('/api/'+path,{credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':'application/json'},...options});
+  let payload;try{payload=await res.json()}catch{payload=null}
+  if(!res.ok)throw new Error(payload?.error||'Không thể kết nối máy chủ WordSky');
+  return payload;
  }
- function message(value,isError=false){
-  const out=$('matrixStatus');
-  if(out){out.textContent=value;out.classList.toggle('is-error',!!isError)}
- }
- function renderStats(){
-  const game=current?.game;
-  if(!game)return;
-  $('matrixScore').textContent=Number(game.score||0).toLocaleString('vi-VN');
-  $('matrixCorrect').textContent=game.correct+'/'+current.round.question_count;
-  $('matrixHearts').textContent='❤️'.repeat(Math.max(0,Number(game.health)||0))+
-   '🖤'.repeat(3-Math.max(0,Number(game.health)||0));
-  $('matrixHearts').setAttribute('aria-label',game.health+' tim còn lại');
-  tick();
+ function message(txt,error=false){
+  statusText=String(txt);statusError=!!error;
+  const el=$('matrixStatus');if(!el)return;
+  el.textContent=statusText;el.classList.toggle('is-error',statusError);
  }
  function tick(){
-  const game=current?.game;
-  if(!game)return;
-  const ms=Math.max(0,Number(game.endsAt)-(Date.now()+offset));
-  const sec=Math.ceil(ms/1000);
-  $('matrixTimer').textContent=String(Math.floor(sec/60)).padStart(2,'0')+
-   ':'+String(sec%60).padStart(2,'0');
-  if(sec===0&&game.status==='PLAYING'&&!busy){
-   busy=true;
-   request('solo/runs/'+current.runId).then(value=>{
-    current=value;chosen=null;sync(value);
-   }).catch(error=>message(error.message,true)).finally(()=>{busy=false});
+  const g=current?.game;if(!g)return;
+  const sec=Math.ceil(Math.max(0,Number(g.endsAt)-(Date.now()+offset))/1000);
+  $('matrixTimer').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+  if(sec===0&&g.status==='PLAYING'&&!clockBusy&&!busy&&!pending){
+   clockBusy=true;refresh().finally(()=>{clockBusy=false});
   }
+ }
+ function stats(){
+  const g=current?.game;if(!g)return;
+  $('matrixScore').textContent=Number(g.score||0).toLocaleString('vi-VN');
+  $('matrixCorrect').textContent=g.correct+'/'+current.round.question_count;
+  const hearts=$('matrixHearts');
+  if(MEMORY){hearts.textContent=g.mistakes+' lần sai · ∞ tim';hearts.setAttribute('aria-label','Không giới hạn tim')}
+  else{hearts.textContent='❤️'.repeat(Math.max(0,g.health))+'🖤'.repeat(Math.max(0,3-g.health));
+   hearts.setAttribute('aria-label',g.health+' tim còn lại')}
+  tick();
  }
  function renderBoard(){
-  const game=current?.game;
-  if(!game)return;
-  const scroll=$('matrixScroll'),left=scroll.scrollLeft,top=scroll.scrollTop;
-  const grid=$('matrixGrid');
-  grid.style.setProperty('--matrix-size',String(game.gridSize));
-  const activeFlash=Date.now()<flashUntil?flash:[];
-  grid.innerHTML=game.cards.map(card=>{
-   const selected=chosen===card.id;
-   const classes='matrix-card matrix-card--'+card.lang+
-    (card.matched?' is-matched':'')+(selected?' is-selected':'')+
-    (activeFlash.includes(card.id)?(flashCorrect?' is-right':' is-wrong'):'');
-   return '<button type="button" class="'+classes+'" data-matrix-id="'+safe(card.id)+'"'+
-    ' aria-pressed="'+selected+'" aria-label="'+safe((card.lang==='en'?'Tiếng Anh: ':'Tiếng Việt: ')+card.label)+'"'+
-    ' title="'+safe(card.label)+'"'+
-    (card.matched||busy||pending||game.status!=='PLAYING'?' disabled':'')+'>'+
-    '<span class="matrix-card-language">'+(card.lang==='en'?'EN':'VI')+'</span>'+
-    '<span class="matrix-card-text">'+safe(card.label)+'</span>'+
-    '</button>';
+  const g=current?.game;if(!g)return;
+  const area=$('matrixScroll'),x=area.scrollLeft,y=area.scrollTop,grid=$('matrixGrid');
+  const locked=MEMORY&&Number(g.flipUntil||0)>Date.now()+offset;
+  grid.style.setProperty('--matrix-size',String(g.gridSize));
+  grid.innerHTML=g.cards.map(c=>{
+   const revealed=!MEMORY||c.revealed===true;
+   const label=MEMORY&&c.matched?'✓':revealed?String(c.label||''):'✦';
+   const lang=revealed?c.lang:null;
+   const classes='matrix-card'+(lang?' matrix-card--'+lang:'')+
+    (MEMORY&&!revealed&&!c.matched?' matrix-card--hidden':'')+
+    (c.matched?' is-matched':'')+(selected===c.id?' is-selected':'')+
+    (c.revealed?' is-flipped':'');
+   const aria=c.matched?'Đã ghép':revealed?(lang==='en'?'Tiếng Anh: ':'Tiếng Việt: ')+label:'Thẻ úp, chọn để lật';
+   return '<button type="button" class="'+classes+'" data-matrix-id="'+safe(c.id)+'" '+
+    'aria-pressed="'+(selected===c.id||!!c.revealed)+'" aria-label="'+safe(aria)+'"'+
+    (revealed?' title="'+safe(label)+'"':'')+
+    (c.matched||busy||pending||locked||g.status!=='PLAYING'?' disabled':'')+'>'+
+    (lang?'<span class="matrix-card-language">'+(lang==='en'?'EN':'VI')+'</span>':'')+
+    '<span class="matrix-card-text">'+safe(label)+'</span></button>';
   }).join('');
-  scroll.scrollLeft=left;scroll.scrollTop=top;
+  area.scrollLeft=x;area.scrollTop=y;
  }
- function terminal(value){
-  const result=$('matrixResult');
-  result.hidden=false;
-  const game=value.game;
-  const won=game.status==='COMPLETED';
-  $('matrixResultTitle').textContent=won?'🎉 Hoàn thành ma trận':
-   game.status==='FAILED'?'💔 Hết 3 tim — thua cuộc':'⌛ Hết giờ';
-  $('matrixResultSummary').textContent='Bạn ghép đúng '+game.correct+' / '+
-   value.round.question_count+' cặp, đạt '+game.score+' điểm và chọn sai '+game.mistakes+' lần.';
-  const sync=value.reviewSync?.status;
+ function terminal(v){
+  const g=v.game,win=g.status==='COMPLETED';
+  $('matrixResult').hidden=false;
+  $('matrixResultTitle').textContent=win?'🎉 Hoàn thành ma trận':g.status==='FAILED'?'💔 Hết 3 tim — thua cuộc':'⌛ Hết giờ';
+  $('matrixResultSummary').textContent='Ghép đúng '+g.correct+'/'+v.round.question_count+
+   ' cặp · '+g.score+' điểm · '+g.mistakes+' lần sai.';
+  const sync=v.reviewSync?.status;
   $('matrixReviewStatus').textContent=sync==='guest'
-   ?'Bạn đang chơi với tư cách khách. Đăng nhập để từ sai tự đồng bộ với My Learning.'
-   :sync==='pending'
-    ?'Máy chủ đã lưu trận; đồng bộ từ sai đang chờ thử lại.'
-    :'Nếu bạn đã đăng nhập, từ sai được tự động đưa vào lịch luyện của tài khoản.';
-  const wrong=Array.isArray(value.reviewWords)?value.reviewWords:[];
-  $('matrixWrongWords').innerHTML=wrong.length?
-   '<h3>Từ cần ôn sau lượt này</h3><div class="matrix-review-list">'+wrong.map(w=>
-    '<div><strong>'+safe(w.english)+'</strong><span>'+safe(w.meaning)+'</span></div>'
-   ).join('')+'</div>':
-   '<p>Chưa có từ ghép sai được ghi nhận trong lượt này.</p>';
-  store(RUN_KEY,null);store(PENDING_KEY,null);
-  audio()?.setScene('MATRIX',false);
+   ?'Bạn đang chơi khách. Đăng nhập để từ sai được đồng bộ vào My Learning.'
+   :sync==='pending'?'Từ sai đang chờ đồng bộ; hãy mở lại lượt chơi.':
+   'Từ sai của tài khoản đã được gửi đến My Learning nếu có.';
+  const wrong=Array.isArray(v.reviewWords)?v.reviewWords:[];
+  $('matrixWrongWords').innerHTML=wrong.length?'<h3>Từ sai cần ôn</h3><div class="matrix-review-list">'+
+   wrong.map(w=>'<div><strong>'+safe(w.english)+'</strong><span>'+safe(w.meaning)+'</span></div>').join('')+'</div>':
+   '<p>Không có từ sai được ghi nhận.</p>';
+  save(RUN_KEY,null);save(PENDING_KEY,null);
+  audio()?.setScene(MODE,false);
+ }
+ function scheduleFlip(){
+  if(wrongTimer!==null)clearTimeout(wrongTimer);
+  wrongTimer=null;
+  const g=current?.game;
+  if(!MEMORY||!g||g.status!=='PLAYING'||!g.flipUntil)return;
+  const id=current.runId;
+  wrongTimer=setTimeout(()=>{wrongTimer=null;if(current?.runId===id&&!pending&&!busy)refresh().catch(()=>{})},
+   Math.max(0,Number(g.flipUntil)-(Date.now()+offset))+65);
  }
  function sync(value){
-  if(!value||value.game?.mode!=='MATRIX')throw new Error('Dữ liệu ma trận không hợp lệ');
-  current=value;
-  offset=Number(value.game.now)-Date.now();
-  $('matrixSetup').hidden=true;
-  $('matrixPlay').hidden=false;
-  renderStats();
-  renderBoard();
-  audio()?.setScene('MATRIX',value.game.status==='PLAYING');
-  if(value.game.status!=='PLAYING'){
-   terminal(value);
-  }else{
-   $('matrixResult').hidden=true;
-   message('Chọn một thẻ tiếng Anh và một thẻ tiếng Việt để ghép.');
-  }
+  if(!value||value.game?.mode!==MODE)throw new Error('Dữ liệu game không hợp lệ');
+  current=value;offset=Number(value.game.now)-Date.now();
+  $('matrixSetup').hidden=true;$('matrixPlay').hidden=false;
+  $('matrixResult').hidden=value.game.status==='PLAYING';
+  stats();renderBoard();
+  audio()?.setScene(MODE,value.game.status==='PLAYING');
+  scheduleFlip();
+  if(value.game.status!=='PLAYING')terminal(value);
  }
- function feedback(previous,updated){
-  if(updated.result?.correct===true){
-   message('Ghép chính xác! +100 điểm');
-   audio()?.cue(updated.game.status==='COMPLETED'?'win':'correct');
-  }else if(updated.result?.correct===false){
-   message('Chưa đúng: −25 điểm và mất 1 tim.',true);
-   audio()?.cue(updated.game.status==='FAILED'?'lose':'damage');
+ async function refresh(){
+  if(!current||pending||busy)return;
+  try{const id=current.runId;const res=await api('solo/runs/'+id);
+   if(current?.runId===id){selected=null;sync(res)}}
+  catch(err){message(err.message,true)}
+ }
+ function feedback(before,after){
+  const r=after.result;
+  if(MEMORY&&r?.complete===false){
+   message('Đã lật thẻ. Hãy ghi nhớ và chọn một thẻ khác.');return;
   }
-  if(previous?.status==='PLAYING'&&updated.game.status==='TIMEOUT')audio()?.cue('lose');
+  if(r?.correct===true){message('Ghép đúng! +'+r.awarded+' điểm');audio()?.cue(after.game.status==='COMPLETED'?'win':'correct')}
+  else if(r?.correct===false){message(MEMORY?'Chưa đúng, hai thẻ tự úp lại. Không mất tim.':'Sai cặp: trừ điểm và mất 1 tim.',true);
+   audio()?.cue(MEMORY?'wrong':after.game.status==='FAILED'?'lose':'damage')}
+  else if(before?.status==='PLAYING'&&after.game.status==='TIMEOUT'){audio()?.cue('lose')}
  }
  async function submitPending(checkFirst=false){
   if(!current||!pending||busy)return;
-  busy=true;
-  $('matrixRetry').hidden=true;
-  renderBoard();
-  const previous=current.game;
+  busy=true;$('matrixRetry').hidden=true;renderBoard();
+  const before=current.game,runId=current.runId;
   try{
-   let answer=null;
+   let response=null;
    if(checkFirst){
-    const existing=await request('solo/runs/'+current.runId+'/attempts/'+pending.attemptId);
-    if(existing.attempt?.applied)answer=existing;
+    const readAttempt=await api('solo/runs/'+runId+'/attempts/'+pending.attemptId);
+    if(readAttempt.attempt?.applied)response=readAttempt;
    }
-   if(!answer)answer=await request('solo/runs/'+current.runId+'/answer',{
-    method:'POST',body:JSON.stringify(pending)
-   });
-   pending=null;store(PENDING_KEY,null);chosen=null;
-   current=answer;feedback(previous,answer);
-   flashCorrect=answer.result?.correct===true;
-   flashUntil=Date.now()+420;
-   renderStats();
+   if(!response)response=await api('solo/runs/'+runId+'/answer',{method:'POST',body:JSON.stringify(pending)});
+   pending=null;save(PENDING_KEY,null);selected=null;busy=false;
+   sync(response);feedback(before,response);renderBoard();
+  }catch{
    busy=false;
-   syncPreservingStatus(answer);
-   setTimeout(()=>{flash=[];flashUntil=0;if(current?.game.status==='PLAYING')renderBoard()},460);
-  }catch(error){
-   message('Chưa xác nhận được thao tác. Bấm “Thử gửi lại thao tác” để kiểm tra và gửi cùng mã lần chọn.',true);
-   $('matrixRetry').hidden=false;
-   busy=false;
-   renderBoard();
+   message('Kết quả chưa được xác nhận. Dùng nút Thử lại để kiểm tra cùng mã thao tác.',true);
+   $('matrixRetry').hidden=false;renderBoard();
   }
- }
- function syncPreservingStatus(value){
-  const status=$('matrixStatus').textContent;
-  const isError=$('matrixStatus').classList.contains('is-error');
-  sync(value);
-  if(value.game.status==='PLAYING')message(status,isError);
  }
  function choose(id){
-  const game=current?.game;
-  if(!game||game.status!=='PLAYING'||busy||pending)return;
-  const card=game.cards.find(c=>c.id===id);
-  if(!card||card.matched)return;
+  const g=current?.game;
+  if(!g||g.status!=='PLAYING'||pending||busy)return;
+  if(MEMORY&&Number(g.flipUntil||0)>Date.now()+offset)return;
+  const c=g.cards.find(x=>x.id===id);
+  if(!c||c.matched||c.revealed)return;
   audio()?.unlock();
-  if(!chosen){chosen=id;message('Đã chọn '+(card.lang==='en'?'tiếng Anh':'tiếng Việt')+'. Chọn thẻ ngôn ngữ còn lại.');renderBoard();return;}
-  if(chosen===id){chosen=null;message('Đã bỏ chọn thẻ.');renderBoard();return;}
-  const first=game.cards.find(c=>c.id===chosen);
-  if(first?.lang===card.lang){
-   chosen=id;message('Chọn một thẻ tiếng Anh và một thẻ tiếng Việt.');renderBoard();return;
+  if(MEMORY){
+   pending={attemptId:crypto.randomUUID(),cardId:id};
+  }else{
+   if(!selected){selected=id;message('Đã chọn '+(c.lang==='en'?'tiếng Anh':'tiếng Việt')+'. Chọn nghĩa tương ứng.');renderBoard();return}
+   if(selected===id){selected=null;renderBoard();return}
+   const other=g.cards.find(x=>x.id===selected);
+   if(other?.lang===c.lang){selected=id;message('Hãy chọn một thẻ tiếng Anh và một thẻ tiếng Việt.');renderBoard();return}
+   pending={attemptId:crypto.randomUUID(),firstId:selected,secondId:id};
   }
-  const attemptId=crypto.randomUUID();
-  flash=[chosen,id];flashCorrect=false;flashUntil=0;
-  pending={attemptId,firstId:chosen,secondId:id};
-  store(PENDING_KEY,pending);
-  submitPending();
+  save(PENDING_KEY,pending);submitPending();
  }
- async function begin(size){
+ async function begin(){
   if(busy)return;
-  busy=true;
-  $('matrixStart').disabled=true;
-  audio()?.unlock();
-  message('Đang tạo ma trận trên máy chủ...');
+  busy=true;$('matrixStart').disabled=true;audio()?.unlock();
+  const h=$('matrixSetup').querySelector('.matrix-hint');
+  h.classList.remove('is-error');message('Đang tạo ma trận...');
   try{
-   const response=await request('solo/matrix/start',{
-    method:'POST',body:JSON.stringify({grid_size:Number(size)})
-   });
-   chosen=null;pending=null;
-   store(RUN_KEY,response.runId);store(PENDING_KEY,null);
-   flash=[];
-   busy=false;
-   sync(response);
-  }catch(error){
-   const hint=$('matrixSetup').querySelector('.matrix-hint');
-   hint.textContent=error.message;
-   hint.classList.add('is-error');
-  }finally{
-   busy=false;$('matrixStart').disabled=false;
-  }
+   const form=new FormData($('matrixForm'));
+   const payload={
+    grid_size:Number(form.get('grid_size')),difficulty:form.get('difficulty'),
+    topic_id:form.get('topic_id')||null,duration_seconds:Number(form.get('duration_seconds')),
+    points_per_correct:Number(form.get('points_per_correct')),penalty:Number(form.get('penalty'))
+   };
+   const res=await api('solo/'+MODE.toLowerCase()+'/start',{method:'POST',body:JSON.stringify(payload)});
+   pending=null;selected=null;save(RUN_KEY,res.runId);save(PENDING_KEY,null);
+   busy=false;sync(res);
+  }catch(err){h.textContent=err.message;h.classList.add('is-error')}
+  finally{busy=false;$('matrixStart').disabled=false}
  }
  async function restore(){
+  if(restoreStarted)return;restoreStarted=true;
   const runId=read(RUN_KEY);
   if(typeof runId!=='string'||!/^[a-f0-9-]{36}$/i.test(runId))return;
   try{
-   const value=await request('solo/runs/'+runId);
-   if(value.game?.mode!=='MATRIX')throw new Error('Đây không phải lượt MATRIX');
-   chosen=null;pending=read(PENDING_KEY);
-   sync(value);
-   if(pending&&value.game.status==='PLAYING'){
+   const res=await api('solo/runs/'+runId);
+   if(res.game?.mode!==MODE)throw new Error('Không đúng chế độ');
+   pending=read(PENDING_KEY);selected=null;sync(res);
+   if(pending&&res.game.status==='PLAYING'){
     $('matrixRetry').hidden=false;
-    message('Có thao tác đang chờ xác nhận từ máy chủ. Chọn “Thử gửi lại thao tác”.');
+    message('Có thao tác chưa xác nhận. Thử lại bằng cùng mã lần chọn.');
    }
-  }catch{
-   store(RUN_KEY,null);store(PENDING_KEY,null);
-   pending=null;
-  }
+  }catch{save(RUN_KEY,null);save(PENDING_KEY,null);pending=null}
  }
- $('matrixForm').addEventListener('submit',event=>{
-  event.preventDefault();begin($('matrixSize').value);
+ async function populateTopics(){
+  try{
+   const response=await api('topics');
+   const select=$('matrixTopic');
+   for(const t of response.topics||[]){
+    const opt=document.createElement('option');opt.value=t.id;
+    opt.textContent=t.title+' ('+t.word_count+' từ)';
+    select.append(opt);
+   }
+  }catch{ /* All topics remains a valid option. */ }
+ }
+ function again(){
+  current=null;selected=null;pending=null;
+  if(wrongTimer!==null)clearTimeout(wrongTimer);wrongTimer=null;
+  save(RUN_KEY,null);save(PENDING_KEY,null);
+  $('matrixPlay').hidden=true;$('matrixResult').hidden=true;
+  $('matrixSetup').hidden=false;$('matrixRetry').hidden=true;
+  audio()?.setScene(MODE,false);
+  $('matrixSetup').scrollIntoView({behavior:'smooth',block:'start'});
+ }
+ $('matrixForm').addEventListener('submit',e=>{e.preventDefault();begin()});
+ $('matrixSize').addEventListener('change',()=>{
+  const time=DEFAULT_TIME[MODE][Number($('matrixSize').value)];
+  if(time)$('matrixDuration').value=String(time);
  });
- $('matrixGrid').addEventListener('click',event=>{
-  const target=event.target.closest('[data-matrix-id]');
-  if(target)choose(target.dataset.matrixId);
+ $('matrixGrid').addEventListener('click',e=>{
+  const el=e.target.closest('[data-matrix-id]');
+  if(el)choose(el.dataset.matrixId);
  });
  $('matrixRetry').addEventListener('click',()=>submitPending(true));
- $('matrixAgain').addEventListener('click',()=>{
-  current=null;chosen=null;pending=null;flash=[];
-  store(RUN_KEY,null);store(PENDING_KEY,null);
-  $('matrixPlay').hidden=true;$('matrixResult').hidden=true;
-  $('matrixSetup').hidden=false;
-  audio()?.setScene('MATRIX',false);
-  $('matrixSetup').scrollIntoView({behavior:'smooth',block:'start'});
- });
- window.addEventListener('pagehide',()=>audio()?.setScene('MATRIX',false));
+ $('matrixAgain').addEventListener('click',again);
+ window.addEventListener('pagehide',()=>audio()?.setScene(MODE,false));
  setInterval(tick,800);
- restore();
+ populateTopics();restore();
 })();

@@ -34,6 +34,8 @@ setup(){
  dc exec -T db psql -X -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test < db/migrations/20261024_110000_car_solo.sql >/dev/null
  echo 'Applying MATRIX Solo migration to LOCAL test DB...'
  dc exec -T db psql -X -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test < db/migrations/20261030_ux33_matrix_solo.sql >/dev/null
+  echo 'Applying MEMORY+competition migration to LOCAL test DB...'
+  dc exec -T db psql -X -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test < db/migrations/20261030_ux34_matrix_memory_config.sql >/dev/null
  echo 'Applying 5-second round migration to LOCAL test DB...'
  dc exec -T db psql -X -v ON_ERROR_STOP=1 -U wordsky_test -d wordsky_v6_test < db/migrations/20261024_160000_room_fast_forward.sql >/dev/null
  echo 'Seeding original 26 topics and 260 words to LOCAL test DB...'

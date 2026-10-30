@@ -120,7 +120,7 @@ function adminInputEvent(b){
  if(typeof b.password!=='string'||b.password.length<8)throw fail('Mật khẩu phòng ít nhất 8 ký tự');
  const max=toInt(b.max_players);if(max<2||max>500)throw fail('Giới hạn người chơi: 2–500');
  if(!Array.isArray(b.rounds)||b.rounds.length<1||b.rounds.length>12)throw fail('Cuộc thi phải có 1–12 vòng');
- return {title,password_hash:hashPassword(b.password),max_players:max,rounds:b.rounds.map(normalizeRound)};
+ return {title,password_hash:hashPassword(b.password),max_players:max,rounds:b.rounds.map(r=>normalizeRound(r,{soloMatrix:true}))};
 }
 function codeGen(){const letters='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:7},()=>letters[randomInt(letters.length)]).join('')}
 // Check the active vocabulary in the same DB transaction as event creation/update.
@@ -189,23 +189,33 @@ async function selectMatchWords(db,round){
 }
 async function selectMatrixWords(db,round){
  const needed=requiredWords(round);
- // Both languages must have unique visible labels. One selected topic currently
- // never reaches 32 pairs, so the first release uses all enabled topics.
+ // A topic filter must never silently fall back to unrelated words.
  const q=await db.query(
-  'SELECT id,english,meaning FROM ('+
-   'SELECT unique_en.*,row_number() OVER (PARTITION BY lower(btrim(unique_en.meaning)) ORDER BY random()) AS vi_rank FROM ('+
-    'SELECT DISTINCT ON (lower(btrim(w.english))) w.id,w.english,w.meaning '+
-    'FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
-    "WHERE w.enabled=true AND t.enabled=true AND btrim(w.english)<>'' AND btrim(w.meaning)<>'' "+
-    'ORDER BY lower(btrim(w.english)),w.id'+
-   ') unique_en'+
-  ') choices WHERE vi_rank=1 ORDER BY random() LIMIT $1',[needed]
+   'SELECT id,english,meaning FROM ('+
+    'SELECT unique_en.*,row_number() OVER (PARTITION BY lower(btrim(unique_en.meaning)) ORDER BY random()) AS vi_rank FROM ('+
+     'SELECT DISTINCT ON (lower(btrim(w.english))) w.id,w.english,w.meaning,w.cefr_level,w.cefr_review_status '+
+     'FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
+     "WHERE w.enabled=true AND t.enabled=true AND btrim(w.english)<>'' AND btrim(w.meaning)<>'' "+
+     'AND ($2::uuid IS NULL OR w.topic_id=$2) '+
+     "ORDER BY lower(btrim(w.english)),CASE WHEN w.cefr_review_status='APPROVED' THEN 0 ELSE 1 END,w.id"+
+    ') unique_en'+
+   ') choices WHERE vi_rank=1 ORDER BY CASE '+
+     "WHEN cefr_review_status='APPROVED' AND ( "+
+       "($3='EASY' AND cefr_level IN ('A1','A2')) OR "+
+       "($3='NORMAL' AND cefr_level IN ('B1','B2')) OR "+
+       "($3='HARD' AND cefr_level IN ('C1','C2')) ) THEN 0 "+
+     "WHEN cefr_review_status='APPROVED' THEN 1 ELSE 2 END,random() LIMIT $1",
+   [needed,round.topic_id||null,round.difficulty]
  );
  assertWordCapacity(round,q.rows.length);
  return q.rows;
 }
 async function ensureVocabulary(db,rounds){
  for(const round of rounds){
+  if(['MATRIX','MEMORY'].includes(round.mode)){
+   await selectMatrixWords(db,round);
+   continue;
+  }
   if(round.mode==='CAR'){
    const r=carWordRequirements(round),got=await approvedCarWordCounts(db,round);
    const missing=Object.entries(r).filter(([name,n])=>got[name]<n)
@@ -242,7 +252,7 @@ async function adminUpdateEvent(req,id){mustAdmin(req);if(badId(id))throw fail('
  if(title.length<3||max<2||max>500)throw fail('Cấu hình không hợp lệ');
  if(b.rounds){
   if(!Array.isArray(b.rounds)||b.rounds.length<1||b.rounds.length>12)throw fail('Vòng thi không hợp lệ');
-  const rounds=b.rounds.map(normalizeRound);
+  const rounds=b.rounds.map(r=>normalizeRound(r,{soloMatrix:true}));
   await ensureVocabulary(db,rounds);
   await db.query('DELETE FROM ws_rounds WHERE event_id=$1',[id]);
   await writeRounds(db,id,rounds);
@@ -259,6 +269,10 @@ async function adminStatus(req,id,verb){mustAdmin(req);if(badId(id))throw fail('
   const rr=await db.query('SELECT mode,difficulty,question_count,topic_id FROM ws_rounds WHERE event_id=$1 ORDER BY position',[id]);
   if(!rr.rows.length)throw fail('Cuộc thi chưa có vòng chơi');
   await ensureVocabulary(db,rr.rows);
+  for(const rd of rr.rows.filter(x=>['MATRIX','MEMORY'].includes(x.mode))){
+   const gate=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[rd.mode]);
+   if(gate.rows[0]?.enabled!==true)throw fail('Chế độ '+rd.mode+' chưa được bật cho thi đấu',403);
+  }
  }
  if(verb==='start'){
   const cnt=await db.query('SELECT count(*)::int n FROM ws_participants WHERE event_id=$1',[id]);if(cnt.rows[0].n<1)throw fail('Cần ít nhất một người tham gia trước khi bắt đầu');
@@ -308,7 +322,7 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
  if(p.admin)throw fail('Admin không tham gia tính điểm',403);
  if(e.status!=='LIVE')throw fail('Cuộc thi chưa bắt đầu',409);
  const round=e.rounds.find(r=>r.id===roundId);if(!round)throw fail('Vòng thi không tồn tại',404);
- const feature=await sql('SELECT enabled FROM ws_features WHERE feature_key=$1',[round.mode]);if(feature.rows[0]?.enabled===false)throw fail('Chế độ chơi hiện đang bị tắt',403);
+ const feature=await sql('SELECT enabled FROM ws_features WHERE feature_key=$1',[round.mode]);if(feature.rows[0]?.enabled===false||(['MATRIX','MEMORY'].includes(round.mode)&&feature.rows[0]?.enabled!==true))throw fail('Chế độ chơi hiện đang bị tắt',403);
  const now=Date.now(),start=Date.parse(round.starts_at),ends=Date.parse(round.ends_at);
  if(now<start||now>=ends)throw fail('Chưa đến hoặc đã hết giờ vòng này',409);
  return transaction(async db=>{
@@ -317,6 +331,8 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
    let words=[];
    if(round.mode==='CAR'){
     words=await selectApprovedCarWords(db,round);
+   }else if(['MATRIX','MEMORY'].includes(round.mode)){
+    words=await selectMatrixWords(db,round);
    }else{
     words=await selectMatchWords(db,round);
    }
@@ -359,7 +375,21 @@ async function playRound(req,code,runId,answer){const e=await eventInfo(code.toU
   const q=await db.query('SELECT a.*,r.mode,r.difficulty,r.points_per_correct,r.penalty,r.weight,r.question_count,r.duration_seconds,r.car_step_seconds,r.bomb_fall_seconds,r.bomb_batch_size,r.bomb_spawn_interval_seconds,r.event_id,r.id AS round_id FROM ws_runs a JOIN ws_rounds r ON r.id=a.round_id WHERE a.id=$1 AND a.participant_id=$2 AND r.event_id=$3 FOR UPDATE OF a',[runId,p.id,e.id]);
   if(!q.rows.length)throw fail('Không tìm thấy lượt chơi',404);const rec=q.rows[0];const now=Date.now();let st=rec.state;
   const previous=JSON.stringify(st);let result={};
-  if(answer){({state:st,result}=answerQuestion(st,rec,answer,now));}
+  if(answer&&['MATRIX','MEMORY'].includes(rec.mode)){
+   const attemptId=String(answer.attemptId||'');
+   if(!idRegexp.test(attemptId))throw fail('Mã lần trả lời không hợp lệ');
+   const content=soloAttemptContent(rec.mode,answer);
+   const receipt=st.answerReceipts?.[attemptId];
+   if(receipt){
+    if(!sameAttemptContent(receiptContent(receipt),content))
+     throw fail('Mã lần trả lời đã dùng cho một thao tác khác',409);
+    result=receiptResult(receipt);
+   }else{
+    ({state:st,result}=answerQuestion(st,rec,answer,now));
+    if(!st.answerReceipts)st.answerReceipts={};
+    st.answerReceipts[attemptId]={content,result};
+   }
+  }else if(answer){({state:st,result}=answerQuestion(st,rec,answer,now));}
   else reconcile(st,rec,now);
   if(JSON.stringify(st)!==previous){await db.query('UPDATE ws_runs SET state=$1::jsonb,score=$2,health=$3,correct=$4,mistakes=$5,status=$6,finished_at=CASE WHEN $6=$7 THEN finished_at ELSE coalesce(finished_at,now()) END WHERE id=$8',[JSON.stringify(st),st.score,st.health,st.correct,st.mistakes,st.status,'PLAYING',runId])}
   return {runId,roundId:rec.round_id,game:publicState(st,now),result};
@@ -373,14 +403,17 @@ async function globalRank(){const r=await sql('SELECT id,display_name,xp,streak 
 
 function soloRound(mode,input){
  const b=input||{};
- if(mode==='MATRIX'){
-  const grid=Number(b.grid_size??8);
-  const counts={8:32,12:72,16:128},seconds={8:600,12:1200,16:1800};
-  if(!Number.isInteger(grid)||!Object.hasOwn(counts,grid))throw fail('Ma trận chỉ hỗ trợ 8×8, 12×12 hoặc 16×16');
-  if(b.topic_id)throw fail('Ma trận cần dùng toàn bộ kho từ vì một chủ đề chưa đủ số cặp');
-  return normalizeRound({mode,difficulty:grid===8?'EASY':grid===12?'NORMAL':'HARD',
-   topic_id:null,duration_seconds:seconds[grid],question_count:counts[grid],
-   points_per_correct:100,penalty:25,weight:1},{soloMatrix:true});
+ if(mode==='MATRIX'||mode==='MEMORY'){
+  const grid=Number(b.grid_size??6);
+  const counts={6:18,10:50,12:72},times={6:360,10:720,12:1200};
+  if(!Number.isInteger(grid)||!Object.hasOwn(counts,grid))
+   throw fail('Ma trận chỉ hỗ trợ 6×6, 10×10 hoặc 12×12');
+  return normalizeRound({
+   mode,difficulty:b.difficulty||'NORMAL',topic_id:b.topic_id||null,
+   duration_seconds:b.duration_seconds??(mode==='MEMORY'?times[grid]/2:times[grid]),
+   question_count:counts[grid],
+   points_per_correct:b.points_per_correct??100,penalty:b.penalty??25,weight:1
+  },{soloMatrix:true});
  }
  return normalizeRound({
   mode,difficulty:b.difficulty||'EASY',topic_id:b.topic_id||null,
@@ -392,7 +425,7 @@ function soloPublicRound(round,state){
  const out={mode:round.mode,topic_id:round.topic_id,difficulty:round.difficulty,duration_seconds:round.duration_seconds,
   question_count:round.question_count,points_per_correct:round.points_per_correct,penalty:round.penalty};
  if(round.mode==='BOMB'||round.mode==='CAR')Object.assign(out,state?.soloConfig||{});
- if(round.mode==='MATRIX')out.grid_size=state?.gridSize;
+ if(['MATRIX','MEMORY'].includes(round.mode))out.grid_size=state?.gridSize;
  return out;
 }
 function soloGuestIdentity(req,signingSecret){
@@ -401,14 +434,14 @@ function soloGuestIdentity(req,signingSecret){
  return {token:randomToken()};
 }
 async function startSolo(req,res,mode){
- if(!['MATCH','BOMB','CAR','MATRIX'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
+ if(!['MATCH','BOMB','CAR','MATRIX','MEMORY'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
  const round=soloRound(mode,body(req));
  const signingSecret=secret();if(!signingSecret||signingSecret.length<32)throw fail('Máy chủ chưa cấu hình SESSION_SECRET an toàn',503);
  const owner=actor(req);const identity=soloGuestIdentity(req,signingSecret);const accessHash=hashToken(identity.token);const now=Date.now();
  const fingerprintHash=hashToken(signingSecret+':'+ipOf(req));
  const created=await transaction(async db=>{
   const feature=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[mode]);
-  if(feature.rows[0]?.enabled===false||(mode==='MATRIX'&&feature.rows[0]?.enabled!==true))throw fail(`Chế độ ${mode} hiện đang tạm dừng`,403);
+  if(feature.rows[0]?.enabled===false||(['MATRIX','MEMORY'].includes(mode)&&feature.rows[0]?.enabled!==true))throw fail(`Chế độ ${mode} hiện đang tạm dừng`,403);
   // Serialize the rate-limit check per fingerprint across all serverless instances.
   await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[fingerprintHash]);
   const recent=await db.query("SELECT count(*)::int AS n FROM ws_solo_runs WHERE client_fingerprint_hash=$1 AND started_at>now()-interval '15 minutes'",[fingerprintHash]);
@@ -417,7 +450,7 @@ async function startSolo(req,res,mode){
    const topic=await db.query('SELECT id FROM ws_topics WHERE id=$1 AND enabled=true',[round.topic_id]);
    if(!topic.rows.length)throw fail('Chủ đề không tồn tại hoặc đang bị tắt',404);
   }
-  const words=mode==='CAR'?await selectApprovedCarWords(db,round):mode==='MATRIX'?await selectMatrixWords(db,round):await selectMatchWords(db,round);
+  const words=mode==='CAR'?await selectApprovedCarWords(db,round):['MATRIX','MEMORY'].includes(mode)?await selectMatrixWords(db,round):await selectMatchWords(db,round);
   const state=createState(round,words,now,now+round.duration_seconds*1000);
   if(mode==='BOMB')state.soloConfig={bomb_fall_seconds:round.bomb_fall_seconds,bomb_batch_size:round.bomb_batch_size,bomb_spawn_interval_seconds:round.bomb_spawn_interval_seconds};
   if(mode==='CAR')state.soloConfig={car_step_seconds:round.car_step_seconds};
@@ -446,6 +479,7 @@ const receiptResult=receipt=>receipt?.result??receipt??{};
 function soloAttemptContent(mode,answer){
  if(mode==='MATCH')return {leftId:String(answer.leftId||''),rightId:String(answer.rightId||'')};
  if(mode==='MATRIX')return {firstId:String(answer.firstId||''),secondId:String(answer.secondId||'')};
+ if(mode==='MEMORY')return {cardId:String(answer.cardId||'')};
  if(mode==='BOMB'){
   if(answer.auto!==true||answer.bombId!==undefined)throw fail('BOMB Solo chỉ nhận chế độ tự động theo từ đã nhập');
   return {answer:normalizeAnswer(answer.answer),auto:true};
@@ -642,6 +676,7 @@ export default async function handler(req,res){
   if(method==='GET'&&key==='topics')return output(res,200,{topics:await fetchTopics(false)});
   if(method==='POST'&&key==='solo/match/start')return output(res,201,await startSolo(req,res,'MATCH'));
    if(method==='POST'&&key==='solo/matrix/start')return output(res,201,await startSolo(req,res,'MATRIX'));
+   if(method==='POST'&&key==='solo/memory/start')return output(res,201,await startSolo(req,res,'MEMORY'));
   if(method==='POST'&&key==='solo/bomb/start')return output(res,201,await startSolo(req,res,'BOMB'));
   if(method==='POST'&&key==='solo/car/start')return output(res,201,await startSolo(req,res,'CAR'));
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSolo(req,r[2]));
@@ -735,7 +770,7 @@ export default async function handler(req,res){
    return output(res,200,{ok:true});
   }
   if(method==='GET'&&key==='admin/features'){mustAdmin(req);const features=await sql('SELECT feature_key,enabled,updated_at FROM ws_features ORDER BY feature_key');return output(res,200,{features:features.rows})}
-  if(method==='PATCH'&&r[0]==='admin'&&r[1]==='features'&&r[2]&&r.length===3){mustAdmin(req);const key=r[2].toUpperCase();if(!['MATCH','BOMB','CAR','MATRIX','ATTENDANCE','SIGNUP'].includes(key))throw fail('Feature không hợp lệ');const b=body(req);if(typeof b.enabled!=='boolean')throw fail('enabled phải là true hoặc false');const q=await sql('INSERT INTO ws_features(feature_key,enabled) VALUES($1,$2) ON CONFLICT(feature_key) DO UPDATE SET enabled=excluded.enabled,updated_at=now() RETURNING feature_key,enabled',[key,b.enabled]);return output(res,200,q.rows[0])}
+  if(method==='PATCH'&&r[0]==='admin'&&r[1]==='features'&&r[2]&&r.length===3){mustAdmin(req);const key=r[2].toUpperCase();if(!['MATCH','BOMB','CAR','MATRIX','MEMORY','ATTENDANCE','SIGNUP'].includes(key))throw fail('Feature không hợp lệ');const b=body(req);if(typeof b.enabled!=='boolean')throw fail('enabled phải là true hoặc false');const q=await sql('INSERT INTO ws_features(feature_key,enabled) VALUES($1,$2) ON CONFLICT(feature_key) DO UPDATE SET enabled=excluded.enabled,updated_at=now() RETURNING feature_key,enabled',[key,b.enabled]);return output(res,200,q.rows[0])}
   if(method==='GET'&&key==='admin/events'){mustAdmin(req);return output(res,200,{events:await adminList()})}
   if(method==='POST'&&key==='admin/events')return output(res,201,await adminCreateEvent(req));
   if(r[0]==='admin'&&r[1]==='events'&&r[2]){
