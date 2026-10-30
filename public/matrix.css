@@ -72,3 +72,13 @@
  .matrix-header p{font-size:14px}
 }
 @media(prefers-reduced-motion:reduce){.matrix-card{transition:none}}
+
+/* UX34: configurable two-mode card game, hidden faces never contain secret labels. */
+.matrix-setup input{width:100%;min-height:48px;background:#10203c;border:1px solid #7194bf;border-radius:11px;padding:10px 12px;color:#eefaff;font:inherit}
+.matrix-setup select:focus-visible,.matrix-setup input:focus-visible{outline:3px solid #8effe2;outline-offset:2px}
+.memory-page .matrix-card--hidden,.room-memory .matrix-card--hidden{background:linear-gradient(140deg,#465b90,#19264b);border-color:#7996d0;color:#fff;box-shadow:inset 0 0 0 2px #eef4ff1c}
+.memory-page .matrix-card--hidden .matrix-card-text,.room-memory .matrix-card--hidden .matrix-card-text{font-size:30px;color:#b5d4ff}
+.memory-page .matrix-card.is-matched,.room-memory .matrix-card.is-matched{opacity:.46;background:#174d44;border-color:#5dbaa0;color:#d4fff0}
+.memory-page .matrix-card.is-matched .matrix-card-text,.room-memory .matrix-card.is-matched .matrix-card-text{font-size:23px}
+.room-card-grid{--matrix-size:6;--matrix-cell:98px;display:grid;grid-template-columns:repeat(var(--matrix-size),var(--matrix-cell));gap:6px;width:max-content;padding:12px}
+.room-matrix-scroll{max-height:60vh;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y}

@@ -5,7 +5,7 @@
  if(!mount)return;
  const isLearn=mount.dataset.wsPage==='learn';
  const isProgress=mount.dataset.wsPage==='progress';
- const isMatrix=mount.dataset.wsPage==='matrix';
+ const isMatrix=mount.dataset.wsPage==='matrix'||mount.dataset.wsPage==='memory';
  const isLearningPage=isLearn||isProgress||isMatrix;
  const menuItems=[
   {key:'home',label:'Trang chủ',url:'/#home',arena:'home'},
@@ -16,12 +16,13 @@
   {key:'solo-bomb',label:'BOMB Solo',url:'/#solo-bomb',arena:'solo-bomb'},
   {key:'solo-car',label:'CAR Solo',url:'/#solo-car',arena:'solo-car'},
   {key:'matrix',label:'Ma trận thẻ',url:'/matrix.html'},
+  {key:'memory',label:'Memory úp thẻ',url:'/memory.html'},
   {key:'rooms',label:'Thi đấu',url:'/#rooms',arena:'rooms'},
   {key:'attendance',label:'Chuyên cần',url:'/#attendance',arena:'attendance'},
   {key:'rank',label:'Xếp hạng',url:'/#rank',arena:'rank'},
   {key:'admin',label:'Admin',url:'/#admin',arena:'admin',adminOnly:true}
  ];
- const gameKeys=new Set(['game','solo','solo-bomb','solo-car','matrix','rooms']);
+ const gameKeys=new Set(['game','solo','solo-bomb','solo-car','matrix','memory','rooms']);
  const navLink=item=>`<a class="ws-nav-link${gameKeys.has(item.key)?' ws-nav-game-link':''}" href="${item.url}" data-ws-route="${item.key}"${!isLearn&&item.arena?` data-screen="${item.arena}"`:''}${item.adminOnly?' hidden':''}>${item.key==='solo'?'MATCH Solo':item.label}</a>`;
  // One disclosure for every game, shared across Arena and Learn. Keep original links.
  // UX-02: five clear destinations, with old deep links preserved below.
@@ -91,6 +92,7 @@
  function activeKey(){
   const hash=window.location.hash.replace(/^#/,'').toLowerCase();
   if(isProgress)return 'learning-progress';
+  if(mount.dataset.wsPage==='memory')return 'memory';
   if(isMatrix)return 'matrix';
   if(isLearn)return hash==='game'?'game':'flash';
   return ['home','solo','solo-bomb','solo-car','rooms','attendance','rank','admin'].includes(hash)?hash:'home';
