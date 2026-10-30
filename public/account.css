@@ -1,0 +1,42 @@
+/* UX40: scope account-security controls; do not affect gameplay or shared navigation. */
+.ws40-account-page{background:radial-gradient(circle at 15% 2%,#202d5c 0%,#0e162c 42%,#07111f 100%);color:#ebf3ff;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.ws40-account-page *{box-sizing:border-box}
+.ws40-account-page [hidden]{display:none!important}
+.ws40-shell{width:min(860px,calc(100% - 32px));margin:0 auto;padding:30px 0 110px}
+.ws40-heading{text-align:center;margin:6px auto 28px;max-width:720px}
+.ws40-eyebrow{color:#7ce8cc;font-size:12px;font-weight:800;letter-spacing:2px}
+.ws40-heading h1{font-size:clamp(30px,5vw,50px);line-height:1.1;letter-spacing:-1.5px;margin:14px 0}
+.ws40-heading p{color:#c6d2eb;line-height:1.7}
+.ws40-card{border-radius:22px;background:linear-gradient(145deg,#1f2b4e,#14243e);border:1px solid #425a82;padding:clamp(20px,4vw,34px);box-shadow:0 20px 54px #0208147a}
+.ws40-card-heading{display:flex;align-items:center;gap:17px;border-bottom:1px solid #435579;padding-bottom:20px;margin-bottom:20px}
+.ws40-icon{width:56px;height:56px;flex:0 0 56px;border-radius:16px;background:#244d55;display:grid;place-items:center;font-size:29px}
+.ws40-card h2{font-size:23px;margin:0 0 7px}
+.ws40-card-heading p{margin:0;color:#acc1dc;font-size:14px;overflow-wrap:anywhere}
+.ws40-card form{display:grid;gap:12px}
+.ws40-card label{font-size:14px;font-weight:760;color:#edf7ff}
+.ws40-card input{font:inherit;min-height:48px;border:1px solid #6580a8;border-radius:11px;background:#0b1930;color:#fff;padding:12px 13px;width:100%;min-width:0}
+.ws40-card input[readonly]{background:#1e2c44;color:#c4d5ed}
+.ws40-card input:focus-visible,.ws40-card button:focus-visible,.ws40-card a:focus-visible{outline:3px solid #8cf4db;outline-offset:2px}
+.ws40-field{display:grid;gap:8px}
+.ws40-password{display:flex;align-items:stretch;gap:6px}
+.ws40-password input{flex:1}
+.ws40-password button{flex-shrink:0;border-radius:11px;border:1px solid #6f8ba9;background:#253e5c;color:#e4f5ff;cursor:pointer;min-width:66px;font:inherit;font-weight:750}
+.ws40-hint,.ws40-footer{font-size:13px;line-height:1.65;color:#c1cee6}
+.ws40-hint{margin:2px 0 8px}
+.ws40-actions{display:flex;flex-wrap:wrap;gap:10px}
+.ws40-button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:11px 18px;border-radius:12px;font:inherit;font-weight:800;text-decoration:none;cursor:pointer;border:1px solid transparent}
+.ws40-primary{background:#6ce7ca;color:#052e2b;border-color:#b6fff0}
+.ws40-primary:hover{background:#a2ffeb}
+.ws40-secondary{background:#223755;color:#eef6ff;border-color:#57749a}
+.ws40-secondary:hover{background:#344f75}
+.ws40-button:disabled{opacity:.56;cursor:wait}
+.ws40-status:empty{display:none}
+.ws40-status{background:#293a56;border:1px solid #4c7094;border-radius:12px;padding:12px 14px;color:#f3f8ff;line-height:1.5}
+.ws40-status[data-kind="error"]{background:#4b293f;border-color:#d28595;color:#ffe6e9}
+.ws40-status[data-kind="success"]{background:#1d433e;border-color:#70c9ad;color:#d3fff1}
+.ws40-done,.ws40-guest{display:grid;justify-items:start;gap:12px;line-height:1.7}
+.ws40-done strong{font-size:19px;color:#9cffe3}
+.ws40-done p,.ws40-guest p{color:#c7d7ef;margin:0}
+.ws40-footer{margin:20px 0 0;text-align:center}
+@media(max-width:390px){.ws40-shell{width:calc(100% - 20px);padding-top:18px}.ws40-card{padding:18px}.ws40-actions{flex-direction:column}.ws40-button{width:100%}.ws40-heading p{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.ws40-account-page *, .ws40-account-page *::before,.ws40-account-page *::after{scroll-behavior:auto!important;transition:none!important}}
