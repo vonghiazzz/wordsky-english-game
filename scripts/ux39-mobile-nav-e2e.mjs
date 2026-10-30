@@ -42,9 +42,18 @@ for(const [browserName,browserType] of [['Chromium',chromium],['Firefox',firefox
     });
     for(const [path,active] of ROUTES){
      const response=await page.goto(ORIGIN+path,{waitUntil:'domcontentloaded',timeout:30000});
-     assert.equal(response.status(),200,browserName+' '+path+' HTTP');
+     // Same-document Arena hash navigation legitimately returns no HTTP response.
+     // Validate the route itself and wait for nav active state instead.
+     if(response)assert.equal(response.status(),200,browserName+' '+path+' HTTP');
+     const expected=new URL(ORIGIN+path);
+     const actual=new URL(page.url());
+     assert.equal(actual.pathname,expected.pathname,browserName+' '+path+' URL path');
+     assert.equal(actual.hash,expected.hash,browserName+' '+path+' URL hash');
      await page.waitForFunction(()=>document.body.classList.contains('ws-mobile-dock-visible'));
      await page.locator('#wsSharedNav .ws-mobile-dock').waitFor({state:'visible'});
+     await page.waitForFunction(key=>
+      [...document.querySelectorAll('.ws-mobile-dock [data-ws-dock].is-active')]
+       .some(a=>a.dataset.wsDock===key),active,{timeout:10000});
      const result=await page.evaluate(()=>{
       const dock=document.querySelector('#wsSharedNav .ws-mobile-dock');
       const links=[...dock.querySelectorAll('a[data-ws-dock]')];
