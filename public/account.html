@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#0b1226">
+ <meta name="description" content="WordSky: quản lý bảo mật và đổi mật khẩu cho tài khoản người chơi.">
+ <title>Tài khoản & bảo mật · WordSky</title>
+ <link rel="stylesheet" href="/shared-nav.css">
+ <link rel="stylesheet" href="/ux-design-system.css">
+ <link rel="stylesheet" href="/account.css">
+ <script src="/shared-nav.js" defer></script>
+ <script type="module" src="/account.js"></script>
+</head>
+<body class="ws40-account-page">
+ <div id="wsSharedNav" data-ws-page="account"></div>
+ <main class="ws40-shell">
+  <header class="ws40-heading">
+   <span class="ws40-eyebrow">WORDSKY · TÀI KHOẢN</span>
+   <h1>Bảo mật tài khoản</h1>
+   <p>Đổi mật khẩu của riêng bạn mà không ảnh hưởng đến từ vựng, điểm số hoặc lịch ôn.</p>
+  </header>
+  <section class="ws40-card" aria-labelledby="ws40Title">
+   <div class="ws40-card-heading">
+    <span class="ws40-icon" aria-hidden="true">🔐</span>
+    <div><h2 id="ws40Title">Đổi mật khẩu</h2>
+     <p id="ws40Identity">Đang xác minh tài khoản đăng nhập…</p>
+    </div>
+   </div>
+   <p id="ws40Status" class="ws40-status" role="status" aria-live="polite"></p>
+   <div id="ws40Guest" class="ws40-guest" hidden>
+    <p>Hãy đăng nhập bằng tài khoản người chơi trước khi đổi mật khẩu.</p>
+    <a class="ws40-button ws40-secondary" href="/#home">Về trang đăng nhập</a>
+   </div>
+   <form id="ws40Form" autocomplete="on" hidden>
+    <label for="ws40Username">Tên đăng nhập</label>
+    <input id="ws40Username" name="username" type="text" autocomplete="username" readonly>
+    <div class="ws40-field">
+     <label for="ws40Current">Mật khẩu hiện tại</label>
+     <div class="ws40-password"><input id="ws40Current" name="current_password" type="password" autocomplete="current-password" maxlength="1024" required>
+     <button type="button" data-ws40-show="ws40Current" aria-label="Hiện mật khẩu hiện tại" aria-pressed="false">Hiện</button></div>
+    </div>
+    <div class="ws40-field">
+     <label for="ws40New">Mật khẩu mới</label>
+     <div class="ws40-password"><input id="ws40New" name="new_password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+     <button type="button" data-ws40-show="ws40New" aria-label="Hiện mật khẩu mới" aria-pressed="false">Hiện</button></div>
+    </div>
+    <div class="ws40-field">
+     <label for="ws40Confirm">Nhập lại mật khẩu mới</label>
+     <div class="ws40-password"><input id="ws40Confirm" name="confirm_password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+     <button type="button" data-ws40-show="ws40Confirm" aria-label="Hiện mật khẩu xác nhận" aria-pressed="false">Hiện</button></div>
+    </div>
+    <p class="ws40-hint">Mật khẩu mới cần 12–128 ký tự, có cả chữ và số, không chứa tên đăng nhập và khác mật khẩu hiện tại.</p>
+    <div class="ws40-actions">
+     <button class="ws40-button ws40-primary" type="submit" id="ws40Submit">Đổi mật khẩu</button>
+     <button class="ws40-button ws40-secondary" type="button" id="ws40Logout">Đăng xuất</button>
+    </div>
+   </form>
+   <div id="ws40Done" class="ws40-done" hidden>
+    <strong>Đã đổi mật khẩu thành công</strong>
+    <p>Để bảo vệ tài khoản, tất cả các phiên đăng nhập cũ đã hết hiệu lực. Hãy đăng nhập lại bằng mật khẩu mới.</p>
+    <a class="ws40-button ws40-primary" href="/#home">Đăng nhập lại</a>
+   </div>
+  </section>
+  <p class="ws40-footer">Bạn quên mật khẩu hiện tại? Hãy liên hệ quản trị viên để đặt lại mật khẩu sau khi xác minh tài khoản.</p>
+ </main>
+</body>
+</html>
