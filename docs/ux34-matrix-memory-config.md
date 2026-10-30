@@ -54,3 +54,9 @@ progress must be preserved. PR does not authorize Production migration.
 5. Explicit Production approval; apply UX33 then UX34 schema before code.
 6. Stage new Production build without alias, smoke, promote if green,
    then explicitly enable selected flags. No automatic Vercel deployment.
+
+### Admin round configuration QA
+Each MATRIX/MEMORY round has an independent wrong-answer penalty; the existing
+competition-wide penalty remains the default for MATCH/BOMB/CAR. Selecting a
+different card-grid size updates the duration to the new mode-specific preset
+only if the prior duration was still the old preset. Custom Admin times stay.

@@ -813,6 +813,19 @@ function carVocabularyNeeds(difficulty,count){
  const plan={EASY:[3,1,0],NORMAL:[1,1,1],HARD:[0,1,2]}[difficulty]||[1,1,1];
  return {A2:plan[0]*count,BONUS:plan[1]*count,DOUBLE:plan[2]*count};
 }
+function cardRoundDefaultDuration(mode,pairs){
+ const presets={MATRIX:{18:360,50:720,72:1200},MEMORY:{18:180,50:360,72:600}};
+ return presets[mode]?.[pairs]??null;
+}
+function cardRoundAdjustedDuration(mode,previousPairs,nextPairs,previousDuration){
+ const oldDefault=cardRoundDefaultDuration(mode,previousPairs);
+ const nextDefault=cardRoundDefaultDuration(mode,nextPairs);
+ return oldDefault!==null&&nextDefault!==null&&Number(previousDuration)===oldDefault
+  ?nextDefault:previousDuration;
+}
+function adminRoundPenalty(mode,roundPenalty,defaultPenalty){
+ return ['MATRIX','MEMORY'].includes(mode)?Number(roundPenalty):Number(defaultPenalty);
+}
 function renderRounds(){
  const host=$('roundsEditor');if(!host)return;
  host.innerHTML=draftRounds.map((r,i)=>{
@@ -835,6 +848,7 @@ function renderRounds(){
   const countHtml=isCards?'<label>Số ô / kích thước<select data-k="question_count">'+
    sizes.map(t=>'<option value="'+t.n+'" '+(t.n===r.question_count?'selected':'')+'>'+t.label+'</option>').join('')+'</select></label>':
    '<label>Số lượt<input type="number" data-k="question_count" min="3" max="'+(r.mode==='MATCH'?Math.min(20,cap):cap)+'" value="'+r.question_count+'"></label>';
+  const cardPenaltyHtml=isCards?'<label>Điểm trừ khi sai<input type="number" data-k="penalty" min="0" max="1000" value="'+Number(r.penalty??25)+'"></label>':'';
   const bombHtml=r.mode==='BOMB'?'<label>Bom rơi (s)<input type="number" data-k="bomb_fall_seconds" min="5" max="60" value="'+(r.bomb_fall_seconds??16)+'"></label>'+
    '<label>Số bom / đợt<input type="number" data-k="bomb_batch_size" min="1" max="3" value="'+(r.bomb_batch_size??2)+'"></label>'+
    '<label>Khoảng cách đợt (s)<input type="number" data-k="bomb_spawn_interval_seconds" min="3" max="45" value="'+(r.bomb_spawn_interval_seconds??9)+'"></label>':'';
@@ -845,7 +859,7 @@ function renderRounds(){
    '<label>Chủ đề<select data-k="topic_id">'+optionsTopics(r.topic_id,true)+'</select></label>'+
    '<label>Độ khó<select data-k="difficulty">'+['EASY','NORMAL','HARD'].map(d=>'<option value="'+d+'" '+(d===r.difficulty?'selected':'')+'>'+d+'</option>').join('')+'</select></label>'+
    '<label>Thời gian (giây)<input type="number" data-k="duration_seconds" min="20" max="'+(isCards?1800:600)+'" value="'+r.duration_seconds+'"></label>'+
-   countHtml+bombHtml+carHtml+
+   countHtml+cardPenaltyHtml+bombHtml+carHtml+
    '<label>Điểm đúng<input type="number" data-k="points_per_correct" min="10" max="1000" value="'+r.points_per_correct+'"></label>'+
    '<label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="'+r.weight+'"></label>'+
    '<div class="round-note">'+stock+cefrHint+'</div>'+
@@ -855,7 +869,7 @@ function renderRounds(){
 function collectRounds(){document.querySelectorAll('[data-round]').forEach(e=>{const i=Number(e.dataset.round);const r=draftRounds[i];e.querySelectorAll('[data-k]').forEach(c=>{r[c.dataset.k]=['mode','topic_id','difficulty'].includes(c.dataset.k)?c.value:Number(c.value)});r.topic_id=r.topic_id||null;
  if(r.mode==='MATCH')r.question_count=Math.min(20,r.question_count);});return draftRounds}
 function renderAdminEvents(){const host=$('adminPanelEvents');if(!host)return;
- host.innerHTML=`<div class="dashboard-card"><div class="dashboard-row"><h2>🛠️ ${editingEvent?'Sửa cuộc thi':'Tạo cuộc thi mới'}</h2>${editingEvent?'<button class="btn" id="cancelEditEvent">Hủy sửa</button>':''}</div><p class="small-note">Cấu hình mật khẩu phòng, số người tối đa, thời gian mỗi vòng và điểm số. Người tham gia nhìn thấy bảng điểm theo thời gian thực.</p><form id="createEventForm" class="form-grid"><label>Tên cuộc thi<input name="title" value="${escapeHtml(editingEvent?.title||'WordSky English Cup')}" required maxlength="120"></label><label>Mật khẩu tham gia<input name="password" type="password" minlength="8" placeholder="${editingEvent?'Bỏ trống để giữ mật khẩu':'Tối thiểu 8 ký tự'}" ${editingEvent?'':'required'} autocomplete="new-password"></label><label>Giới hạn số người<input name="max_players" type="number" min="2" max="500" value="${editingEvent?.max_players||30}" required></label><label>Điểm trừ khi sai<input name="penalty" type="number" min="0" max="1000" value="${draftRounds[0]?.penalty??25}"></label><div class="span2"><div class="dashboard-row"><h3>Các vòng thi (${draftRounds.length})</h3><div class="form-actions"><button type="button" class="btn" data-add-round="MATCH">+ Nối từ</button><button type="button" class="btn" data-add-round="BOMB">+ Bom</button><button type="button" class="btn" data-add-round="CAR" ${carFeatureEnabled?'':'disabled title="CAR chưa bật hoặc chưa có dữ liệu CEFR đã duyệt"'}>+ Đua xe</button><button type="button" class="btn" data-add-round="MATRIX" ${matrixFeatureEnabled?'':'disabled title="MATRIX đang tắt"'}>+ Ma trận mở</button><button type="button" class="btn" data-add-round="MEMORY" ${memoryFeatureEnabled?'':'disabled title="MEMORY đang tắt"'}>+ Ma trận úp</button></div></div><div id="roundsEditor"></div></div><button type="submit" class="btn primary span2">${editingEvent?'Lưu chỉnh sửa':'Tạo phòng thi'} →</button></form></div><div class="dashboard-card"><div class="dashboard-row"><h2>📋 Danh sách giải đấu</h2><span class="pill">${adminEvents.length} giải</span></div><div id="eventsList"></div></div>`;
+ host.innerHTML=`<div class="dashboard-card"><div class="dashboard-row"><h2>🛠️ ${editingEvent?'Sửa cuộc thi':'Tạo cuộc thi mới'}</h2>${editingEvent?'<button class="btn" id="cancelEditEvent">Hủy sửa</button>':''}</div><p class="small-note">Cấu hình mật khẩu phòng, số người tối đa, thời gian mỗi vòng và điểm số. Người tham gia nhìn thấy bảng điểm theo thời gian thực.</p><form id="createEventForm" class="form-grid"><label>Tên cuộc thi<input name="title" value="${escapeHtml(editingEvent?.title||'WordSky English Cup')}" required maxlength="120"></label><label>Mật khẩu tham gia<input name="password" type="password" minlength="8" placeholder="${editingEvent?'Bỏ trống để giữ mật khẩu':'Tối thiểu 8 ký tự'}" ${editingEvent?'':'required'} autocomplete="new-password"></label><label>Giới hạn số người<input name="max_players" type="number" min="2" max="500" value="${editingEvent?.max_players||30}" required></label><label>Điểm trừ mặc định (MATCH/BOMB/CAR)<input name="penalty" type="number" min="0" max="1000" value="${draftRounds[0]?.penalty??25}"></label><div class="span2"><div class="dashboard-row"><h3>Các vòng thi (${draftRounds.length})</h3><div class="form-actions"><button type="button" class="btn" data-add-round="MATCH">+ Nối từ</button><button type="button" class="btn" data-add-round="BOMB">+ Bom</button><button type="button" class="btn" data-add-round="CAR" ${carFeatureEnabled?'':'disabled title="CAR chưa bật hoặc chưa có dữ liệu CEFR đã duyệt"'}>+ Đua xe</button><button type="button" class="btn" data-add-round="MATRIX" ${matrixFeatureEnabled?'':'disabled title="MATRIX đang tắt"'}>+ Ma trận mở</button><button type="button" class="btn" data-add-round="MEMORY" ${memoryFeatureEnabled?'':'disabled title="MEMORY đang tắt"'}>+ Ma trận úp</button></div></div><div id="roundsEditor"></div></div><button type="submit" class="btn primary span2">${editingEvent?'Lưu chỉnh sửa':'Tạo phòng thi'} →</button></form></div><div class="dashboard-card"><div class="dashboard-row"><h2>📋 Danh sách giải đấu</h2><span class="pill">${adminEvents.length} giải</span></div><div id="eventsList"></div></div>`;
   renderRounds();setupPasswordToggles(host);renderAdminEventList();
 }
 function renderAdminEventList(){
@@ -868,7 +882,7 @@ function renderAdminEventList(){
  (adminEvents.length?`<div class="admin-page-bar" role="navigation" aria-label="Phân trang danh sách giải đấu"><span class="small-note">Giải ${from+1}–${from+shown.length}/${adminEvents.length} · Trang ${adminEventPage}/${pages}</span><div class="form-actions"><button type="button" class="btn" data-admin-event-page="prev" ${adminEventPage===1?'disabled':''}>← Trước</button><button type="button" class="btn" data-admin-event-page="next" ${adminEventPage===pages?'disabled':''}>Tiếp →</button></div></div>`:'');
 }
 
-async function submitEventForm(event){event.preventDefault();collectRounds();const f=new FormData(event.target);const p=Object.fromEntries(f);const penalty=Number(p.penalty);const rounds=draftRounds.map(r=>({...r,penalty}));const payload={title:p.title,max_players:Number(p.max_players),rounds};if(p.password)payload.password=p.password;
+async function submitEventForm(event){event.preventDefault();collectRounds();const f=new FormData(event.target);const p=Object.fromEntries(f);const penalty=Number(p.penalty);const rounds=draftRounds.map(r=>({...r,penalty:adminRoundPenalty(r.mode,r.penalty,penalty)}));const payload={title:p.title,max_players:Number(p.max_players),rounds};if(p.password)payload.password=p.password;
  for(const round of rounds){
   if(round.mode==='BOMB'&&round.duration_seconds<(Math.ceil(round.question_count/Number(round.bomb_batch_size??2))-1)*Number(round.bomb_spawn_interval_seconds??9)+Number(round.bomb_fall_seconds??16)){toast('Tăng thời gian vòng: bom cuối chưa đủ thời gian để rơi.',true);return;}
   if(round.mode==='CAR'&&round.duration_seconds<round.question_count*Number(round.car_step_seconds??8)){toast('Vòng CAR cần tổng thời gian ít nhất số chặng × giây mỗi chặng.',true);return;}
@@ -1072,7 +1086,7 @@ async function manageVocabulary(type,id){
   if(mode==='MEMORY'&&!memoryFeatureEnabled)return toast('MEMORY chưa được bật.',true);
   collectRounds();if(draftRounds.length>=12)return toast('Tối đa 12 vòng',true);
   const cards=['MATRIX','MEMORY'].includes(mode);
-  draftRounds.push({mode,difficulty:'NORMAL',duration_seconds:mode==='MATRIX'?360:mode==='MEMORY'?180:90,
+  draftRounds.push({mode,difficulty:'NORMAL',duration_seconds:cards?cardRoundDefaultDuration(mode,18):90,
    question_count:cards?18:8,points_per_correct:100,penalty:25,weight:1,
    topic_id:mode==='CAR'||cards?null:topics[0]?.id||null,
    bomb_fall_seconds:16,bomb_batch_size:2,bomb_spawn_interval_seconds:9,car_step_seconds:8});
@@ -1117,12 +1131,19 @@ window.addEventListener('change',async e=>{
  if(e.target.closest('#roundsEditor')&&e.target.dataset.k){
   const row=Number(e.target.closest('[data-round]')?.dataset.round);
   const previous=draftRounds[row]?.mode;
+  const previousPairs=draftRounds[row]?.question_count;
+  const previousDuration=draftRounds[row]?.duration_seconds;
   collectRounds();
   if(e.target.dataset.k==='mode'&&draftRounds[row]?.mode!==previous){
    const rd=draftRounds[row],cards=['MATRIX','MEMORY'].includes(rd.mode);
    rd.question_count=cards?18:8;
-   rd.duration_seconds=rd.mode==='MATRIX'?360:rd.mode==='MEMORY'?180:90;
+   rd.duration_seconds=cards?cardRoundDefaultDuration(rd.mode,18):90;
    if(cards)rd.topic_id=null;
+  }
+  if(e.target.dataset.k==='question_count'){
+   const rd=draftRounds[row];
+   if(['MATRIX','MEMORY'].includes(rd?.mode))
+    rd.duration_seconds=cardRoundAdjustedDuration(rd.mode,previousPairs,rd.question_count,previousDuration);
   }
   if(e.target.dataset.k==='difficulty'){const r=draftRounds[Number(e.target.closest('[data-round]')?.dataset.round)];if(r?.mode==='BOMB'){const p={EASY:[20,2,10],NORMAL:[16,2,9],HARD:[10,3,6]}[r.difficulty];if(p)[r.bomb_fall_seconds,r.bomb_batch_size,r.bomb_spawn_interval_seconds]=p;}}renderRounds();return;}
  if(e.target.dataset.feature){try{const f=e.target.dataset.feature;await api('admin/features/'+f,{method:'PATCH',body:{enabled:e.target.checked}});toast('Đã cập nhật tính năng '+f);loadAdmin()}catch(x){toast(x.message,true);e.target.checked=!e.target.checked}}
