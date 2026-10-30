@@ -1,5 +1,6 @@
 // WordSky V4 server-side API. Vercel Node Function, PostgreSQL as durable source of truth.
 import {sql,transaction,getPool} from '../lib/db.js';
+import {isDatabaseTargetConfigured} from '../lib/db-target.js';
 import {createAdminUsersService,isSessionVersionCurrent} from '../lib/admin-users-service.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,SOLO_MATRIX_SIZES,MATRIX_DURATION_SECONDS,MEMORY_DURATION_SECONDS,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
@@ -664,7 +665,7 @@ export default async function handler(req,res){
   // Enabled vocabulary is public to all learners, including guests.
   // No user progress, credentials, or CEFR moderation metadata is exposed.
   if(method==='GET'&&key==='learning/vocabulary')return output(res,200,await getFlashcardCatalog());
-  if(method==='GET'&&key==='health')return output(res,200,{ok:true,service:'wordsky-v4',database:!!process.env.DATABASE_URL});
+  if(method==='GET'&&key==='health')return output(res,200,{ok:true,service:'wordsky-v4',database:isDatabaseTargetConfigured()});
   if(method==='POST'&&key==='auth/login')return output(res,200,await signIn(req,res));
   if(method==='POST'&&key==='auth/signup')return output(res,201,await signUp(req,res));
   if(method==='POST'&&key==='auth/logout'){res.setHeader('set-cookie',cookie(AUTH_COOKIE,'',0));return output(res,200,{ok:true})}
