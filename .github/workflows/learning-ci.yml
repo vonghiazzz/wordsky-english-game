@@ -157,6 +157,7 @@ jobs:
             'db/migrations/20261024_100000_bomb_solo.sql',
             'db/migrations/20261024_110000_car_solo.sql',
             'db/migrations/20261030_ux33_matrix_solo.sql',
+            'db/migrations/20261030_ux34_matrix_memory_config.sql',
             'db/migrations/20261024_160000_room_fast_forward.sql',
             'db/migrations/20261025_ux10_flashcard_progress.sql',
             'db/migrations/20261026_ux17_personal_vocabulary.sql',
