@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#0b1226">
+ <meta name="description" content="WordSky Ma trận thẻ: tìm cặp từ tiếng Anh và tiếng Việt trong bảng 8×8, 12×12 hoặc 16×16.">
+ <title>Ma trận thẻ · WordSky</title>
+ <link rel="stylesheet" href="/style.css">
+ <link rel="stylesheet" href="/shared-nav.css">
+ <link rel="stylesheet" href="/ux-design-system.css">
+ <link rel="stylesheet" href="/game-audio.css">
+ <link rel="stylesheet" href="/matrix.css">
+</head>
+<body class="matrix-page">
+ <div id="wsSharedNav" data-ws-page="matrix"></div>
+ <main class="matrix-shell">
+  <header class="matrix-header">
+   <span class="matrix-eyebrow">WORDSKY · MATRIX SOLO</span>
+   <h1>🃏 Ma trận thẻ</h1>
+   <p>Mọi thẻ đều mở sẵn. Chọn một từ tiếng Anh và nghĩa tiếng Việt tương ứng. Mỗi lần ghép đúng được <strong>+100 điểm</strong>; sai bị <strong>−25 điểm và mất 1 tim</strong>. Hết 3 tim là thua.</p>
+   <div id="matrixAudio" aria-label="Cài đặt âm thanh trò chơi"></div>
+  </header>
+  <section id="matrixSetup" class="matrix-setup" aria-labelledby="matrixSetupTitle">
+   <div><h2 id="matrixSetupTitle">Chọn kích thước</h2>
+    <p>Chế độ Solo sử dụng từ vựng máy chủ trên nhiều chủ đề. Các từ trùng nghĩa được loại ra để mỗi thẻ có một đáp án duy nhất.</p></div>
+   <form id="matrixForm">
+    <label for="matrixSize">Độ lớn ma trận</label>
+    <select id="matrixSize" name="grid_size">
+     <option value="8">8 × 8 · 64 thẻ · 32 cặp · 10 phút</option>
+     <option value="12">12 × 12 · 144 thẻ · 72 cặp · 20 phút</option>
+     <option value="16">16 × 16 · 256 thẻ · 128 cặp · 30 phút</option>
+    </select>
+    <button type="submit" class="matrix-primary" id="matrixStart">Bắt đầu chơi</button>
+   </form>
+   <p class="matrix-hint">Bạn có 3 tim ở mọi kích thước. Ma trận lớn có thể cuộn ngang và dọc; không làm chữ nhỏ đến mức khó đọc trên điện thoại.</p>
+  </section>
+  <section id="matrixPlay" class="matrix-play" hidden aria-label="Bàn chơi ma trận thẻ">
+   <div class="matrix-stats" aria-live="polite">
+    <div><small>ĐIỂM</small><strong id="matrixScore">0</strong></div>
+    <div><small>CẶP ĐÃ GHÉP</small><strong id="matrixCorrect">0/32</strong></div>
+    <div><small>TIM</small><strong id="matrixHearts" aria-label="3 tim">❤️❤️❤️</strong></div>
+    <div><small>THỜI GIAN</small><strong id="matrixTimer">10:00</strong></div>
+   </div>
+   <div class="matrix-info">
+    <span id="matrixStatus" role="status" aria-live="polite">Chọn thẻ Anh và Việt để ghép cặp.</span>
+    <button id="matrixRetry" type="button" hidden>Thử gửi lại thao tác</button>
+   </div>
+   <p class="matrix-pan-hint">↔ ↕ Cuộn bàn để tìm từ. Các thẻ xanh là tiếng Anh, thẻ vàng là tiếng Việt. Chọn sai không làm lộ cặp đúng.</p>
+   <div class="matrix-scroll" id="matrixScroll" tabindex="0" aria-label="Cuộn ma trận thẻ">
+    <div id="matrixGrid" class="matrix-grid" role="group" aria-label="Các thẻ từ vựng"></div>
+   </div>
+  </section>
+  <section id="matrixResult" class="matrix-result" hidden aria-live="polite">
+   <h2 id="matrixResultTitle">Kết quả</h2>
+   <p id="matrixResultSummary"></p>
+   <p id="matrixReviewStatus"></p>
+   <div id="matrixWrongWords" class="matrix-wrong-words"></div>
+   <div class="matrix-result-actions">
+    <button id="matrixAgain" type="button" class="matrix-primary">Chơi lại</button>
+    <a href="/progress.html">Mở My Learning</a>
+    <a href="/#home">Chọn trò khác</a>
+   </div>
+  </section>
+ </main>
+ <script src="/shared-nav.js" defer></script>
+ <script src="/game-audio.js" defer></script>
+ <script src="/matrix.js" defer></script>
+</body>
+</html>
