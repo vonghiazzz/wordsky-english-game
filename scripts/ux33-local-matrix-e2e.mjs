@@ -36,7 +36,6 @@ async function clickPair(page,a,b){
  await page.locator('[data-matrix-id="'+a+'"]').click();
  await page.locator('[data-matrix-id="'+b+'"]').click();
 }
-const delay=async millis=>new Promise(resolve=>setTimeout(resolve,millis));
 try{
  assert.equal((await db.query('SELECT current_database() AS db')).rows[0].db,'wordsky_v6_test');
  const capacity=await db.query(
@@ -55,7 +54,7 @@ try{
  const started=await db.query('SELECT state FROM ws_solo_runs WHERE id=$1',[run8]);
  const p=started.rows[0].state.pairs[0];
  await clickPair(page,p.enId,p.viId);
- await page.locator('#matrixScore').getByText('100').waitFor();
+ await page.waitForFunction(()=>document.getElementById('matrixScore')?.textContent==='100');
  assert.match(await page.locator('#matrixCorrect').textContent(),/^1\/32$/);
  assert.equal(await page.locator('.matrix-card.is-matched').count(),2);
  pass('8x8 grades correct pair on server and locks two matching cards');
@@ -68,7 +67,7 @@ try{
  for(let i=0;i<3;i++){
   await clickPair(page,pairs[1].enId,pairs[2].viId);
   if(i===2)await page.locator('#matrixResult').waitFor({state:'visible'});
-  else await page.waitForFunction(expected=>document.getElementById('matrixHearts')?.textContent.includes('❤️'.repeat(expected)),2-i);
+  else await page.waitForFunction(expected=>document.getElementById('matrixHearts')?.textContent===('❤️'.repeat(expected)+'🖤'.repeat(3-expected)),2-i);
  }
  assert.match(await page.locator('#matrixResultTitle').textContent(),/Hết 3 tim/);
  assert.equal((await db.query('SELECT state FROM ws_solo_runs WHERE id=$1',[run8])).rows[0].state.mistakes,3);
@@ -100,7 +99,7 @@ try{
  for(let i=0;i<3;i++){
   await clickPair(playerPage,one.enId,two.viId);
   if(i===2)await playerPage.locator('#matrixResult').waitFor({state:'visible'});
-  else await playerPage.waitForFunction(n=>document.getElementById('matrixHearts')?.textContent.includes('❤️'.repeat(n)),2-i);
+  else await playerPage.waitForFunction(n=>document.getElementById('matrixHearts')?.textContent===('❤️'.repeat(n)+'🖤'.repeat(3-n)),2-i);
  }
  // UX27 auto-review is idempotently triggered as soon as the terminal result is committed.
  const reviews=await db.query(
