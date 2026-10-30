@@ -156,6 +156,7 @@ jobs:
             'db/migrations/20261023_220000_match_solo.sql',
             'db/migrations/20261024_100000_bomb_solo.sql',
             'db/migrations/20261024_110000_car_solo.sql',
+            'db/migrations/20261030_ux33_matrix_solo.sql',
             'db/migrations/20261024_160000_room_fast_forward.sql',
             'db/migrations/20261025_ux10_flashcard_progress.sql',
             'db/migrations/20261026_ux17_personal_vocabulary.sql',
@@ -229,6 +230,11 @@ jobs:
           fi
           if ! node scripts/ux30-admin-users-e2e.mjs; then
             echo 'UX30 isolated Admin backend diagnostics (last 80 lines):'
+            tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
+            exit 1
+          fi
+          if ! node scripts/ux33-local-matrix-e2e.mjs; then
+            echo 'UX33 isolated MATRIX diagnostics (last 80 lines):'
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
             exit 1
           fi
