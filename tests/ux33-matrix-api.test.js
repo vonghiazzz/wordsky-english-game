@@ -129,3 +129,34 @@ test('UX33 POST answer is server-graded and receipt retry is idempotent',async()
  assert.equal(game.state.wrongWordIds.length,2);
  assert.ok(!('wrongWordIds' in b.data.game));
 });
+
+test('UX34 MEMORY Solo returns only hidden cards and preserves idempotent flips without hearts',async()=>{
+ reset();enabled=true;
+ const started=await api('POST','solo/memory/start',{body:{grid_size:6}});
+ assert.equal(started.status,201);
+ const cookie=started.headers['set-cookie']?.split(';')[0];
+ assert.equal(started.data.round.mode,'MEMORY');
+ assert.equal(started.data.round.question_count,18);
+ assert.equal(started.data.round.duration_seconds,180);
+ assert.equal(started.data.game.cards.length,36);
+ assert.ok(started.data.game.cards.every(c=>!('label' in c)&&!('lang' in c)));
+ const one=game.state.pairs[0],two=game.state.pairs[1];
+ const reveal={attemptId:attempt(21),cardId:one.enId};
+ const first=await api('POST','solo/runs/'+runId+'/answer',{cookie,body:reveal});
+ assert.equal(first.status,200);
+ assert.equal(first.data.game.cards.filter(c=>c.revealed).length,1);
+ assert.ok(first.data.game.cards.find(c=>c.id===one.enId).label);
+ const replay=await api('POST','solo/runs/'+runId+'/answer',{cookie,body:reveal});
+ assert.equal(replay.status,200);
+ assert.equal(replay.data.duplicate,true);
+ assert.equal(replay.data.game.score,0);
+ const bad=await api('POST','solo/runs/'+runId+'/answer',{cookie,
+  body:{attemptId:attempt(22),cardId:two.viId}});
+ assert.equal(bad.status,200);
+ assert.equal(bad.data.game.mistakes,1);
+ assert.equal(bad.data.game.health,3);
+ assert.equal(bad.data.game.cards.filter(c=>c.revealed).length,2);
+ const altered=await api('POST','solo/runs/'+runId+'/answer',{cookie,
+  body:{attemptId:attempt(22),cardId:one.viId}});
+ assert.equal(altered.status,409);
+});
