@@ -43,3 +43,21 @@ test('Manual release instructions require approved Preview before Production',()
   'No Vercel deployment is created solely from pushes'
  ])assert.ok(doc.includes(phrase),'Missing release gate: '+phrase);
 });
+
+test('WordSky pins Node 24 across Vercel, lockfile, CI and local development',()=>{
+ const pkg=JSON.parse(read('package.json'));
+ const lock=JSON.parse(read('package-lock.json'));
+ assert.equal(pkg.engines.node,'24.x','Vercel must not auto-select Node 26');
+ assert.equal(lock.packages[''].engines.node,'24.x','npm lockfile must match package.json');
+ assert.equal(read('.nvmrc').trim(),'24','local developer runtime must match CI');
+ const ci=read('.github/workflows/learning-ci.yml');
+ const smoke=read('.github/workflows/ux26-production-readonly-smoke.yml');
+ assert.equal((ci.match(/node-version:\s*'24'/g)||[]).length,2,
+  'Both unit/PostgreSQL and Chromium/Firefox jobs must use Node 24');
+ assert.equal((ci.match(/Verify Node.js 24 runtime/g)||[]).length,2);
+ assert.equal((smoke.match(/node-version:\s*'24'/g)||[]).length,1,
+  'Read-only smoke should not run on a different Node version');
+ assert.doesNotMatch(ci+smoke,/node-version:\s*['"](?:22|26)['"]/);
+ assert.deepEqual(vercel.git,{deploymentEnabled:false},
+  'Pinning Node must never enable Git-triggered Vercel deploys');
+});
