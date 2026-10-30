@@ -131,7 +131,7 @@
       $('ws27Total').textContent=words.length+(result.has_more?'+':'');
       $('ws27Misses').textContent=words.reduce((sum,w)=>sum+Number(w.mistake_runs||0),0);
       $('ws27Reviewed').textContent=words.filter(w=>w.remembered===false&&Number(w.review_count||0)>0).length;
-      $('ws27Scope').textContent='Từ sai của tài khoản hiện tại · PostgreSQL · Chỉ Solo MATCH/BOMB/CAR từ UX27. Tối đa '+result.limit+' từ gần đây.';
+      $('ws27Scope').textContent='Từ khó sau Solo MATCH/BOMB/CAR/MATRIX/MEMORY · Lưu theo tài khoản PostgreSQL · Tối đa '+result.limit+' từ gần đây.';
       render();
       message(syncError
         ?'Đã tải '+words.length+' từ. Chưa xác minh đồng bộ tự động: '+syncError
