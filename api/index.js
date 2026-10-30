@@ -627,6 +627,15 @@ export default async function handler(req,res){
     q:params.get('q')??'',page:Number(page),size:Number(size)
    }));
   }
+  if(method==='GET'&&key==='admin/users/reset-history'){
+   const params=new URL(req.url||'/','http://local').searchParams;
+   const page=params.get('page')??'0',size=params.get('size')??'20';
+   if(!/^(0|[1-9][0-9]{0,4})$/.test(page)||!/^[1-9][0-9]{0,1}$/.test(size))
+    throw fail('Phân trang không hợp lệ',400);
+   return output(res,200,await adminUsersService().listResetHistory(req,{
+    q:params.get('q')??'',page:Number(page),size:Number(size)
+   }));
+  }
   if(method==='POST'&&r[0]==='admin'&&r[1]==='users'&&r[3]==='reset-password'&&r.length===4){
    const result=await adminUsersService().resetPassword(req,r[2],body(req,4096));
    return output(res,200,result);

@@ -1,7 +1,9 @@
 /* UX30: thin Admin UI. All authorization and password validation live on server. */
 const $=id=>document.getElementById(id);
 let page=0,total=0,selected=null,seq=0;
+let historyPage=0,historyTotal=0,historySeq=0;
 const SIZE=20;
+const HISTORY_SIZE=20;
 async function api(path,options={}){
  const response=await fetch('/api/'+path,{credentials:'same-origin',cache:'no-store',...options});
  const payload=await response.json().catch(()=>({}));
@@ -46,6 +48,51 @@ async function listUsers(){
   $('auListStatus').textContent='Không tải được danh sách: '+error.message;
  }
 }
+function formatHistoryTime(value){
+ const timestamp=new Date(value);
+ if(!Number.isFinite(timestamp.getTime()))return 'Không rõ thời gian';
+ return new Intl.DateTimeFormat('vi-VN',{
+  timeZone:'Asia/Ho_Chi_Minh',dateStyle:'medium',timeStyle:'short'
+ }).format(timestamp);
+}
+async function listResetHistory(){
+ const ticket=++historySeq;
+ $('auHistoryStatus').textContent='Đang tải lịch sử…';
+ const filters=new URLSearchParams({
+  q:$('auHistorySearch').value.trim(),page:String(historyPage),size:String(HISTORY_SIZE)
+ });
+ try{
+  const data=await api('admin/users/reset-history?'+filters);
+  if(ticket!==historySeq)return;
+  if(!Array.isArray(data.events)||!Number.isSafeInteger(data.total))
+   throw Error('Dữ liệu lịch sử không hợp lệ');
+  historyTotal=data.total;
+  const host=$('auHistory');
+  host.replaceChildren();
+  for(const event of data.events){
+   const line=text('article','','au-history-item');
+   const info=text('div','');
+   info.append(
+    text('strong',event.target_username),
+    text('small','Thực hiện bởi Admin: '+event.admin_username)
+   );
+   const time=text('time',formatHistoryTime(event.created_at),'au-history-time');
+   const parsed=new Date(event.created_at);
+   if(Number.isFinite(parsed.getTime()))time.dateTime=parsed.toISOString();
+   line.append(info,time);
+   host.append(line);
+  }
+  if(!data.events.length)host.append(text('p','Chưa có lần đặt lại mật khẩu phù hợp.'));
+  $('auHistoryStatus').textContent=historyTotal+' lần đặt lại mật khẩu';
+  $('auHistoryPage').textContent=(historyPage+1)+' / '+Math.max(1,Math.ceil(historyTotal/HISTORY_SIZE));
+  $('auHistoryPrev').disabled=historyPage===0;
+  $('auHistoryNext').disabled=(historyPage+1)*HISTORY_SIZE>=historyTotal;
+ }catch(error){
+  if(ticket!==historySeq)return;
+  $('auHistory').replaceChildren();
+  $('auHistoryStatus').textContent='Không tải được lịch sử: '+error.message;
+ }
+}
 function openReset(user){
  if(typeof user.id!=='string'||typeof user.username!=='string')return;
  selected={id:user.id,username:user.username};
@@ -55,6 +102,15 @@ function openReset(user){
  $('auDialog').showModal();
  $('auConfirmUsername').focus();
 }
+$('auHistoryForm').addEventListener('submit',event=>{
+ event.preventDefault();historyPage=0;listResetHistory();
+});
+$('auHistoryPrev').addEventListener('click',()=>{
+ if(historyPage>0){historyPage--;listResetHistory();}
+});
+$('auHistoryNext').addEventListener('click',()=>{
+ if((historyPage+1)*HISTORY_SIZE<historyTotal){historyPage++;listResetHistory();}
+});
 $('auSearchForm').addEventListener('submit',event=>{
  event.preventDefault();page=0;listUsers();
 });
@@ -93,7 +149,7 @@ $('auResetForm').addEventListener('submit',async event=>{
   const name=result.username;
   $('auDialog').close();
   $('auListStatus').textContent='Đã đặt lại mật khẩu cho '+name+'; phiên đăng nhập cũ không còn hợp lệ.';
-  await listUsers();
+  await Promise.all([listUsers(),listResetHistory()]);
   $('auListStatus').textContent='Đã đặt lại mật khẩu cho '+name+'; phiên đăng nhập cũ không còn hợp lệ.';
  }catch(error){$('auResetStatus').textContent='Chưa thay đổi mật khẩu: '+error.message}
  finally{submit.disabled=false;$('auCancel').disabled=false;$('auAdminPassword').value='';}
@@ -106,7 +162,8 @@ $('auResetForm').addEventListener('submit',async event=>{
    $('auAuth').textContent='Bạn cần đăng nhập tài khoản quản trị trong WordSky trước khi mở trang này.';
    return;
   }
-  $('auAuth').hidden=true;$('auApp').hidden=false;await listUsers();
+  $('auAuth').hidden=true;$('auApp').hidden=false;$('auHistorySection').hidden=false;
+  await Promise.all([listUsers(),listResetHistory()]);
  }catch(error){
   $('auAuth').dataset.error='true';
   $('auAuth').textContent='Không xác minh được quyền quản trị: '+error.message;

@@ -35,6 +35,24 @@
    <button type="button" id="auNext">Sau →</button>
   </nav>
  </section>
+ <section id="auHistorySection" class="au-panel au-history-panel" hidden aria-labelledby="auHistoryTitle">
+  <div class="au-bar">
+   <div><span class="au-eyebrow">NHẬT KÝ BẢO MẬT</span><h2 id="auHistoryTitle">Lịch sử đặt lại mật khẩu</h2></div>
+   <form id="auHistoryForm" role="search" aria-label="Tìm lịch sử đặt lại mật khẩu">
+    <label for="auHistorySearch">Tìm theo username học viên</label>
+    <div class="au-search-row"><input id="auHistorySearch" name="q" maxlength="64"
+      placeholder="Username học viên" autocomplete="off">
+     <button type="submit">Tìm lịch sử</button></div>
+   </form>
+  </div>
+  <p id="auHistoryStatus" class="au-status" role="status" aria-live="polite"></p>
+  <div id="auHistory" class="au-list" aria-live="polite"></div>
+  <nav class="au-pages" aria-label="Phân trang lịch sử đặt lại mật khẩu">
+   <button type="button" id="auHistoryPrev">← Trước</button>
+   <span id="auHistoryPage">1 / 1</span>
+   <button type="button" id="auHistoryNext">Sau →</button>
+  </nav>
+ </section>
  <p class="au-note">Mật khẩu cũ không thể xem lại. Mỗi lần đặt lại phải xác thực mật khẩu Admin, được ghi nhật ký và làm mất hiệu lực phiên đăng nhập cũ của học viên.</p>
 </main>
 <dialog id="auDialog" aria-labelledby="auDialogTitle">
