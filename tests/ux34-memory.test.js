@@ -7,7 +7,7 @@ import {
  MATRIX_SIZES,MATRIX_DURATION_SECONDS,MEMORY_DURATION_SECONDS
 } from '../lib/game.js';
 
-const words=Array.from({length:100},(_,i)=>({
+const words=Array.from({length:140},(_,i)=>({
  id:'22222222-2222-4222-8222-'+String(i).padStart(12,'0'),
  english:'English '+i,meaning:'Nghĩa '+i
 }));
@@ -17,16 +17,18 @@ function rd(size,mode='MEMORY'){
   duration_seconds:mode==='MEMORY'?MEMORY_DURATION_SECONDS[size]:MATRIX_DURATION_SECONDS[size],
   points_per_correct:100,penalty:25,weight:1},{soloMatrix:true});
 }
-for(const size of [6,10,12]){
+for(const size of [4,5,6,8,10,12,16]){
  test('UX34 '+size+'x'+size+' MATRIX and MEMORY use matching word capacities',()=>{
-  assert.equal(MATRIX_SIZES[size],size*size/2);
+  assert.equal(MATRIX_SIZES[size],Math.floor(size*size/2));
   const matrix=rd(size,'MATRIX'),memory=rd(size);
   assert.equal(memory.duration_seconds,matrix.duration_seconds/2);
   for(const round of [matrix,memory]){
    const st=createState(round,words,1000),shown=publicState(st,1000);
    assert.equal(shown.cards.length,size*size);
    assert.equal(shown.gridSize,size);
-   assert.equal(new Set(shown.cards.map(c=>c.id)).size,size*size);
+   assert.equal(new Set(shown.cards.filter(c=>!c.empty).map(c=>c.id)).size,MATRIX_SIZES[size]*2);
+   assert.equal(shown.cards.filter(c=>c.empty).length,size%2);
+   if(size===5)assert.deepEqual(shown.cards[12],{empty:true});
    assert.equal(st.status,'PLAYING');
   }
  });
@@ -103,7 +105,7 @@ test('UX34 MEMORY fully solved creates COMPLETED run without losing hearts',()=>
  assert.equal(st.health,3);
 });
 test('UX34 no arbitrary grid dimensions, and default features disabled in migration',()=>{
- for(const invalid of [9,20,32,64,128]){
+ for(const invalid of [9,20,31,64,127,129]){
   assert.throws(()=>normalizeRound({mode:'MEMORY',duration_seconds:180,
    question_count:invalid},{soloMatrix:true}),/Ma trận/);
  }
@@ -125,9 +127,13 @@ test('UX34 Solo and Admin UI work with both modes without exposing secret face v
  assert.match(memory,/data-matrix-mode="MEMORY"/);
  assert.match(memory,/Không mất tim/);
  assert.match(matrix,/data-matrix-mode="MATRIX"/);
- for(const size of [6,10,12]){
+ for(const size of [4,5,6]){
   assert.match(memory,new RegExp('<option value="'+size+'">'));
   assert.match(matrix,new RegExp('<option value="'+size+'">'));
+ }
+ for(const large of [8,10,12,16]){
+  assert.doesNotMatch(matrix,new RegExp('<option value="'+large+'">'));
+  assert.doesNotMatch(memory,new RegExp('<option value="'+large+'">'));
  }
  assert.match(client,/cardId:id/);
  assert.match(client,/!MEMORY\|\|c\.revealed===true/);

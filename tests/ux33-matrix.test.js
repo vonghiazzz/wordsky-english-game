@@ -17,13 +17,15 @@ const make=size=>normalizeRound({
 },{soloMatrix:true});
 const tile=(state,pair,lang)=>state.cards.find(c=>c.id===(lang==='en'?pair.enId:pair.viId));
 
-for(const size of [6,10,12]){
+for(const size of [4,5,6,8,10,12,16]){
  test(`UX33 ${size}x${size} creates balanced, secret-mapped cards`,()=>{
   const rd=make(size),state=createState(rd,words,1000),publicGame=publicState(state,1000);
   assert.equal(publicGame.mode,'MATRIX');
   assert.equal(publicGame.gridSize,size);
   assert.equal(publicGame.cards.length,size*size);
-  assert.equal(new Set(publicGame.cards.map(c=>c.id)).size,size*size);
+  assert.equal(new Set(publicGame.cards.filter(c=>!c.empty).map(c=>c.id)).size,rd.question_count*2);
+  assert.equal(publicGame.cards.filter(c=>c.empty).length,size%2);
+  if(size%2)assert.deepEqual(publicGame.cards[Math.floor(size*size/2)],{empty:true});
   assert.equal(publicGame.cards.filter(c=>c.lang==='en').length,rd.question_count);
   assert.equal(publicGame.cards.filter(c=>c.lang==='vi').length,rd.question_count);
   assert.ok(publicGame.cards.every(c=>!('wordId' in c)&&!('pairId' in c)&&!('meaning' in c)&&!('english' in c)));
@@ -33,9 +35,9 @@ for(const size of [6,10,12]){
 }
 test('UX33 is Solo only and cannot take arbitrary matrix dimensions',()=>{
  assert.throws(()=>normalizeRound({mode:'MATRIX',question_count:32,duration_seconds:600}),/Chế độ/);
- for(const q of [0,31,33,64,256])
+ for(const q of [0,7,31,33,64,129,256])
   assert.throws(()=>normalizeRound({mode:'MATRIX',question_count:q,duration_seconds:600},{soloMatrix:true}),/Ma trận/);
- assert.throws(()=>make(17));
+ assert.throws(()=>normalizeRound({mode:'MATRIX',question_count:17,duration_seconds:180},{soloMatrix:true}),/Ma trận/);
 });
 test('UX33 correct pair earns +100 and locks both cards',()=>{
  const rd=make(6),state=createState(rd,words,1000),p=state.pairs[0];

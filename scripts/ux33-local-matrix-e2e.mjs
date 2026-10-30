@@ -33,10 +33,11 @@ async function newGame(page,size){
  await page.goto(BASE+'/matrix.html');
  await page.locator('#matrixSize').selectOption(String(size));
  await page.locator('#matrixStart').click();
- const tileCount=size*size;
+ const tileCount=2*Math.floor(size*size/2);
  await page.locator('.matrix-card').first().waitFor({state:'visible'});
  assert.equal(await page.locator('.matrix-card').count(),tileCount);
  assert.equal(await page.locator('.matrix-card--en').count(),tileCount/2);
+ assert.equal(await page.locator('.matrix-card-space').count(),size%2);
  assert.equal(await page.locator('.matrix-card--vi').count(),tileCount/2);
  return getRun(page);
 }
@@ -80,16 +81,19 @@ try{
  assert.match(await page.locator('#matrixResultTitle').textContent(),/Hết 3 tim/);
  assert.equal((await db.query('SELECT state FROM ws_solo_runs WHERE id=$1',[run6])).rows[0].state.mistakes,3);
  pass('third incorrect pair ends the game without exposing answers');
- const run10=await newGame(page,10);
- assert.match((await db.query('SELECT question_count FROM ws_solo_runs WHERE id=$1',[run10])).rows[0].question_count.toString(),/^50$/);
- const run12=await newGame(page,12);
- assert.equal((await db.query('SELECT question_count FROM ws_solo_runs WHERE id=$1',[run12])).rows[0].question_count,72);
+ const run4=await newGame(page,4);
+ assert.equal((await db.query('SELECT question_count FROM ws_solo_runs WHERE id=$1',[run4])).rows[0].question_count,8);
+ const run5=await newGame(page,5);
+ assert.equal((await db.query('SELECT question_count FROM ws_solo_runs WHERE id=$1',[run5])).rows[0].question_count,12);
+ assert.equal(await page.locator('.matrix-card-space').count(),1);
+ // 6x6 is still scrollable at narrow mobile widths.
+ await newGame(page,6);
  const scrollable=await page.locator('#matrixScroll').evaluate(node=>({
   x:node.scrollWidth>node.clientWidth,y:node.scrollHeight>node.clientHeight
  }));
  assert.deepEqual(scrollable,{x:true,y:true});
  assert.equal(await page.evaluate(()=>window.WordSkyAudio?.getState().scene),'MATRIX');
- pass('10x10 and 12x12 work; full board stays scrollable on a 375px mobile viewport');
+ pass('4x4, 5x5 centre gap and 6x6 work on a narrow mobile viewport');
  const username='qa33'+randomBytes(6).toString('hex'),password='MatrixSafePassword2026!';
  const account=await db.query(
   'INSERT INTO ws_users(username,display_name,password_hash) VALUES($1,$2,$3) RETURNING id',
@@ -160,7 +164,21 @@ try{
  assert.equal(await memoryPage.evaluate(()=>window.WordSkyAudio?.getState().scene),'MEMORY');
  pass('MEMORY 6x6 face-down, private reveal, auto flip-back, no heart loss, and correct pair lock');
 
- console.log('UX34 MATRIX + MEMORY SOLO LOCAL E2E: PASS');
+ // 5x5 MEMORY: 24 hidden cards and one stable, inert centre slot.
+ await memoryPage.evaluate(()=>{
+  sessionStorage.removeItem('wordsky_ux34_memory_run');
+  sessionStorage.removeItem('wordsky_ux34_memory_pending');
+ });
+ await memoryPage.goto(BASE+'/memory.html');
+ await memoryPage.locator('#matrixSize').selectOption('5');
+ await memoryPage.locator('#matrixStart').click();
+ await memoryPage.locator('.matrix-card--hidden').first().waitFor({state:'visible'});
+ assert.equal(await memoryPage.locator('.matrix-card--hidden').count(),24);
+ assert.equal(await memoryPage.locator('.matrix-card-space').count(),1);
+ const memory5=await memoryPage.evaluate(()=>JSON.parse(sessionStorage.getItem('wordsky_ux34_memory_run')||'null'));
+ assert.match(memory5,/^[a-f0-9-]{36}$/i);runIds.push(memory5);
+ pass('MEMORY 5x5: 24 private hidden cards and one inert centre slot');
+ console.log('UX35 MATRIX + MEMORY SOLO LOCAL E2E: PASS');
 }finally{
  for(const browser of [chrome,fox])if(browser)await browser.close().catch(()=>{});
  for(const userId of userIds){

@@ -20,7 +20,8 @@ test('UX33 pages and JS parse and appear in existing game library',()=>{
  assert.match(nav,/key:'matrix',label:'Ma trận thẻ',url:'\/matrix\.html'/);
 });
 test('UX33 UI exposes three real matrix dimensions, clear heart scoring and server state',()=>{
- for(const size of [6,10,12])assert.match(page,new RegExp('<option value="'+size+'">'));
+ for(const size of [4,5,6])assert.match(page,new RegExp('<option value="'+size+'">'));
+ for(const size of [8,10,12,16])assert.doesNotMatch(page,new RegExp('<option value="'+size+'">'));
  assert.match(page,/Hết 3 tim là thua/);
  assert.match(page,/\+100 điểm/);
  assert.match(page,/−25 điểm/);
@@ -41,6 +42,8 @@ test('UX34 12x12 cards remain readable on mobile and are keyboard accessible',()
  assert.match(page,/id="matrixScroll" tabindex="0"/);
  assert.match(client,/aria-pressed/);
  assert.match(client,/role=|matrixGrid/);
+ assert.match(client,/matrix-card-space/);
+ assert.match(css,/\.matrix-card-space/);
 });
 test('UX33 audio reuses original procedural music with user gesture unlocking',()=>{
  assert.match(audio,/MATRIX: \{ms:/);

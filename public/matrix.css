@@ -34,6 +34,7 @@
 .matrix-scroll:focus-visible{outline:3px solid #83e9ef}
 .matrix-grid{--matrix-size:8;--matrix-cell:104px;display:grid;grid-template-columns:repeat(var(--matrix-size),var(--matrix-cell));gap:7px;width:max-content;min-width:100%;padding:14px;align-content:start}
 .matrix-card{min-width:0;min-height:102px;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;border-radius:11px;border:2px solid #466a9b;background:linear-gradient(145deg,#233b68,#172c50);color:#f2f8ff;font:inherit;cursor:pointer;padding:9px 6px;transition:background-color .12s,border-color .12s,transform .12s;overflow:hidden}
+.matrix-card-space{min-height:96px;border:1px dashed #53708d;border-radius:11px;background:#0a172d55;pointer-events:none}
 .matrix-card--vi{border-color:#9e7948;background:linear-gradient(145deg,#55412a,#352e29);color:#fff2da}
 .matrix-card-language{position:absolute;top:4px;right:6px;color:#cce6ff;font-size:10px;font-weight:900;letter-spacing:.08em;opacity:.75}
 .matrix-card--vi .matrix-card-language{color:#ffe1a3}
@@ -82,3 +83,12 @@
 .memory-page .matrix-card.is-matched .matrix-card-text,.room-memory .matrix-card.is-matched .matrix-card-text{font-size:23px}
 .room-card-grid{--matrix-size:6;--matrix-cell:98px;display:grid;grid-template-columns:repeat(var(--matrix-size),var(--matrix-cell));gap:6px;width:max-content;padding:12px}
 .room-matrix-scroll{max-height:60vh;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y}
+
+/* Compact Solo: 4x4 and 5x5 usually fit mobile width; 6x6 remains legible. */
+@media(max-width:700px){
+ .matrix-grid[data-grid-size="4"]{--matrix-cell:clamp(68px,19vw,98px)}
+ .matrix-grid[data-grid-size="5"]{--matrix-cell:clamp(58px,16vw,92px)}
+ .matrix-grid[data-grid-size="6"]{--matrix-cell:clamp(52px,13.2vw,84px)}
+ .matrix-grid[data-grid-size="6"] .matrix-card-text{font-size:10px}
+ .matrix-card-space{min-height:78px}
+}
