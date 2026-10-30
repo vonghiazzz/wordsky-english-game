@@ -145,6 +145,7 @@
    });
    pending=null;store(PENDING_KEY,null);chosen=null;
    current=answer;feedback(previous,answer);
+   flashCorrect=answer.result?.correct===true;
    flashUntil=Date.now()+420;
    renderStats();
    busy=false;
@@ -194,6 +195,7 @@
    chosen=null;pending=null;
    store(RUN_KEY,response.runId);store(PENDING_KEY,null);
    flash=[];
+   busy=false;
    sync(response);
   }catch(error){
    const hint=$('matrixSetup').querySelector('.matrix-hint');
