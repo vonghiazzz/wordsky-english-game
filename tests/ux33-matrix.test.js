@@ -11,13 +11,13 @@ const words=Array.from({length:140},(_,i)=>({
  english:`english ${i}`,meaning:`nghĩa ${i}`
 }));
 const make=size=>normalizeRound({
- mode:'MATRIX',difficulty:size===8?'EASY':size===12?'NORMAL':'HARD',
+ mode:'MATRIX',difficulty:size===6?'EASY':size===10?'NORMAL':'HARD',
  duration_seconds:MATRIX_DURATION_SECONDS[size],
  question_count:MATRIX_SIZES[size],points_per_correct:100,penalty:25,weight:1
 },{soloMatrix:true});
 const tile=(state,pair,lang)=>state.cards.find(c=>c.id===(lang==='en'?pair.enId:pair.viId));
 
-for(const size of [8,12,16]){
+for(const size of [6,10,12]){
  test(`UX33 ${size}x${size} creates balanced, secret-mapped cards`,()=>{
   const rd=make(size),state=createState(rd,words,1000),publicGame=publicState(state,1000);
   assert.equal(publicGame.mode,'MATRIX');
@@ -38,7 +38,7 @@ test('UX33 is Solo only and cannot take arbitrary matrix dimensions',()=>{
  assert.throws(()=>make(17));
 });
 test('UX33 correct pair earns +100 and locks both cards',()=>{
- const rd=make(8),state=createState(rd,words,1000),p=state.pairs[0];
+ const rd=make(6),state=createState(rd,words,1000),p=state.pairs[0];
  const first=tile(state,p,'en'),second=tile(state,p,'vi');
  assert.deepEqual(answerQuestion(state,rd,{firstId:first.id,secondId:second.id},1300).result,{correct:true,awarded:100});
  assert.equal(state.score,100);
@@ -50,7 +50,7 @@ test('UX33 correct pair earns +100 and locks both cards',()=>{
  assert.throws(()=>answerQuestion(state,rd,{firstId:first.id,secondId:second.id},1500),/đã ghép/);
 });
 test('UX33 three mismatches exhaust three hearts and record both wrong words',()=>{
- const rd=make(8),state=createState(rd,words,1000),first=state.pairs[0],second=state.pairs[1];
+ const rd=make(6),state=createState(rd,words,1000),first=state.pairs[0],second=state.pairs[1];
  for(let i=0;i<3;i++){
   const attempt=answerQuestion(state,rd,{firstId:first.enId,secondId:second.viId},1300+i);
   assert.equal(attempt.result.correct,false);
@@ -65,25 +65,25 @@ test('UX33 three mismatches exhaust three hearts and record both wrong words',()
  assert.throws(()=>answerQuestion(state,rd,{firstId:first.enId,secondId:second.viId},1500),/kết thúc/);
 });
 test('UX33 invalid same-language or unknown card cannot remove hearts',()=>{
- const rd=make(8),state=createState(rd,words,1000);
+ const rd=make(6),state=createState(rd,words,1000);
  assert.throws(()=>answerQuestion(state,rd,{firstId:state.pairs[0].enId,secondId:state.pairs[1].enId},1200),/một thẻ tiếng Anh/);
  assert.throws(()=>answerQuestion(state,rd,{firstId:state.pairs[0].enId,secondId:'not-a-card'},1200),/không hợp lệ/);
  assert.equal(state.health,3);
  assert.equal(state.mistakes,0);
 });
 test('UX33 all cards solved completes run; timeouts are computed on server',()=>{
- const rd=make(8),state=createState(rd,words,1000);
+ const rd=make(6),state=createState(rd,words,1000);
  for(const p of state.pairs)answerQuestion(state,rd,{firstId:p.enId,secondId:p.viId},1100);
  assert.equal(state.status,'COMPLETED');
- assert.equal(state.correct,32);
- assert.equal(state.score,3200);
+ assert.equal(state.correct,18);
+ assert.equal(state.score,1800);
  const late=createState(rd,words,1000);
  reconcile(late,rd,601000);
  assert.equal(late.status,'TIMEOUT');
 });
-test('UX33 requires 128 unique words for 16x16 and uses disabled-by-default schema gate',()=>{
- const rd=make(16);
- assert.throws(()=>createState(rd,words.slice(0,127),1000),/cần 128 từ/);
+test('UX34 requires 72 unique words for 12x12 and uses disabled-by-default schema gate',()=>{
+ const rd=make(12);
+ assert.throws(()=>createState(rd,words.slice(0,71),1000),/cần 72 từ/);
  const migration=readFileSync(new URL('../db/migrations/20261030_ux33_matrix_solo.sql',import.meta.url),'utf8');
  assert.match(migration,/VALIDATE CONSTRAINT ws_solo_runs_mode_check/);
  assert.match(migration,/VALUES \('MATRIX',false\)/);
@@ -91,6 +91,6 @@ test('UX33 requires 128 unique words for 16x16 and uses disabled-by-default sche
  const api=readFileSync(new URL('../api/index.js',import.meta.url),'utf8');
  assert.match(api,/solo\/matrix\/start/);
  assert.match(api,/selectMatrixWords/);
- assert.match(api,/mode==='MATRIX'&&feature\.rows\[0\]\?\.enabled!==true/);
+ assert.match(api,/\['MATRIX','MEMORY'\]\.includes\(mode\)&&feature\.rows\[0\]\?\.enabled!==true/);
  assert.match(api,/syncFinishedSoloReview\(ownerForAutoReview,runId\)/);
 });

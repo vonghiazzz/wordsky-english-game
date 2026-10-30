@@ -73,7 +73,7 @@ const start=async size=>{
 };
 test('UX33 no database feature flag means fail closed, and invalid size fails early',async()=>{
  reset();enabled=false;
- const off=await start(8);
+ const off=await start(6);
  assert.equal(off.res.status,403);
  assert.equal(game,null);
  enabled=true;
@@ -81,33 +81,33 @@ test('UX33 no database feature flag means fail closed, and invalid size fails ea
  assert.equal(wrong.res.status,400);
  assert.equal(game,null);
 });
-test('UX33 starting from available vocabulary gives exactly 256 safely anonymized cards',async()=>{
+test('UX33 starting from available vocabulary gives exactly 144 safely anonymized cards',async()=>{
  reset();
- const {res,cookie}=await start(16);
+ const {res,cookie}=await start(12);
  assert.equal(res.status,201);
  assert.match(cookie,/^ws_solo=/);
  assert.equal(res.data.round.mode,'MATRIX');
- assert.equal(res.data.round.question_count,128);
- assert.equal(res.data.round.duration_seconds,1800);
- assert.equal(res.data.game.cards.length,256);
+ assert.equal(res.data.round.question_count,72);
+ assert.equal(res.data.round.duration_seconds,1200);
+ assert.equal(res.data.game.cards.length,144);
  assert.equal(game.mode,'MATRIX');
- assert.equal(game.state.pairs.length,128);
+ assert.equal(game.state.pairs.length,72);
  assert.ok(res.data.game.cards.every(c=>!Object.hasOwn(c,'wordId')&&!Object.hasOwn(c,'pairId')));
  assert.equal(Object.hasOwn(res.data.game,'pairs'),false);
  const read=await api('GET','solo/runs/'+runId,{cookie});
  assert.equal(read.status,200);
- assert.equal(read.data.game.cards.length,256);
+ assert.equal(read.data.game.cards.length,144);
 });
 test('UX33 missing unique pairs returns 400 without creating run',async()=>{
- reset();words=fixture(31);
- const {res}=await start(8);
+ reset();words=fixture(17);
+ const {res}=await start(6);
  assert.equal(res.status,400);
- assert.match(res.data.error,/cần 32 từ/);
+ assert.match(res.data.error,/cần 18 từ/);
  assert.equal(game,null);
 });
 test('UX33 POST answer is server-graded and receipt retry is idempotent',async()=>{
  reset();
- const {res,cookie}=await start(8);
+ const {res,cookie}=await start(6);
  assert.equal(res.status,201);
  const first=game.state.pairs[0],second=game.state.pairs[1];
  const correct={attemptId:attempt(1),firstId:first.enId,secondId:first.viId};
