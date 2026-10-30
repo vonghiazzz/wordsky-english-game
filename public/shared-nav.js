@@ -6,7 +6,8 @@
  const isLearn=mount.dataset.wsPage==='learn';
  const isProgress=mount.dataset.wsPage==='progress';
  const isMatrix=mount.dataset.wsPage==='matrix'||mount.dataset.wsPage==='memory';
- const isLearningPage=isLearn||isProgress||isMatrix;
+ const isAccount=mount.dataset.wsPage==='account';
+ const isLearningPage=isLearn||isProgress||isMatrix||isAccount;
  const menuItems=[
   {key:'home',label:'Trang chủ',url:'/#home',arena:'home'},
   {key:'flash',label:'Học từ',url:'/learn.html#flash'},
@@ -54,7 +55,7 @@
   <a class="ws-site-logo" href="/" aria-label="WordSky - Về trang chủ"><span class="ws-logo-mark" aria-hidden="true">✦</span><span>Word<span class="ws-logo-sky">Sky</span><small>ENGLISH</small></span></a>
   <button class="ws-nav-toggle" type="button" aria-expanded="false" aria-label="Mở menu" aria-controls="wsNavLinks">☰</button>
   <nav class="ws-site-links" id="wsNavLinks" aria-label="Điều hướng WordSky">${navMarkup}</nav>
-  ${isLearningPage?'<span class="ws-guest-note">Học miễn phí</span>':'<button class="accountbtn ws-site-account" id="accountButton" type="button">Đăng nhập <span>↗</span></button>'}
+  ${isAccount?'<span class="ws-guest-note">Bảo mật tài khoản</span>':isLearningPage?'<span class="ws-guest-note">Học miễn phí</span>':'<button class="accountbtn ws-site-account" id="accountButton" type="button">Đăng nhập <span>↗</span></button>'}
  </div></header>
  <nav class="ws-mobile-dock" aria-label="Điều hướng nhanh">
   <a href="/#home" data-ws-dock="home"><span aria-hidden="true">⌂</span><small>Trang chủ</small></a>
@@ -91,7 +92,7 @@
  }
  function activeKey(){
   const hash=window.location.hash.replace(/^#/,'').toLowerCase();
-  if(isProgress)return 'learning-progress';
+  if(isProgress||isAccount)return 'learning-progress';
   if(mount.dataset.wsPage==='memory')return 'memory';
   if(isMatrix)return 'matrix';
   if(isLearn)return hash==='game'?'game':'flash';
