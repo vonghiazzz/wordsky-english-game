@@ -28,15 +28,20 @@ async function createUser(){
  return user;
 }
 async function createRun(userId,ids,mode='MATCH'){
- const state={mode,status:'FAILED',score:0,health:0,correct:0,mistakes:1,
+ const memory=mode==='MEMORY';
+ const status=memory?'TIMEOUT':'FAILED';
+ const health=memory?3:0;
+ const questions=['MATRIX','MEMORY'].includes(mode)?8:3;
+ const state={mode,status,score:0,health,correct:0,mistakes:1,
    wrongWordIds:ids,startedAt:Date.now()-60000,endsAt:Date.now()-30000,
    pairs:[],distractors:[]};
  const row=await db.query(
   'INSERT INTO ws_solo_runs(user_id,access_token_hash,client_fingerprint_hash,'+
   'mode,difficulty,duration_seconds,question_count,points_per_correct,penalty,'+
   'status,health,score,correct,mistakes,state,finished_at) '+
-  "VALUES($1,$2,$3,$4,'EASY',90,3,100,25,'FAILED',0,0,0,1,$5::jsonb,now()) RETURNING id",
-  [userId,randomBytes(32).toString('hex'),randomBytes(32).toString('hex'),mode,JSON.stringify(state)]
+  "VALUES($1,$2,$3,$4,'EASY',90,$5,100,25,$6,$7,0,0,1,$8::jsonb,now()) RETURNING id",
+  [userId,randomBytes(32).toString('hex'),randomBytes(32).toString('hex'),
+   mode,questions,status,health,JSON.stringify(state)]
  );
  runs.push(row.rows[0].id);
  return row.rows[0].id;
@@ -69,13 +74,17 @@ try {
  const count=await db.query('SELECT current_database() AS name');
  assert.equal(count.rows[0].name,'wordsky_v6_test');
  const vocab=await db.query(
-  'SELECT id,english FROM ws_words WHERE enabled=true ORDER BY id LIMIT 3'
+  'SELECT id,english FROM ws_words WHERE enabled=true ORDER BY id LIMIT 6'
  );
- assert.equal(vocab.rows.length,3);
- const [wordA,wordB,wordC]=vocab.rows;
+ assert.equal(vocab.rows.length,6);
+ const [wordA,wordB,wordC,wordD,wordE,wordF]=vocab.rows;
  const userA=await createUser(),userB=await createUser();
  const runA=await createRun(userA.id,[wordA.id]);
  await createRun(userA.id,[wordA.id]);
+ // One MATRIX mismatch has two vocabulary candidates; MEMORY has its own.
+ // These are terminal disposable CI runs, never real account data.
+ await createRun(userA.id,[wordD.id,wordE.id],'MATRIX');
+ await createRun(userA.id,[wordF.id],'MEMORY');
  await createRun(userB.id,[wordB.id],'BOMB');
  await createRun(null,[wordC.id],'CAR');
 
@@ -99,9 +108,13 @@ try {
 
  const a=await getNotebook(owner1),a2=await getNotebook(owner2),b=await getNotebook(other);
  assert.equal(a.actor_id,userA.id);
- assert.deepEqual(a.words.map(w=>w.word_id),[wordA.id]);
- assert.equal(a.words[0].mistake_runs,2);
- assert.deepEqual(a2.words.map(w=>w.word_id),[wordA.id]);
+ assert.deepEqual(a.words.map(w=>w.word_id).sort(),
+  [wordA.id,wordD.id,wordE.id,wordF.id].sort());
+ assert.equal(a.words.find(w=>w.word_id===wordA.id).mistake_runs,2);
+ assert.deepEqual(a2.words.map(w=>w.word_id).sort(),
+  [wordA.id,wordD.id,wordE.id,wordF.id].sort());
+ assert.deepEqual(a.words.find(w=>w.word_id===wordD.id).modes,['MATRIX']);
+ assert.deepEqual(a.words.find(w=>w.word_id===wordF.id).modes,['MEMORY']);
  assert.deepEqual(b.words.map(w=>w.word_id),[wordB.id]);
  pass('two browsers see one account, other actor cannot see their words');
 
@@ -134,6 +147,14 @@ try {
  await pageB.locator('#ws27Account').waitFor({state:'visible'});
  assert.equal(await pageB.locator('[data-word-id="'+wordA.id+'"]').count(),0);
  await pageB.locator('[data-word-id="'+wordB.id+'"]').waitFor();
+ for(const p of [page1,page2]){
+  for(const id of [wordD.id,wordE.id,wordF.id])
+   await p.locator('[data-word-id="'+id+'"]').waitFor({state:'visible'});
+ }
+ for(const id of [wordD.id,wordE.id,wordF.id])
+  assert.equal(await pageB.locator('[data-word-id="'+id+'"]').count(),0);
+ assert.equal(await page1.locator('#ws27Total').textContent(),'4');
+ assert.equal(await page1.locator('#ws27Misses').textContent(),'5');
  pass('Chromium/Firefox account notebook UI stays isolated across devices');
  for(const page of [page1,page2,pageB]){
    assert.equal(await page.locator('[data-review-word]').count(),0,'no manual per-word review buttons');
@@ -157,6 +178,17 @@ try {
   assert.ok(metrics.overflow<=1,
     'UX27 mobile horizontal overflow at '+width+'px: '+JSON.stringify(metrics));
   assert.ok(metrics.left>=-1&&metrics.right<=width+1,'UX27 card clipped at '+width+'px');
+ }
+ for(const p of [page1,page2]){
+  await p.locator('#ws27Mode').selectOption('MATRIX');
+  for(const id of [wordD.id,wordE.id])
+   await p.locator('[data-word-id="'+id+'"]').waitFor({state:'visible'});
+  assert.equal(await p.locator('[data-word-id="'+wordA.id+'"]').count(),0);
+  assert.equal(await p.locator('[data-word-id="'+wordF.id+'"]').count(),0);
+  await p.locator('#ws27Mode').selectOption('MEMORY');
+  await p.locator('[data-word-id="'+wordF.id+'"]').waitFor({state:'visible'});
+  assert.equal(await p.locator('[data-word-id="'+wordD.id+'"]').count(),0);
+  await p.locator('#ws27Mode').selectOption('');
  }
  await page1.locator('#ws27Mode').selectOption('CAR');
  assert.equal(await page1.locator('[data-word-id="'+wordA.id+'"]').count(),0);
@@ -182,9 +214,20 @@ try {
  pass('no manual action, account SRS is visible on both browsers and replays are idempotent');
 
  const ledger=await db.query('SELECT count(*)::int n FROM ws_learning_review_requests WHERE user_id=$1',[userA.id]);
- assert.equal(ledger.rows[0].n,1);
+ assert.equal(ledger.rows[0].n,4,
+  'two MATCH runs dedupe A; MATRIX adds D/E and MEMORY adds F once');
  const history=await db.query('SELECT count(*)::int n FROM ws_learning_flashcard_reviews WHERE user_id=$1 AND word_id=$2',[userA.id,wordA.id]);
  assert.equal(history.rows[0].n,1);
+ const newWords=await db.query(
+  'SELECT word_id::text AS id,remembered,review_count FROM ws_learning_word_progress '+
+  'WHERE user_id=$1 AND word_id=ANY($2::uuid[])',
+  [userA.id,[wordD.id,wordE.id,wordF.id]]
+ );
+ assert.equal(newWords.rows.length,3);
+ for(const word of newWords.rows){
+  assert.equal(word.remembered,false);
+  assert.equal(word.review_count,1,'MATRIX/MEMORY must not double-queue review');
+ }
  const foreignCommand=await other.request.post(BASE+'/api/learning/reviews',{
   headers:{origin:BASE},
   data:{
