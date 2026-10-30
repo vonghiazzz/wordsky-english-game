@@ -22,6 +22,14 @@ const getRun=async page=>{
  return id;
 };
 async function newGame(page,size){
+ // Do not restore a still-playing old run when switching QA grid sizes.
+ // Only remove the per-tab pointer; all runs are cleaned up on the isolated DB.
+ if(page.url().startsWith(BASE+'/matrix.html')){
+  await page.evaluate(()=>{
+   sessionStorage.removeItem('wordsky_ux33_matrix_run');
+   sessionStorage.removeItem('wordsky_ux33_matrix_pending');
+  });
+ }
  await page.goto(BASE+'/matrix.html');
  await page.locator('#matrixSize').selectOption(String(size));
  await page.locator('#matrixStart').click();
