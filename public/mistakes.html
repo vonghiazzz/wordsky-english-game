@@ -18,7 +18,7 @@
 <header class="ws27-hero">
  <div class="ws27-hero-label">WORDSKY · LEARN FROM PLAY</div>
  <h1>Sai một lần.<br><em>Nhớ lâu hơn.</em></h1>
- <p>Các từ ghép sai, bom bỏ lỡ và từ ở làn an toàn của chặng CAR hết giờ sẽ tự xuất hiện trong sổ này. Đăng nhập trước khi chơi để đồng bộ trên mọi thiết bị.</p>
+ <p>Những từ liên quan đến cặp ghép sai ở MATCH, MATRIX, MEMORY, bom bỏ lỡ ở BOMB và từ chưa trả lời trên làn an toàn của CAR sẽ xuất hiện trong sổ này. Đăng nhập trước khi chơi để đồng bộ trên mọi thiết bị.</p>
  <div class="ws27-hero-actions"><a href="/#solo" class="ws27-secondary">🎮 Chơi MATCH</a><a href="/progress.html" class="ws27-secondary">↗ My Learning</a></div>
 </header>
 <section class="ws27-panel" aria-labelledby="ws27Title">
@@ -26,14 +26,14 @@
  <p id="ws27Status" class="ws27-status" role="status" aria-live="polite">Đang xác minh phiên đăng nhập…</p>
  <div id="ws27Guest" class="ws27-empty" hidden><h3>🔒 Đăng nhập để lưu từ sai theo tài khoản</h3><p>Chơi không đăng nhập vẫn xem được từ sai ngay sau trận trên thiết bị đó, nhưng không tự gán những lượt cũ cho một tài khoản.</p><a href="/#home" class="ws27-primary">Về WordSky để đăng nhập →</a></div>
  <div id="ws27Account" hidden>
-  <div class="ws27-metrics" aria-label="Tổng hợp từ sai"><div><small>TỪ CẦN XEM LẠI</small><strong id="ws27Total">0</strong></div><div><small>LƯỢT CHƠI TỪNG GẶP KHÓ</small><strong id="ws27Misses">0</strong></div><div><small>ĐANG CẦN ÔN</small><strong id="ws27Reviewed">0</strong></div></div>
-  <div class="ws27-filters"><label>Tìm từ hoặc nghĩa<input id="ws27Search" type="search" placeholder="Ví dụ: badminton, cầu lông" autocomplete="off"></label><label>Lọc trò chơi<select id="ws27Mode"><option value="">Tất cả</option><option value="MATCH">MATCH</option><option value="BOMB">BOMB</option><option value="CAR">CAR</option></select></label></div>
+  <div class="ws27-metrics" aria-label="Tổng hợp từ sai"><div><small>TỪ CẦN XEM LẠI</small><strong id="ws27Total">0</strong></div><div><small>LƯỢT GHI NHẬN TỪ KHÓ</small><strong id="ws27Misses">0</strong></div><div><small>ĐANG CẦN ÔN</small><strong id="ws27Reviewed">0</strong></div></div>
+  <div class="ws27-filters"><label>Tìm từ hoặc nghĩa<input id="ws27Search" type="search" placeholder="Ví dụ: badminton, cầu lông" autocomplete="off"></label><label>Lọc trò chơi<select id="ws27Mode"><option value="">Tất cả</option><option value="MATCH">MATCH</option><option value="BOMB">BOMB</option><option value="CAR">CAR</option><option value="MATRIX">MATRIX</option><option value="MEMORY">MEMORY</option></select></label></div>
   <p id="ws27Count" class="ws27-count"></p>
   <div id="ws27List" class="ws27-list"></div>
-  <div id="ws27Empty" class="ws27-empty" hidden><h3>🌟 Chưa có từ sai được ghi nhận</h3><p>Thử một lượt MATCH/BOMB/CAR khi đã đăng nhập, rồi quay lại sau khi kết thúc trận.</p></div>
+  <div id="ws27Empty" class="ws27-empty" hidden><h3>🌟 Chưa có từ sai được ghi nhận</h3><p>Thử một lượt Solo MATCH/BOMB/CAR/MATRIX/MEMORY khi đã đăng nhập, rồi quay lại sau khi kết thúc trận.</p></div>
  </div>
 </section>
-<section class="ws27-explainer" aria-labelledby="ws27How"><h2 id="ws27How">Tự động ôn từ sai sau trận</h2><p>Khi kết thúc MATCH, BOMB hoặc CAR Solo trong trạng thái đăng nhập, WordSky tự lưu từ cần ôn vào PostgreSQL và đánh dấu <strong>Cần ôn</strong> trong My Learning. Không có bước xác nhận từng thẻ. Gửi lại kết quả trận hoặc mở nhiều thiết bị cũng không tạo review trùng.</p><p>MATCH ghi từ ghép sai; BOMB ghi bom đã bỏ lỡ; CAR ghi từ trả lời sai có xác định được và các từ <strong>chưa trả lời ở làn an toàn khi chặng hết giờ</strong>. Những từ CAR bỏ lỡ là gợi ý luyện tập, không bị gọi nhầm là một đáp án sai. Guest chỉ xem được kết quả lượt hiện tại. Chữ rơi và phòng thi chưa thuộc phạm vi tính năng này.</p></section>
+<section class="ws27-explainer" aria-labelledby="ws27How"><h2 id="ws27How">Tự động ôn từ sai sau trận</h2><p>Khi kết thúc một trận Solo MATCH, BOMB, CAR, MATRIX hoặc MEMORY đã đăng nhập, WordSky tự ghi nhận từ khó được xác định vào PostgreSQL và đánh dấu <strong>Cần ôn</strong> trong My Learning. Không cần xác nhận từng thẻ; gửi lại kết quả hoặc mở thêm thiết bị cũng không tạo review trùng.</p><p>MATCH ghi từ ghép sai; BOMB ghi bom đã bỏ lỡ; CAR ghi từ trả lời sai được xác định và từ <strong>chưa trả lời ở làn an toàn khi chặng hết giờ</strong>. MATRIX/MEMORY ghi nhận cả hai từ liên quan khi ghép sai cặp Anh–Việt, nhằm gợi ý ôn lại, không khẳng định mỗi từ đều là một lỗi chính tả. Tổng lượt ghi nhận được tính theo từng cặp <strong>trận–từ</strong>, không phải số trận duy nhất. Guest chỉ xem kết quả lượt hiện tại; Chữ rơi và phòng thi chưa thuộc phạm vi này.</p></section>
 <footer class="ws27-footer"><a href="/progress.html">My Learning</a><span>·</span><a href="/personal.html">Từ cá nhân</a><span>·</span><a href="/">WordSky Arena</a></footer>
 </main>
 </body></html>
