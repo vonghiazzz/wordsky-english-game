@@ -2,6 +2,7 @@
 import {sql,transaction,getPool} from '../lib/db.js';
 import {isDatabaseTargetConfigured} from '../lib/db-target.js';
 import {createAdminUsersService,isSessionVersionCurrent} from '../lib/admin-users-service.js';
+import {createPlayerPasswordService} from '../lib/player-password-service.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,SOLO_MATRIX_SIZES,MATRIX_DURATION_SECONDS,MEMORY_DURATION_SECONDS,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
@@ -56,6 +57,20 @@ function adminUsersService(){
    return accepted;
   },
   hashPassword,verifyPassword,expectedOrigin:a
+ });
+}
+function playerPasswordService(){
+ // Preview uses its own Vercel deployment origin; Production uses APP_ORIGIN.
+ // Never derive the trusted origin from a client-controlled Host header.
+ const origin=process.env.VERCEL_ENV==='preview'&&process.env.VERCEL_URL
+  ?'https://'+process.env.VERCEL_URL
+  :process.env.APP_ORIGIN||(process.env.VERCEL_URL?'https://'+process.env.VERCEL_URL:null);
+ return createPlayerPasswordService({
+  db:getPool(),requirePlayer:async req=>mustPlayer(req),
+  hashPassword,verifyPassword,expectedOrigin:origin,
+  getIp:ipOf,throttle,
+  recordFailure:async ip=>sql('INSERT INTO ws_login_failures(remote_ip) VALUES($1)',[ip]),
+  clearFailures:async ip=>sql('DELETE FROM ws_login_failures WHERE remote_ip=$1',[ip])
  });
 }
 async function playerRow(id){const {rows}=await sql('SELECT id,username,display_name,xp,streak,last_checkin FROM ws_users WHERE id=$1',[id]);if(!rows.length)throw fail('Tài khoản không tồn tại',401);return rows[0]}
@@ -574,8 +589,11 @@ export default async function handler(req,res){
  try{
   res.setHeader('x-content-type-options','nosniff');
   if(!['GET','POST','PATCH','DELETE'].includes(req.method))return output(res,405,{error:'Phương thức không được hỗ trợ'});
-  if(req.method!=='GET'&&!sameOrigin(req))return output(res,403,{error:'Invalid origin'});
   const r=requestSegments=route(req),method=req.method,key=r.join('/');
+  // Self-password changes perform their own strict, non-optional Origin check.
+  // This permits a verified isolated Preview origin without weakening other APIs.
+  if(req.method!=='GET'&&key!=='auth/change-password'&&!sameOrigin(req))
+   return output(res,403,{error:'Invalid origin'});
   // UX30: validate a signed player cookie against the live DB once per request.
   // Existing synchronous mustPlayer()/actor() callers then reuse this decision.
   // No cookie without a matching current session_version may access account data.
@@ -668,6 +686,12 @@ export default async function handler(req,res){
   if(method==='GET'&&key==='health')return output(res,200,{ok:true,service:'wordsky-v4',database:isDatabaseTargetConfigured()});
   if(method==='POST'&&key==='auth/login')return output(res,200,await signIn(req,res));
   if(method==='POST'&&key==='auth/signup')return output(res,201,await signUp(req,res));
+  if(method==='POST'&&key==='auth/change-password'){
+   const result=await playerPasswordService().changePassword(req,body(req,4096));
+   // All player tokens (including this device) were revoked by session_version.
+   res.setHeader('set-cookie',cookie(AUTH_COOKIE,'',0));
+   return output(res,200,result);
+  }
   if(method==='POST'&&key==='auth/logout'){res.setHeader('set-cookie',cookie(AUTH_COOKIE,'',0));return output(res,200,{ok:true})}
   if(method==='GET'&&key==='auth/me'){const a=actor(req);return output(res,200,{actor:a?.role==='player'?{...a,profile:await playerRow(a.id)}:a||null})}
   if(method==='POST'&&key==='attendance/checkin')return output(res,200,await checkin(req));
