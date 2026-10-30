@@ -106,10 +106,9 @@
   }
   gamesToggle.classList.toggle('is-active',gameKeys.has(active)&&active!=='rooms');
   progressToggle.classList.toggle('is-active',active==='attendance'||active==='rank'||active==='learning-progress');
-  // Hide the bottom dock in games/room to keep typing and Ready controls uncovered.
-  const dockHidden=isMatrix||(isLearn?active==='game':!isProgress&&['solo','solo-bomb','solo-car','rooms'].includes(active));
-  mount.classList.toggle('ws-dock-hidden',dockHidden);
-  document.body.classList.toggle('ws-mobile-dock-visible',!dockHidden);
+  // UX39: keep the bottom dock available in every Arena, Solo, room and Learn route.
+  // Shared CSS reserves scroll and safe-area space below inputs and Ready controls.
+  document.body.classList.add('ws-mobile-dock-visible');
   for(const a of mount.querySelectorAll('[data-ws-dock]')){
    const key=a.dataset.wsDock;
    const current=key==='solo'?gameKeys.has(active)&&active!=='rooms':key==='attendance'?['attendance','rank','learning-progress'].includes(active):key===active;
