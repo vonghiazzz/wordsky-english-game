@@ -239,6 +239,7 @@ jobs:
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
             exit 1
           fi
+          node scripts/ux39-mobile-nav-e2e.mjs
 
       - name: Verify temporary QA account cleanup
         run: |
