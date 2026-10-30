@@ -450,7 +450,11 @@ async function submitRoomCard(){
   // Check first for a prior receipt. A lost HTTP response must never count twice.
   const receipt=await api('rooms/'+roomCode+'/runs/'+runId);
   if(game?.runId!==runId)return;
-  if(receipt.game?.status!=='PLAYING')throw apiError('Vòng này đã kết thúc');
+  if(receipt.game?.status!=='PLAYING'){
+   clearRoomCardPending();roomFirstCard=null;game.game=receipt.game;
+   feedback='Vòng đã kết thúc; điểm và trạng thái vừa được đồng bộ.';
+   gameBusy=false;renderGame();return;
+  }
   const result=await api('rooms/'+roomCode+'/runs/'+runId+'/answer',{method:'POST',body:payload});
   if(game?.runId!==runId)return;
   clearRoomCardPending();
@@ -462,13 +466,13 @@ async function submitRoomCard(){
    else wsAudioStateCue(original,result.game);
   }else{feedback='🧠 Đã lật thẻ. Ghi nhớ và tìm thẻ cùng nghĩa.';}
   roomFirstCard=null;
-  renderGame();
+  gameBusy=false;renderGame();
   const board=$('roomMatrixScroll');
   if(board){board.scrollLeft=x;board.scrollTop=y}
   if(result.game.status!=='PLAYING')setTimeout(()=>loadRoom(),700);
  }catch(e){
   feedback='⚠️ '+e.message+' — có thể thử lại với cùng mã thao tác.';
-  renderGame();
+  gameBusy=false;renderGame();
   // Keep payload for explicit retry. Server receipt prevents double grading.
  }finally{gameBusy=false}
 }

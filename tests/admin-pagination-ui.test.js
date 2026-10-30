@@ -78,7 +78,7 @@ test('event list uses 8 entries per page, retains action buttons, and clamps aft
 test('round X delete button gets its own dedicated grid row while controls remain intact',()=>{
  const rounds=between('function renderRounds()', '\nfunction collectRounds()');
  assert.match(rounds,/class="round-remove-row"/);
- assert.match(rounds,/data-remove-round="\$\{i\}"/);
+ assert.match(rounds,/data-remove-round=\'"\+i\+"\'/);
  assert.match(rounds,/✕ Xóa vòng/);
  assert.match(rounds,/class="round-note"/);
  assert.match(css,/\.round-line > \.round-remove-row\{grid-column:1\/-1/);
