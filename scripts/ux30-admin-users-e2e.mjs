@@ -60,7 +60,11 @@ try{
  await login(playerCtx,username,OLD_PASSWORD);
  const playerListing=await playerCtx.request.get(BASE+'/api/admin/users');
  assert.equal(playerListing.status(),401);
- pass('guests and players cannot read Admin account list');
+ const guestHistory=await guestCtx.request.get(BASE+'/api/admin/users/reset-history?q='+username);
+ const playerHistory=await playerCtx.request.get(BASE+'/api/admin/users/reset-history?q='+username);
+ assert.equal(guestHistory.status(),401);
+ assert.equal(playerHistory.status(),401);
+ pass('guests and players cannot read Admin account list or security history');
 
  const signin=await login(adminCtx,'owner',ADMIN_PASSWORD);
  assert.equal((await signin.json()).role,'admin');
@@ -72,6 +76,9 @@ try{
  assert.equal(data.users[0].username,username);
  assert.equal('password_hash' in data.users[0],false);
  assert.equal('session_version' in data.users[0],false);
+ const beforeHistory=await adminCtx.request.get(BASE+'/api/admin/users/reset-history?q='+username+'&page=0&size=20');
+ assert.equal(beforeHistory.status(),200,await beforeHistory.text());
+ assert.equal((await beforeHistory.json()).total,0);
  pass('Admin can search account without exposing credential fields');
 
  const page=await adminCtx.newPage();
@@ -140,6 +147,27 @@ try{
  assert.equal(audit.rows.length,1);
  assert.equal(audit.rows[0].admin_username,'owner');
  pass('old password denied; new password accepted; audit entry contains no secrets');
+
+ const historyResponse=await adminCtx.request.get(
+  BASE+'/api/admin/users/reset-history?q='+username+'&page=0&size=20');
+ assert.equal(historyResponse.status(),200,await historyResponse.text());
+ const history=await historyResponse.json();
+ assert.equal(history.total,1);
+ assert.equal(history.events.length,1);
+ assert.equal(history.events[0].target_username,username);
+ assert.equal(history.events[0].admin_username,'owner');
+ assert.ok(history.events[0].created_at);
+ assert.doesNotMatch(JSON.stringify(history),/password_hash|new_password|admin_password|session_version/);
+ await page.locator('#auHistorySection').waitFor({state:'visible'});
+ await page.locator('#auHistorySearch').fill(username);
+ await page.locator('#auHistoryForm button[type=submit]').click();
+ await page.locator('.au-history-item').waitFor({state:'visible'});
+ assert.ok((await page.locator('.au-history-item').first().innerText()).includes(username));
+ assert.ok((await page.locator('.au-history-item').first().innerText()).includes('owner'));
+ const historyOverflow=await page.evaluate(
+  ()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+ assert.ok(historyOverflow<=1,'Admin audit history 360px overflow '+historyOverflow);
+ pass('Admin read-only audit history, isolated search and mobile rendering');
  await Promise.allSettled([adminCtx.close(),playerCtx.close(),guestCtx.close(),freshCtx.close()]);
  console.log('\nUX30 ISOLATED ADMIN USERS / PASSWORD RESET E2E: PASS');
 }catch(error){
