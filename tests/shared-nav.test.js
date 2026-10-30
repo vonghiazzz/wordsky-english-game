@@ -68,7 +68,7 @@ test('shared nav supports mobile and keyboard access',()=>{
 
 test('game links are grouped under one disclosure without changing routes',()=>{
  for(const key of ["'game'","'solo'","'solo-bomb'","'solo-car'","'rooms'"])assert.ok(nav.includes('key:'+key),key);
- assert.match(nav,/gameKeys=new Set\(\['game','solo','solo-bomb','solo-car','rooms'\]\)/);
+ assert.match(nav,/gameKeys=new Set\(\['game','solo','solo-bomb','solo-car','matrix','rooms'\]\)/);
  assert.match(nav,/data-ws-games-group/);
  assert.match(nav,/data-ws-games-toggle aria-expanded="false" aria-controls="wsNavGamesList"/);
  assert.match(nav,/ws-nav-games-list" id="wsNavGamesList" hidden/);

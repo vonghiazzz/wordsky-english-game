@@ -97,11 +97,11 @@ CREATE TABLE IF NOT EXISTS ws_solo_runs (
  user_id uuid REFERENCES ws_users(id) ON DELETE SET NULL,
  access_token_hash text NOT NULL,
  client_fingerprint_hash text NOT NULL,
- mode text NOT NULL DEFAULT 'MATCH' CHECK(mode IN ('MATCH','BOMB','CAR')),
+ mode text NOT NULL DEFAULT 'MATCH' CHECK(mode IN ('MATCH','BOMB','CAR','MATRIX')),
  topic_id uuid REFERENCES ws_topics(id) ON DELETE SET NULL,
  difficulty text NOT NULL CHECK(difficulty IN ('EASY','NORMAL','HARD')),
- duration_seconds integer NOT NULL CHECK(duration_seconds BETWEEN 20 AND 600),
- question_count integer NOT NULL CHECK(question_count BETWEEN 3 AND 30),
+ duration_seconds integer NOT NULL CHECK(duration_seconds BETWEEN 20 AND 1800),
+ question_count integer NOT NULL CHECK(question_count BETWEEN 3 AND 128),
  points_per_correct integer NOT NULL CHECK(points_per_correct BETWEEN 10 AND 1000),
  penalty integer NOT NULL CHECK(penalty BETWEEN 0 AND 1000),
  status text NOT NULL DEFAULT 'PLAYING' CHECK(status IN ('PLAYING','COMPLETED','FAILED','TIMEOUT')),
@@ -132,12 +132,12 @@ CREATE TABLE IF NOT EXISTS ws_login_failures (
 CREATE INDEX IF NOT EXISTS ws_login_failures_recent ON ws_login_failures(remote_ip, attempted_at DESC);
 
 CREATE TABLE IF NOT EXISTS ws_features (
- feature_key text PRIMARY KEY CHECK(feature_key IN ('MATCH','BOMB','CAR','ATTENDANCE','SIGNUP')),
+ feature_key text PRIMARY KEY CHECK(feature_key IN ('MATCH','BOMB','CAR','MATRIX','ATTENDANCE','SIGNUP')),
  enabled boolean NOT NULL DEFAULT true,
  updated_at timestamptz NOT NULL DEFAULT now()
 );
 INSERT INTO ws_features(feature_key,enabled)
-VALUES ('MATCH',true),('BOMB',true),('CAR',true),('ATTENDANCE',true),('SIGNUP',true)
+VALUES ('MATCH',true),('BOMB',true),('CAR',true),('MATRIX',false),('ATTENDANCE',true),('SIGNUP',true)
 ON CONFLICT(feature_key) DO NOTHING;
 CREATE TABLE IF NOT EXISTS ws_join_failures (
  remote_ip text NOT NULL,
