@@ -79,7 +79,10 @@ for(const [browserName,browserType] of [['Chromium',chromium],['Firefox',firefox
      if(path==='/matrix.html'||path==='/memory.html'){
       assert.equal(await page.locator('#matrixResult a').count(),0,'duplicate result anchors');
       assert.equal(await page.locator('#matrixAgain').count(),1,'replay button removed');
-      await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
+      await page.evaluate(()=>{
+       document.documentElement.style.scrollBehavior='auto';
+       window.scrollTo(0,document.documentElement.scrollHeight);
+      });
       const bounds=await page.evaluate(()=>{
        const button=document.querySelector('#matrixStart')?.getBoundingClientRect();
        const dock=document.querySelector('.ws-mobile-dock').getBoundingClientRect();
@@ -89,7 +92,10 @@ for(const [browserName,browserType] of [['Chromium',chromium],['Firefox',firefox
        browserName+' '+path+' matrix Start button covered: '+JSON.stringify(bounds));
      }
      if(path==='/#rooms'){
-      await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
+      await page.evaluate(()=>{
+       document.documentElement.style.scrollBehavior='auto';
+       window.scrollTo(0,document.documentElement.scrollHeight);
+      });
       const bounds=await page.evaluate(()=>{
        const button=document.querySelector('#joinForm button[type="submit"]')?.getBoundingClientRect();
        const dock=document.querySelector('.ws-mobile-dock').getBoundingClientRect();
