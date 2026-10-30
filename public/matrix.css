@@ -1,0 +1,74 @@
+/* UX33 MATRIX Solo: readable, pan/scroll grid at every dimension. */
+.matrix-page{background:radial-gradient(circle at 10% 0%,#1d275b 0%,#0b1226 46%,#07111f 100%);color:#eaf3ff;min-height:100vh}
+.matrix-page [hidden]{display:none!important}
+.matrix-shell{width:min(1320px,calc(100% - 32px));margin:0 auto;padding:28px 0 90px}
+.matrix-header{padding:30px 0 22px}
+.matrix-eyebrow{color:#7dffdf;font-size:12px;font-weight:900;letter-spacing:.14em}
+.matrix-header h1{font-size:clamp(32px,5vw,56px);margin:10px 0}
+.matrix-header p{max-width:960px;color:#c5d3eb;line-height:1.75;font-size:15px}
+.matrix-header strong{color:#f7fafc}
+.matrix-page .ws-audio-panel{max-width:650px}
+.matrix-setup,.matrix-result{border:1px solid #425b82;border-radius:22px;background:linear-gradient(130deg,#202e54,#13213a);padding:25px;box-shadow:0 18px 48px #0206114d}
+.matrix-setup{display:grid;grid-template-columns:1fr minmax(270px,390px);gap:20px;align-items:center}
+.matrix-setup h2,.matrix-result h2{font-size:24px;margin:0 0 8px}
+.matrix-setup p,.matrix-result p{color:#c9d8ed;line-height:1.7}
+.matrix-setup form{display:grid;gap:11px}
+.matrix-setup label{font-weight:750;color:#e8f5ff}
+.matrix-setup select{width:100%;min-height:48px;background:#10203c;border:1px solid #7194bf;border-radius:11px;padding:10px 12px;color:#eefaff;font-size:14px}
+.matrix-primary{background:#52ddbd;border:2px solid #b8fff0;color:#062a2b;padding:12px 21px;min-height:49px;border-radius:12px;font:inherit;font-weight:900;cursor:pointer;box-shadow:0 5px 18px #00e3ac20}
+.matrix-primary:hover{background:#91ffe2}
+.matrix-primary:disabled{opacity:.5;cursor:wait}
+.matrix-setup .matrix-hint{grid-column:1/-1;margin:0;font-size:13px;color:#bac9dd}
+.matrix-setup .matrix-hint.is-error{color:#ffb7c3;font-weight:750}
+.matrix-play{display:grid;gap:10px}
+.matrix-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;position:sticky;top:5px;z-index:5;padding:8px 0;background:#0b1226ee;backdrop-filter:blur(8px)}
+.matrix-stats>div{display:flex;flex-direction:column;gap:4px;background:#17294b;border:1px solid #3c5f87;border-radius:13px;min-width:0;padding:11px 13px}
+.matrix-stats small{font-size:10px;font-weight:850;letter-spacing:.08em;color:#bbd1ef}
+.matrix-stats strong{font-size:clamp(16px,2.6vw,25px);font-weight:900;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.matrix-stats #matrixHearts{font-size:clamp(15px,2.4vw,22px);letter-spacing:.02em}
+.matrix-info{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1a2d47;border:1px solid #466786;border-radius:10px;padding:12px 15px;font-weight:750}
+.matrix-info .is-error{color:#ffb8bb}
+#matrixRetry{border:1px solid #ffe5ad;border-radius:9px;background:#75502a;color:#fff;padding:9px 12px;cursor:pointer;font:inherit}
+.matrix-pan-hint{margin:3px 0;color:#bbd5ec;font-size:12px}
+.matrix-scroll{max-height:min(68vh,850px);overflow:auto;overscroll-behavior:contain;border:1px solid #526a92;border-radius:16px;background:#0f1a32;scrollbar-color:#7796b9 #152640;scrollbar-width:auto;touch-action:pan-x pan-y;outline-offset:3px}
+.matrix-scroll:focus-visible{outline:3px solid #83e9ef}
+.matrix-grid{--matrix-size:8;--matrix-cell:104px;display:grid;grid-template-columns:repeat(var(--matrix-size),var(--matrix-cell));gap:7px;width:max-content;min-width:100%;padding:14px;align-content:start}
+.matrix-card{min-width:0;min-height:102px;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;border-radius:11px;border:2px solid #466a9b;background:linear-gradient(145deg,#233b68,#172c50);color:#f2f8ff;font:inherit;cursor:pointer;padding:9px 6px;transition:background-color .12s,border-color .12s,transform .12s;overflow:hidden}
+.matrix-card--vi{border-color:#9e7948;background:linear-gradient(145deg,#55412a,#352e29);color:#fff2da}
+.matrix-card-language{position:absolute;top:4px;right:6px;color:#cce6ff;font-size:10px;font-weight:900;letter-spacing:.08em;opacity:.75}
+.matrix-card--vi .matrix-card-language{color:#ffe1a3}
+.matrix-card-text{font-size:12px;line-height:1.32;font-weight:760;text-align:center;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;line-clamp:4;overflow:hidden;width:100%}
+.matrix-card:hover:not(:disabled){border-color:#d8f6ff;transform:translateY(-1px);box-shadow:0 7px 18px #02061850}
+.matrix-card:focus-visible{outline:3px solid #b7fff0;outline-offset:2px;z-index:1}
+.matrix-card.is-selected{border-color:#7affdf;background:#14766c;box-shadow:0 0 0 3px #53f7da55}
+.matrix-card.is-right{border-color:#78ffc0;background:#246451}
+.matrix-card.is-wrong{border-color:#ff8195;background:#7d3547}
+.matrix-card.is-matched{opacity:.23;filter:saturate(.3);cursor:default}
+.matrix-card:disabled{cursor:default}
+.matrix-result{margin-top:23px;border-color:#4d8a84}
+.matrix-result h2{color:#a2ffe2}
+.matrix-result-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:20px}
+.matrix-result-actions a{color:#a7e7ff;text-decoration:underline;font-weight:800}
+.matrix-wrong-words h3{margin:20px 0 10px}
+.matrix-review-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.matrix-review-list>div{display:flex;flex-direction:column;gap:4px;padding:11px 12px;background:#102b43;border:1px solid #477b89;border-radius:10px}
+.matrix-review-list strong{color:#f4faff}
+.matrix-review-list span{color:#c9d9e9;font-size:13px}
+@media(max-width:700px){
+ .matrix-shell{width:calc(100% - 22px);padding:18px 0 100px}
+ .matrix-setup{grid-template-columns:1fr;padding:19px}
+ .matrix-setup .matrix-hint{grid-column:auto}
+ .matrix-stats{gap:6px}
+ .matrix-stats>div{padding:8px 7px;min-width:0}
+ .matrix-stats small{font-size:9px}
+ .matrix-info{flex-direction:column;align-items:stretch}
+ .matrix-grid{--matrix-cell:98px;gap:6px;padding:10px}
+ .matrix-card{min-height:94px;padding:7px 5px}
+ .matrix-card-text{font-size:11px}
+ .matrix-scroll{max-height:60vh}
+}
+@media(max-width:390px){
+ .matrix-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .matrix-header p{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){.matrix-card{transition:none}}
