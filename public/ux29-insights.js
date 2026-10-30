@@ -5,6 +5,7 @@ import {learningApi} from './ux10-account-core.js';
 const $=id=>document.getElementById(id);
 let days=7,sequence=0,actorId=null;
 const num=value=>Number.isSafeInteger(value)&&value>=0;
+const SOLO_MODES=['MATCH','BOMB','CAR','MATRIX','MEMORY'];
 
 export function validateInsightsResponse(data,actor,requestedDays){
  if(!data||data.scope!=='account-learning-insights'||data.actor_id!==actor||
@@ -23,6 +24,11 @@ export function validateInsightsResponse(data,actor,requestedDays){
  if(s.marked_remembered+s.marked_need_review!==s.reviews||
     s.active_days>requestedDays)
   throw Error('Lịch sử thống kê không nhất quán.');
+ if(data.solo_modes.length!==SOLO_MODES.length||
+    SOLO_MODES.some((mode,i)=>data.solo_modes[i]?.mode!==mode||
+      !num(data.solo_modes[i]?.runs))||
+    data.solo_modes.reduce((total,row)=>total+row.runs,0)!==s.solo_runs)
+  throw Error('Số trận Solo không nhất quán.');
  for(const day of data.daily)
   if(!/^\d{4}-\d{2}-\d{2}$/.test(day.day)||!num(day.reviews)||
      !num(day.solo_runs)||!num(day.marked_remembered)||
@@ -106,7 +112,8 @@ function render(data){
  renderChart(data.daily,data.days);
  const mode=Object.fromEntries(data.solo_modes.map(row=>[row.mode,row.runs]));
  $('ws29SoloModes').textContent='Trận Solo trong kỳ: MATCH '+(mode.MATCH||0)+
-  ' · BOMB '+(mode.BOMB||0)+' · CAR '+(mode.CAR||0);
+  ' · BOMB '+(mode.BOMB||0)+' · CAR '+(mode.CAR||0)+
+  ' · MATRIX '+(mode.MATRIX||0)+' · MEMORY '+(mode.MEMORY||0);
  renderFocus(data.focus_words);
  $('ws29Content').hidden=false;
  $('ws29Status').dataset.kind='success';

@@ -45,16 +45,19 @@ async function save(ctx,user,source,wordId,remembered,count){
  assert.equal(response.status(),201,await response.text());
 }
 async function solo(userId,mode){
- const state={mode,status:'FAILED',health:0,score:0,correct:0,mistakes:1,
+ const cardMode=['MATRIX','MEMORY'].includes(mode);
+ const status=mode==='MEMORY'?'TIMEOUT':'FAILED';
+ const health=status==='TIMEOUT'?3:0;
+ const state={mode,status,health,score:0,correct:0,mistakes:1,
   wrongWordIds:[],startedAt:Date.now()-30000,endsAt:Date.now()-10000,
   pairs:[],distractors:[],bombs:[],levels:[],index:0};
  const r=await db.query(
   'INSERT INTO ws_solo_runs(user_id,access_token_hash,client_fingerprint_hash,'+
   'mode,difficulty,duration_seconds,question_count,points_per_correct,penalty,'+
   'status,health,score,correct,mistakes,state,finished_at) '+
-  "VALUES($1,$2,$3,$4,'EASY',90,3,100,25,'FAILED',0,0,0,1,$5::jsonb,now()) RETURNING id",
+  "VALUES($1,$2,$3,$4,'EASY',90,$5,100,25,$6,$7,0,0,1,$8::jsonb,now()) RETURNING id",
   [userId,randomBytes(32).toString('hex'),randomBytes(32).toString('hex'),
-   mode,JSON.stringify(state)]
+   mode,cardMode?8:3,status,health,JSON.stringify(state)]
  );
  createdRuns.push(r.rows[0].id);
  return r.rows[0].id;
@@ -99,7 +102,10 @@ try{
  await save(ctxA,owner,'personal',personal.id,false,0);
  await save(ctxB,other,'shared',wordC.id,true,0);
  await solo(owner.id,'MATCH');
+ await solo(owner.id,'MATRIX');
+ await solo(owner.id,'MEMORY');
  await solo(other.id,'BOMB');
+ await solo(other.id,'MATRIX');
 
  const apiA=await ctxA.request.get(BASE+'/api/learning/insights?days=7');
  const apiB=await ctxB.request.get(BASE+'/api/learning/insights?days=7&user_id='+owner.id);
@@ -117,7 +123,7 @@ try{
   markRate:dataA.summary.remembered_mark_rate,activeDays:dataA.summary.active_days,
   need:dataA.summary.current_need_review,known:dataA.summary.current_known,
   solo:dataA.summary.solo_runs
- },{reviews:4,markedRemembered:1,markRate:25,activeDays:1,need:2,known:1,solo:1});
+ },{reviews:4,markedRemembered:1,markRate:25,activeDays:1,need:2,known:1,solo:3});
  assert.equal(dataA.focus_words[0].word_id,wordA.id);
  assert.equal(dataA.focus_words[0].need_review_marks,2);
  assert.ok(dataA.focus_words.some(w=>w.word_id===personal.id&&w.source==='personal'));
@@ -125,8 +131,8 @@ try{
  assert.equal(dataB.summary.reviews,1);
  assert.equal(dataB.summary.current_known,1);
  assert.equal(dataB.summary.current_need_review,0);
- assert.deepEqual(dataA.solo_modes.map(x=>x.runs),[1,0,0]);
- assert.deepEqual(dataB.solo_modes.map(x=>x.runs),[0,1,0]);
+ assert.deepEqual(dataA.solo_modes.map(x=>x.runs),[1,0,0,1,1]);
+ assert.deepEqual(dataB.solo_modes.map(x=>x.runs),[0,1,0,1,0]);
  pass('PostgreSQL truth: two source histories, weak words and Solo are actor-scoped');
 
  const A=await ctxA.newPage(),A2=await ctxA2.newPage(),B=await ctxB.newPage();
@@ -139,6 +145,8 @@ try{
  assert.equal(await A.locator('#ws29Reviews').textContent(),'4');
  assert.equal(await A2.locator('#ws29Reviews').textContent(),'4');
  assert.equal(await B.locator('#ws29Reviews').textContent(),'1');
+ assert.match(await A.locator('#ws29SoloModes').textContent(),/MATRIX 1 · MEMORY 1/);
+ assert.match(await B.locator('#ws29SoloModes').textContent(),/MATRIX 1 · MEMORY 0/);
  assert.match(await A.locator('#ws29Words').textContent(),/observation/);
  assert.doesNotMatch(await B.locator('#ws29Words').textContent(),/observation/);
  assert.equal(await A.locator('#ws29Chart [role="listitem"]').count(),7);
