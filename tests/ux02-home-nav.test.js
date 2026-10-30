@@ -7,6 +7,7 @@ const home=read('public/index.html');
 const learn=read('public/learn.html');
 const nav=read('public/shared-nav.js');
 const css=read('public/ux02-home-nav.css');
+const sharedCss=read('public/shared-nav.css');
 const app=read('public/app.js');
 const base=read('public/style.css');
 
@@ -49,8 +50,8 @@ test('Two disclosures handle keyboard, focus, active state and Escape',()=>{
  assert.match(nav,/setProgressOpen\(false\)/);
  assert.match(nav,/progressToggle\.classList\.toggle\('is-active',active==='attendance'\|\|active==='rank'\|\|active==='learning-progress'\)/);
  assert.doesNotMatch(nav,/label:'Sổ từ cần ôn'|label:'Luyện từ sai'/);
- assert.match(nav,/ws-dock-hidden/);
- assert.match(nav,/ws-mobile-dock-visible/);
+ assert.doesNotMatch(nav,/ws-dock-hidden|dockHidden=/);
+ assert.match(nav,/document\.body\.classList\.add\('ws-mobile-dock-visible'\)/);
  assert.match(nav,/window\.addEventListener\('popstate'/);
  assert.match(nav,/window\.addEventListener\('hashchange'/);
 });
@@ -59,7 +60,9 @@ test('New styles are scoped to Home and shared nav, including small screens',()=
  assert.match(css,/#screen-home \.ws02-hero/);
  assert.match(css,/#screen-home \.ws02-journey/);
  assert.match(css,/#wsSharedNav \.ws-nav-progress/);
- assert.match(css,/#wsSharedNav:not\(\.ws-dock-hidden\) \.ws-mobile-dock/);
+ assert.match(sharedCss,/#wsSharedNav \.ws-mobile-dock\{position:fixed/);
+ assert.match(sharedCss,/body\.ws-mobile-dock-visible/);
+ assert.doesNotMatch(css,/\.ws-mobile-dock/);
  assert.match(css,/@media\(max-width:390px\)/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.doesNotMatch(css,/\.bomb-falling\s*\{|\.car-vehicle\s*\{|\.falling-word\s*\{|\.typing-dock\s*\{/);
