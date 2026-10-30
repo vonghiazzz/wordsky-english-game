@@ -20,10 +20,9 @@
 .solo-game-shell .ws04-next p{margin:0;flex:1;min-width:0}
 .solo-game-shell .ws04-next p strong{display:block;font-size:13px;margin-bottom:5px;color:#f5f8ff}
 .solo-game-shell .ws04-next p span{display:block;font-size:11px;line-height:1.6;color:#b5c7e0}
-.solo-game-shell .ws04-next .ws04-learn{min-height:44px;white-space:nowrap;flex-shrink:0}
 .solo-game-shell .ws04-result+.solo-actions{gap:10px;margin-top:14px}
 .solo-game-shell .ws04-result+.solo-actions .btn{min-height:44px}
-.solo-game-shell .ws04-result~.solo-actions .btn:focus-visible,.solo-game-shell .ws04-learn:focus-visible{outline:3px solid #d7d5ff;outline-offset:3px}
-@media(max-width:640px){.solo-game-shell .ws04-next{flex-direction:column;align-items:stretch}.solo-game-shell .ws04-next .ws04-learn{justify-content:center;width:100%}.solo-game-shell .ws04-result+.solo-actions .btn{flex:1;min-width:130px}}
+.solo-game-shell .ws04-result~.solo-actions .btn:focus-visible{outline:3px solid #d7d5ff;outline-offset:3px}
+@media(max-width:640px){.solo-game-shell .ws04-next{flex-direction:column;align-items:stretch}.solo-game-shell .ws04-result+.solo-actions .btn{flex:1;min-width:130px}}
 @media(max-width:390px){.solo-game-shell .ws04-metrics{gap:6px}.solo-game-shell .ws04-metrics>div{padding:12px 9px}.solo-game-shell .ws04-metrics dt{font-size:10px}.solo-game-shell .ws04-metrics dd{font-size:20px}.solo-game-shell .ws04-metrics dd small{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.solo-game-shell .ws04-progress span{transition:none!important}}

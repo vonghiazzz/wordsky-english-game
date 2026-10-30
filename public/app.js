@@ -189,7 +189,7 @@ function soloResultMarkup(g,rd,mode){
  <dl class="ws04-metrics"><div><dt>Điểm</dt><dd>${fmt(score)}</dd></div><div><dt>Đã hoàn thành</dt><dd>${correct}<small> / ${target} ${unit}</small></dd></div><div><dt>${mistakeLabel}</dt><dd>${mistakes}</dd></div></dl>
  <div class="ws04-progress-title"><span>Tiến độ hoàn thành</span><strong>${percent}%</strong></div>
  <div class="ws04-progress" role="progressbar" aria-label="Mục hoàn thành" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${correct}"><span style="width:${percent}%"></span></div>
- ${wrongList}${autoNotice}<div class="ws04-next"><p><strong>Tiếp tục ghi nhớ từ vựng</strong><span>${nextText}</span></p><a class="btn ghost ws04-learn" href="/progress.html">↗ My Learning</a></div>
+ ${wrongList}${autoNotice}<div class="ws04-next"><p><strong>Tiếp tục ghi nhớ từ vựng</strong><span>${nextText} Mở Tiến độ trong thanh điều hướng để tiếp tục ôn.</span></p></div>
  </section>`;
 }
 function renderSoloCarGame(){

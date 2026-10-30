@@ -37,3 +37,17 @@
  .ws-nav-game-link{font-size:14px;min-height:44px}
 }
 @media(prefers-reduced-motion:reduce){.ws-nav-chevron{transition:none}}
+
+/* One mobile dock on every WordSky page: Arena, competition, Solo, Learn and My Learning. */
+#wsSharedNav .ws-mobile-dock{display:none}
+@media(max-width:680px){
+ body.ws-mobile-dock-visible{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+ html{scroll-padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+ body.ws-mobile-dock-visible :is(input,textarea,select,button){scroll-margin-bottom:calc(94px + env(safe-area-inset-bottom))}
+ #wsSharedNav .ws-mobile-dock{position:fixed;left:0;right:0;bottom:0;z-index:79;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:6px max(7px,env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-right));background:#101a30f5;border-top:1px solid #4d5d7a;box-shadow:0 -12px 28px #050a19aa;backdrop-filter:blur(16px)}
+ #wsSharedNav .ws-mobile-dock a{min-height:54px;min-width:0;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;text-decoration:none;color:#b3c2dc;font-size:20px;border-radius:12px;padding:4px 2px}
+ #wsSharedNav .ws-mobile-dock a small{font-size:10px;line-height:1.2;font-weight:750;white-space:nowrap}
+ #wsSharedNav .ws-mobile-dock a.is-active{color:#c6fff0;background:#293456}
+ #wsSharedNav .ws-mobile-dock a:focus-visible{outline:3px solid #b4b6ff;outline-offset:-3px}
+}
+@media(max-width:355px){#wsSharedNav .ws-mobile-dock a small{font-size:9px}}

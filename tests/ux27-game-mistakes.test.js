@@ -135,7 +135,8 @@ test('UX27 Solo result includes only server-returned words, escaping untrusted H
  assert.match(result,/Từ cần ôn sau lượt này/);
  assert.match(result,/&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
  assert.doesNotMatch(result,/<script>alert\(1\)<\/script>/);
- assert.match(result,/href="\/progress\.html"/);
+ assert.doesNotMatch(result,/<a\b/);
+ assert.match(result,/Mở Tiến độ trong thanh điều hướng/);
 });
 
 
