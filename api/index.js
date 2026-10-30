@@ -187,6 +187,23 @@ async function selectMatchWords(db,round){
  assertWordCapacity(round,data.rows.length);
  return data.rows;
 }
+async function selectMatrixWords(db,round){
+ const needed=requiredWords(round);
+ // Both languages must have unique visible labels. One selected topic currently
+ // never reaches 32 pairs, so the first release uses all enabled topics.
+ const q=await db.query(
+  'SELECT id,english,meaning FROM ('+
+   'SELECT unique_en.*,row_number() OVER (PARTITION BY lower(btrim(unique_en.meaning)) ORDER BY random()) AS vi_rank FROM ('+
+    'SELECT DISTINCT ON (lower(btrim(w.english))) w.id,w.english,w.meaning '+
+    'FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
+    "WHERE w.enabled=true AND t.enabled=true AND btrim(w.english)<>'' AND btrim(w.meaning)<>'' "+
+    'ORDER BY lower(btrim(w.english)),w.id'+
+   ') unique_en'+
+  ') choices WHERE vi_rank=1 ORDER BY random() LIMIT $1',[needed]
+ );
+ assertWordCapacity(round,q.rows.length);
+ return q.rows;
+}
 async function ensureVocabulary(db,rounds){
  for(const round of rounds){
   if(round.mode==='CAR'){
@@ -356,6 +373,15 @@ async function globalRank(){const r=await sql('SELECT id,display_name,xp,streak 
 
 function soloRound(mode,input){
  const b=input||{};
+ if(mode==='MATRIX'){
+  const grid=Number(b.grid_size??8);
+  const counts={8:32,12:72,16:128},seconds={8:600,12:1200,16:1800};
+  if(!Number.isInteger(grid)||!Object.hasOwn(counts,grid))throw fail('Ma trận chỉ hỗ trợ 8×8, 12×12 hoặc 16×16');
+  if(b.topic_id)throw fail('Ma trận cần dùng toàn bộ kho từ vì một chủ đề chưa đủ số cặp');
+  return normalizeRound({mode,difficulty:grid===8?'EASY':grid===12?'NORMAL':'HARD',
+   topic_id:null,duration_seconds:seconds[grid],question_count:counts[grid],
+   points_per_correct:100,penalty:25,weight:1},{soloMatrix:true});
+ }
  return normalizeRound({
   mode,difficulty:b.difficulty||'EASY',topic_id:b.topic_id||null,
   duration_seconds:b.duration_seconds??90,question_count:b.question_count??(mode==='BOMB'?8:mode==='CAR'?3:6),
@@ -366,6 +392,7 @@ function soloPublicRound(round,state){
  const out={mode:round.mode,topic_id:round.topic_id,difficulty:round.difficulty,duration_seconds:round.duration_seconds,
   question_count:round.question_count,points_per_correct:round.points_per_correct,penalty:round.penalty};
  if(round.mode==='BOMB'||round.mode==='CAR')Object.assign(out,state?.soloConfig||{});
+ if(round.mode==='MATRIX')out.grid_size=state?.gridSize;
  return out;
 }
 function soloGuestIdentity(req,signingSecret){
@@ -374,14 +401,14 @@ function soloGuestIdentity(req,signingSecret){
  return {token:randomToken()};
 }
 async function startSolo(req,res,mode){
- if(!['MATCH','BOMB','CAR'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
+ if(!['MATCH','BOMB','CAR','MATRIX'].includes(mode))throw fail('Chế độ Solo không hợp lệ');
  const round=soloRound(mode,body(req));
  const signingSecret=secret();if(!signingSecret||signingSecret.length<32)throw fail('Máy chủ chưa cấu hình SESSION_SECRET an toàn',503);
  const owner=actor(req);const identity=soloGuestIdentity(req,signingSecret);const accessHash=hashToken(identity.token);const now=Date.now();
  const fingerprintHash=hashToken(signingSecret+':'+ipOf(req));
  const created=await transaction(async db=>{
   const feature=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[mode]);
-  if(feature.rows[0]?.enabled===false)throw fail(`Chế độ ${mode} hiện đang tạm dừng`,403);
+  if(feature.rows[0]?.enabled===false||(mode==='MATRIX'&&feature.rows[0]?.enabled!==true))throw fail(`Chế độ ${mode} hiện đang tạm dừng`,403);
   // Serialize the rate-limit check per fingerprint across all serverless instances.
   await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[fingerprintHash]);
   const recent=await db.query("SELECT count(*)::int AS n FROM ws_solo_runs WHERE client_fingerprint_hash=$1 AND started_at>now()-interval '15 minutes'",[fingerprintHash]);
@@ -390,7 +417,7 @@ async function startSolo(req,res,mode){
    const topic=await db.query('SELECT id FROM ws_topics WHERE id=$1 AND enabled=true',[round.topic_id]);
    if(!topic.rows.length)throw fail('Chủ đề không tồn tại hoặc đang bị tắt',404);
   }
-  const words=mode==='CAR'?await selectApprovedCarWords(db,round):await selectMatchWords(db,round);
+  const words=mode==='CAR'?await selectApprovedCarWords(db,round):mode==='MATRIX'?await selectMatrixWords(db,round):await selectMatchWords(db,round);
   const state=createState(round,words,now,now+round.duration_seconds*1000);
   if(mode==='BOMB')state.soloConfig={bomb_fall_seconds:round.bomb_fall_seconds,bomb_batch_size:round.bomb_batch_size,bomb_spawn_interval_seconds:round.bomb_spawn_interval_seconds};
   if(mode==='CAR')state.soloConfig={car_step_seconds:round.car_step_seconds};
@@ -418,6 +445,7 @@ function authorizeSolo(req,run){
 const receiptResult=receipt=>receipt?.result??receipt??{};
 function soloAttemptContent(mode,answer){
  if(mode==='MATCH')return {leftId:String(answer.leftId||''),rightId:String(answer.rightId||'')};
+ if(mode==='MATRIX')return {firstId:String(answer.firstId||''),secondId:String(answer.secondId||'')};
  if(mode==='BOMB'){
   if(answer.auto!==true||answer.bombId!==undefined)throw fail('BOMB Solo chỉ nhận chế độ tự động theo từ đã nhập');
   return {answer:normalizeAnswer(answer.answer),auto:true};
@@ -613,6 +641,7 @@ export default async function handler(req,res){
   if(method==='GET'&&key==='rankings')return output(res,200,{players:await globalRank()});
   if(method==='GET'&&key==='topics')return output(res,200,{topics:await fetchTopics(false)});
   if(method==='POST'&&key==='solo/match/start')return output(res,201,await startSolo(req,res,'MATCH'));
+   if(method==='POST'&&key==='solo/matrix/start')return output(res,201,await startSolo(req,res,'MATRIX'));
   if(method==='POST'&&key==='solo/bomb/start')return output(res,201,await startSolo(req,res,'BOMB'));
   if(method==='POST'&&key==='solo/car/start')return output(res,201,await startSolo(req,res,'CAR'));
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSolo(req,r[2]));
@@ -706,7 +735,7 @@ export default async function handler(req,res){
    return output(res,200,{ok:true});
   }
   if(method==='GET'&&key==='admin/features'){mustAdmin(req);const features=await sql('SELECT feature_key,enabled,updated_at FROM ws_features ORDER BY feature_key');return output(res,200,{features:features.rows})}
-  if(method==='PATCH'&&r[0]==='admin'&&r[1]==='features'&&r[2]&&r.length===3){mustAdmin(req);const key=r[2].toUpperCase();if(!['MATCH','BOMB','CAR','ATTENDANCE','SIGNUP'].includes(key))throw fail('Feature không hợp lệ');const b=body(req);if(typeof b.enabled!=='boolean')throw fail('enabled phải là true hoặc false');const q=await sql('INSERT INTO ws_features(feature_key,enabled) VALUES($1,$2) ON CONFLICT(feature_key) DO UPDATE SET enabled=excluded.enabled,updated_at=now() RETURNING feature_key,enabled',[key,b.enabled]);return output(res,200,q.rows[0])}
+  if(method==='PATCH'&&r[0]==='admin'&&r[1]==='features'&&r[2]&&r.length===3){mustAdmin(req);const key=r[2].toUpperCase();if(!['MATCH','BOMB','CAR','MATRIX','ATTENDANCE','SIGNUP'].includes(key))throw fail('Feature không hợp lệ');const b=body(req);if(typeof b.enabled!=='boolean')throw fail('enabled phải là true hoặc false');const q=await sql('INSERT INTO ws_features(feature_key,enabled) VALUES($1,$2) ON CONFLICT(feature_key) DO UPDATE SET enabled=excluded.enabled,updated_at=now() RETURNING feature_key,enabled',[key,b.enabled]);return output(res,200,q.rows[0])}
   if(method==='GET'&&key==='admin/events'){mustAdmin(req);return output(res,200,{events:await adminList()})}
   if(method==='POST'&&key==='admin/events')return output(res,201,await adminCreateEvent(req));
   if(r[0]==='admin'&&r[1]==='events'&&r[2]){
