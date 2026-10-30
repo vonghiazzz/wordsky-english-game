@@ -130,7 +130,7 @@ test('UX34 Solo and Admin UI work with both modes without exposing secret face v
   assert.match(matrix,new RegExp('<option value="'+size+'">'));
  }
  assert.match(client,/cardId:id/);
- assert.match(client,/\\!MEMORY\\|\\|c\\.revealed===true/);
+ assert.match(client,/!MEMORY\|\|c\.revealed===true/);
  assert.match(app,/room-matrix-scroll/);
  assert.match(app,/data-room-card/);
  assert.match(api,/solo\/memory\/start/);
