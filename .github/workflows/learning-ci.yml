@@ -234,6 +234,11 @@ jobs:
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
             exit 1
           fi
+          if ! node scripts/ux40-player-password-e2e.mjs; then
+            echo 'UX40 isolated player password-change diagnostics (last 60 lines):'
+            tail -n 60 "$RUNNER_TEMP/wordsky-api.log"
+            exit 1
+          fi
           if ! node scripts/ux33-local-matrix-e2e.mjs; then
             echo 'UX33 isolated MATRIX diagnostics (last 80 lines):'
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
