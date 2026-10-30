@@ -120,7 +120,7 @@ function adminInputEvent(b){
  if(typeof b.password!=='string'||b.password.length<8)throw fail('Mật khẩu phòng ít nhất 8 ký tự');
  const max=toInt(b.max_players);if(max<2||max>500)throw fail('Giới hạn người chơi: 2–500');
  if(!Array.isArray(b.rounds)||b.rounds.length<1||b.rounds.length>12)throw fail('Cuộc thi phải có 1–12 vòng');
- return {title,password_hash:hashPassword(b.password),max_players:max,rounds:b.rounds.map(normalizeRound)};
+ return {title,password_hash:hashPassword(b.password),max_players:max,rounds:b.rounds.map(r=>normalizeRound(r,{soloMatrix:true}))};
 }
 function codeGen(){const letters='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:7},()=>letters[randomInt(letters.length)]).join('')}
 // Check the active vocabulary in the same DB transaction as event creation/update.
@@ -189,23 +189,33 @@ async function selectMatchWords(db,round){
 }
 async function selectMatrixWords(db,round){
  const needed=requiredWords(round);
- // Both languages must have unique visible labels. One selected topic currently
- // never reaches 32 pairs, so the first release uses all enabled topics.
+ // A topic filter must never silently fall back to unrelated words.
  const q=await db.query(
-  'SELECT id,english,meaning FROM ('+
-   'SELECT unique_en.*,row_number() OVER (PARTITION BY lower(btrim(unique_en.meaning)) ORDER BY random()) AS vi_rank FROM ('+
-    'SELECT DISTINCT ON (lower(btrim(w.english))) w.id,w.english,w.meaning '+
-    'FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
-    "WHERE w.enabled=true AND t.enabled=true AND btrim(w.english)<>'' AND btrim(w.meaning)<>'' "+
-    'ORDER BY lower(btrim(w.english)),w.id'+
-   ') unique_en'+
-  ') choices WHERE vi_rank=1 ORDER BY random() LIMIT $1',[needed]
+   'SELECT id,english,meaning FROM ('+
+    'SELECT unique_en.*,row_number() OVER (PARTITION BY lower(btrim(unique_en.meaning)) ORDER BY random()) AS vi_rank FROM ('+
+     'SELECT DISTINCT ON (lower(btrim(w.english))) w.id,w.english,w.meaning,w.cefr_level,w.cefr_review_status '+
+     'FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
+     "WHERE w.enabled=true AND t.enabled=true AND btrim(w.english)<>'' AND btrim(w.meaning)<>'' "+
+     'AND ($2::uuid IS NULL OR w.topic_id=$2) '+
+     "ORDER BY lower(btrim(w.english)),CASE WHEN w.cefr_review_status='APPROVED' THEN 0 ELSE 1 END,w.id"+
+    ') unique_en'+
+   ') choices WHERE vi_rank=1 ORDER BY CASE '+
+     "WHEN cefr_review_status='APPROVED' AND ( "+
+       "($3='EASY' AND cefr_level IN ('A1','A2')) OR "+
+       "($3='NORMAL' AND cefr_level IN ('B1','B2')) OR "+
+       "($3='HARD' AND cefr_level IN ('C1','C2')) ) THEN 0 "+
+     "WHEN cefr_review_status='APPROVED' THEN 1 ELSE 2 END,random() LIMIT $1",
+   [needed,round.topic_id||null,round.difficulty]
  );
  assertWordCapacity(round,q.rows.length);
  return q.rows;
 }
 async function ensureVocabulary(db,rounds){
  for(const round of rounds){
+  if(['MATRIX','MEMORY'].includes(round.mode)){
+   await selectMatrixWords(db,round);
+   continue;
+  }
   if(round.mode==='CAR'){
    const r=carWordRequirements(round),got=await approvedCarWordCounts(db,round);
    const missing=Object.entries(r).filter(([name,n])=>got[name]<n)
@@ -242,7 +252,7 @@ async function adminUpdateEvent(req,id){mustAdmin(req);if(badId(id))throw fail('
  if(title.length<3||max<2||max>500)throw fail('Cấu hình không hợp lệ');
  if(b.rounds){
   if(!Array.isArray(b.rounds)||b.rounds.length<1||b.rounds.length>12)throw fail('Vòng thi không hợp lệ');
-  const rounds=b.rounds.map(normalizeRound);
+  const rounds=b.rounds.map(r=>normalizeRound(r,{soloMatrix:true}));
   await ensureVocabulary(db,rounds);
   await db.query('DELETE FROM ws_rounds WHERE event_id=$1',[id]);
   await writeRounds(db,id,rounds);
@@ -259,6 +269,10 @@ async function adminStatus(req,id,verb){mustAdmin(req);if(badId(id))throw fail('
   const rr=await db.query('SELECT mode,difficulty,question_count,topic_id FROM ws_rounds WHERE event_id=$1 ORDER BY position',[id]);
   if(!rr.rows.length)throw fail('Cuộc thi chưa có vòng chơi');
   await ensureVocabulary(db,rr.rows);
+  for(const rd of rr.rows.filter(x=>['MATRIX','MEMORY'].includes(x.mode))){
+   const gate=await db.query('SELECT enabled FROM ws_features WHERE feature_key=$1',[rd.mode]);
+   if(gate.rows[0]?.enabled!==true)throw fail('Chế độ '+rd.mode+' chưa được bật cho thi đấu',403);
+  }
  }
  if(verb==='start'){
   const cnt=await db.query('SELECT count(*)::int n FROM ws_participants WHERE event_id=$1',[id]);if(cnt.rows[0].n<1)throw fail('Cần ít nhất một người tham gia trước khi bắt đầu');
@@ -308,7 +322,7 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
  if(p.admin)throw fail('Admin không tham gia tính điểm',403);
  if(e.status!=='LIVE')throw fail('Cuộc thi chưa bắt đầu',409);
  const round=e.rounds.find(r=>r.id===roundId);if(!round)throw fail('Vòng thi không tồn tại',404);
- const feature=await sql('SELECT enabled FROM ws_features WHERE feature_key=$1',[round.mode]);if(feature.rows[0]?.enabled===false)throw fail('Chế độ chơi hiện đang bị tắt',403);
+ const feature=await sql('SELECT enabled FROM ws_features WHERE feature_key=$1',[round.mode]);if(feature.rows[0]?.enabled===false||(['MATRIX','MEMORY'].includes(round.mode)&&feature.rows[0]?.enabled!==true))throw fail('Chế độ chơi hiện đang bị tắt',403);
  const now=Date.now(),start=Date.parse(round.starts_at),ends=Date.parse(round.ends_at);
  if(now<start||now>=ends)throw fail('Chưa đến hoặc đã hết giờ vòng này',409);
  return transaction(async db=>{
@@ -317,6 +331,8 @@ async function startRound(req,code,roundId){const e=await eventInfo(code.toUpper
    let words=[];
    if(round.mode==='CAR'){
     words=await selectApprovedCarWords(db,round);
+   }else if(['MATRIX','MEMORY'].includes(round.mode)){
+    words=await selectMatrixWords(db,round);
    }else{
     words=await selectMatchWords(db,round);
    }
