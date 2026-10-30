@@ -2,7 +2,7 @@
 import {sql,transaction,getPool} from '../lib/db.js';
 import {createAdminUsersService,isSessionVersionCurrent} from '../lib/admin-users-service.js';
 import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie,hashToken,randomToken,normalizeName,username,sameOrigin} from '../lib/security.js';
-import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
+import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,SOLO_MATRIX_SIZES,MATRIX_DURATION_SECONDS,MEMORY_DURATION_SECONDS,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
@@ -404,16 +404,15 @@ async function globalRank(){const r=await sql('SELECT id,display_name,xp,streak 
 function soloRound(mode,input){
  const b=input||{};
  if(mode==='MATRIX'||mode==='MEMORY'){
-  const grid=Number(b.grid_size??6);
-  const counts={6:18,10:50,12:72},times={6:360,10:720,12:1200};
-  if(!Number.isInteger(grid)||!Object.hasOwn(counts,grid))
-   throw fail('Ma trận chỉ hỗ trợ 6×6, 10×10 hoặc 12×12');
+  const grid=Number(b.grid_size??4);
+  if(!Number.isInteger(grid)||!Object.hasOwn(SOLO_MATRIX_SIZES,grid))
+   throw fail('Solo chỉ hỗ trợ ma trận 4×4, 5×5 hoặc 6×6');
   return normalizeRound({
    mode,difficulty:b.difficulty||'NORMAL',topic_id:b.topic_id||null,
-   duration_seconds:b.duration_seconds??(mode==='MEMORY'?times[grid]/2:times[grid]),
-   question_count:counts[grid],
+   duration_seconds:b.duration_seconds??(mode==='MEMORY'?MEMORY_DURATION_SECONDS:MATRIX_DURATION_SECONDS)[grid],
+   question_count:SOLO_MATRIX_SIZES[grid],
    points_per_correct:b.points_per_correct??100,penalty:b.penalty??25,weight:1
-  },{soloMatrix:true});
+  },{soloMatrix:true,soloOnly:true});
  }
  return normalizeRound({
   mode,difficulty:b.difficulty||'EASY',topic_id:b.topic_id||null,

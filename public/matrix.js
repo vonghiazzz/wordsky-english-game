@@ -6,7 +6,7 @@
  const MEMORY=MODE==='MEMORY';
  const RUN_KEY=MEMORY?'wordsky_ux34_memory_run':'wordsky_ux33_matrix_run';
  const PENDING_KEY=MEMORY?'wordsky_ux34_memory_pending':'wordsky_ux33_matrix_pending';
- const DEFAULT_TIME={MATRIX:{6:360,10:720,12:1200},MEMORY:{6:180,10:360,12:600}};
+ const DEFAULT_TIME={MATRIX:{4:180,5:240,6:360},MEMORY:{4:90,5:120,6:180}};
  const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const audio=()=>window.WordSkyAudio;
  const save=(key,value)=>{try{if(value==null)sessionStorage.removeItem(key);else sessionStorage.setItem(key,JSON.stringify(value))}catch{}};
@@ -48,7 +48,9 @@
   const area=$('matrixScroll'),x=area.scrollLeft,y=area.scrollTop,grid=$('matrixGrid');
   const locked=MEMORY&&Number(g.flipUntil||0)>Date.now()+offset;
   grid.style.setProperty('--matrix-size',String(g.gridSize));
+  grid.dataset.gridSize=String(g.gridSize);
   grid.innerHTML=g.cards.map(c=>{
+   if(c.empty)return '<div class="matrix-card-space" aria-hidden="true"></div>';
    const revealed=!MEMORY||c.revealed===true;
    const label=MEMORY&&c.matched?'✓':revealed?String(c.label||''):'✦';
    const lang=revealed?c.lang:null;
@@ -143,7 +145,7 @@
   if(!g||g.status!=='PLAYING'||pending||busy)return;
   if(MEMORY&&Number(g.flipUntil||0)>Date.now()+offset)return;
   const c=g.cards.find(x=>x.id===id);
-  if(!c||c.matched||c.revealed)return;
+  if(!c||c.empty||c.matched||c.revealed)return;
   audio()?.unlock();
   if(MEMORY){
    pending={attemptId:crypto.randomUUID(),cardId:id};

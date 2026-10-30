@@ -481,7 +481,7 @@ function chooseRoomCard(cardId){
  if(!g||!['MATRIX','MEMORY'].includes(g.mode)||g.status!=='PLAYING'||gameBusy||roomCardPending)return;
  if(g.mode==='MEMORY'&&Number(g.flipUntil||0)>Date.now()+localTimeOffset)return;
  const c=g.cards?.find(v=>v.id===cardId);
- if(!c||c.matched||c.revealed)return;
+ if(!c||c.empty||c.matched||c.revealed)return;
  window.WordSkyAudio?.unlock();
  if(g.mode==='MEMORY'){
   roomCardPending={attemptId:crypto.randomUUID(),cardId};
@@ -644,6 +644,7 @@ function renderGame(){
    const memory=g.mode==='MEMORY';
    const locked=memory&&Number(g.flipUntil||0)>Date.now()+localTimeOffset;
    const cards=(g.cards||[]).map(c=>{
+    if(c.empty)return '<div class="matrix-card-space" aria-hidden="true"></div>';
     const faceUp=!memory||c.revealed===true;
     const label=memory&&c.matched?'✓':faceUp?String(c.label||''):'✦';
     const lang=faceUp?c.lang:null;
@@ -814,7 +815,7 @@ function carVocabularyNeeds(difficulty,count){
  return {A2:plan[0]*count,BONUS:plan[1]*count,DOUBLE:plan[2]*count};
 }
 function cardRoundDefaultDuration(mode,pairs){
- const presets={MATRIX:{18:360,50:720,72:1200},MEMORY:{18:180,50:360,72:600}};
+ const presets={MATRIX:{8:180,12:240,18:360,32:480,50:720,72:1200,128:1800},MEMORY:{8:90,12:120,18:180,32:240,50:360,72:600,128:900}};
  return presets[mode]?.[pairs]??null;
 }
 function cardRoundAdjustedDuration(mode,previousPairs,nextPairs,previousDuration){
@@ -844,7 +845,10 @@ function renderRounds(){
    ...(matrixFeatureEnabled||r.mode==='MATRIX'?['MATRIX']:[]),
    ...(memoryFeatureEnabled||r.mode==='MEMORY'?['MEMORY']:[])];
   const modesHtml=modes.map(m=>'<option '+(m===r.mode?'selected':'')+' value="'+m+'">'+MODE_SHORT[m]+'</option>').join('');
-  const sizes=[{n:18,label:'6 × 6 · 18 cặp'},{n:50,label:'10 × 10 · 50 cặp'},{n:72,label:'12 × 12 · 72 cặp'}];
+  const sizes=[{n:8,label:'4 × 4 · 8 cặp'},{n:12,label:'5 × 5 · 12 cặp · 1 ô trống'},
+   {n:18,label:'6 × 6 · 18 cặp'},{n:32,label:'8 × 8 · 32 cặp'},
+   {n:50,label:'10 × 10 · 50 cặp'},{n:72,label:'12 × 12 · 72 cặp'},
+   {n:128,label:'16 × 16 · 128 cặp'}];
   const countHtml=isCards?'<label>Số ô / kích thước<select data-k="question_count">'+
    sizes.map(t=>'<option value="'+t.n+'" '+(t.n===r.question_count?'selected':'')+'>'+t.label+'</option>').join('')+'</select></label>':
    '<label>Số lượt<input type="number" data-k="question_count" min="3" max="'+(r.mode==='MATCH'?Math.min(20,cap):cap)+'" value="'+r.question_count+'"></label>';
@@ -864,7 +868,7 @@ function renderRounds(){
    '<label>Hệ số<input type="number" data-k="weight" min="1" max="10" value="'+r.weight+'"></label>'+
    '<div class="round-note">'+stock+cefrHint+'</div>'+
    '<div class="round-remove-row"><button class="btn warn" type="button" data-remove-round="'+i+'" aria-label="Xóa vòng '+(i+1)+'">✕ Xóa vòng '+(i+1)+'</button></div></div>';
- }).join('')+'<p class="small-note">Chế độ MATRIX/MEMORY cho chọn 6×6, 10×10, 12×12. MEMORY không trừ tim và có thời gian mặc định bằng nửa MATRIX; Admin được chỉnh thời gian, chủ đề, cấp độ và điểm.</p>';
+ }).join('')+'<p class="small-note">MATRIX/MEMORY trong phòng thi có kích thước từ 4×4 đến 16×16 (5×5 có 1 ô trống). MEMORY không trừ tim và có thời gian mặc định bằng nửa MATRIX; Admin được chỉnh thời gian, chủ đề, cấp độ và điểm.</p>';
 }
 function collectRounds(){document.querySelectorAll('[data-round]').forEach(e=>{const i=Number(e.dataset.round);const r=draftRounds[i];e.querySelectorAll('[data-k]').forEach(c=>{r[c.dataset.k]=['mode','topic_id','difficulty'].includes(c.dataset.k)?c.value:Number(c.value)});r.topic_id=r.topic_id||null;
  if(r.mode==='MATCH')r.question_count=Math.min(20,r.question_count);});return draftRounds}

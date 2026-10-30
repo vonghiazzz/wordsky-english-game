@@ -2,14 +2,19 @@
 
 ## Product scope
 Two independent card-grid games share vocabulary and server-scored Solo/competition logic.
-MATRIX is face-up, MEMORY is face-down. Both offer 6×6 = 18 pairs,
-10×10 = 50 pairs, 12×12 = 72 pairs.
+MATRIX is face-up, MEMORY is face-down. New Solo runs offer 4×4 = 8 pairs,
+5×5 = 12 pairs + one inert centre slot, or 6×6 = 18 pairs.
+Competition Admin rounds can select 4×4, 5×5, 6×6, 8×8, 10×10, 12×12, 16×16.
 
 | Size | MATRIX default | MEMORY default |
 |---|---:|---:|
+| 4×4 | 180s | 90s |
+| 5×5 | 240s | 120s |
 | 6×6 | 360s | 180s |
-| 10×10 | 720s | 360s |
-| 12×12 | 1200s | 600s |
+| 8×8 (Admin) | 480s | 240s |
+| 10×10 (Admin) | 720s | 360s |
+| 12×12 (Admin) | 1200s | 600s |
+| 16×16 (Admin) | 1800s | 900s |
 
 Users can change difficulty (EASY/NORMAL/HARD), topic, duration (20–1800s),
 correct points (10–1000), wrong penalty (0–1000). Only unique
@@ -60,3 +65,13 @@ Each MATRIX/MEMORY round has an independent wrong-answer penalty; the existing
 competition-wide penalty remains the default for MATCH/BOMB/CAR. Selecting a
 different card-grid size updates the duration to the new mode-specific preset
 only if the prior duration was still the old preset. Custom Admin times stay.
+
+### UX35 compact Solo dimensions
+- The Solo API accepts only 4/5/6 for **new** MATRIX and MEMORY runs.
+- The 5×5 board has 24 playable cards (12 bilingual pairs) plus an inert,
+  blank centre slot. This slot has no word ID, label, hidden answer or button.
+- Existing Solo 10×10/12×12 runs can still resume from their persisted state.
+- Admin's seven-size selector stays inside the existing database limits of
+  128 pairs and 1800 seconds, with vocabulary capacity checked on the server.
+- No migration is required: UX33/UX34 Production constraints already support
+  all new sizes. Only deploy after the PR passes CI and manual Preview QA.

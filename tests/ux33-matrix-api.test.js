@@ -81,22 +81,22 @@ test('UX33 no database feature flag means fail closed, and invalid size fails ea
  assert.equal(wrong.res.status,400);
  assert.equal(game,null);
 });
-test('UX33 starting from available vocabulary gives exactly 144 safely anonymized cards',async()=>{
+test('UX35 MATRIX Solo 6x6 returns 36 anonymized cards',async()=>{
  reset();
- const {res,cookie}=await start(12);
+ const {res,cookie}=await start(6);
  assert.equal(res.status,201);
  assert.match(cookie,/^ws_solo=/);
  assert.equal(res.data.round.mode,'MATRIX');
- assert.equal(res.data.round.question_count,72);
- assert.equal(res.data.round.duration_seconds,1200);
- assert.equal(res.data.game.cards.length,144);
+ assert.equal(res.data.round.question_count,18);
+ assert.equal(res.data.round.duration_seconds,360);
+ assert.equal(res.data.game.cards.length,36);
  assert.equal(game.mode,'MATRIX');
- assert.equal(game.state.pairs.length,72);
+ assert.equal(game.state.pairs.length,18);
  assert.ok(res.data.game.cards.every(c=>!Object.hasOwn(c,'wordId')&&!Object.hasOwn(c,'pairId')));
  assert.equal(Object.hasOwn(res.data.game,'pairs'),false);
  const read=await api('GET','solo/runs/'+runId,{cookie});
  assert.equal(read.status,200);
- assert.equal(read.data.game.cards.length,144);
+ assert.equal(read.data.game.cards.length,36);
 });
 test('UX33 missing unique pairs returns 400 without creating run',async()=>{
  reset();words=fixture(17);
@@ -159,4 +159,27 @@ test('UX34 MEMORY Solo returns only hidden cards and preserves idempotent flips 
  const altered=await api('POST','solo/runs/'+runId+'/answer',{cookie,
   body:{attemptId:attempt(22),cardId:one.viId}});
  assert.equal(altered.status,409);
+});
+
+test('UX35 MATRIX Solo 5x5 creates 12 pairs and one inert centre space',async()=>{
+ reset();const {res,cookie}=await start(5);
+ assert.equal(res.status,201);
+ assert.equal(res.data.round.grid_size,5);
+ assert.equal(res.data.round.question_count,12);
+ assert.equal(res.data.round.duration_seconds,240);
+ assert.equal(res.data.game.cards.length,25);
+ assert.deepEqual(res.data.game.cards[12],{empty:true});
+ assert.equal(res.data.game.cards.filter(c=>c.id).length,24);
+ assert.equal(res.data.game.cards.filter(c=>c.lang==='en').length,12);
+ assert.equal(res.data.game.cards.filter(c=>c.lang==='vi').length,12);
+ assert.equal(game.state.pairs.length,12);
+ assert.equal((await api('GET','solo/runs/'+runId,{cookie})).data.game.cards[12].empty,true);
+});
+test('UX35 MATRIX Solo rejects every Admin-only dimension',async()=>{
+ for(const size of [8,10,12,16]){
+  reset();const {res}=await start(size);
+  assert.equal(res.status,400);
+  assert.match(res.data.error,/4×4, 5×5.*6×6/);
+  assert.equal(game,null);
+ }
 });
