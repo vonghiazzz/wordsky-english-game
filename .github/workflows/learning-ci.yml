@@ -83,6 +83,11 @@ jobs:
         env:
           UX23C_TEST_DATABASE_URL: postgres://wordsky:wordsky_ci_only@127.0.0.1:5432/wordsky_test
 
+      - name: UX43B verify opt-in typed recall contract without DB or SRS writes
+        run: |
+          set -euo pipefail
+          node scripts/ux43b-offline-recall-qa.mjs
+
   browser-srs-e2e:
     needs: unit-and-postgres
     runs-on: ubuntu-latest
