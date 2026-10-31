@@ -592,7 +592,7 @@ export default async function handler(req,res){
   const r=requestSegments=route(req),method=req.method,key=r.join('/');
   // Self-password changes perform their own strict, non-optional Origin check.
   // This permits a verified isolated Preview origin without weakening other APIs.
-  if(req.method!=='GET'&&key!=='auth/change-password'&&!sameOrigin(req))
+  if(req.method!=='GET'&&!['auth/change-password','auth/revoke-sessions'].includes(key)&&!sameOrigin(req))
    return output(res,403,{error:'Invalid origin'});
   // UX30: validate a signed player cookie against the live DB once per request.
   // Existing synchronous mustPlayer()/actor() callers then reuse this decision.
@@ -689,6 +689,11 @@ export default async function handler(req,res){
   if(method==='POST'&&key==='auth/change-password'){
    const result=await playerPasswordService().changePassword(req,body(req,4096));
    // All player tokens (including this device) were revoked by session_version.
+   res.setHeader('set-cookie',cookie(AUTH_COOKIE,'',0));
+   return output(res,200,result);
+  }
+  if(method==='POST'&&key==='auth/revoke-sessions'){
+   const result=await playerPasswordService().revokeSessions(req,body(req,2048));
    res.setHeader('set-cookie',cookie(AUTH_COOKIE,'',0));
    return output(res,200,result);
   }
