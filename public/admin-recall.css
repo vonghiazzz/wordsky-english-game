@@ -1,0 +1,30 @@
+/* UX43E1 isolated Admin draft workbench; no changes to shared game nav. */
+[hidden]{display:none!important}
+.rc-section{margin-top:18px}
+.rc-section h2{font-size:21px;margin:3px 0 12px;color:#fff}
+.rc-warning{border:1px solid #ad905c;background:#443522;padding:13px;border-radius:12px;color:#fff0ce;line-height:1.7}
+.rc-section textarea{font:inherit;color:#fff;background:#0d2039;border:1px solid #6e8cad;border-radius:10px;padding:12px;min-height:90px;resize:vertical;width:100%}
+.rc-section textarea:focus-visible{outline:3px solid #baf4dd;outline-offset:2px}
+.rc-section form{max-width:740px}
+.rc-section label{margin-top:17px}
+.rc-primary{display:inline-flex;align-items:center;justify-content:center;background:#80e6c5;border:1px solid #baf4dd;color:#093b34;padding:12px 17px;font-weight:850;min-height:46px;border-radius:10px;margin:18px 0 0}
+.rc-primary:hover{background:#b0ffeb}
+#rcSelected{color:#a4f4d8;font-weight:800;min-height:32px}
+#rcSaveStatus{margin:12px 0 0;min-height:24px}
+.rc-draft{background:#1c3553;border:1px solid #4e6e90;border-radius:14px;padding:14px 16px;overflow-wrap:anywhere}
+.rc-draft strong{display:block;font-size:17px;color:#fff}
+.rc-draft small{display:block;font-size:13px;color:#bed2eb;margin-top:6px}
+.rc-draft p{font-size:16px;font-weight:700;color:#f5fbff;line-height:1.65;margin:12px 0}
+.rc-draft-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:15px}
+.rc-draft-actions button{border:1px solid #779abb;border-radius:10px;background:#2c5179;color:#fff;padding:11px 15px;font:inherit;font-size:13px;font-weight:800;min-height:46px}
+.rc-draft-actions .rc-remove{background:#723e4b;border-color:#c08991}
+#rcDeleteDialog p{color:#c8d9ec;line-height:1.6}
+#rcDeleteStatus{color:#ffc3cf}
+#rcDeleteDialog .au-actions button{padding:10px;min-height:46px;border:1px solid #6e8cad;border-radius:10px;color:#fff;background:#284468}
+#rcDeleteDialog .au-actions .au-danger{background:#733547;border-color:#c18692}
+#rcDeleteDialog .au-actions .au-muted{background:#1d344e}
+@media(max-width:540px){
+ .rc-section{padding:14px}
+ .rc-draft-actions{flex-direction:column;align-items:stretch}
+ .rc-draft-actions button,.rc-primary{width:100%}
+}

@@ -15,6 +15,7 @@ import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
 import {recallPilotEnabled,recallPilotStatus,acceptRecallPilotConsent,withdrawRecallPilotConsent,issueRecallPilotTrial,submitRecallPilotTrial} from '../lib/ux43c-recall-service.js';
+import {recallDraftsEnabled,createRecallDraftService} from '../lib/ux43e-recall-drafts.js';
 import {getFinishedRunWrongWords,getAccountGameMistakeNotebook} from '../lib/game-mistakes.js';
 import {syncFinishedSoloReview,syncRecentSoloReviews} from '../lib/auto-game-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
@@ -58,6 +59,24 @@ function adminUsersService(){
    return accepted;
   },
   hashPassword,verifyPassword,expectedOrigin:a
+ });
+}
+function adminRecallDraftService(){
+ const origin=process.env.VERCEL_ENV==='preview'&&process.env.VERCEL_URL
+  ?'https://'+process.env.VERCEL_URL
+  :process.env.APP_ORIGIN||(process.env.VERCEL_URL?'https://'+process.env.VERCEL_URL:null);
+ return createRecallDraftService({
+  db:getPool(),transaction,
+  requireAdmin:async req=>mustAdmin(req),
+  verifyAdminPassword:async(_actor,pass,req)=>{
+   const ip=ipOf(req);
+   await throttle(ip);
+   const accepted=Boolean(process.env.ADMIN_PASSWORD_HASH)&&
+    verifyPassword(pass,process.env.ADMIN_PASSWORD_HASH);
+   if(!accepted)await sql('INSERT INTO ws_login_failures(remote_ip) VALUES($1)',[ip]);
+   else await sql('DELETE FROM ws_login_failures WHERE remote_ip=$1',[ip]);
+   return accepted;
+  },expectedOrigin:origin
  });
 }
 function playerPasswordService(){
@@ -594,7 +613,8 @@ export default async function handler(req,res){
   // Self-password changes perform their own strict, non-optional Origin check.
   // This permits a verified isolated Preview origin without weakening other APIs.
   if(req.method!=='GET'&&!['auth/change-password','auth/revoke-sessions'].includes(key)&&
-      !key.startsWith('learning/recall/')&&!sameOrigin(req))
+      !key.startsWith('learning/recall/')&&
+      !key.startsWith('admin/recall/')&&!sameOrigin(req))
    return output(res,403,{error:'Invalid origin'});
   // UX30: validate a signed player cookie against the live DB once per request.
   // Existing synchronous mustPlayer()/actor() callers then reuse this decision.
@@ -738,6 +758,29 @@ export default async function handler(req,res){
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r.length===3)return output(res,200,await playSolo(req,r[2]));
   if(method==='GET'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='attempts'&&r[4]&&r.length===5)return output(res,200,await playSolo(req,r[2],undefined,r[4]));
   if(method==='POST'&&r[0]==='solo'&&r[1]==='runs'&&r[2]&&r[3]==='answer'&&r.length===4)return output(res,200,await playSolo(req,r[2],body(req)));
+  // UX43E1: Admin can create/discard PRIVATE DRAFTS only.
+  // The deployed UX43C challenge still selects approved+active prompts.
+  // No admin activation/approval endpoint is implemented.
+  if(key.startsWith('admin/recall/')){
+   if(!recallDraftsEnabled())
+    return output(res,404,{error:'Bàn kiểm duyệt thử nghiệm chưa được bật'});
+   const curator=adminRecallDraftService();
+   if(method==='GET'&&(key==='admin/recall/words'||key==='admin/recall/drafts')){
+    const p=new URL(req.url||'/','http://local').searchParams;
+    const page=p.get('page')??'0',size=p.get('size')??'20';
+    if(!/^(0|[1-9][0-9]{0,4})$/.test(page)||!/^[1-9][0-9]{0,1}$/.test(size))
+     throw fail('Phân trang không hợp lệ',400);
+    const args={q:p.get('q')??'',page:Number(page),size:Number(size)};
+    const data=key==='admin/recall/words'
+     ?await curator.listWords(req,args):await curator.listDrafts(req,args);
+    return output(res,200,data);
+   }
+   if(method==='POST'&&key==='admin/recall/drafts')
+    return output(res,201,await curator.createDraft(req,body(req,4096)));
+   if(method==='DELETE'&&r.length===4&&r[2]==='drafts')
+    return output(res,200,await curator.discardDraft(req,r[3],body(req,2048)));
+   return output(res,404,{error:'Không có thao tác kiểm duyệt này'});
+  }
   if(method==='GET'&&key==='admin/users'){
    const params=new URL(req.url||'/','http://local').searchParams;
    const page=params.get('page')??'0',size=params.get('size')??'20';

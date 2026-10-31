@@ -269,6 +269,11 @@ jobs:
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
             exit 1
           fi
+          if ! node scripts/ux43e1-admin-recall-e2e.mjs; then
+            echo 'UX43E1 isolated Admin draft curation QA diagnostics (last 80 lines):'
+            tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
+            exit 1
+          fi
           node scripts/ux39-mobile-nav-e2e.mjs
 
       - name: Verify temporary QA account cleanup
