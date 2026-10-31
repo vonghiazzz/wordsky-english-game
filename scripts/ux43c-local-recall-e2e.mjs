@@ -126,6 +126,22 @@ try{
  assert.equal(replayConflict.status(),409);
  console.log('PASS: UX43C lost-response replay exact request; new request cannot double-count');
 
+ // The same request ID cannot be reused to grade a DIFFERENT challenge.
+ // Malformed control characters are HTTP 400 and never consume a trial.
+ const unused=await post(one,'trials',pin(a.id));
+ assert.equal(unused.status(),201);
+ const unusedId=(await unused.json()).trial.trial_id;
+ assert.equal((await post(one,'submit',pin(a.id,{
+  trial_id:unusedId,request_id:original[0].request_id,response:word.english
+ }))).status(),409);
+ assert.equal((await post(one,'submit',pin(a.id,{
+  trial_id:unusedId,request_id:randomUUID(),response:'invalid\\ninput'
+ }))).status(),400);
+ const unusedAfter=await db.query(
+  'SELECT submitted_request_id FROM ws_recall_trials WHERE id=$1',[unusedId]);
+ assert.equal(unusedAfter.rows[0].submitted_request_id,null);
+ console.log('PASS: UX43C reused request ID and malformed answers leave challenge unconsumed');
+
  await post(two,'consent',pin(b.id,{agree:true,consent_version:'ux43b-opt-in-v1'}));
  const foreign=await post(two,'submit',pin(b.id,{
   trial_id:original[0].trial_id,request_id:randomUUID(),response:word.english
