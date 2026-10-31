@@ -63,7 +63,7 @@ try{
  chrome=await chromium.launch({headless:true});
  fox=await firefox.launch({headless:true});
  const one=await chrome.newContext({viewport:{width:360,height:780}});
- const two=await firefox.newContext({viewport:{width:390,height:780}});
+ const two=await fox.newContext({viewport:{width:390,height:780}});
  const guest=await chrome.newContext();
  contexts.push(one,two,guest);
 
