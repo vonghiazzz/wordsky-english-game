@@ -1,0 +1,42 @@
+/* UX43C isolated pilot only: scoped; shared nav/dock never restyled here. */
+.ws43c-page{min-height:100vh;background:radial-gradient(circle at 12% 0%,#20365e 0,#0d1a30 45%,#07101d 100%);color:#ecf4ff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.ws43c-page *{box-sizing:border-box}
+.ws43c-page [hidden]{display:none!important}
+.ws43c-main{width:min(760px,calc(100% - 30px));margin:0 auto;padding:32px 0 112px}
+.ws43c-hero{text-align:center;margin:6px auto 26px}
+.ws43c-label{font-size:12px;letter-spacing:2px;font-weight:800;color:#6de7d5}
+.ws43c-hero h1{font-size:clamp(29px,5vw,46px);letter-spacing:-1.1px;line-height:1.15;margin:12px 0}
+.ws43c-hero p{margin:0 auto;max-width:600px;color:#c4d4e8;line-height:1.75}
+.ws43c-panel{border:1px solid #456188;background:linear-gradient(135deg,#1e2d4d,#13263f);border-radius:22px;padding:clamp(18px,4vw,32px);box-shadow:0 18px 54px #01070f66}
+.ws43c-head{display:flex;align-items:center;gap:14px;padding-bottom:18px;border-bottom:1px solid #415c7c;margin-bottom:16px}
+.ws43c-mark{display:grid;place-items:center;width:50px;height:50px;flex:0 0 50px;border-radius:15px;background:#1c574f;color:#89ffdf;font-size:27px}
+.ws43c-head h2{font-size:21px;margin:0 0 6px}
+.ws43c-head p{color:#b4cbe3;line-height:1.5;font-size:14px;margin:0}
+.ws43c-panel h3{font-size:19px;margin:18px 0 12px}
+.ws43c-panel p{line-height:1.7;color:#cad7e8}
+.ws43c-status{background:#213952;border:1px solid #477b9c;border-radius:12px;padding:11px 14px}
+.ws43c-status:empty{display:none}
+.ws43c-status[data-error="true"]{background:#49304a;color:#ffe6ec;border-color:#b27293}
+.ws43c-check{display:flex;align-items:flex-start;gap:12px;line-height:1.65;padding:15px 13px;border:1px solid #496988;background:#10273e;border-radius:12px;cursor:pointer;margin:16px 0}
+.ws43c-check input{flex:none;width:21px;height:21px;margin:2px 0;accent-color:#65e8c7}
+.ws43c-button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 17px;font:inherit;font-weight:800;cursor:pointer;border-radius:12px;border:1px solid transparent;text-decoration:none}
+.ws43c-primary{background:#70efd2;color:#083a35;border-color:#9dffea}
+.ws43c-primary:hover{background:#a3fff0}
+.ws43c-secondary{background:#304663;color:#eff8ff;border-color:#6987a6}
+.ws43c-danger{color:#ffe8eb;border-color:#b57a8a;background:#5a314a}
+.ws43c-danger:hover{background:#6c3f54}
+.ws43c-button:disabled{opacity:.52;cursor:not-allowed}
+.ws43c-prompt{font-size:clamp(23px,4vw,31px);font-weight:850;line-height:1.5;text-align:center;background:#0e2642;border:1px solid #557fa1;padding:26px 12px;border-radius:18px;overflow-wrap:anywhere}
+.ws43c-meta{font-size:13px;margin:10px 0 20px}
+.ws43c-panel form{display:grid;gap:12px}
+.ws43c-panel form label{font-size:14px;font-weight:750}
+.ws43c-panel input[type="text"]{width:100%;min-height:54px;background:#0a182d;border:1px solid #738daa;border-radius:12px;padding:13px 15px;font:inherit;font-size:18px;color:#fff}
+.ws43c-page input:focus-visible,.ws43c-page button:focus-visible,.ws43c-page a:focus-visible{outline:3px solid #81e7db;outline-offset:3px}
+.ws43c-result{border:1px solid #6086ac;background:#203951;border-radius:12px;padding:16px;line-height:1.6;margin:16px 0;font-weight:750}
+.ws43c-result[data-correct="true"]{background:#1b4d3b;border-color:#65b79a}
+.ws43c-result[data-correct="false"]{background:#4a3944;border-color:#ba8b99}
+.ws43c-privacy{border-top:1px solid #526581;margin-top:28px;padding-top:12px}
+.ws43c-privacy p,.ws43c-footnote{font-size:14px;color:#bccde2;line-height:1.7}
+.ws43c-footnote{text-align:center;margin:20px auto 0;max-width:600px}
+@media(max-width:390px){.ws43c-main{width:calc(100% - 20px);padding-top:18px}.ws43c-panel{padding:16px}.ws43c-button{width:100%}.ws43c-head h2{font-size:18px}.ws43c-hero p{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.ws43c-page *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
