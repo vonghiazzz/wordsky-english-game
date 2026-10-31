@@ -613,7 +613,8 @@ export default async function handler(req,res){
   // Self-password changes perform their own strict, non-optional Origin check.
   // This permits a verified isolated Preview origin without weakening other APIs.
   if(req.method!=='GET'&&!['auth/change-password','auth/revoke-sessions'].includes(key)&&
-      !key.startsWith('learning/recall/')&&!sameOrigin(req))
+      !key.startsWith('learning/recall/')&&
+      !key.startsWith('admin/recall/')&&!sameOrigin(req))
    return output(res,403,{error:'Invalid origin'});
   // UX30: validate a signed player cookie against the live DB once per request.
   // Existing synchronous mustPlayer()/actor() callers then reuse this decision.
