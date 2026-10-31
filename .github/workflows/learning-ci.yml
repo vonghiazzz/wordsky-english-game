@@ -83,6 +83,10 @@ jobs:
         env:
           UX23C_TEST_DATABASE_URL: postgres://wordsky:wordsky_ci_only@127.0.0.1:5432/wordsky_test
 
+      - name: QA-S1A public seed cue audit (offline, no writes)
+        run: npm run audit:recall:seed
+        # Lexical candidates for human review; not grading or SRS mutations.
+
       - name: UX43B verify opt-in typed recall contract without DB or SRS writes
         run: |
           set -euo pipefail
