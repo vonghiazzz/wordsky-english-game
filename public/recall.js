@@ -135,7 +135,7 @@ $('ws43cAgree').addEventListener('click',async()=>{
    expected_actor_id:actor,agree:true,consent_version:'ux43b-opt-in-v1'
   });
   if(answer.consent_active!==true)throw Error('Máy chủ chưa ghi nhận đồng ý.');
-  clearTrial();await refresh();
+  clearTrial();displayActive(true);
   status('Đã ghi nhận lựa chọn. Bạn có thể kiểm tra nhớ từ.');
  }catch(error){status(error.message,true);if(error.status===401||error.status===409)resetForAuth();}
  finally{busy(false);}
