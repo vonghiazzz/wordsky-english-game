@@ -166,6 +166,14 @@ try{
  assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor.id,accountB.id);
  console.log('PASS: UX41 strict Origin, owner pin, confirmation and password protections');
 
+ // UX42: a different browser must not keep displaying an account form after
+ // another device revokes every session. A password typed there is wiped.
+ const stalePage=await fox.newPage();
+ await stalePage.goto(BASE+'/account.html');
+ await stalePage.locator('#ws40Form').waitFor({state:'visible'});
+ assert.equal(await stalePage.locator('#ws40Username').inputValue(),nameB);
+ await stalePage.locator('#ws40Current').fill(OLD_B);
+
  const pageB=await other.newPage();
  await pageB.goto(BASE+'/account.html');
  await pageB.locator('#ws41Form').waitFor({state:'visible'});
@@ -181,7 +189,14 @@ try{
  assert.equal(await pageB.locator('#ws41Current').inputValue(),'');
  assert.equal((await (await other.request.get(BASE+'/api/auth/me')).json()).actor,null);
  assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor,null);
+ await stalePage.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await stalePage.locator('#ws40Guest').waitFor({state:'visible'});
+ assert.equal(await stalePage.locator('#ws40Form').isVisible(),false);
+ assert.equal(await stalePage.locator('#ws41Form').isVisible(),false);
+ assert.equal(await stalePage.locator('#ws40Current').inputValue(),'');
+ assert.equal(await stalePage.locator('#ws40Username').inputValue(),'');
  assert.equal((await (await guest.request.get(BASE+'/api/auth/me')).json()).actor.id,accountA.id);
+ console.log('PASS: UX42 focus refresh hides stale account forms and clears credentials');
  const afterB=(await pool.query(
   'SELECT password_hash,session_version,password_changed_at FROM ws_users WHERE id=$1',
   [accountB.id])).rows[0];
@@ -193,6 +208,11 @@ try{
  assert.equal(ownerA.session_version,1);
  await signin(fox,nameB,OLD_B);
  assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor.id,accountB.id);
+ await stalePage.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await stalePage.locator('#ws40Form').waitFor({state:'visible'});
+ assert.equal(await stalePage.locator('#ws40Username').inputValue(),nameB);
+ assert.equal(await stalePage.locator('#ws40Current').inputValue(),'');
+ console.log('PASS: UX42 verified re-login restores account form without stale credentials');
  console.log('PASS: UX41 Chromium/Firefox sessions revoked, existing password and XP intact');
  console.log('\nUX40+UX41 ISOLATED ACCOUNT SECURITY E2E: PASS');
 }catch(error){
