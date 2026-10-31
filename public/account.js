@@ -8,6 +8,9 @@ const revokeForm=byId('ws41Form');
 const revokeSubmit=byId('ws41Submit');
 let actorId=null;
 let pending=false;
+let authCheckSeq=0;
+let lastAuthCheckAt=0;
+const securityActionComplete=()=>!done.hidden||!byId('ws41Done').hidden;
 
 function status(message,kind='info'){
  const label=byId('ws40Status');
@@ -26,6 +29,8 @@ function revokeStatus(message,kind='info'){
 function showGuest(message){
  actorId=null;
  clearPasswords();
+ byId('ws40Username').value='';
+ revokeStatus('');
  form.hidden=true;
  done.hidden=true;
  revokeForm.hidden=true;
@@ -46,13 +51,20 @@ async function api(path,options={}){
  return json;
 }
 async function refresh(){
- status('');
- revokeStatus('');
+ if(pending||securityActionComplete())return;
+ // Ignore older auth responses if tabs, focus or password actions overlap.
+ const check=++authCheckSeq;
  try{
   const data=await api('auth/me');
+  if(check!==authCheckSeq||pending)return;
   if(data.actor?.role!=='player'||typeof data.actor.id!=='string'){
-   showGuest('Chức năng này chỉ dành cho tài khoản người chơi đã đăng nhập.');
+   showGuest('Phiên đăng nhập không còn hiệu lực. Hãy đăng nhập lại.');
    return;
+  }
+  if(actorId&&actorId!==data.actor.id){
+   clearPasswords();
+   status('Tài khoản đã thay đổi. Vui lòng nhập lại mật khẩu.');
+   revokeStatus('');
   }
   actorId=data.actor.id;
   const username=String(data.actor.profile?.username||'');
@@ -65,6 +77,8 @@ async function refresh(){
   byId('ws41Done').hidden=true;
   revokeForm.hidden=false;
  }catch{
+  if(check!==authCheckSeq||pending)return;
+  // No account-specific form is shown without a verified signed session.
   showGuest('Không thể xác minh phiên đăng nhập. Hãy thử đăng nhập lại.');
  }
 }
@@ -95,6 +109,7 @@ form.addEventListener('submit',async event=>{
   return;
  }
  pending=true;
+ ++authCheckSeq;
  submit.disabled=true;
  revokeSubmit.disabled=true;
  status('Đang xác minh và cập nhật mật khẩu…');
@@ -143,6 +158,7 @@ revokeForm.addEventListener('submit',async event=>{
  }
  const current=byId('ws41Current').value;
  pending=true;
+ ++authCheckSeq;
  submit.disabled=true;
  revokeSubmit.disabled=true;
  revokeStatus('Đang xác minh mật khẩu và thu hồi phiên đăng nhập…');
@@ -185,6 +201,7 @@ revokeForm.addEventListener('submit',async event=>{
 
 byId('ws40Logout').addEventListener('click',async()=>{
  if(pending)return;
+ ++authCheckSeq;
  try{
   await api('auth/logout',{
    method:'POST',headers:{'content-type':'application/json'},body:'{}'
@@ -194,8 +211,25 @@ byId('ws40Logout').addEventListener('click',async()=>{
   location.assign('/#home');
  }catch{status('Không đăng xuất được. Vui lòng thử lại.','error')}
 });
-window.addEventListener('pagehide',clearPasswords);
+function recheckVisibleSession(force=false){
+ // A real window focus may fire before visibilityState flips to visible.
+ if(pending||securityActionComplete()||(!force&&document.visibilityState==='hidden'))return;
+ const now=Date.now();
+ // When logged out, check immediately after a re-login in another tab.
+ if(!force&&actorId!==null&&now-lastAuthCheckAt<750)return;
+ lastAuthCheckAt=now;
+ void refresh(); // Read-only GET; no polling and no session writes.
+}
+window.addEventListener('focus',()=>recheckVisibleSession(true));
+document.addEventListener('visibilitychange',()=>recheckVisibleSession());
+window.addEventListener('pagehide',()=>{
+ ++authCheckSeq;
+ clearPasswords();
+});
 window.addEventListener('pageshow',event=>{
- if(event.persisted){clearPasswords();refresh();}
+ if(event.persisted){
+  clearPasswords();
+  recheckVisibleSession(true);
+ }
 });
 refresh();
