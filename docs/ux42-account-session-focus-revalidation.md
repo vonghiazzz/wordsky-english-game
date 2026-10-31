@@ -16,7 +16,9 @@ session checks and is out of scope.
 ## UX / code
 
 - On window focus and document visibility changes to visible, perform
-  a **read-only** `GET /api/auth/me`, with an 750ms coalescing window.
+  a **read-only** `GET /api/auth/me`. Explicit window focus forces a check
+  even if visibility state has not updated; other visibility events coalesce
+  within 750ms while authenticated.
   BFCache restores force a check. No timers, background polling or new
   storage are introduced.
 - Ignore auth responses that started before a newer refresh,
