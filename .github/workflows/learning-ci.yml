@@ -88,6 +88,12 @@ jobs:
           set -euo pipefail
           node scripts/ux43b-offline-recall-qa.mjs
 
+      - name: UX43D offline bilingual prompt and SRS research-readiness audit
+        run: |
+          set -euo pipefail
+          node scripts/ux43d-offline-research-qa.mjs
+        # No user exports, database credentials, preview builds or SRS writes.
+
   browser-srs-e2e:
     needs: unit-and-postgres
     runs-on: ubuntu-latest
