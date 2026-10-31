@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1326">
+<meta name="robots" content="noindex,nofollow">
+<title>Kiểm duyệt câu hỏi · WordSky Admin</title>
+<link rel="stylesheet" href="/admin-users.css">
+<link rel="stylesheet" href="/admin-recall.css">
+<script type="module" src="/admin-recall.js"></script>
+</head>
+<body>
+<main class="admin-users-layout">
+ <header class="au-header">
+  <div>
+   <div class="au-eyebrow">WORDSKY / ADMIN / UX43E1</div>
+   <h1>Bản nháp Kiểm tra nhớ từ</h1>
+   <p>Tạo câu hỏi tiếng Việt và các đáp án tiếng Anh được đề xuất.
+    Chức năng chỉ lưu bản nháp. Mọi câu hỏi đều <strong>chưa được phê duyệt và chưa kích hoạt</strong>.</p>
+  </div>
+  <a class="au-back" href="/#admin">Trở về Admin</a>
+ </header>
+ <p id="rcAuth" class="au-alert" role="status" aria-live="polite">Đang kiểm tra quyền quản trị…</p>
+ <div id="rcApp" hidden>
+  <section class="au-panel" aria-labelledby="rcWordTitle">
+   <div class="au-bar"><h2 id="rcWordTitle">1. Chọn từ trong kho</h2></div>
+   <form id="rcFindWord">
+    <label for="rcWordSearch">Tra cứu từ tiếng Anh hoặc nghĩa tiếng Việt</label>
+    <div class="au-search-row">
+     <input id="rcWordSearch" placeholder="Ví dụ: walk" maxlength="64" autocomplete="off">
+     <button type="submit">Tìm từ</button>
+    </div>
+   </form>
+   <p id="rcWordStatus" class="au-status" role="status"></p>
+   <div id="rcWords" class="au-list"></div>
+   <div class="au-pages"><button id="rcWordPrev" type="button">Trước</button>
+    <span id="rcWordPage"></span><button id="rcWordNext" type="button">Sau</button></div>
+  </section>
+  <section class="au-panel rc-section" aria-labelledby="rcComposeTitle">
+   <h2 id="rcComposeTitle">2. Soạn bản nháp</h2>
+   <p class="rc-warning">Chỉ được lưu bản nháp <strong>approved=false / active=false</strong>.
+    Chưa có cơ chế hai người kiểm duyệt độc lập nên không có nút Phê duyệt hoặc Kích hoạt.</p>
+   <form id="rcDraftForm" autocomplete="off">
+    <input type="hidden" id="rcSelectedWordId">
+    <p id="rcSelected" class="au-status">Chưa chọn từ.</p>
+    <label for="rcPrompt">Câu gợi ý nghĩa tiếng Việt</label>
+    <textarea id="rcPrompt" maxlength="180" rows="3" placeholder="Ví dụ: Đi bộ" required></textarea>
+    <label for="rcAnswers">Đáp án tiếng Anh được chấp nhận (mỗi dòng một biến thể, tối đa 8)</label>
+    <textarea id="rcAnswers" rows="4" placeholder="walk" required></textarea>
+    <label for="rcRevision">Mã phiên bản duyệt (chữ, số, dấu chấm, gạch dưới hoặc gạch ngang)</label>
+    <input id="rcRevision" type="text" maxlength="64" placeholder="draft-1" required>
+    <label for="rcPassword">Mật khẩu Admin để xác nhận lưu bản nháp</label>
+    <input id="rcPassword" type="password" autocomplete="current-password" maxlength="1024" required>
+    <button id="rcSave" type="submit" class="rc-primary" disabled>Lưu bản nháp chưa duyệt</button>
+    <p id="rcSaveStatus" class="au-alert" role="status" aria-live="polite"></p>
+   </form>
+  </section>
+  <section class="au-panel rc-section" aria-labelledby="rcDraftsTitle">
+   <h2 id="rcDraftsTitle">3. Danh sách phiên bản câu hỏi</h2>
+   <p class="au-note">Các phiên bản đã được sử dụng trong một phiên kiểm tra sẽ không bị thay đổi tại đây.
+    Thay đổi nghĩa hoặc đáp án cần tạo phiên bản mới.</p>
+   <form id="rcFindDraft">
+    <label for="rcDraftSearch">Tìm theo từ hoặc câu tiếng Việt</label>
+    <div class="au-search-row">
+     <input id="rcDraftSearch" maxlength="64" placeholder="Tìm bản nháp…">
+     <button type="submit">Tìm</button>
+    </div>
+   </form>
+   <p id="rcDraftStatus" class="au-status" role="status"></p>
+   <div id="rcDrafts" class="au-list"></div>
+   <div class="au-pages"><button id="rcDraftPrev" type="button">Trước</button>
+    <span id="rcDraftPage"></span><button id="rcDraftNext" type="button">Sau</button></div>
+  </section>
+  <dialog id="rcDeleteDialog" aria-labelledby="rcDeleteTitle">
+   <h2 id="rcDeleteTitle">Xóa bản nháp</h2>
+   <p id="rcDeleteSelected">Chỉ bản nháp chưa phê duyệt và chưa kích hoạt mới được xóa.</p>
+   <form id="rcDeleteForm" autocomplete="off">
+    <label for="rcConfirmRevision">Nhập lại mã phiên bản để xác nhận</label>
+    <input id="rcConfirmRevision" required maxlength="64" autocomplete="off">
+    <label for="rcDeletePassword">Nhập lại mật khẩu Admin</label>
+    <input id="rcDeletePassword" required maxlength="1024" type="password" autocomplete="current-password">
+    <p id="rcDeleteStatus" role="status" aria-live="polite"></p>
+    <div class="au-actions">
+     <button id="rcCancelDelete" type="button" class="au-muted">Hủy</button>
+     <button id="rcConfirmDelete" type="submit" class="au-danger">Xác nhận xóa bản nháp</button>
+    </div>
+   </form>
+  </dialog>
+ </div>
+ <p class="au-note">Đây là bàn soạn thảo nội bộ trên database QA/Preview cô lập. Không được đưa kết quả này
+ vào lịch ôn SRS, dữ liệu nghiên cứu hoặc Production khi chưa qua kiểm duyệt độc lập và chính sách đồng ý tham gia.</p>
+</main>
+</body>
+</html>
