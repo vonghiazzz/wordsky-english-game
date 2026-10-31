@@ -135,7 +135,7 @@ try{
   trial_id:unusedId,request_id:original[0].request_id,response:word.english
  }))).status(),409);
  assert.equal((await post(one,'submit',pin(a.id,{
-  trial_id:unusedId,request_id:randomUUID(),response:'invalid\\ninput'
+  trial_id:unusedId,request_id:randomUUID(),response:'invalid'+String.fromCharCode(10)+'input'
  }))).status(),400);
  const unusedAfter=await db.query(
   'SELECT submitted_request_id FROM ws_recall_trials WHERE id=$1',[unusedId]);
