@@ -212,14 +212,15 @@ byId('ws40Logout').addEventListener('click',async()=>{
  }catch{status('Không đăng xuất được. Vui lòng thử lại.','error')}
 });
 function recheckVisibleSession(force=false){
- if(pending||securityActionComplete()||document.visibilityState==='hidden')return;
+ // A real window focus may fire before visibilityState flips to visible.
+ if(pending||securityActionComplete()||(!force&&document.visibilityState==='hidden'))return;
  const now=Date.now();
  // When logged out, check immediately after a re-login in another tab.
  if(!force&&actorId!==null&&now-lastAuthCheckAt<750)return;
  lastAuthCheckAt=now;
  void refresh(); // Read-only GET; no polling and no session writes.
 }
-window.addEventListener('focus',()=>recheckVisibleSession());
+window.addEventListener('focus',()=>recheckVisibleSession(true));
 document.addEventListener('visibilitychange',()=>recheckVisibleSession());
 window.addEventListener('pagehide',()=>{
  ++authCheckSeq;
