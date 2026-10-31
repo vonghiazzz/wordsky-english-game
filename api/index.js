@@ -14,6 +14,7 @@ import {getAccountSrsQueue} from '../lib/srs-queue.js';
 import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
+import {recallPilotEnabled,recallPilotStatus,acceptRecallPilotConsent,withdrawRecallPilotConsent,issueRecallPilotTrial,submitRecallPilotTrial} from '../lib/ux43c-recall-service.js';
 import {getFinishedRunWrongWords,getAccountGameMistakeNotebook} from '../lib/game-mistakes.js';
 import {syncFinishedSoloReview,syncRecentSoloReviews} from '../lib/auto-game-review.js';
 import {importLegacyFlashcard,importLegacyBatch} from '../lib/legacy-learning-import.js';
@@ -603,6 +604,31 @@ export default async function handler(req,res){
     ?await sql('SELECT session_version FROM public.ws_users WHERE id=$1',[playerClaim.id])
     :{rows:[]};
    req._wsPlayerSessionValid=Boolean(current.rows[0]&&isSessionVersionCurrent(playerClaim,current.rows[0]));
+  }
+  // UX43C isolated-Preview-only typed recall. Never enable via a
+  // Production flag, never accept client-provided grading or account IDs.
+  if(key.startsWith('learning/recall/')){
+   if(!recallPilotEnabled())
+    return output(res,404,{error:'Kiểm tra nhớ từ thử nghiệm chưa được bật'});
+   const account=mustPlayer(req);
+   if(method==='GET'&&key==='learning/recall/status')
+    return output(res,200,await recallPilotStatus(account));
+   if(method==='POST'||method==='DELETE'){
+    const expected=process.env.VERCEL_ENV==='preview'&&process.env.VERCEL_URL
+      ?'https://'+process.env.VERCEL_URL:process.env.APP_ORIGIN;
+    if(!expected||req.headers?.origin!==expected)
+     return output(res,403,{error:'Nguồn yêu cầu không hợp lệ'});
+   }
+   if(method==='POST'&&key==='learning/recall/consent')
+    return output(res,200,await acceptRecallPilotConsent(account,body(req,1024)));
+   if(method==='DELETE'&&key==='learning/recall/consent')
+    return output(res,200,await withdrawRecallPilotConsent(account,body(req,1024)));
+   if(method==='POST'&&key==='learning/recall/trials')
+    return output(res,201,await issueRecallPilotTrial(account,body(req,1024)));
+   if(method==='POST'&&key==='learning/recall/submit'){
+    const payload=body(req,2048);
+    return output(res,200,await submitRecallPilotTrial(account,payload));
+   }
   }
   if(method==='POST'&&key==='learning/reviews'){
     const userId=mustPlayer(req).id,review=body(req);
