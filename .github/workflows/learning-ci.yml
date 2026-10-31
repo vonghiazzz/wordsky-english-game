@@ -113,6 +113,7 @@ jobs:
       APP_ORIGIN: http://localhost:3000
       WORDSKY_SRS_PREVIEW_ENABLED: 'true'
       WORDSKY_SRS_SHADOW_ENABLED: 'true'
+      WORDSKY_RECALL_PREVIEW_ENABLED: 'true'
       PGSSLMODE: disable
       PORT: '3000'
 
@@ -168,7 +169,8 @@ jobs:
             'db/migrations/20261026_ux17_personal_vocabulary.sql',
             'db/migrations/20261027_ux23_idempotent_review_requests.sql',
             'db/migrations/20261027_ux24b_shadow_srs_schedules.sql',
-            'db/migrations/20261029_ux30_admin_users_password_reset.sql'
+            'db/migrations/20261029_ux30_admin_users_password_reset.sql',
+            'db/migrations/20261031_ux43c_typed_recall_pilot.sql'
           ];
 
           await db.connect();
@@ -253,6 +255,11 @@ jobs:
           fi
           if ! node scripts/ux33-local-matrix-e2e.mjs; then
             echo 'UX33 isolated MATRIX diagnostics (last 80 lines):'
+            tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
+            exit 1
+          fi
+          if ! node scripts/ux43c-local-recall-e2e.mjs; then
+            echo 'UX43C isolated typed recall QA diagnostics (last 80 lines):'
             tail -n 80 "$RUNNER_TEMP/wordsky-api.log"
             exit 1
           fi
