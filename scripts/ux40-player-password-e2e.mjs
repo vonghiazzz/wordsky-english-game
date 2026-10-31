@@ -31,6 +31,10 @@ async function change(ctx,body,origin=BASE){
  const headers=origin===null?{}:{origin};
  return ctx.request.post(BASE+'/api/auth/change-password',{headers,data:body});
 }
+async function revoke(ctx,body,origin=BASE){
+ const headers=origin===null?{}:{origin};
+ return ctx.request.post(BASE+'/api/auth/revoke-sessions',{headers,data:body});
+}
 const post=(current=OLD_A,next=NEW_A,identity=accountA?.id)=>({
  expected_actor_id:identity,current_password:current,
  new_password:next,confirm_password:next
@@ -142,7 +146,55 @@ try{
  await page2.locator('#ws40Guest').waitFor({state:'visible'});
  await page2.locator('#ws40Guest a').click();
  assert.equal(new URL(page2.url()).pathname,'/');
- console.log('\nUX40 ISOLATED PLAYER PASSWORD CHANGE E2E: PASS');
+
+ // UX41: same password, explicitly invalidate all sessions on both devices.
+ // Account B has its own two sessions, separate from account A.
+ await signin(fox,nameB,OLD_B);
+ const beforeB=(await pool.query(
+  'SELECT password_hash,session_version,password_changed_at FROM ws_users WHERE id=$1',
+  [accountB.id])).rows[0];
+ assert.equal(beforeB.session_version,0);
+ const revokeBody={expected_actor_id:accountB.id,current_password:OLD_B,confirm_revoke_all:true};
+ assert.equal((await revoke(guest,revokeBody)).status(),409,
+  'Player A must not revoke account B');
+ assert.equal((await revoke(other,revokeBody,null)).status(),403);
+ assert.equal((await revoke(other,revokeBody,'https://attacker.example')).status(),403);
+ assert.equal((await revoke(other,{...revokeBody,confirm_revoke_all:false})).status(),400);
+ assert.equal((await revoke(other,{...revokeBody,expected_actor_id:accountA.id})).status(),409);
+ assert.equal((await revoke(other,{...revokeBody,current_password:'IncorrectPassword!'})).status(),403);
+ assert.equal((await (await other.request.get(BASE+'/api/auth/me')).json()).actor.id,accountB.id);
+ assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor.id,accountB.id);
+ console.log('PASS: UX41 strict Origin, owner pin, confirmation and password protections');
+
+ const pageB=await other.newPage();
+ await pageB.goto(BASE+'/account.html');
+ await pageB.locator('#ws41Form').waitFor({state:'visible'});
+ assert.equal(await pageB.locator('#ws40Username').inputValue(),nameB);
+ const revokeOverflow=await pageB.evaluate(()=>
+  document.documentElement.scrollWidth-document.documentElement.clientWidth);
+ assert.ok(revokeOverflow<=1,'Account security panel exceeds mobile width '+revokeOverflow);
+ await pageB.locator('#ws41Current').fill(OLD_B);
+ await pageB.locator('#ws41Confirm').check();
+ await pageB.locator('#ws41Submit').click();
+ await pageB.locator('#ws41Done').waitFor({state:'visible'});
+ assert.equal(await pageB.locator('#ws41Form').isVisible(),false);
+ assert.equal(await pageB.locator('#ws41Current').inputValue(),'');
+ assert.equal((await (await other.request.get(BASE+'/api/auth/me')).json()).actor,null);
+ assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor,null);
+ assert.equal((await (await guest.request.get(BASE+'/api/auth/me')).json()).actor.id,accountA.id);
+ const afterB=(await pool.query(
+  'SELECT password_hash,session_version,password_changed_at FROM ws_users WHERE id=$1',
+  [accountB.id])).rows[0];
+ assert.equal(afterB.session_version,1);
+ assert.equal(afterB.password_hash,beforeB.password_hash);
+ assert.equal(afterB.password_changed_at,beforeB.password_changed_at);
+ const ownerA=(await pool.query(
+  'SELECT session_version FROM ws_users WHERE id=$1',[accountA.id])).rows[0];
+ assert.equal(ownerA.session_version,1);
+ await signin(fox,nameB,OLD_B);
+ assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor.id,accountB.id);
+ console.log('PASS: UX41 Chromium/Firefox sessions revoked, existing password and XP intact');
+ console.log('\nUX40+UX41 ISOLATED ACCOUNT SECURITY E2E: PASS');
 }catch(error){
  console.error('\nUX40 ISOLATED PLAYER PASSWORD CHANGE E2E: FAIL\n'+(error.stack||error));
  process.exitCode=1;

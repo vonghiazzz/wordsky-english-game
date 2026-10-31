@@ -40,3 +40,12 @@
 .ws40-footer{margin:20px 0 0;text-align:center}
 @media(max-width:390px){.ws40-shell{width:calc(100% - 20px);padding-top:18px}.ws40-card{padding:18px}.ws40-actions{flex-direction:column}.ws40-button{width:100%}.ws40-heading p{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.ws40-account-page *, .ws40-account-page *::before,.ws40-account-page *::after{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* UX41 keeps device revocation a separate, explicit security action. */
+.ws41-card{margin-top:18px}
+.ws41-card .ws40-card-heading p{line-height:1.6}
+.ws40-card .ws41-checkbox{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;font-weight:650;line-height:1.6;margin:4px 0 6px}
+.ws40-card .ws41-checkbox input[type="checkbox"]{flex:none;width:20px;min-width:20px;min-height:20px;height:20px;margin:2px 0 0;accent-color:#6ce7ca;cursor:pointer}
+.ws41-submit{justify-self:start}
+@media(max-width:390px){.ws41-submit{width:100%}}

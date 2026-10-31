@@ -62,6 +62,33 @@
     <a class="ws40-button ws40-primary" href="/#home">Đăng nhập lại</a>
    </div>
   </section>
+  <section class="ws40-card ws41-card" id="ws41Card" aria-labelledby="ws41Title" hidden>
+   <div class="ws40-card-heading">
+    <span class="ws40-icon" aria-hidden="true">🛡️</span>
+    <div>
+     <h2 id="ws41Title">Đăng xuất tất cả thiết bị</h2>
+     <p>Thu hồi mọi phiên đăng nhập của tài khoản, kể cả thiết bị đang dùng. Mật khẩu không thay đổi. Nếu nghi mật khẩu đã bị lộ, hãy đổi mật khẩu ở phần trên trước.</p>
+    </div>
+   </div>
+   <p id="ws41Status" class="ws40-status" role="status" aria-live="polite"></p>
+   <form id="ws41Form" autocomplete="on" hidden>
+    <label for="ws41Current">Xác nhận bằng mật khẩu hiện tại</label>
+    <div class="ws40-password">
+     <input id="ws41Current" name="current_password" type="password" autocomplete="current-password" maxlength="1024" required>
+     <button type="button" data-ws40-show="ws41Current" aria-label="Hiện mật khẩu xác nhận" aria-pressed="false">Hiện</button>
+    </div>
+    <label class="ws41-checkbox" for="ws41Confirm">
+     <input type="checkbox" id="ws41Confirm" name="confirm_revoke_all" required>
+     <span>Tôi hiểu tất cả thiết bị sẽ phải đăng nhập lại.</span>
+    </label>
+    <button class="ws40-button ws40-secondary ws41-submit" id="ws41Submit" type="submit">Đăng xuất tất cả thiết bị</button>
+   </form>
+   <div id="ws41Done" class="ws40-done" hidden>
+    <strong>Đã thu hồi các phiên đăng nhập</strong>
+    <p>Bạn đã đăng xuất khỏi mọi thiết bị. Mật khẩu vẫn giữ nguyên; hãy đăng nhập lại bằng mật khẩu hiện tại.</p>
+    <a class="ws40-button ws40-primary" href="/#home">Đăng nhập lại</a>
+   </div>
+  </section>
   <p class="ws40-footer">Bạn quên mật khẩu hiện tại? Hãy liên hệ quản trị viên để đặt lại mật khẩu sau khi xác minh tài khoản.</p>
  </main>
 </body>
