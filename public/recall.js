@@ -11,6 +11,7 @@ const status=(message,error=false)=>{
 const show=(id,visible)=>{$(id).hidden=!visible};
 const clearEntry=()=>{
  $('ws43cAnswer').value='';
+ $('ws43cAnswer').readOnly=false;
  state.unconfirmedAnswer=null;
  state.requestId=null;
 };
@@ -90,7 +91,9 @@ async function refresh(){
    return;
   }
   if(state.actor&&state.actor!==actor.actor.id){
-   resetForAuth();status('Tài khoản đã thay đổi. Hãy bắt đầu lại.',true);
+   clearTrial();
+   state.consented=false;
+   status('Tài khoản đã thay đổi. Đang xác minh phiên mới.',true);
   }
   state.actor=actor.actor.id;
   $('ws43cIdentity').textContent='Tài khoản: '+String(actor.actor.profile?.username||'đã đăng nhập');
@@ -132,7 +135,7 @@ $('ws43cAgree').addEventListener('click',async()=>{
    expected_actor_id:actor,agree:true,consent_version:'ux43b-opt-in-v1'
   });
   if(answer.consent_active!==true)throw Error('Máy chủ chưa ghi nhận đồng ý.');
-  clearTrial();displayActive(true);
+  clearTrial();await refresh();
   status('Đã ghi nhận lựa chọn. Bạn có thể kiểm tra nhớ từ.');
  }catch(error){status(error.message,true);if(error.status===401||error.status===409)resetForAuth();}
  finally{busy(false);}
@@ -153,7 +156,10 @@ $('ws43cNext').addEventListener('click',async()=>{
   show('ws43cAnswerForm',true);show('ws43cNext',false);
   $('ws43cAnswer').focus();
   status('Gõ đáp án tiếng Anh, không có gợi ý.');
- }catch(error){status(error.message,true);if(error.status===401||error.status===409&& !state.actor)resetForAuth();}
+ }catch(error){
+  status(error.message,true);
+  if(error.status===401)resetForAuth();
+ }
  finally{busy(false);if(state.trial)$('ws43cNext').hidden=true;}
 });
 $('ws43cAnswerForm').addEventListener('submit',async(event)=>{
