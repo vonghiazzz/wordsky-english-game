@@ -189,6 +189,7 @@ try{
  assert.equal(await pageB.locator('#ws41Current').inputValue(),'');
  assert.equal((await (await other.request.get(BASE+'/api/auth/me')).json()).actor,null);
  assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor,null);
+ await stalePage.bringToFront();
  await stalePage.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await stalePage.locator('#ws40Guest').waitFor({state:'visible'});
  assert.equal(await stalePage.locator('#ws40Form').isVisible(),false);
@@ -208,6 +209,7 @@ try{
  assert.equal(ownerA.session_version,1);
  await signin(fox,nameB,OLD_B);
  assert.equal((await (await fox.request.get(BASE+'/api/auth/me')).json()).actor.id,accountB.id);
+ await stalePage.bringToFront();
  await stalePage.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await stalePage.locator('#ws40Form').waitFor({state:'visible'});
  assert.equal(await stalePage.locator('#ws40Username').inputValue(),nameB);
