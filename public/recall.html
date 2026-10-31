@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1226">
+<meta name="description" content="WordSky: thử nghiệm gõ từ tiếng Anh khi chỉ nhìn thấy nghĩa tiếng Việt.">
+<title>Kiểm tra nhớ từ · WordSky</title>
+<link rel="stylesheet" href="/shared-nav.css">
+<link rel="stylesheet" href="/ux-design-system.css">
+<link rel="stylesheet" href="/recall.css">
+<script src="/shared-nav.js" defer></script>
+<script type="module" src="/recall.js"></script>
+</head>
+<body class="ws43c-page">
+<div id="wsSharedNav" data-ws-page="progress"></div>
+<main class="ws43c-main">
+ <header class="ws43c-hero">
+  <span class="ws43c-label">WORDSKY · RECALL LAB</span>
+  <h1>Bạn còn nhớ từ này không?</h1>
+  <p>Nhìn nghĩa tiếng Việt, tự gõ từ tiếng Anh trước khi biết kết quả.
+   Bài này hoàn toàn tách biệt với nút “Đã nhớ” và lịch ôn SRS hiện tại.</p>
+ </header>
+ <section class="ws43c-panel" aria-labelledby="ws43cTitle">
+  <div class="ws43c-head">
+   <span class="ws43c-mark" aria-hidden="true">✦</span>
+   <div><h2 id="ws43cTitle">Kiểm tra nhớ từ · Bản thử nghiệm</h2>
+    <p id="ws43cIdentity">Đang xác minh tài khoản…</p></div>
+  </div>
+  <p id="ws43cStatus" class="ws43c-status" role="status" aria-live="polite"></p>
+  <section id="ws43cGuest" hidden>
+   <p>Vui lòng đăng nhập tài khoản người chơi để tham gia thử nghiệm.</p>
+   <a href="/#home" class="ws43c-button ws43c-secondary">Về trang đăng nhập</a>
+  </section>
+  <section id="ws43cOptIn" hidden aria-labelledby="ws43cConsentTitle">
+   <h3 id="ws43cConsentTitle">Tham gia thử nghiệm có tự nguyện</h3>
+   <p>WordSky chỉ lưu thông tin lượt kiểm tra đã chấm: đúng/sai,
+    thời gian ở dạng khoảng, từ và mã tài khoản. Không lưu câu bạn gõ
+    hoặc mật khẩu. Dữ liệu phục vụ kiểm tra phương pháp học,
+    không tự động cập nhật mức “Đã nhớ” hay lịch SRS.</p>
+   <p>Bạn có thể rút lại đồng ý và xóa tất cả dữ liệu của thử nghiệm này.
+    Hiện tại bản thử nghiệm dành cho môi trường QA/Preview cô lập.</p>
+   <label class="ws43c-check" for="ws43cConsentCheck">
+    <input id="ws43cConsentCheck" type="checkbox">
+    <span>Tôi đã đọc và chủ động đồng ý tham gia thử nghiệm kiểm tra nhớ từ.</span>
+   </label>
+   <button type="button" class="ws43c-button ws43c-primary" id="ws43cAgree" disabled>Đồng ý và tiếp tục</button>
+  </section>
+  <section id="ws43cExercise" hidden aria-labelledby="ws43cExerciseTitle">
+   <h3 id="ws43cExerciseTitle">Nghĩa tiếng Việt</h3>
+   <div class="ws43c-prompt" id="ws43cPrompt">Nhấn “Bắt đầu” để nhận câu hỏi.</div>
+   <p id="ws43cExpires" class="ws43c-meta"></p>
+   <form id="ws43cAnswerForm" hidden autocomplete="off">
+    <label for="ws43cAnswer">Gõ từ hoặc cụm từ bằng tiếng Anh</label>
+    <input id="ws43cAnswer" type="text" name="answer" maxlength="160"
+     autocapitalize="off" autocomplete="off" spellcheck="false" required>
+    <button id="ws43cSubmit" class="ws43c-button ws43c-primary" type="submit">Kiểm tra câu trả lời</button>
+   </form>
+   <div class="ws43c-result" id="ws43cResult" hidden role="status" aria-live="polite"></div>
+   <button type="button" class="ws43c-button ws43c-primary" id="ws43cNext">Bắt đầu · Câu hỏi mới</button>
+  </section>
+  <section class="ws43c-privacy" id="ws43cPrivacy" hidden>
+   <h3>Kiểm soát dữ liệu của bạn</h3>
+   <p>Lượt kiểm tra chỉ phục vụ nghiên cứu thử nghiệm và không thay đổi từ vựng đã học.</p>
+   <label class="ws43c-check" for="ws43cWithdrawCheck">
+    <input id="ws43cWithdrawCheck" type="checkbox">
+    <span>Tôi xác nhận muốn xóa mọi lượt kiểm tra đã lưu và rút lại đồng ý.</span>
+   </label>
+   <button type="button" class="ws43c-button ws43c-danger" id="ws43cWithdraw" disabled>Rút lại đồng ý và xóa dữ liệu</button>
+  </section>
+ </section>
+ <p class="ws43c-footnote">Ghi chú: đúng/sai trong bài gõ từ là kết quả của một lần trả lời, không phải bằng chứng chắc chắn về trí nhớ dài hạn.</p>
+</main>
+</body>
+</html>
