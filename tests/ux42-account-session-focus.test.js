@@ -7,12 +7,13 @@ const html=readFileSync(new URL('../public/account.html',import.meta.url),'utf8'
 const e2e=readFileSync(new URL('../scripts/ux40-player-password-e2e.mjs',import.meta.url),'utf8');
 
 test('UX42 resumes account session validation on focus, visibility and BFCache restore',()=>{
- assert.match(client,/window\.addEventListener\('focus',\(\)=>recheckVisibleSession\(\)\)/);
+ assert.match(client,/window\.addEventListener\('focus',\(\)=>recheckVisibleSession\(true\)\)/);
  assert.match(client,/document\.addEventListener\('visibilitychange',\(\)=>recheckVisibleSession\(\)\)/);
  assert.match(client,/window\.addEventListener\('pageshow',event=>/);
  assert.match(client,/if\(event\.persisted\)/);
  assert.match(client,/recheckVisibleSession\(true\)/);
  assert.match(client,/document\.visibilityState==='hidden'/);
+ assert.match(client,/\(!force&&document\.visibilityState==='hidden'\)/);
  assert.match(client,/now-lastAuthCheckAt<750/);
  assert.doesNotMatch(client,/setInterval\(|navigator\.sendBeacon|localStorage|sessionStorage/);
 });
