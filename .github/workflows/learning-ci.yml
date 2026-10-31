@@ -184,6 +184,13 @@ jobs:
 
           node scripts/seed.js
 
+      - name: UX43A evaluate SRS v1 on isolated rollback-only QA history
+        run: |
+          set -euo pipefail
+          node scripts/ux43a-srs-local-audit.mjs --fixture
+        # This runner connects ONLY to 127.0.0.1:5547/wordsky_v6_test.
+        # No Production/Preview DB secrets, schema changes or persisted QA data.
+
       - name: Run account sync and browser SRS acceptance
         run: |
           set -euo pipefail
