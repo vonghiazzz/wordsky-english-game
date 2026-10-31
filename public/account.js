@@ -4,6 +4,8 @@ const form=byId('ws40Form');
 const guest=byId('ws40Guest');
 const done=byId('ws40Done');
 const submit=byId('ws40Submit');
+const revokeForm=byId('ws41Form');
+const revokeSubmit=byId('ws41Submit');
 let actorId=null;
 let pending=false;
 
@@ -13,13 +15,22 @@ function status(message,kind='info'){
  label.dataset.kind=kind;
 }
 function clearPasswords(){
- for(const id of ['ws40Current','ws40New','ws40Confirm'])byId(id).value='';
+ for(const id of ['ws40Current','ws40New','ws40Confirm','ws41Current'])byId(id).value='';
+ byId('ws41Confirm').checked=false;
+}
+function revokeStatus(message,kind='info'){
+ const label=byId('ws41Status');
+ label.textContent=message;
+ label.dataset.kind=kind;
 }
 function showGuest(message){
  actorId=null;
  clearPasswords();
  form.hidden=true;
  done.hidden=true;
+ revokeForm.hidden=true;
+ byId('ws41Done').hidden=true;
+ byId('ws41Card').hidden=true;
  guest.hidden=false;
  byId('ws40Identity').textContent='Chưa có phiên người chơi hợp lệ';
  status(message||'Vui lòng đăng nhập để tiếp tục.');
@@ -36,6 +47,7 @@ async function api(path,options={}){
 }
 async function refresh(){
  status('');
+ revokeStatus('');
  try{
   const data=await api('auth/me');
   if(data.actor?.role!=='player'||typeof data.actor.id!=='string'){
@@ -49,6 +61,9 @@ async function refresh(){
   guest.hidden=true;
   done.hidden=true;
   form.hidden=false;
+  byId('ws41Card').hidden=false;
+  byId('ws41Done').hidden=true;
+  revokeForm.hidden=false;
  }catch{
   showGuest('Không thể xác minh phiên đăng nhập. Hãy thử đăng nhập lại.');
  }
@@ -81,6 +96,7 @@ form.addEventListener('submit',async event=>{
  }
  pending=true;
  submit.disabled=true;
+ revokeSubmit.disabled=true;
  status('Đang xác minh và cập nhật mật khẩu…');
  try{
   const result=await api('auth/change-password',{
@@ -99,6 +115,7 @@ form.addEventListener('submit',async event=>{
   form.reset();
   form.hidden=true;
   done.hidden=false;
+  byId('ws41Card').hidden=true;
   status('Mật khẩu đã được cập nhật.','success');
  }catch(error){
   if(error.status===401){
@@ -113,8 +130,59 @@ form.addEventListener('submit',async event=>{
   clearPasswords();
   pending=false;
   submit.disabled=false;
+  revokeSubmit.disabled=false;
  }
 });
+
+revokeForm.addEventListener('submit',async event=>{
+ event.preventDefault();
+ if(pending||!actorId)return;
+ if(!byId('ws41Confirm').checked){
+  revokeStatus('Vui lòng xác nhận bạn muốn đăng xuất khỏi tất cả thiết bị.','error');
+  return;
+ }
+ const current=byId('ws41Current').value;
+ pending=true;
+ submit.disabled=true;
+ revokeSubmit.disabled=true;
+ revokeStatus('Đang xác minh mật khẩu và thu hồi phiên đăng nhập…');
+ try{
+  const result=await api('auth/revoke-sessions',{
+   method:'POST',
+   headers:{'content-type':'application/json'},
+   body:JSON.stringify({
+    expected_actor_id:actorId,
+    current_password:current,
+    confirm_revoke_all:true
+   })
+  });
+  if(result.ok!==true||result.sessions_revoked!==true||
+     result.reauth_required!==true||result.password_unchanged!==true)
+   throw Error('Máy chủ trả về trạng thái không nhất quán. Hãy kiểm tra đăng nhập.');
+  actorId=null;
+  revokeForm.reset();
+  form.hidden=true;
+  revokeForm.hidden=true;
+  done.hidden=true;
+  byId('ws41Done').hidden=false;
+  byId('ws40Identity').textContent='Tất cả phiên đăng nhập đã được thu hồi';
+  revokeStatus('Thu hồi thành công. Mật khẩu không thay đổi.','success');
+ }catch(error){
+  if(error.status===401){
+   showGuest('Phiên đăng nhập không còn hiệu lực. Hãy đăng nhập lại.');
+  }else if(error.status===409){
+   showGuest('Tài khoản đã thay đổi. Hãy đăng nhập lại đúng tài khoản.');
+  }else if(!error.status){
+   revokeStatus('Chưa nhận được xác nhận. Hãy kiểm tra trạng thái đăng nhập trước khi gửi lại.','error');
+  }else revokeStatus(error.message,'error');
+ }finally{
+  clearPasswords();
+  pending=false;
+  submit.disabled=false;
+  revokeSubmit.disabled=false;
+ }
+});
+
 byId('ws40Logout').addEventListener('click',async()=>{
  if(pending)return;
  try{
