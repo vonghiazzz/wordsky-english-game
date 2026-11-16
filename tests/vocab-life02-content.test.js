@@ -94,5 +94,7 @@ test('LIFE-02 CLI automatically validates both LIFE-01 and LIFE-02 without DB/ne
  assert.equal(r.status,0,r.stderr);
  assert.match(r.stdout,/PROVISIONAL CANDIDATES ONLY.*LIFE-01\.json/);
  assert.match(r.stdout,/PROVISIONAL CANDIDATES ONLY.*LIFE-02\.json/);
- assert.match(r.stdout,/PASS: 2 saved batch\(es\) structurally checked/);
+ const match=r.stdout.match(/PASS: (\d+) saved batch\(es\) structurally checked/);
+ assert.ok(match,'Missing offline saved-batch QA summary');
+ assert.ok(Number(match[1])>=2,'All previously saved batches must remain checked');
 });
