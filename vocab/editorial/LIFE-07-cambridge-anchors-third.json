@@ -1,0 +1,67 @@
+{
+  "batch_id": "LIFE-07",
+  "status": "CAMBRIDGE_COMPONENT_ANCHORS_ONLY",
+  "evidence_date": "2026-11-16",
+  "records": [
+    {
+      "expression": "have a stiff neck",
+      "anchor": "stiff",
+      "uk_ipa": "/stɪf/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/stiff",
+      "anchor_cefr": "B2",
+      "meaning_scope": "painful difficult-to-move body part adjective",
+      "note": "Cambridge B2 on stiff in body/muscle pain sense, with stiff neck as usage example; not whole phrase classification.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "feel exhausted",
+      "anchor": "exhausted",
+      "uk_ipa": "/ɪɡˈzɔː.stɪd/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/exhausted",
+      "anchor_cefr": "B1",
+      "meaning_scope": "extremely tired adjective",
+      "note": "The exhausted adjective has B1 for extremely tired; phrase feel exhausted is not separately graded.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "buy a digital thermometer",
+      "anchor": "thermometer",
+      "uk_ipa": "/θəˈmɒm.ɪ.tər/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/thermometer",
+      "anchor_cefr": "B2",
+      "meaning_scope": "temperature measuring device noun",
+      "note": "Thermometer noun is B2, but digital thermometer and buy a digital thermometer were not separately graded.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "apply a bandage",
+      "anchor": "bandage",
+      "uk_ipa": "/ˈbæn.dɪdʒ/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/bandage",
+      "anchor_cefr": "A2",
+      "meaning_scope": "medical injury covering noun",
+      "note": "Cambridge A2 label applies to bandage NOUN (cloth), not the verb 'bandage' or entire apply a bandage phrase.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "prepare a balanced meal",
+      "anchor": "balanced",
+      "uk_ipa": "/ˈbæl.ənst/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/learner-english/balanced",
+      "anchor_cefr": "B2",
+      "meaning_scope": "healthy mixture of different foods adjective",
+      "note": "Cambridge Learner's Dictionary B2 for balanced in balanced diet/meal context; not a direct grade for prepare a balanced meal.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    }
+  ]
+}
