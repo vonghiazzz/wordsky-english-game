@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,readdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {validateLife1000Candidates} from '../lib/vocab-life1000-gate.js';
 
@@ -108,13 +108,16 @@ test('LIFE-06 has draft examples and IPA, but no reviewers, grading aliases or a
  }
 });
 
-test('LIFE-06 cumulative CLI checks all six saved 100-entry batches with no DB writes',()=>{
+test('LIFE-06 cumulative CLI checks every currently saved batch without DB writes',()=>{
  const result=spawnSync(process.execPath,['scripts/qa-vocab-life1000.mjs'],{
   cwd:new URL('..',import.meta.url),encoding:'utf8',env:{PATH:process.env.PATH}
  });
  assert.equal(result.status,0,result.stderr);
- for(const id of ['01','02','03','04','05','06'])
-  assert.match(result.stdout,new RegExp('PROVISIONAL CANDIDATES ONLY.*LIFE-'+id+'\\.json'));
- assert.match(result.stdout,/PASS: 6 saved batch\(es\) structurally checked/);
+ const saved=readdirSync(new URL('../vocab/batches/',import.meta.url))
+  .filter(name=>/^LIFE-(0[1-9]|10)\\.json$/u.test(name)).sort();
+ assert.ok(saved.length>=6,'LIFE-06 cumulative check requires at least six saved batches');
+ for(const file of saved)
+  assert.match(result.stdout,new RegExp('PROVISIONAL CANDIDATES ONLY.*'+file.replace('.','\\\\.')));
+ assert.match(result.stdout,new RegExp('PASS: '+saved.length+' saved batch\\(es\\) structurally checked'));
  assert.match(result.stdout,/"production_deployment_authorized": false/);
 });
