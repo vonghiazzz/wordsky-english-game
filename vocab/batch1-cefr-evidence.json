@@ -1,0 +1,232 @@
+{
+  "batch": "WordSky content Batch 1 (20 words in 5 existing topics)",
+  "policy": "academic-cefr-evidence-v1",
+  "source_checked_on": "2026-11-16",
+  "governance": "All CEFR fields are proposals only. No independent bilingual reviewer signed; do not set APPROVED or use as live game eligibility evidence.",
+  "interpretation": "CEFR grades language competence; dictionaries and teaching lists assign useful word/sense-level guidance. Contextual inference does not equal an explicit dictionary label.",
+  "records": [
+    {
+      "topic": "Daily Life",
+      "english": "wash dishes",
+      "level": "A1",
+      "part_of_speech": "verb phrase",
+      "evidence_kind": "collocation_in_labeled_sense",
+      "source_cefr_level": "A1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/learner-english/wash",
+      "evidence_note": "Cambridge wash (clean something) A1, with the dishes as its example. The exact phrase is not independently tagged.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Daily Life",
+      "english": "get dressed",
+      "level": "A2",
+      "part_of_speech": "verb phrase",
+      "evidence_kind": "collocation_in_labeled_sense",
+      "source_cefr_level": "A2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/essential-british-english/dress",
+      "evidence_note": "Cambridge dress verb (put clothes on) A2 includes the get dressed phrase.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Daily Life",
+      "english": "take a shower",
+      "level": "A1",
+      "part_of_speech": "verb phrase",
+      "evidence_kind": "collocation_in_labeled_sense",
+      "source_cefr_level": "A1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/learner-english/shower",
+      "evidence_note": "Cambridge shower noun (wash) A1 explicitly mentions have or take a shower.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Daily Life",
+      "english": "set the table",
+      "level": "B1",
+      "part_of_speech": "phrase",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "B1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/set-the-table",
+      "evidence_note": "Cambridge labels the exact phrase B1.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Food",
+      "english": "vegetable",
+      "level": "A1",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/vegetable",
+      "evidence_note": "Cambridge vegetable noun (food sense) A1.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Food",
+      "english": "cheese",
+      "level": "A1",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/learner-english/cheese",
+      "evidence_note": "Cambridge food noun cheese A1.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Food",
+      "english": "sandwich",
+      "level": "A1",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/sandwich",
+      "evidence_note": "Cambridge sandwich noun (food) A1.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Food",
+      "english": "noodles",
+      "level": "A2",
+      "part_of_speech": "plural noun",
+      "evidence_kind": "contextual_inference",
+      "source_cefr_level": null,
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/noodle",
+      "support_url": "https://www.pearsoncanadaschool.com/content/dam/websites/pearson-canada-school/assets/documents/literacy/nik/NIK-ScopeAndSequence-L4.pdf",
+      "evidence_note": "Cambridge noun food sense has NO explicit CEFR. Pearson Level 4 A2+/B1 course features noodles. A2 is a local teaching estimate, not a certified word-level assignment; Oxford Food topic b2 differs.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "School - Trường học",
+      "english": "textbook",
+      "level": "A2",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/textbook",
+      "evidence_note": "Cambridge textbook noun (study book) A2; not textbook adjective.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "School - Trường học",
+      "english": "dictionary",
+      "level": "A1",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/dictionary",
+      "evidence_note": "Cambridge dictionary noun (word reference book) A1.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "School - Trường học",
+      "english": "classmate",
+      "level": "A2",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/classmate",
+      "evidence_note": "Cambridge classmate noun (person in your class) A2.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "School - Trường học",
+      "english": "timetable",
+      "level": "A2",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/timetable",
+      "evidence_note": "Cambridge timetable UK school-class schedule sense A2 (general timetable sense B1).",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Travel - Du lịch",
+      "english": "boarding pass",
+      "level": "B1",
+      "part_of_speech": "noun phrase",
+      "evidence_kind": "contextual_inference",
+      "source_cefr_level": null,
+      "source_url": "https://www.cambridgeenglish.org/vn/Images/506887-b1-preliminary-vocabulary-list.pdf",
+      "support_url": "https://dictionary.cambridge.org/dictionary/english/boarding-pass",
+      "evidence_note": "Included in Cambridge English B1 Preliminary vocabulary list, but this does NOT establish a unique individual B1 sense label; Cambridge dictionary definition is unlabeled.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Travel - Du lịch",
+      "english": "luggage",
+      "level": "A2",
+      "part_of_speech": "uncountable noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/luggage",
+      "evidence_note": "Cambridge luggage noun (travel bags) A2; uncountable.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Travel - Du lịch",
+      "english": "destination",
+      "level": "B1",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "B1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/destination",
+      "evidence_note": "Cambridge destination noun (place travelled to) B1.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Travel - Du lịch",
+      "english": "departure",
+      "level": "B1",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "B1",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/departure",
+      "evidence_note": "Cambridge departure noun (leaving / start of journey) B1.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Technology - Công nghệ",
+      "english": "charger",
+      "level": "B2",
+      "part_of_speech": "noun",
+      "evidence_kind": "contextual_inference",
+      "source_cefr_level": null,
+      "source_url": "https://www.oxfordlearnersdictionaries.com/definition/english/charger",
+      "support_url": "https://dictionary.cambridge.org/dictionary/english/charger",
+      "evidence_note": "Oxford charger has a topic-context tag Physics and chemistry b2; Cambridge phone-charger sense has no explicit CEFR. B2 is a provisional topic-based placement, NOT a direct headword label.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Technology - Công nghệ",
+      "english": "battery",
+      "level": "A2",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "A2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/battery",
+      "evidence_note": "Cambridge battery noun (electrical device) A2, not assault/other senses.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Technology - Công nghệ",
+      "english": "browser",
+      "level": "B2",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "B2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/browser",
+      "evidence_note": "Cambridge browser noun (computer application) B2.",
+      "human_bilingual_review_required": true
+    },
+    {
+      "topic": "Technology - Công nghệ",
+      "english": "attachment",
+      "level": "B2",
+      "part_of_speech": "noun",
+      "evidence_kind": "exact_sense_label",
+      "source_cefr_level": "B2",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/attachment",
+      "evidence_note": "Cambridge attachment noun (email file), COMPUTING sense B2.",
+      "human_bilingual_review_required": true
+    }
+  ]
+}
