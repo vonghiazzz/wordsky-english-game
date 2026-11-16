@@ -28,13 +28,13 @@
       "editor_approved": false
     },
     {
-      "expression": "show a prescription",
+      "expression": "pick up a prescription",
       "anchor": "prescription",
       "uk_ipa": "/prɪˈskrɪp.ʃən/",
       "source_url": "https://dictionary.cambridge.org/dictionary/english/prescription",
       "anchor_cefr": "B1",
       "label_scope": "medical_treatment_document_noun",
-      "note": "Cambridge prescription noun, treatment document sense B1, not an eyeglass prescription. Whole show a prescription phrase has no direct label.",
+      "note": "Cambridge prescription medical document noun carries B1. Full pick up a prescription phrase is ungraded; may mean collect prescribed medication; clarify regional use in bilingual review.",
       "phrase_ipa_verified": false,
       "phrase_cefr_verified": false,
       "editor_approved": false
