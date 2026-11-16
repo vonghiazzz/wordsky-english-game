@@ -146,7 +146,7 @@ test('LIFE-05 script by default is an offline dry run and never contacts Postgre
  });
  assert.equal(p.status,0,p.stderr);
  assert.match(p.stdout,/LIFE-05 inactive topic registration/);
- assert.match(p.stdout,/"proposed_topic_words": 50/);
+ assert.match(p.stdout,/"proposed_topic_words": 75/);
  assert.match(p.stdout,/DRY RUN: no DB connection/);
  assert.doesNotMatch(p.stdout,/postgresql:\/\//);
 });
