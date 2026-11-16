@@ -1,0 +1,31 @@
+/* UX44 vocabulary pronunciation; scoped, accessible and touch-friendly. */
+.ws-speak-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 9px 13px;
+  border: 1px solid #7b9bb7;
+  border-radius: 12px;
+  background: #203d57;
+  color: #f5faff;
+  font: 700 13px/1.4 system-ui, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ws-speak-button:hover:not(:disabled) {background:#2e576f;border-color:#b2d6f4;}
+.ws-speak-button:focus-visible {outline:3px solid #91f1d1;outline-offset:3px;}
+.ws-speak-button.is-speaking {border-color:#9bf4d6;background:#255344;}
+.ws-speak-button:disabled {opacity:.48;cursor:not-allowed;}
+.ws-speak-button.ws-speak-compact {width:44px;padding:9px;}
+.ws-speech-status {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+@media (max-width:650px) {
+  .word-controls .ws-speak-button.ws-speak-compact {flex:0 0 44px;}
+  .ws10-word-actions .ws-speak-button.ws-speak-compact {flex:0 0 44px;}
+}

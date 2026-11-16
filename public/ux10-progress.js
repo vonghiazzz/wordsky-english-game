@@ -477,6 +477,7 @@ function boot() {
     const filtered = filterWords(view.words, view.learned,
       {query:search.value,topic:selectedTopicFilter,status:statusFilter.value});
     byId('ws10Count').textContent = filtered.length.toLocaleString('vi-VN') + ' thẻ';
+    window.WordSkySpeech?.stop();
     list.replaceChildren();
     const empty = byId('ws10Empty');
     empty.hidden = filtered.length > 0;
@@ -506,6 +507,8 @@ function boot() {
       reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || unifiedSaving || busy));
       knownBtn.addEventListener('click', () => isUnified ? updateUnifiedCard(card, true) : isAccount ? updateAccountCard(card, true) : isServer ? updateServerCard(card,true) : updateCard(card,true));
       reviewBtn.addEventListener('click', () => isUnified ? updateUnifiedCard(card, false) : isAccount ? updateAccountCard(card, false) : isServer ? updateServerCard(card,false) : updateCard(card,false));
+      const pronunciation = window.WordSkySpeech?.makeButton(card.english, true);
+      if (pronunciation) actions.append(pronunciation);
       actions.append(knownBtn, reviewBtn);
       row.append(wordCol, meaning, actions);
       fragment.append(row);

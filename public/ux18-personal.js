@@ -82,6 +82,7 @@ function entry(word,label,onClick,style=''){
  if(style)b.className=style;b.disabled=busy;b.addEventListener('click',onClick);return b;
 }
 function renderList(){
+ window.WordSkySpeech?.stop();
  const root=el('personalList');root.replaceChildren();
  const term=el('personalSearch').value.toLocaleLowerCase('vi').trim();
  const filtered=account.words.filter(w=>[w.topic,w.english,w.meaning].some(v=>v.toLocaleLowerCase('vi').includes(term)));
@@ -95,6 +96,8 @@ function renderList(){
   const caption=document.createElement('small');caption.textContent=word.topic+' · '+(known.get(word.id)===true?'Đã nhớ':known.has(word.id)?'Cần ôn':'Chưa học');
   details.append(title,caption);
   const controls=document.createElement('div');controls.className='word-controls';
+  const pronunciation=window.WordSkySpeech?.makeButton(word.english,true);
+  if(pronunciation)controls.append(pronunciation);
   controls.append(
    entry(word,'✓ Đã nhớ',()=>act(()=>scopedUnifiedReview(word.id,true))),
    entry(word,'↻ Cần ôn',()=>act(()=>scopedUnifiedReview(word.id,false))),
