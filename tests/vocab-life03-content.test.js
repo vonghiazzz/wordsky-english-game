@@ -122,6 +122,8 @@ test('LIFE-03 remains a draft and the offline CLI preflights all 3 batches toget
  assert.match(p.stdout,/LIFE-01\.json/);
  assert.match(p.stdout,/LIFE-02\.json/);
  assert.match(p.stdout,/LIFE-03\.json/);
- assert.match(p.stdout,/PASS: 3 saved batch\(es\) structurally checked/);
+ const countMatch=p.stdout.match(/PASS: (\d+) saved batch\(es\) structurally checked/);
+ assert.ok(countMatch,'Expected offline batch QA summary');
+ assert.ok(Number(countMatch[1])>=3,'Earlier three batches must remain checked');
  assert.match(p.stdout,/"production_deployment_authorized": false/);
 });
