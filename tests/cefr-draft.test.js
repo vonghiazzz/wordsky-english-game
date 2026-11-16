@@ -31,20 +31,23 @@ test('test-only fixture refuses preview and plain dry-run',()=>{
  assert.notEqual(r.status,0);
 });
 
-test('all 26 topics included in review queue: 280 seed words UNREVIEWED and 117 drafts PROVISIONAL',()=>{
+test('all 26 topics included in review queue: 260 originals UNREVIEWED, 20 Batch 1 and 117 draft candidates PROVISIONAL',()=>{
  const queue=JSON.parse(fs.readFileSync(path.join(root,'vocab/cefr-review-all-topics.json'),'utf8'));
  assert.equal(queue.records.length,397);
  assert.equal(new Set(queue.records.map(x=>x.topic)).size,26);
- assert.equal(queue.records.filter(x=>x.review_status==='UNREVIEWED').length,280);
- assert.equal(queue.records.filter(x=>x.review_status==='PROVISIONAL').length,117);
+ assert.equal(queue.records.filter(x=>x.review_status==='UNREVIEWED').length,260);
+ assert.equal(queue.records.filter(x=>x.review_status==='PROVISIONAL').length,137);
+ assert.equal(queue.records.filter(x=>x.review_status==='APPROVED').length,0);
  assert.equal(new Set(queue.records.map(x=>x.topic+'::'+x.english.toLowerCase())).size,397,
   'Seed and provisional candidates must never overlap');
  for(const topic of Object.keys(seed)){
-  const legacy=queue.records.filter(x=>x.topic===topic&&x.review_status==='UNREVIEWED');
-  assert.equal(legacy.length,seed[topic].length);
-  assert.ok(legacy.every(x=>x.level===null),'No guessed CEFR for unreviewed seed words');
+  const seedKeys=new Set(seed[topic].map(card=>card[0].toLocaleLowerCase('en')));
+  const queuedSeed=queue.records.filter(x=>x.topic===topic&&seedKeys.has(x.english.toLocaleLowerCase('en')));
+  assert.equal(queuedSeed.length,seed[topic].length);
+  assert.ok(queuedSeed.every(x=>x.review_status==='UNREVIEWED'?x.level===null:
+   x.review_status==='PROVISIONAL'&&x.verification_scope?.startsWith('source_lookup_only;')));
   for(const card of seed[topic]){
-   const item=legacy.find(x=>x.english.toLowerCase()===card[0].toLowerCase());
+   const item=queuedSeed.find(x=>x.english.toLowerCase()===card[0].toLowerCase());
    assert.ok(item,'Missing queued seed word: '+topic+' / '+card[0]);
    for(const [i,key] of ['english','ipa','meaning','example','translation'].entries())
     assert.equal(item[key],card[i],topic+' / '+card[0]+' / '+key);
