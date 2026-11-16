@@ -124,6 +124,8 @@ test('LIFE-05 runs five-batch offline gate, including four inherited batches and
  assert.equal(run.status,0,run.stderr);
  for(const n of ['01','02','03','04','05'])
   assert.match(run.stdout,new RegExp('PROVISIONAL CANDIDATES ONLY.*LIFE-'+n+'\\.json'));
- assert.match(run.stdout,/PASS: 5 saved batch\(es\) structurally checked/);
+ const match=run.stdout.match(/PASS: (\d+) saved batch\(es\) structurally checked/);
+ assert.ok(match,'Missing cumulative saved-batch QA summary');
+ assert.ok(Number(match[1])>=5,'Five existing batches must remain checked after expansion');
  assert.match(run.stdout,/"production_deployment_authorized": false/);
 });
