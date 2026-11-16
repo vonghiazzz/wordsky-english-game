@@ -86,6 +86,10 @@ jobs:
         run: npm run vocab:topic:plan
         # No topic creation; the optional write tool is never run here.
 
+      - name: LIFE-03 Social Relationships disabled-topic dry-run
+        run: npm run vocab:topic:plan:life03
+        # No DB target, words, topic activation or production writes.
+
       - name: Run all tests (including isolated PostgreSQL concurrency)
         run: npm test
         env:
@@ -312,3 +316,7 @@ jobs:
       - name: LIFE-02 topic registration in isolated rollback-only PostgreSQL
         run: node scripts/qa-life02-topic-local-e2e.mjs
         # Enabled=false, idempotent and rolled back; NEVER a remote Preview write.
+
+      - name: LIFE-03 Social Relationships topic in isolated rollback-only PostgreSQL
+        run: node scripts/qa-life03-topic-local-e2e.mjs
+        # Disabled empty topic, idempotency, and ROLLBACK before exit.
