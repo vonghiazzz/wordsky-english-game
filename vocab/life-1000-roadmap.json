@@ -1,0 +1,355 @@
+{
+  "version": "wordsky-life-1000-v1",
+  "status": "PLANNED_NOT_IMPORTED",
+  "purpose": "1000 original vocabulary/phrase entries for practical everyday English",
+  "batch_count": 10,
+  "target_words_per_batch": 100,
+  "target_words_per_group": 25,
+  "total_target_new_words": 1000,
+  "suggested_cefr_mix": {
+    "A1": 200,
+    "A2": 400,
+    "B1": 300,
+    "B2": 100
+  },
+  "proposed_topics": [
+    {
+      "name": "Everyday Conversation - Giao tiếp hằng ngày",
+      "activation": "REQUIRES_SEPARATE_APPROVAL"
+    },
+    {
+      "name": "Social Relationships - Quan hệ xã hội",
+      "activation": "REQUIRES_SEPARATE_APPROVAL"
+    },
+    {
+      "name": "Cooking & Kitchen - Nấu ăn",
+      "activation": "REQUIRES_SEPARATE_APPROVAL"
+    },
+    {
+      "name": "Money & Payments - Thanh toán",
+      "activation": "REQUIRES_SEPARATE_APPROVAL"
+    },
+    {
+      "name": "Work Communication - Giao tiếp công việc",
+      "activation": "REQUIRES_SEPARATE_APPROVAL"
+    },
+    {
+      "name": "Community Services - Dịch vụ cộng đồng",
+      "activation": "REQUIRES_SEPARATE_APPROVAL"
+    },
+    {
+      "name": "Problem Solving - Xử lý tình huống",
+      "activation": "REQUIRES_SEPARATE_APPROVAL"
+    }
+  ],
+  "batches": [
+    {
+      "id": "LIFE-01",
+      "name": "Sinh hoạt hằng ngày",
+      "groups": [
+        {
+          "id": "morning",
+          "name": "Buổi sáng và thức dậy",
+          "topic": "Daily Life",
+          "target_words": 25
+        },
+        {
+          "id": "personal-care",
+          "name": "Vệ sinh và chăm sóc bản thân",
+          "topic": "Daily Life",
+          "target_words": 25
+        },
+        {
+          "id": "household",
+          "name": "Công việc nhà",
+          "topic": "Home - Nhà cửa",
+          "target_words": 25
+        },
+        {
+          "id": "evening",
+          "name": "Buổi tối và cuối tuần",
+          "topic": "Daily Life",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-02",
+      "name": "Giao tiếp hằng ngày",
+      "groups": [
+        {
+          "id": "introductions",
+          "name": "Giới thiệu và làm quen",
+          "topic": "Everyday Conversation - Giao tiếp hằng ngày",
+          "target_words": 25
+        },
+        {
+          "id": "checking-in",
+          "name": "Hỏi thăm và đáp lời",
+          "topic": "Everyday Conversation - Giao tiếp hằng ngày",
+          "target_words": 25
+        },
+        {
+          "id": "small-talk",
+          "name": "Chuyện phiếm hằng ngày",
+          "topic": "Everyday Conversation - Giao tiếp hằng ngày",
+          "target_words": 25
+        },
+        {
+          "id": "requests",
+          "name": "Nhờ giúp đỡ và lịch sự",
+          "topic": "Everyday Conversation - Giao tiếp hằng ngày",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-03",
+      "name": "Gia đình và quan hệ xã hội",
+      "groups": [
+        {
+          "id": "family",
+          "name": "Quan hệ trong gia đình",
+          "topic": "Family",
+          "target_words": 25
+        },
+        {
+          "id": "friendship",
+          "name": "Bạn bè và lời mời",
+          "topic": "Social Relationships - Quan hệ xã hội",
+          "target_words": 25
+        },
+        {
+          "id": "gatherings",
+          "name": "Gặp gỡ và hoạt động xã hội",
+          "topic": "Social Relationships - Quan hệ xã hội",
+          "target_words": 25
+        },
+        {
+          "id": "feelings",
+          "name": "Chia sẻ cảm xúc và hỗ trợ",
+          "topic": "Feelings - Cảm xúc",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-04",
+      "name": "Ăn uống và nấu ăn",
+      "groups": [
+        {
+          "id": "ingredients",
+          "name": "Nguyên liệu và thực phẩm",
+          "topic": "Food",
+          "target_words": 25
+        },
+        {
+          "id": "kitchen",
+          "name": "Dụng cụ và không gian bếp",
+          "topic": "Cooking & Kitchen - Nấu ăn",
+          "target_words": 25
+        },
+        {
+          "id": "cooking",
+          "name": "Các bước nấu ăn",
+          "topic": "Cooking & Kitchen - Nấu ăn",
+          "target_words": 25
+        },
+        {
+          "id": "dining",
+          "name": "Gọi món và dùng bữa",
+          "topic": "Restaurant - Nhà hàng",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-05",
+      "name": "Mua sắm và thanh toán",
+      "groups": [
+        {
+          "id": "shopping",
+          "name": "Hỏi hàng và so sánh sản phẩm",
+          "topic": "Shopping - Mua sắm",
+          "target_words": 25
+        },
+        {
+          "id": "prices",
+          "name": "Giá, khuyến mãi và ngân sách",
+          "topic": "Money & Payments - Thanh toán",
+          "target_words": 25
+        },
+        {
+          "id": "payments",
+          "name": "Thanh toán và hóa đơn",
+          "topic": "Money & Payments - Thanh toán",
+          "target_words": 25
+        },
+        {
+          "id": "returns",
+          "name": "Đổi trả và khiếu nại",
+          "topic": "Money & Payments - Thanh toán",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-06",
+      "name": "Đi lại và du lịch",
+      "groups": [
+        {
+          "id": "commute",
+          "name": "Đi làm và đi học",
+          "topic": "Transport - Di chuyển",
+          "target_words": 25
+        },
+        {
+          "id": "navigation",
+          "name": "Hỏi và chỉ đường",
+          "topic": "Directions - Chỉ đường",
+          "target_words": 25
+        },
+        {
+          "id": "bookings",
+          "name": "Đặt vé, đặt phòng",
+          "topic": "Travel - Du lịch",
+          "target_words": 25
+        },
+        {
+          "id": "disruptions",
+          "name": "Trục trặc và hỗ trợ khi đi",
+          "topic": "Travel - Du lịch",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-07",
+      "name": "Sức khỏe và chăm sóc bản thân",
+      "groups": [
+        {
+          "id": "symptoms",
+          "name": "Triệu chứng thông thường",
+          "topic": "Body & Health - Cơ thể",
+          "target_words": 25
+        },
+        {
+          "id": "pharmacy",
+          "name": "Nhà thuốc và chỉ dẫn",
+          "topic": "Body & Health - Cơ thể",
+          "target_words": 25
+        },
+        {
+          "id": "habits",
+          "name": "Thói quen khỏe mạnh",
+          "topic": "Sports & Hobbies - Thể thao",
+          "target_words": 25
+        },
+        {
+          "id": "wellbeing",
+          "name": "Tinh thần và sức khỏe",
+          "topic": "Feelings - Cảm xúc",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-08",
+      "name": "Giao tiếp công việc",
+      "groups": [
+        {
+          "id": "workday",
+          "name": "Nhiệm vụ và lịch làm việc",
+          "topic": "Jobs - Nghề nghiệp",
+          "target_words": 25
+        },
+        {
+          "id": "messages",
+          "name": "Tin nhắn và email công việc",
+          "topic": "Work Communication - Giao tiếp công việc",
+          "target_words": 25
+        },
+        {
+          "id": "meetings",
+          "name": "Trao đổi trong cuộc họp",
+          "topic": "Work Communication - Giao tiếp công việc",
+          "target_words": 25
+        },
+        {
+          "id": "feedback",
+          "name": "Phản hồi và phối hợp",
+          "topic": "Work Communication - Giao tiếp công việc",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-09",
+      "name": "Dịch vụ và cộng đồng",
+      "groups": [
+        {
+          "id": "neighbourhood",
+          "name": "Địa điểm và hàng xóm",
+          "topic": "Places",
+          "target_words": 25
+        },
+        {
+          "id": "housing",
+          "name": "Thuê nhà và sửa chữa",
+          "topic": "Community Services - Dịch vụ cộng đồng",
+          "target_words": 25
+        },
+        {
+          "id": "services",
+          "name": "Dịch vụ cộng đồng",
+          "topic": "Community Services - Dịch vụ cộng đồng",
+          "target_words": 25
+        },
+        {
+          "id": "appointments",
+          "name": "Đặt lịch và yêu cầu hỗ trợ",
+          "topic": "Community Services - Dịch vụ cộng đồng",
+          "target_words": 25
+        }
+      ]
+    },
+    {
+      "id": "LIFE-10",
+      "name": "Nêu ý kiến và xử lý tình huống",
+      "groups": [
+        {
+          "id": "opinions",
+          "name": "Bày tỏ quan điểm",
+          "topic": "Problem Solving - Xử lý tình huống",
+          "target_words": 25
+        },
+        {
+          "id": "agreement",
+          "name": "Đồng ý, bất đồng lịch sự",
+          "topic": "Problem Solving - Xử lý tình huống",
+          "target_words": 25
+        },
+        {
+          "id": "problems",
+          "name": "Mô tả và xử lý vấn đề",
+          "topic": "Problem Solving - Xử lý tình huống",
+          "target_words": 25
+        },
+        {
+          "id": "plans",
+          "name": "Lựa chọn và thống nhất kế hoạch",
+          "topic": "Verbs - Động từ",
+          "target_words": 25
+        }
+      ]
+    }
+  ],
+  "policies": {
+    "grading": "NO_AUTO_APPROVED_SYNONYMS",
+    "cefr": "PROVISIONAL_UNTIL_INDEPENDENT_REVIEW",
+    "catalog": "GITHUB_DRAFT_IS_NOT_PRODUCTION",
+    "import": "NO_DATABASE_WRITES_FROM_PLAN",
+    "review": "HUMAN_BILINGUAL_REVIEW_REQUIRED",
+    "uniqueness": "GLOBAL_ENGLISH_ENTRY_AND_VIETNAMESE_CUE_REVIEW"
+  }
+}
