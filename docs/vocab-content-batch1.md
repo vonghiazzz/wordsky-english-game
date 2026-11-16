@@ -10,7 +10,7 @@ Grow the existing core vocabulary before introducing more topics. Current reposi
 | --- | --- |
 | Daily Life | wash dishes; get dressed; take a shower; set the table |
 | Food | vegetable; cheese; sandwich; noodles |
-| School - Trường học | library; dictionary; classmate; timetable |
+| School - Trường học | textbook; dictionary; classmate; timetable |
 | Travel - Du lịch | boarding pass; luggage; destination; departure |
 | Technology - Công nghệ | charger; battery; browser; attachment |
 
@@ -21,7 +21,9 @@ Each entry contains the existing 5 fields: English, IPA, Vietnamese meaning, Eng
 - `db/seed-vocabulary.json` feeds `scripts/seed.js` for local/isolated testing. The seed script uses `ON CONFLICT(topic_id,english) DO NOTHING`. Running it repeatedly does not overwrite older existing rows, progress records or user cards.
 - **Do not run this seed against Production** without a separate content release decision, backup and approved migration/rollback plan. The public Production catalog is managed by PostgreSQL/Admin and will not change from a GitHub merge alone.
 - Existing game eligibility/CEFR approval checks must not be bypassed to expose newly seeded words in SOLO/competitions. No automatic activation of draft questions or `accepted_english` answer lists.
-- The new meaning cues are intended to be distinct, avoiding additional literal cue collisions. QA-S1A (separate PR #82) records the pre-existing ambiguous cue `năm` corresponding to `five` and `year`. That existing case still needs a human content decision.
+- The new meaning cues are intended to be distinct, avoiding additional literal cue collisions.
+- The original suggestion `library` was already present in the frozen 117-record `PROVISIONAL` CEFR draft. Replace it with `textbook` instead of duplicating an existing candidate.
+- This content batch updates `vocab/cefr-review-all-topics.json` in lockstep: 280 unreviewed seed words + 117 provisional candidates = **397 review records**. Every added word remains `UNREVIEWED`, with `level=null` and no reviewer approval. The CI test now checks exact seed/queue field parity and rejects provisional overlaps. This does not authorize any production import. QA-S1A (separate PR #82) records the pre-existing ambiguous cue `năm` corresponding to `five` and `year`. That existing case still needs a human content decision.
 - Do not use real student data, account word lists or progress history to assess these words; test from public seed + synthetic QA accounts only.
 - **Acceptance:** `npm run check`, `npm test`, local isolated PostgreSQL17 and Chromium/Firefox E2E; verify no duplicate English words or new identical Vietnamese cues; human sign-off on IPA and usage before any actual content release.
 

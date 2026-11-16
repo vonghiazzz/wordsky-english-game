@@ -6,7 +6,7 @@ const seed=JSON.parse(readFileSync(new URL('../db/seed-vocabulary.json',import.m
 const expectedBatch={
  'Daily Life':['wash dishes','get dressed','take a shower','set the table'],
  'Food':['vegetable','cheese','sandwich','noodles'],
- 'School - Trường học':['library','dictionary','classmate','timetable'],
+ 'School - Trường học':['textbook','dictionary','classmate','timetable'],
  'Travel - Du lịch':['boarding pass','luggage','destination','departure'],
  'Technology - Công nghệ':['charger','battery','browser','attachment']
 };
@@ -87,4 +87,13 @@ test('Batch 1 content changes do not update existing seed words on repeat import
  const seedScript=readFileSync(new URL('../scripts/seed.js',import.meta.url),'utf8');
  assert.match(seedScript,/ON CONFLICT\(topic_id,english\) DO NOTHING/);
  assert.doesNotMatch(seedScript,/DELETE FROM ws_words|TRUNCATE ws_words/i);
+});
+
+test('Batch 1 does not overlap pre-existing PROVISIONAL CEFR drafts',()=>{
+ const drafts=JSON.parse(readFileSync(new URL('../vocab/cefr-provisional.json',import.meta.url),'utf8'));
+ const draftKeys=new Set(drafts.records.map(c=>c.topic+'\0'+en(c.english)));
+ for(const [topic,rows] of Object.entries(seed))
+  for(const row of rows)
+   assert.equal(draftKeys.has(topic+'\0'+en(row[0])),false,
+    'No seed/CEFR draft overlap: '+topic+' / '+row[0]);
 });
