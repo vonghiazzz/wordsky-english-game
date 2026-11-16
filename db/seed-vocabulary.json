@@ -69,6 +69,34 @@
       "Nấu ăn",
       "I cook dinner.",
       "Tôi nấu bữa tối."
+    ],
+    [
+      "wash dishes",
+      "/wɒʃ ˈdɪʃɪz/",
+      "Rửa bát đĩa",
+      "I wash dishes after dinner.",
+      "Tôi rửa bát đĩa sau bữa tối."
+    ],
+    [
+      "get dressed",
+      "/ɡet drest/",
+      "Mặc quần áo",
+      "I get dressed before breakfast.",
+      "Tôi mặc quần áo trước bữa sáng."
+    ],
+    [
+      "take a shower",
+      "/teɪk ə ˈʃaʊər/",
+      "Tắm bằng vòi sen",
+      "I take a shower every evening.",
+      "Tôi tắm bằng vòi sen mỗi tối."
+    ],
+    [
+      "set the table",
+      "/set ðə ˈteɪbəl/",
+      "Bày bàn ăn",
+      "We set the table for dinner.",
+      "Chúng tôi bày bàn ăn cho bữa tối."
     ]
   ],
   "Family": [
@@ -213,6 +241,34 @@
       "Trái cây",
       "I eat fruit.",
       "Tôi ăn trái cây."
+    ],
+    [
+      "vegetable",
+      "/ˈvedʒtəbəl/",
+      "Rau củ",
+      "This vegetable is fresh.",
+      "Loại rau này tươi."
+    ],
+    [
+      "cheese",
+      "/tʃiːz/",
+      "Phô mai",
+      "I put cheese on my sandwich.",
+      "Tôi cho phô mai vào bánh mì kẹp."
+    ],
+    [
+      "sandwich",
+      "/ˈsænwɪtʃ/",
+      "Bánh mì kẹp",
+      "She makes a sandwich for lunch.",
+      "Cô ấy làm bánh mì kẹp cho bữa trưa."
+    ],
+    [
+      "noodles",
+      "/ˈnuːdəlz/",
+      "Mì sợi",
+      "He eats noodles for breakfast.",
+      "Anh ấy ăn mì vào bữa sáng."
     ]
   ],
   "Places": [
@@ -789,6 +845,34 @@
       "Kỳ thi",
       "The exam is tomorrow.",
       "Kỳ thi diễn ra ngày mai."
+    ],
+    [
+      "library",
+      "/ˈlaɪbrəri/",
+      "Thư viện",
+      "I borrow books from the library.",
+      "Tôi mượn sách từ thư viện."
+    ],
+    [
+      "dictionary",
+      "/ˈdɪkʃənəri/",
+      "Từ điển",
+      "I use a dictionary to check new words.",
+      "Tôi dùng từ điển để tra từ mới."
+    ],
+    [
+      "classmate",
+      "/ˈklɑːsmeɪt/",
+      "Bạn cùng lớp",
+      "My classmate helps me with homework.",
+      "Bạn cùng lớp giúp tôi làm bài tập về nhà."
+    ],
+    [
+      "timetable",
+      "/ˈtaɪmteɪbəl/",
+      "Thời khóa biểu",
+      "Our timetable starts with English on Monday.",
+      "Thời khóa biểu của chúng tôi bắt đầu bằng môn tiếng Anh vào thứ Hai."
     ]
   ],
   "Jobs - Nghề nghiệp": [
@@ -1077,6 +1161,34 @@
       "Kỳ nghỉ",
       "We are on vacation.",
       "Chúng tôi đang đi nghỉ."
+    ],
+    [
+      "boarding pass",
+      "/ˈbɔːrdɪŋ pæs/",
+      "Thẻ lên máy bay",
+      "Show your boarding pass at the gate.",
+      "Hãy xuất trình thẻ lên máy bay tại cửa ra máy bay."
+    ],
+    [
+      "luggage",
+      "/ˈlʌɡɪdʒ/",
+      "Hành lý",
+      "My luggage is heavy.",
+      "Hành lý của tôi nặng."
+    ],
+    [
+      "destination",
+      "/ˌdestɪˈneɪʃən/",
+      "Điểm đến",
+      "Our destination is Da Nang.",
+      "Điểm đến của chúng tôi là Đà Nẵng."
+    ],
+    [
+      "departure",
+      "/dɪˈpɑːrtʃər/",
+      "Sự khởi hành",
+      "The departure is at nine.",
+      "Giờ khởi hành là chín giờ."
     ]
   ],
   "Weather - Thời tiết": [
@@ -1437,6 +1549,34 @@
       "Tải xuống",
       "I download a file.",
       "Tôi tải một tệp xuống."
+    ],
+    [
+      "charger",
+      "/ˈtʃɑːrdʒər/",
+      "Bộ sạc điện",
+      "I left my charger at home.",
+      "Tôi để quên bộ sạc ở nhà."
+    ],
+    [
+      "battery",
+      "/ˈbætəri/",
+      "Pin của thiết bị",
+      "My phone battery is low.",
+      "Pin điện thoại của tôi sắp hết."
+    ],
+    [
+      "browser",
+      "/ˈbraʊzər/",
+      "Trình duyệt web",
+      "Open the page in your browser.",
+      "Mở trang trong trình duyệt của bạn."
+    ],
+    [
+      "attachment",
+      "/əˈtætʃmənt/",
+      "Tệp đính kèm",
+      "Please open the email attachment.",
+      "Vui lòng mở tệp đính kèm trong email."
     ]
   ],
   "Animals - Động vật": [
