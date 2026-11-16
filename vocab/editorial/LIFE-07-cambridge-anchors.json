@@ -1,0 +1,119 @@
+{
+  "batch_id": "LIFE-07",
+  "status": "SOURCE_ANCHORS_NOT_FULL_PHRASE_VALIDATION",
+  "checked_date": "2026-11-16",
+  "source": "Cambridge Dictionary",
+  "source_anchor_count": 9,
+  "records": [
+    {
+      "expression": "feel light-headed",
+      "anchor": "light-headed",
+      "uk_ipa": "/ˌlaɪtˈhed.ɪd/",
+      "source": "https://dictionary.cambridge.org/dictionary/english/light-headed",
+      "label": null,
+      "note": "Cambridge lists the adjective sense (dizzy/weak). Only the adjective UK IPA is evidenced, not full phrase IPA.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "none",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "feel feverish",
+      "anchor": "feverish",
+      "uk_ipa": "/ˈfiː.vər.ɪʃ/",
+      "source": "https://dictionary.cambridge.org/dictionary/english/feverish",
+      "label": null,
+      "note": "Cambridge adjective ILL sense evidenced; distinct from feverish excitement. UK IPA is the adjective only.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "none",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "feel nauseous",
+      "anchor": "nauseous",
+      "uk_ipa": "/ˈnɔː.zi.əs/",
+      "alternative_uk_ipa": "/ˈnɔːʒəs/",
+      "source": "https://dictionary.cambridge.org/dictionary/english/nauseous",
+      "label": null,
+      "note": "Two accepted UK pronunciations for adjective, feeling sick sense. Avoid forcing a single spelling-to-sound variant.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "none",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "have a toothache",
+      "anchor": "toothache",
+      "uk_ipa": "/ˈtuːθ.eɪk/",
+      "source": "https://dictionary.cambridge.org/dictionary/english/toothache",
+      "label": "A2",
+      "note": "A2 is a DIRECT CEFR label for headword toothache noun; NOT a direct label for entire phrase have a toothache.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "headword_sense_only",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "have a migraine",
+      "anchor": "migraine",
+      "uk_ipa": "/ˈmiː.ɡreɪn/",
+      "alternative_uk_ipa": "/ˈmaɪ.ɡreɪn/",
+      "source": "https://dictionary.cambridge.org/dictionary/english/migraine",
+      "label": null,
+      "note": "Cambridge UK has two variants for migraine noun; whole phrase IPA and CEFR remain unverified.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "none",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "ask for a pharmacist",
+      "anchor": "pharmacist",
+      "uk_ipa": "/ˈfɑː.mə.sɪst/",
+      "source": "https://dictionary.cambridge.org/pronunciation/english/pharmacist",
+      "label": null,
+      "note": "UK IPA for pharmacist noun only, not ask for a pharmacist. This is a pronunciation reference, not CEFR evidence.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "none",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "show a prescription",
+      "anchor": "prescription",
+      "uk_ipa": "/prɪˈskrɪp.ʃən/",
+      "source": "https://dictionary.cambridge.org/pronunciation/english/prescription",
+      "label": null,
+      "note": "UK IPA for prescription noun only; whole phrase and its CEFR remain unverified.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "none",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "ask about side effects",
+      "anchor": "side effect",
+      "uk_ipa": "/ˈsaɪd ɪˌfekt/",
+      "source": "https://dictionary.cambridge.org/dictionary/english/side-effect",
+      "label": "C1",
+      "note": "Cambridge C1 applies to side effect noun meaning unwanted result of medication, treatment or vaccine; C2 for unexpected consequence of situation. C1 is NOT verified for entire ask about side effects phrase. Editorial phrase estimate B1 must be revisited.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "headword_sense_only",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    },
+    {
+      "expression": "feel homesick",
+      "anchor": "homesick",
+      "uk_ipa": "/ˈhəʊm.sɪk/",
+      "source": "https://dictionary.cambridge.org/dictionary/english/homesick",
+      "label": null,
+      "note": "UK IPA for adjective homesick; no direct phrase CEFR label claimed.",
+      "ipa_scope": "headword_or_collocation_component_only",
+      "cefr_label_scope": "none",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false
+    }
+  ]
+}

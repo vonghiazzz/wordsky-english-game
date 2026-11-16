@@ -1,0 +1,43 @@
+{
+  "batch_id": "LIFE-07",
+  "status": "CAMBRIDGE_COMPONENT_ANCHORS_ONLY",
+  "checked_date": "2026-11-16",
+  "records": [
+    {
+      "expression": "have a sore throat",
+      "anchor": "sore throat",
+      "uk_ipa": "/ˌsɔː ˈθrəʊt/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/sore-throat",
+      "anchor_cefr": null,
+      "scope": "exact_noun_collocation",
+      "note": "Cambridge explicitly defines sore throat as a painful throat condition and gives UK IPA. No direct CEFR label evidenced for this compound, and 'have a' is outside pronunciation scope.",
+      "whole_phrase_cefr_verified": false,
+      "whole_phrase_ipa_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "have a dry cough",
+      "anchor": "dry cough (cough noun)",
+      "uk_ipa": "/kɒf/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/cough",
+      "anchor_cefr": "B1",
+      "scope": "cough_noun_medical_sense",
+      "note": "Cambridge cough noun is B1 and explicitly gives 'a dry cough' as an example. /kɒf/ is ONLY the headword IPA, not the IPA for 'dry cough' or 'have a dry cough'.",
+      "whole_phrase_cefr_verified": false,
+      "whole_phrase_ipa_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "have a chesty cough",
+      "anchor": "cough (noun)",
+      "uk_ipa": "/kɒf/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/cough",
+      "anchor_cefr": "B1",
+      "scope": "cough_noun_medical_sense",
+      "note": "Cambridge cough noun B1; the qualifier chesty and whole phrase not individually graded. IPA is only for noun cough.",
+      "whole_phrase_cefr_verified": false,
+      "whole_phrase_ipa_verified": false,
+      "editor_approved": false
+    }
+  ]
+}

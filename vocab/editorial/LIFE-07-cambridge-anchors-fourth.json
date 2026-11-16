@@ -1,0 +1,42 @@
+{
+  "batch_id": "LIFE-07",
+  "status": "COMPONENT_OR_COLLOCATION_EVIDENCE_ONLY",
+  "records": [
+    {
+      "expression": "have a runny nose",
+      "anchor": "runny nose",
+      "evidence_scope": "exact_collocation_definition_only",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/runny-nose",
+      "headword_uk_ipa": null,
+      "anchor_cefr": null,
+      "review_note": "Cambridge defines the runny nose collocation and includes have a runny nose usage. No direct CEFR or full expression pronunciation supplied.",
+      "whole_phrase_cefr_verified": false,
+      "whole_phrase_ipa_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "make a doctor's appointment",
+      "anchor": "appointment",
+      "evidence_scope": "noun_arrangement_sense",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/appointment",
+      "headword_uk_ipa": "/əˈpɔɪnt.mənt/",
+      "anchor_cefr": "A2",
+      "review_note": "A2 is for appointment noun meaning arranged visit; Cambridge explicitly illustrates make an appointment with a doctor. Do not transfer A2 automatically to whole expression.",
+      "whole_phrase_cefr_verified": false,
+      "whole_phrase_ipa_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "feel more confident",
+      "anchor": "confident",
+      "evidence_scope": "adjective_ability_confidence_sense",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/confident",
+      "headword_uk_ipa": "/ˈkɒn.fɪ.dənt/",
+      "anchor_cefr": "B1",
+      "review_note": "B1 is for confident meaning certain of abilities; not a source CEFR grade for feel more confident. Ensure source variant and connected speech before full phrase IPA.",
+      "whole_phrase_cefr_verified": false,
+      "whole_phrase_ipa_verified": false,
+      "editor_approved": false
+    }
+  ]
+}

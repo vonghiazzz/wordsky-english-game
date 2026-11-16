@@ -1,0 +1,236 @@
+{
+  "batch_id": "LIFE-07",
+  "status": "HIGH_RISK_SEMANTIC_REVIEW_PENDING",
+  "scope": "Offline reviewer checklist. Not approved accepted answers, scoring policy, or treatment guidance.",
+  "records": [
+    {
+      "english": "break out in a rash",
+      "group_id": "symptoms",
+      "meaning": "Bắt đầu nổi phát ban",
+      "priority": "HIGH",
+      "sense_boundary": "Sudden appearance of a skin rash; not any redness or a chronic skin disorder.",
+      "possible_equivalent_phrasings_for_editor": [
+        "develop a rash"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "have itchy skin",
+        "get a sunburn"
+      ],
+      "editorial_note": "Vietnamese cue should distinguish onset ('bắt đầu nổi phát ban') from just having a rash.",
+      "cefr_conflict_flag": "rash medical noun C2 versus expression proposal B2; unresolved.",
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "feel nauseous",
+      "group_id": "symptoms",
+      "meaning": "Buồn nôn",
+      "priority": "HIGH",
+      "sense_boundary": "Sensation of wanting to vomit; avoid broader 'unwell' sense.",
+      "possible_equivalent_phrasings_for_editor": [
+        "feel queasy",
+        "feel like vomiting"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "feel sick"
+      ],
+      "editorial_note": "'Feel sick' can mean generally ill; approve only with disambiguated context.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "have a migraine",
+      "group_id": "symptoms",
+      "meaning": "Đau nửa đầu",
+      "priority": "HIGH",
+      "sense_boundary": "Migraine condition, not a generic headache.",
+      "possible_equivalent_phrasings_for_editor": [
+        "I've got a migraine"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "have a headache",
+        "have a splitting headache"
+      ],
+      "editorial_note": "Pronoun/time variant must be normalized deliberately; migraine is not interchangeable with generic severe headache.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "feel short of breath",
+      "group_id": "symptoms",
+      "meaning": "Cảm thấy khó thở",
+      "priority": "HIGH",
+      "sense_boundary": "Difficulty breathing; do not collapse to general tiredness.",
+      "possible_equivalent_phrasings_for_editor": [
+        "feel breathless",
+        "have difficulty breathing"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "feel exhausted",
+        "be out of shape"
+      ],
+      "editorial_note": "Potentially urgent symptom. No treatment directions; preserve accurate meaning and contextual learner wording.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "have a splitting headache",
+      "group_id": "symptoms",
+      "meaning": "Đau đầu dữ dội",
+      "priority": "HIGH",
+      "sense_boundary": "Very severe headache (idiomatic intensity).",
+      "possible_equivalent_phrasings_for_editor": [
+        "have a terrible headache"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "have a migraine",
+        "have a mild headache"
+      ],
+      "editorial_note": "Do not treat migraine diagnosis as a synonym for severe headache.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "pick up a prescription",
+      "group_id": "pharmacy",
+      "meaning": "Nhận thuốc theo đơn",
+      "priority": "HIGH",
+      "sense_boundary": "Collect prescribed medication from a pharmacy, not necessarily collect the prescription document.",
+      "possible_equivalent_phrasings_for_editor": [
+        "collect my prescribed medicine"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "get a doctor's prescription",
+        "request a repeat prescription"
+      ],
+      "editorial_note": "Current English phrase can denote collecting medicine or a prescription; review with UK bilingual editor and revise English or cue if needed.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "ask about side effects",
+      "group_id": "pharmacy",
+      "meaning": "Hỏi về tác dụng phụ",
+      "priority": "HIGH",
+      "sense_boundary": "Ask about potential unwanted effects of medicine/treatment.",
+      "possible_equivalent_phrasings_for_editor": [
+        "enquire about side effects"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "ask about benefits",
+        "report a side effect"
+      ],
+      "editorial_note": "Asking vs reporting are different speech acts.",
+      "cefr_conflict_flag": "side effect medical noun C1 versus expression proposal B1; unresolved.",
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "follow the dosage instructions",
+      "group_id": "pharmacy",
+      "meaning": "Làm theo hướng dẫn liều dùng",
+      "priority": "HIGH",
+      "sense_boundary": "Follow written or given directions on dose and timing; no dosage advice authored.",
+      "possible_equivalent_phrasings_for_editor": [
+        "follow the prescribed dose instructions"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "take a higher dose",
+        "skip the directions"
+      ],
+      "editorial_note": "Keep as communication phrase only. Avoid examples that specify unverified dose or medicine.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "take medicine with food",
+      "group_id": "pharmacy",
+      "meaning": "Uống thuốc cùng thức ăn",
+      "priority": "HIGH",
+      "sense_boundary": "Only when a specific medicine's own label says to take it with food.",
+      "possible_equivalent_phrasings_for_editor": [
+        "take the medicine with a meal"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "take medicine before meals",
+        "take medicine on an empty stomach"
+      ],
+      "editorial_note": "Avoid implying this is universal medical guidance; example must quote label-specific instruction.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "take medicine on an empty stomach",
+      "group_id": "pharmacy",
+      "meaning": "Uống thuốc khi bụng đói",
+      "priority": "HIGH",
+      "sense_boundary": "Only when the prescribed medicine's own label says to do so.",
+      "possible_equivalent_phrasings_for_editor": [
+        "take the medicine without food"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "take medicine with food",
+        "take medicine after dinner"
+      ],
+      "editorial_note": "Not a blanket recommendation. Check semantic equivalence and timings with bilingual editor.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "mention a drug allergy",
+      "group_id": "pharmacy",
+      "meaning": "Nói rõ dị ứng thuốc",
+      "priority": "HIGH",
+      "sense_boundary": "Disclose allergy to medication; not side effect or food intolerance.",
+      "possible_equivalent_phrasings_for_editor": [
+        "tell the pharmacist about a medication allergy"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "mention side effects",
+        "mention a food intolerance"
+      ],
+      "editorial_note": "Drug allergy vs adverse effect should remain distinct; no diagnosis claim.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    },
+    {
+      "english": "request a medical certificate",
+      "group_id": "pharmacy",
+      "meaning": "Yêu cầu giấy chứng nhận y tế",
+      "priority": "HIGH",
+      "sense_boundary": "Ask for a medical certificate/document in a specific administrative setting.",
+      "possible_equivalent_phrasings_for_editor": [
+        "ask for a medical certificate"
+      ],
+      "non_equivalent_or_unsafe_examples_for_editor": [
+        "request a prescription",
+        "request a sick note"
+      ],
+      "editorial_note": "Medical certificate vs sick note can have region-specific administrative meaning; do not auto-accept equivalence.",
+      "cefr_conflict_flag": null,
+      "approved_accepted_answers": [],
+      "reviewer_signed_off": false,
+      "gameplay_approved": false
+    }
+  ]
+}
