@@ -1,0 +1,79 @@
+{
+  "batch_id": "LIFE-07",
+  "status": "CAMBRIDGE_COMPONENT_ANCHORS_ONLY",
+  "checked_date": "2026-11-16",
+  "records": [
+    {
+      "expression": "break out in a rash",
+      "anchor": "rash",
+      "uk_ipa": "/ræʃ/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/rash",
+      "anchor_cefr": "C2",
+      "label_scope": "medical_skin_condition_noun",
+      "note": "Cambridge medical rash noun is C2; phrase-wide CEFR remains an editorial estimate (B2). Medical sense must be preserved.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "have a mild fever",
+      "anchor": "fever",
+      "uk_ipa": "/ˈfiː.vər/",
+      "source_url": "https://dictionary.cambridge.org/uk/dictionary/english/fever",
+      "anchor_cefr": "B1",
+      "label_scope": "high_body_temperature_noun",
+      "note": "Cambridge fever noun in illness sense is B1. Neither mild nor the full phrase receives a directly evidenced label.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "show a prescription",
+      "anchor": "prescription",
+      "uk_ipa": "/prɪˈskrɪp.ʃən/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/prescription",
+      "anchor_cefr": "B1",
+      "label_scope": "medical_treatment_document_noun",
+      "note": "Cambridge prescription noun, treatment document sense B1, not an eyeglass prescription. Whole show a prescription phrase has no direct label.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "feel anxious about tomorrow",
+      "anchor": "anxious",
+      "uk_ipa": "/ˈæŋk.ʃəs/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/anxious?topic=anxious-and-worried",
+      "anchor_cefr": "B1",
+      "label_scope": "worried_nervous_adjective",
+      "note": "Cambridge anxious adjective, worried sense B1; the whole phrase is not directly labeled.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "mention a drug allergy",
+      "anchor": "allergy",
+      "uk_ipa": "/ˈæl.ə.dʒi/",
+      "source_url": "https://dictionary.cambridge.org/pronunciation/english/allergy",
+      "anchor_cefr": null,
+      "label_scope": "pronunciation_only",
+      "note": "UK pronunciation of noun allergy verified. No source CEFR grade established from pronunciation-only page.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    },
+    {
+      "expression": "follow the dosage instructions",
+      "anchor": "dosage",
+      "uk_ipa": "/ˈdəʊ.sɪdʒ/",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/dosage?topic=medicine-in-different-forms",
+      "anchor_cefr": null,
+      "label_scope": "medicine_quantity_noun_without_explicit_cefr",
+      "note": "Cambridge medicinal quantity sense and UK IPA verified; no explicit CEFR evidence on selected entry. The complete phrase needs review.",
+      "phrase_ipa_verified": false,
+      "phrase_cefr_verified": false,
+      "editor_approved": false
+    }
+  ]
+}
