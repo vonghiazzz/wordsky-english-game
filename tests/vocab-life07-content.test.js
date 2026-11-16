@@ -110,3 +110,31 @@ test('LIFE-07 offline CLI checks are read-only and do not assert approval',()=>{
   assert.match(result.stdout,/PASS/u,file);
  }
 });
+
+test('LIFE-07 editorial corrections preserve clear Vietnamese cues and medicine examples',()=>{
+ const lookup=new Map(batch.records.map(r=>[r.english,r]));
+ const cue={
+  'break out in a rash':'Bắt đầu nổi phát ban',
+  'have muscle cramps':'Bị chuột rút',
+  'show a prescription':'Xuất trình đơn thuốc',
+  "make a doctor's appointment":'Đặt lịch hẹn với bác sĩ',
+  'take a day to recharge':'Dành một ngày nghỉ ngơi để lấy lại năng lượng',
+  'feel at ease':'Cảm thấy thoải mái, yên tâm'
+ };
+ for(const [expression,meaning] of Object.entries(cue))
+  assert.equal(lookup.get(expression)?.meaning,meaning,expression);
+ assert.equal(lookup.get('show a prescription')?.example,
+  'Please show your prescription when you collect this medicine.');
+ assert.equal(lookup.get('pick up a prescription')?.example,
+  'I need to pick up my prescription from the pharmacy this afternoon.');
+ assert.equal(lookup.get('mention a drug allergy')?.example,
+  'I need to mention a drug allergy before my appointment.');
+ const recharge=lookup.get('take a day to recharge');
+ assert.equal(recharge?.level,'B1');
+ assert.equal(recharge?.cefr_source_label,null);
+ assert.equal(recharge?.cefr_evidence_kind,'contextual_inference');
+ assert.equal(recharge?.source_url,'https://dictionary.cambridge.org/dictionary/english/recharge');
+ assert.equal(recharge?.ipa,'/teɪk ə deɪ tə ˌriːˈtʃɑːdʒ/');
+ assert.match(recharge?.source_note,/C2.*rest\/relax\/regain-energy/u);
+ assert.match(recharge?.source_note,/B1 expression estimate is FLAGGED FOR REVIEW/u);
+});
