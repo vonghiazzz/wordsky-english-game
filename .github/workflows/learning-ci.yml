@@ -82,6 +82,10 @@ jobs:
         run: npm run vocab:plan
         # Pure JSON contract, no database, no CEFR approvals or deployments.
 
+      - name: LIFE-02 inactive topic plan (offline, no database)
+        run: npm run vocab:topic:plan
+        # No topic creation; the optional write tool is never run here.
+
       - name: Run all tests (including isolated PostgreSQL concurrency)
         run: npm test
         env:
@@ -303,3 +307,7 @@ jobs:
             await db.end();
           }
           JS
+
+      - name: LIFE-02 topic registration in isolated rollback-only PostgreSQL
+        run: node scripts/qa-life02-topic-local-e2e.mjs
+        # Enabled=false, idempotent and rolled back; NEVER a remote Preview write.
