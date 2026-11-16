@@ -78,6 +78,10 @@ jobs:
           JS
       - run: npm ci --ignore-scripts
       - run: npm run check
+      - name: LIFE-1000 offline 10x100 roadmap QA
+        run: npm run vocab:plan
+        # Pure JSON contract, no database, no CEFR approvals or deployments.
+
       - name: Run all tests (including isolated PostgreSQL concurrency)
         run: npm test
         env:
