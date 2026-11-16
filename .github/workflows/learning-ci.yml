@@ -246,6 +246,7 @@ jobs:
           node scripts/local-srs-smoke.mjs
           node scripts/local-ui-e2e.mjs
           node scripts/ux26-browser-audio-qa.mjs
+          node scripts/ux44-browser-speech-qa.mjs
           node scripts/ux27-local-integration.mjs
           if ! node scripts/ux28-local-practice-e2e.mjs; then
             echo 'UX28 isolated backend failure diagnostics (last 80 lines):'
