@@ -1,0 +1,1197 @@
+{
+  "batch_id": "LIFE-07",
+  "status": "ANSWER_AMBIGUITY_REVIEW_ONLY",
+  "policy": "Variants are examples to inspect, NOT accepted answers. Do not add to grading or gameplay until independent review.",
+  "records": [
+    {
+      "group_id": "symptoms",
+      "english": "feel light-headed",
+      "meaning": "Choáng váng nhẹ",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a runny nose",
+      "meaning": "Sổ mũi",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a blocked nose",
+      "meaning": "Nghẹt mũi",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "have a stuffy nose",
+        "have a congested nose"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a sore throat",
+      "meaning": "Đau họng",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "my throat hurts"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a dry cough",
+      "meaning": "Ho khan",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "I've got a dry cough"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a chesty cough",
+      "meaning": "Ho có đờm",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "have a productive cough"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "feel feverish",
+      "meaning": "Cảm thấy như đang sốt",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "break out in a rash",
+      "meaning": "Nổi phát ban",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have itchy skin",
+      "meaning": "Ngứa da",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have an upset stomach",
+      "meaning": "Khó chịu ở bụng",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "have a stomach upset",
+        "my stomach feels upset"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "feel nauseous",
+      "meaning": "Buồn nôn",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [
+        "feel sick",
+        "feel queasy"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a stiff neck",
+      "meaning": "Cứng cổ",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "my neck feels stiff"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a swollen ankle",
+      "meaning": "Sưng mắt cá chân",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "my ankle is swollen"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a bruised knee",
+      "meaning": "Bầm đầu gối",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "my knee is bruised"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a toothache",
+      "meaning": "Đau răng",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "my tooth hurts"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a backache",
+      "meaning": "Đau lưng",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "my back hurts"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a migraine",
+      "meaning": "Đau nửa đầu",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [
+        "I've got a migraine"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a mild fever",
+      "meaning": "Sốt nhẹ",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "feel short of breath",
+      "meaning": "Cảm thấy khó thở",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [
+        "have difficulty breathing",
+        "feel breathless"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have watery eyes",
+      "meaning": "Chảy nước mắt",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "my eyes are watering"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "lose your voice",
+      "meaning": "Mất tiếng",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "become hoarse"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "feel exhausted",
+      "meaning": "Kiệt sức",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have muscle cramps",
+      "meaning": "Chuột rút cơ",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "have muscle spasms"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have an earache",
+      "meaning": "Đau tai",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "symptoms",
+      "english": "have a splitting headache",
+      "meaning": "Đau đầu dữ dội",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "ask for a pharmacist",
+      "meaning": "Yêu cầu gặp dược sĩ",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "speak to a pharmacist"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "show a prescription",
+      "meaning": "Đưa đơn thuốc",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "present a prescription"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "pick up a prescription",
+      "meaning": "Nhận thuốc theo đơn",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [
+        "collect a prescription"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "ask about side effects",
+      "meaning": "Hỏi về tác dụng phụ",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [
+        "enquire about side effects"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "check the expiry date",
+      "meaning": "Kiểm tra hạn sử dụng",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "check the expiration date"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "read the package leaflet",
+      "meaning": "Đọc tờ hướng dẫn thuốc",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "read the patient information leaflet"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "follow the dosage instructions",
+      "meaning": "Làm theo hướng dẫn liều dùng",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "take medicine with food",
+      "meaning": "Uống thuốc cùng thức ăn",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "take medicine on an empty stomach",
+      "meaning": "Uống thuốc khi bụng đói",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "ask for a refill",
+      "meaning": "Yêu cầu cấp tiếp thuốc",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "request a repeat prescription"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "describe your symptoms",
+      "meaning": "Mô tả triệu chứng",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "mention a drug allergy",
+      "meaning": "Nói rõ dị ứng thuốc",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "ask for a cheaper alternative",
+      "meaning": "Hỏi lựa chọn rẻ hơn",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "ask about a less expensive option"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "buy a digital thermometer",
+      "meaning": "Mua nhiệt kế điện tử",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "use a cold compress",
+      "meaning": "Chườm lạnh",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "apply a bandage",
+      "meaning": "Quấn băng",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "put on a bandage"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "clean a minor cut",
+      "meaning": "Làm sạch vết đứt nhỏ",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "ask for cough lozenges",
+      "meaning": "Hỏi mua viên ngậm ho",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "ask for a nasal spray",
+      "meaning": "Hỏi mua thuốc xịt mũi",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "check the medicine label",
+      "meaning": "Kiểm tra nhãn thuốc",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "keep medicine out of reach",
+      "meaning": "Để thuốc ngoài tầm với",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "book a health check-up",
+      "meaning": "Đặt lịch khám sức khỏe",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "schedule a health checkup"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "make a doctor's appointment",
+      "meaning": "Đặt lịch bác sĩ",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "book an appointment with a doctor"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "ask when the clinic opens",
+      "meaning": "Hỏi giờ mở cửa phòng khám",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "pharmacy",
+      "english": "request a medical certificate",
+      "meaning": "Yêu cầu giấy chứng nhận y tế",
+      "risk": "HIGH",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential medical sensitivity, sense ambiguity, or important alternative phrasing; bilingual editor must check.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "go for a brisk walk",
+      "meaning": "Đi bộ nhanh",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "warm up before exercise",
+      "meaning": "Khởi động trước khi tập",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "warm up before working out"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "cool down after a workout",
+      "meaning": "Thả lỏng sau buổi tập",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "cool down after exercising"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "stretch your shoulders",
+      "meaning": "Giãn cơ vai",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "take regular screen breaks",
+      "meaning": "Nghỉ định kỳ khi dùng màn hình",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "stay physically active",
+      "meaning": "Duy trì vận động thể chất",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "drink water throughout the day",
+      "meaning": "Uống nước đều trong ngày",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "keep a regular bedtime",
+      "meaning": "Giữ giờ đi ngủ đều đặn",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "get enough sleep",
+      "meaning": "Ngủ đủ giấc",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "get sufficient sleep"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "prepare a balanced meal",
+      "meaning": "Chuẩn bị bữa ăn cân bằng",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "eat more vegetables",
+      "meaning": "Ăn thêm rau",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "cut down on sugary drinks",
+      "meaning": "Giảm đồ uống có đường",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "limit late-night snacking",
+      "meaning": "Hạn chế ăn vặt khuya",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "take the stairs",
+      "meaning": "Đi cầu thang bộ",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "use the stairs"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "track your daily steps",
+      "meaning": "Theo dõi số bước chân hằng ngày",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "take a rest day",
+      "meaning": "Dành một ngày nghỉ tập",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "protect your skin from the sun",
+      "meaning": "Bảo vệ da khỏi ánh nắng",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "wash your hands thoroughly",
+      "meaning": "Rửa tay kỹ",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "keep a water bottle nearby",
+      "meaning": "Để chai nước gần bên",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "practise good posture",
+      "meaning": "Duy trì tư thế tốt",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "maintain good posture"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "avoid sitting for too long",
+      "meaning": "Tránh ngồi quá lâu",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "plan a weekly workout",
+      "meaning": "Lên lịch tập hằng tuần",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "make time for outdoor activities",
+      "meaning": "Dành thời gian hoạt động ngoài trời",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "build a healthy routine",
+      "meaning": "Xây dựng thói quen lành mạnh",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "habits",
+      "english": "listen to your body",
+      "meaning": "Chú ý tín hiệu của cơ thể",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "feel mentally tired",
+      "meaning": "Cảm thấy mệt mỏi về tinh thần",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "feel emotionally drained",
+      "meaning": "Cảm thấy cạn kiệt cảm xúc",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "feel emotionally exhausted"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "feel anxious about tomorrow",
+      "meaning": "Lo lắng về ngày mai",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "feel under pressure",
+      "meaning": "Cảm thấy chịu áp lực",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "be under a lot of pressure"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "be in a good mood",
+      "meaning": "Có tâm trạng tốt",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "feel cheerful"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "feel at ease",
+      "meaning": "Cảm thấy an tâm",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "feel comfortable"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "need some time alone",
+      "meaning": "Cần thời gian ở một mình",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "talk about your feelings",
+      "meaning": "Chia sẻ cảm xúc",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "reach out to a friend",
+      "meaning": "Chủ động liên lạc bạn bè",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "get in touch with a friend"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "ask for emotional support",
+      "meaning": "Đề nghị hỗ trợ tinh thần",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "take a mental break",
+      "meaning": "Nghỉ ngơi cho đầu óc",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "take a break to clear your head"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "practise deep breathing",
+      "meaning": "Thực hành hít thở sâu",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "set healthy boundaries",
+      "meaning": "Thiết lập ranh giới lành mạnh",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "manage everyday stress",
+      "meaning": "Quản lý căng thẳng thường ngày",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "be kind to yourself",
+      "meaning": "Đối xử tử tế với bản thân",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "recognise your emotions",
+      "meaning": "Nhận biết cảm xúc",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "identify your feelings"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "celebrate small wins",
+      "meaning": "Ghi nhận thành công nhỏ",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "feel more confident",
+      "meaning": "Cảm thấy tự tin hơn",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "gain confidence"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "stay calm in difficult moments",
+      "meaning": "Bình tĩnh trong lúc khó khăn",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "make room for hobbies",
+      "meaning": "Dành thời gian cho sở thích",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "take a day to recharge",
+      "meaning": "Dành một ngày hồi sức",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "avoid negative self-talk",
+      "meaning": "Tránh tự nói điều tiêu cực",
+      "risk": "LOW",
+      "proposed_variants_for_review": [],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "No specific alternative identified in this pass; still requires human semantic review.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "feel homesick",
+      "meaning": "Cảm thấy nhớ nhà",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "miss home"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "find peace of mind",
+      "meaning": "Tìm sự an tâm",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "feel at peace"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    },
+    {
+      "group_id": "wellbeing",
+      "english": "maintain a work-life balance",
+      "meaning": "Cân bằng công việc và cuộc sống",
+      "risk": "MEDIUM",
+      "proposed_variants_for_review": [
+        "balance work and personal life"
+      ],
+      "accepted_answers_approved": [],
+      "grading_mode": "NOT_AUTHORIZED",
+      "reason": "Potential equivalent learner responses; contextual semantic review needed.",
+      "review_status": "PENDING_BILINGUAL_REVIEW"
+    }
+  ]
+}
