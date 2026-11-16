@@ -55,11 +55,11 @@ Each real entry needs original learner-facing example text, IPA, meaning, transl
 
 ## Deterministic QA
 
-Run the roadmap check:
+Run the roadmap check (it also **automatically validates every LIFE-NN.json file** already present in the vocab/batches folder):
 
     npm run vocab:plan
 
-When a real set of 100 proposals is authored:
+When a real set of 100 proposals is authored, an explicit single-batch check is also available:
 
     node scripts/qa-vocab-life1000.mjs --file=vocab/batches/LIFE-01.json
 

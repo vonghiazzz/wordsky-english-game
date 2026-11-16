@@ -124,3 +124,18 @@ test('LIFE-1000 roadmap modifications cannot silently add topics or make unsafe 
   assert.throws(()=>validateLife1000Roadmap(p,seed),/LIFE-1000 preflight/);
  }
 });
+
+test('LIFE-1000 CLI validates roadmap without environment credentials',async()=>{
+ const {spawnSync}=await import('node:child_process');
+ const env={PATH:process.env.PATH};
+ const run=spawnSync(process.execPath,['scripts/qa-vocab-life1000.mjs'],
+  {cwd:process.cwd(),env,encoding:'utf8'});
+ assert.equal(run.status,0,run.stderr);
+ assert.match(run.stdout,/LIFE-1000 roadmap QA \(read-only, NO IMPORT\)/);
+ assert.match(run.stdout,/no topic creation, no approval and no deployment/);
+ const denied=spawnSync(process.execPath,
+  ['scripts/qa-vocab-life1000.mjs','--file=../../secrets.json'],
+  {cwd:process.cwd(),env,encoding:'utf8'});
+ assert.notEqual(denied.status,0);
+ assert.match(denied.stderr,/repository-local LIFE-NN JSON/);
+});
