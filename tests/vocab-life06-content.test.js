@@ -114,10 +114,12 @@ test('LIFE-06 cumulative CLI checks every currently saved batch without DB write
  });
  assert.equal(result.status,0,result.stderr);
  const saved=readdirSync(new URL('../vocab/batches/',import.meta.url))
-  .filter(name=>/^LIFE-(0[1-9]|10)\\.json$/u.test(name)).sort();
+  .filter(name=>name.startsWith('LIFE-')&&name.endsWith('.json')).sort();
  assert.ok(saved.length>=6,'LIFE-06 cumulative check requires at least six saved batches');
  for(const file of saved)
-  assert.match(result.stdout,new RegExp('PROVISIONAL CANDIDATES ONLY.*'+file.replace('.','\\\\.')));
- assert.match(result.stdout,new RegExp('PASS: '+saved.length+' saved batch\\(es\\) structurally checked'));
+  assert.ok(result.stdout.includes('PROVISIONAL CANDIDATES ONLY — reviewer signoff still required: '+file),
+   'Missing QA report for '+file);
+ assert.ok(result.stdout.includes('PASS: '+saved.length+' saved batch(es) structurally checked'),
+  'Cumulative CLI must validate all currently saved batches');
  assert.match(result.stdout,/"production_deployment_authorized": false/);
 });
