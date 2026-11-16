@@ -8,6 +8,7 @@ import {
 const $=id=>document.getElementById(id);
 let actorId=null,quiz=[],index=0,correctCount=0,confirmedCount=0;
 let pendingAttempt=null,saving=false,loading=0,selection=null;
+let answerPronunciation=null;
 const MAX_CARDS=10;
 const rowText=(value)=>String(value??'');
 
@@ -74,9 +75,11 @@ async function loadAccount(message=''){
  }
 }
 function renderQuestion(){
+ window.WordSkySpeech?.stop();
  if(index>=quiz.length){showSummary();return;}
  const word=quiz[index];
  pendingAttempt=null;saving=false;
+ answerPronunciation?.sync();
  $('ws28Position').textContent=(index+1)+' / '+quiz.length;
  $('ws28Progress').setAttribute('aria-valuemax',String(quiz.length));
  $('ws28Progress').setAttribute('aria-valuenow',String(index));
@@ -104,6 +107,7 @@ function showFeedback(attempt){
  box.hidden=false;box.dataset.correct=String(attempt.correct);
  $('ws28Verdict').textContent=attempt.correct?'✓ Chính xác!':'↻ Chưa chính xác · tiếp tục luyện nhé';
  $('ws28CorrectWord').textContent='Đáp án: '+word.english+(word.ipa?' · '+word.ipa:'');
+ answerPronunciation?.sync();
  $('ws28Example').textContent=word.example?'Ví dụ: '+word.example:'';
 }
 async function saveAttempt(){
@@ -169,6 +173,7 @@ function submit(typed,skipped=false){
  saveAttempt();
 }
 function showSummary(partial=false){
+ window.WordSkySpeech?.stop();
  view('Done');
  $('ws28CorrectCount').textContent=String(correctCount);
  $('ws28DoneTotal').textContent=String(confirmedCount);
@@ -192,6 +197,7 @@ async function validateIdentity(){
  }
 }
 function boot(){
+ answerPronunciation=window.WordSkySpeech?.bindButton($('ws28HearAnswer'),()=>pendingAttempt?.word?.english||'');
  $('ws28AnswerForm').addEventListener('submit',event=>{
   event.preventDefault();submit($('ws28Answer').value);
  });
