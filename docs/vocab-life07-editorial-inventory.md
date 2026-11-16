@@ -22,7 +22,7 @@ The British Council [Health B1 lesson](https://learnenglish.britishcouncil.org/f
 | 5 | have a dry cough | Ho khan |
 | 6 | have a chesty cough | Ho có đờm |
 | 7 | feel feverish | Cảm thấy như đang sốt |
-| 8 | break out in a rash | Nổi phát ban |
+| 8 | break out in a rash | Bắt đầu nổi phát ban |
 | 9 | have itchy skin | Ngứa da |
 | 10 | have an upset stomach | Khó chịu ở bụng |
 | 11 | feel nauseous | Buồn nôn |
@@ -37,7 +37,7 @@ The British Council [Health B1 lesson](https://learnenglish.britishcouncil.org/f
 | 20 | have watery eyes | Chảy nước mắt |
 | 21 | lose your voice | Mất tiếng |
 | 22 | feel exhausted | Kiệt sức |
-| 23 | have muscle cramps | Chuột rút cơ |
+| 23 | have muscle cramps | Bị chuột rút |
 | 24 | have an earache | Đau tai |
 | 25 | have a splitting headache | Đau đầu dữ dội |
 
@@ -46,7 +46,7 @@ The British Council [Health B1 lesson](https://learnenglish.britishcouncil.org/f
 | # | English candidate | Vietnamese teaching cue |
 |---:|---|---|
 | 1 | ask for a pharmacist | Yêu cầu gặp dược sĩ |
-| 2 | show a prescription | Đưa đơn thuốc |
+| 2 | show a prescription | Xuất trình đơn thuốc |
 | 3 | pick up a prescription | Nhận thuốc theo đơn |
 | 4 | ask about side effects | Hỏi về tác dụng phụ |
 | 5 | check the expiry date | Kiểm tra hạn sử dụng |
@@ -67,7 +67,7 @@ The British Council [Health B1 lesson](https://learnenglish.britishcouncil.org/f
 | 20 | check the medicine label | Kiểm tra nhãn thuốc |
 | 21 | keep medicine out of reach | Để thuốc ngoài tầm với |
 | 22 | book a health check-up | Đặt lịch khám sức khỏe |
-| 23 | make a doctor's appointment | Đặt lịch bác sĩ |
+| 23 | make a doctor's appointment | Đặt lịch hẹn với bác sĩ |
 | 24 | ask when the clinic opens | Hỏi giờ mở cửa phòng khám |
 | 25 | request a medical certificate | Yêu cầu giấy chứng nhận y tế |
 
@@ -110,7 +110,7 @@ The British Council [Health B1 lesson](https://learnenglish.britishcouncil.org/f
 | 3 | feel anxious about tomorrow | Lo lắng về ngày mai |
 | 4 | feel under pressure | Cảm thấy chịu áp lực |
 | 5 | be in a good mood | Có tâm trạng tốt |
-| 6 | feel at ease | Cảm thấy an tâm |
+| 6 | feel at ease | Cảm thấy thoải mái, yên tâm |
 | 7 | need some time alone | Cần thời gian ở một mình |
 | 8 | talk about your feelings | Chia sẻ cảm xúc |
 | 9 | reach out to a friend | Chủ động liên lạc bạn bè |
@@ -125,7 +125,7 @@ The British Council [Health B1 lesson](https://learnenglish.britishcouncil.org/f
 | 18 | feel more confident | Cảm thấy tự tin hơn |
 | 19 | stay calm in difficult moments | Bình tĩnh trong lúc khó khăn |
 | 20 | make room for hobbies | Dành thời gian cho sở thích |
-| 21 | take a day to recharge | Dành một ngày hồi sức |
+| 21 | take a day to recharge | Dành một ngày nghỉ ngơi để lấy lại năng lượng |
 | 22 | avoid negative self-talk | Tránh tự nói điều tiêu cực |
 | 23 | feel homesick | Cảm thấy nhớ nhà |
 | 24 | find peace of mind | Tìm sự an tâm |
