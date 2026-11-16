@@ -51,7 +51,7 @@ A future file `vocab/batches/LIFE-01.json` must have `batch_id:"LIFE-01"`, `stat
       "source_note": "SYNTHETIC ONLY: not evidence that this expression has the claimed CEFR level."
     }
 
-Each real entry needs original learner-facing example text, IPA, meaning, translation, part of speech, source and an evidence note explaining the **specific sense**. Allowed evidence types are `exact_sense_label`, `collocation_in_labeled_sense` and `contextual_inference`. Inferred words must set `cefr_source_label=null`. All candidates remain `PROVISIONAL`; no client-provided reviewer/approval metadata. A syntactically valid source URL does not prove its claim: human checking is required.
+Each real entry needs original learner-facing example text, IPA, meaning, translation, part of speech, source and an evidence note explaining the **specific sense**. Allowed evidence types are `exact_sense_label` (explicit Cambridge sense), `headword_pos_label` (Oxford 3000 word/POS level, not a per-sense guarantee), `collocation_in_labeled_sense`, and `contextual_inference`. Inferred words must set `cefr_source_label=null`. All candidates remain `PROVISIONAL`; no client-provided reviewer/approval metadata. A syntactically valid source URL does not prove its claim: human checking is required.
 
 ## Deterministic QA
 
