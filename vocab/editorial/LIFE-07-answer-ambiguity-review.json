@@ -92,7 +92,7 @@
     {
       "group_id": "symptoms",
       "english": "break out in a rash",
-      "meaning": "Nổi phát ban",
+      "meaning": "Bắt đầu nổi phát ban",
       "risk": "HIGH",
       "proposed_variants_for_review": [],
       "accepted_answers_approved": [],
@@ -282,7 +282,7 @@
     {
       "group_id": "symptoms",
       "english": "have muscle cramps",
-      "meaning": "Chuột rút cơ",
+      "meaning": "Bị chuột rút",
       "risk": "MEDIUM",
       "proposed_variants_for_review": [
         "have muscle spasms"
@@ -330,7 +330,7 @@
     {
       "group_id": "pharmacy",
       "english": "show a prescription",
-      "meaning": "Đưa đơn thuốc",
+      "meaning": "Xuất trình đơn thuốc",
       "risk": "MEDIUM",
       "proposed_variants_for_review": [
         "present a prescription"
@@ -579,7 +579,7 @@
     {
       "group_id": "pharmacy",
       "english": "make a doctor's appointment",
-      "meaning": "Đặt lịch bác sĩ",
+      "meaning": "Đặt lịch hẹn với bác sĩ",
       "risk": "MEDIUM",
       "proposed_variants_for_review": [
         "book an appointment with a doctor"
@@ -960,7 +960,7 @@
     {
       "group_id": "wellbeing",
       "english": "feel at ease",
-      "meaning": "Cảm thấy an tâm",
+      "meaning": "Cảm thấy thoải mái, yên tâm",
       "risk": "MEDIUM",
       "proposed_variants_for_review": [
         "feel comfortable"
@@ -1135,7 +1135,7 @@
     {
       "group_id": "wellbeing",
       "english": "take a day to recharge",
-      "meaning": "Dành một ngày hồi sức",
+      "meaning": "Dành một ngày nghỉ ngơi để lấy lại năng lượng",
       "risk": "LOW",
       "proposed_variants_for_review": [],
       "accepted_answers_approved": [],
