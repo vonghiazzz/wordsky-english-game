@@ -192,7 +192,8 @@ jobs:
             'db/migrations/20261027_ux24b_shadow_srs_schedules.sql',
             'db/migrations/20261029_ux30_admin_users_password_reset.sql',
             'db/migrations/20261031_ux43c_typed_recall_pilot.sql',
-            'db/migrations/20261117_social_learning_only.sql'
+            'db/migrations/20261117_social_learning_only.sql',
+            'db/migrations/20261117_ux51_verb_practice_runs.sql'
           ];
 
           await db.connect();
