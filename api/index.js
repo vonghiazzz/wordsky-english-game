@@ -138,10 +138,10 @@ async function checkin(req){
 async function fetchTopics(includeWords=false){
  if(!includeWords){
   const r=await sql(`SELECT t.id,t.title,t.enabled,
-   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true)::int AS word_count,
-   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('A1','A2'))::int AS approved_a2,
-   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('B1','B2'))::int AS approved_bonus,
-   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('C1','C2'))::int AS approved_double
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false)::int AS word_count,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('A1','A2'))::int AS approved_a2,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('B1','B2'))::int AS approved_bonus,
+   count(DISTINCT lower(w.english)) FILTER (WHERE w.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false AND w.cefr_review_status='APPROVED' AND w.cefr_level IN ('C1','C2'))::int AS approved_double
    FROM ws_topics t LEFT JOIN ws_words w ON w.topic_id=t.id
    WHERE t.enabled=true GROUP BY t.id,t.title,t.enabled ORDER BY t.title`);
   return r.rows;
@@ -167,7 +167,7 @@ async function approvedCarWordCounts(db,round){
    count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level IN ('B1','B2'))::int AS bonus,
    count(DISTINCT lower(w.english)) FILTER (WHERE w.cefr_level IN ('C1','C2'))::int AS double
   FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
-  WHERE w.enabled=true AND t.enabled=true AND w.cefr_review_status='APPROVED'
+  WHERE w.enabled=true AND t.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false AND w.cefr_review_status='APPROVED'
     AND ($1::uuid IS NULL OR w.topic_id=$1)`,[round.topic_id||null]);
  const row=q.rows[0]||{};
  return {A2:Number(row.a2||0),BONUS:Number(row.bonus||0),DOUBLE:Number(row.double||0)};
@@ -183,7 +183,7 @@ async function selectApprovedCarWords(db,round){
   FROM (
    SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level
    FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
-   WHERE w.enabled=true AND t.enabled=true AND w.cefr_review_status='APPROVED'
+   WHERE w.enabled=true AND t.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false AND w.cefr_review_status='APPROVED'
     AND w.cefr_level IN ('A1','A2','B1','B2','C1','C2')
     AND ($1::uuid IS NULL OR w.topic_id=$1)
    ORDER BY lower(w.english),w.id
@@ -202,7 +202,7 @@ async function selectMatchWords(db,round){
  const data=await db.query(`SELECT id,english,meaning FROM (
    SELECT DISTINCT ON (lower(w.english)) w.id,w.english,w.meaning,w.cefr_level,w.cefr_review_status
    FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id
-   WHERE w.enabled=true AND t.enabled=true
+   WHERE w.enabled=true AND t.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false
      AND ($1::uuid IS NULL OR w.topic_id=$1)
    ORDER BY lower(w.english),
      CASE WHEN w.cefr_review_status='APPROVED' THEN 0 ELSE 1 END,w.id
@@ -231,7 +231,7 @@ async function selectMatrixWords(db,round){
     'SELECT unique_en.*,row_number() OVER (PARTITION BY lower(btrim(unique_en.meaning)) ORDER BY random()) AS vi_rank FROM ('+
      'SELECT DISTINCT ON (lower(btrim(w.english))) w.id,w.english,w.meaning,w.cefr_level,w.cefr_review_status '+
      'FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
-     "WHERE w.enabled=true AND t.enabled=true AND btrim(w.english)<>'' AND btrim(w.meaning)<>'' "+
+     "WHERE w.enabled=true AND t.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false AND btrim(w.english)<>'' AND btrim(w.meaning)<>'' "+
      'AND ($2::uuid IS NULL OR w.topic_id=$2) '+
      "ORDER BY lower(btrim(w.english)),CASE WHEN w.cefr_review_status='APPROVED' THEN 0 ELSE 1 END,w.id"+
     ') unique_en'+
@@ -262,7 +262,7 @@ async function ensureVocabulary(db,rounds){
   const needed=requiredWords(round);
   if(!needed)continue;
   const count=await db.query(`SELECT count(DISTINCT lower(w.english))::int AS n FROM ws_words w
-    JOIN ws_topics t ON t.id=w.topic_id WHERE w.enabled=true AND t.enabled=true
+    JOIN ws_topics t ON t.id=w.topic_id WHERE w.enabled=true AND t.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false
     AND ($1::uuid IS NULL OR w.topic_id=$1)`,[round.topic_id||null]);
    const available=Number(count.rows[0]?.n||0);
    if(available<needed)throw fail(`Cần ${needed} từ cho ${round.mode} ${round.difficulty}; hiện có ${available} từ (thiếu ${needed-available} từ).`,400);
