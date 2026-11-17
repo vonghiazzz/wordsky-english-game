@@ -18,7 +18,7 @@ Scope: https://wordsky-english-game.vercel.app; isolated guest browser and GET-o
 
 Run: node scripts/ux45-production-readonly-qa.mjs
 
-The isolated CI job ux45-production-readonly is scoped only to PR branch qa/ux45-production-readonly-smoke. It uses Node 24, Playwright Chromium+Firefox and an anonymous, cookie-free browser. Browser requests to non-Production origins or with methods other than GET, HEAD, OPTIONS are blocked before sending. No database credentials or Production Vercel secrets are supplied.
+The guarded UX45 step runs inside the existing Node 24 browser-srs-e2e job only on PR branch qa/ux45-production-readonly-smoke. The job's other tests use isolated localhost PostgreSQL; the UX45 step itself uses anonymous cookie-free Chromium+Firefox browsers against Production. Browser requests to non-Production origins or with methods other than GET, HEAD, OPTIONS are blocked before sending. No Production database credentials, Production account cookies or Vercel deployment secrets are supplied.
 
 Checks: 14 public assets; health/topics/vocabulary; guest access boundaries; Flashcard speech in a mocked UK voice with cancel and mobile layout; My Learning guest speaker; Personal guest gate; SRS practice pre-answer secrecy; zero uncaught page errors and zero attempted write methods.
 
