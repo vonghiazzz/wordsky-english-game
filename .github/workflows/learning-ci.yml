@@ -222,6 +222,10 @@ jobs:
         run: node scripts/qa-social105b-import-local-db.mjs
         # Fixture-only, rollback-only; no production or real editorial status changes.
 
+      - name: UX51 rollback-only account verb history acceptance
+        run: node scripts/ux51-rollback-qa.mjs
+        # Local PostgreSQL only; no persistent QA account or SRS changes.
+
       - name: UX43A evaluate SRS v1 on isolated rollback-only QA history
         run: |
           set -euo pipefail
