@@ -77,13 +77,13 @@
       "ipa_quality": "PENDING"
     },
     {
-      "english": "Have we met somewhere before",
-      "meaning": "Chúng ta từng gặp nhau ở đâu chưa",
+      "english": "Did we cross paths at the conference",
+      "meaning": "Chúng ta có tình cờ gặp nhau ở hội nghị không",
       "topic": "Everyday Conversation - Giao tiếp hằng ngày",
       "group_id": "social-introductions-and-smalltalk",
       "ipa": "",
-      "example": "Have we met somewhere before?",
-      "translation": "Chúng ta từng gặp nhau ở đâu chưa?",
+      "example": "Did we cross paths at the conference?",
+      "translation": "Chúng ta có tình cờ gặp nhau ở hội nghị không?",
       "part_of_speech": "conversational utterance",
       "level": "A2",
       "review_status": "PROVISIONAL",
