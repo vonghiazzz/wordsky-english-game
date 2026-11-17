@@ -30,7 +30,7 @@ test('UX51 reject arbitrary verb, duplicate target, oversized, invalid request a
  ]) assert.throws(()=>evaluateVerbAttempt(candidate));
  assert.equal(evaluateVerbAttempt({request_id:id,mode:'retry',answers:[{v1:'go',target:'v2',given:'went'}]}).correct,1);
 });
-test('UX51 API pins authenticated actor and does not access SRS tables',()=>{
+test('UX51 API pins authenticated actor and does not access SRS tables',async()=>{
  const fs=await import('node:fs');
  const api=fs.readFileSync(new URL('../api/index.js',import.meta.url),'utf8');
  const service=fs.readFileSync(new URL('../lib/verb-practice-history.js',import.meta.url),'utf8');
