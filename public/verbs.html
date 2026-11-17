@@ -40,8 +40,26 @@
    </table>
   </div>
   <p id="ws47Empty" class="ws47-empty" hidden>Không tìm thấy động từ phù hợp. Bạn có thể thử dạng nguyên mẫu hoặc dạng quá khứ khác.</p>
-  <div class="ws47-bottom"><span id="ws47Showing"></span><button type="button" id="ws47More" hidden>Xem thêm động từ</button></div>
+  <nav class="ws48-pagination" aria-label="Phân trang động từ"><button type="button" id="ws48Prev">← Trước</button><span id="ws47Showing" role="status"></span><button type="button" id="ws48Next">Sau →</button></nav>
   <p class="ws47-note">Đây là bảng tra cứu độc lập, không làm thay đổi lịch SRS hoặc số lượng thẻ My Learning. Các động từ chưa có trong danh sách biên soạn sẽ không được tự chia theo dự đoán. Một số cách viết Anh–Anh/Anh–Mỹ có thể khác nhau.</p>
+ </section>
+ <section class="ws48-practice" id="ws48Practice" aria-labelledby="ws48PracticeTitle">
+  <div class="ws48-practice-heading">
+   <div><span class="ws47-eyebrow">LUYỆN TẬP V1 · V2 · V3</span><h2 id="ws48PracticeTitle">Điền dạng động từ đúng</h2><p>10 câu mỗi lượt, điền V2 hoặc V3 dựa trên V1 và nghĩa. Không ảnh hưởng lịch ôn SRS.</p></div>
+   <label>Nhóm câu hỏi<select id="ws48Kind"><option value="all">Tất cả động từ</option><option value="irregular">Bất quy tắc</option><option value="regular">Có quy tắc</option></select></label>
+  </div>
+  <div class="ws48-practice-actions"><button type="button" id="ws48Start">Bắt đầu 10 câu</button></div>
+  <div id="ws48Quiz" class="ws48-quiz" hidden>
+   <div class="ws48-quiz-head"><span id="ws48Progress" role="status"></span><strong id="ws48Score"></strong></div>
+   <p class="ws48-question" id="ws48Question"></p>
+   <p class="ws48-meaning" id="ws48Meaning"></p>
+   <form id="ws48Form" autocomplete="off">
+    <label for="ws48Answer">Nhập dạng động từ</label>
+    <div class="ws48-input-row"><input id="ws48Answer" type="text" autocapitalize="off" spellcheck="false" maxlength="80" required><button type="submit" id="ws48Submit">Kiểm tra</button></div>
+   </form>
+   <p id="ws48Feedback" role="status" aria-live="polite"></p>
+   <button type="button" id="ws48NextQuestion" hidden>Câu tiếp theo →</button>
+  </div>
  </section>
 </main>
 </body>
