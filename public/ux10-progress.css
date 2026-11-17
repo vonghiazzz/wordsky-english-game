@@ -63,3 +63,11 @@
 .ws46-verb-cell strong{font-size:clamp(12px,2.5vw,15px);overflow-wrap:anywhere}
 .ws46-verb-caption{display:block;margin-top:8px;opacity:.8}
 @media(max-width:420px){.ws46-verb-forms{padding:7px}.ws46-verb-grid{gap:4px}.ws46-verb-cell{padding:6px 4px}}
+
+
+/* UX47 dedicated verb table entry, independent from saved learning progress. */
+.ws47-launch{margin:0 0 22px;border:1px solid #536f85;border-radius:17px;background:linear-gradient(105deg,#1b3a4b,#24264b);padding:22px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.ws47-launch h2{margin:7px 0 4px;font-size:22px}
+.ws47-launch p{font-size:13px;color:#c7d6e7;line-height:1.6;margin:0;max-width:700px}
+.ws47-launch .ws10-button{flex-shrink:0}
+@media(max-width:700px){.ws47-launch{padding:17px;flex-direction:column;align-items:stretch}.ws47-launch .ws10-button{width:100%}}
