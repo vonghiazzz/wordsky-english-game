@@ -27,12 +27,16 @@ export function auditLife01Candidate({batch,catalog,topics}={}){
  const activeTopics=requireCatalog(catalog,topics);
  if(!batch||batch.batch_id!=='LIFE-01'||batch.status!=='DRAFT'||!Array.isArray(batch.records)||batch.records.length!==100)
   throw Error('LIFE-01 must contain exactly 100 DRAFT candidate records');
- const oldEnglish=new Set(),oldMeaning=new Set(),newEnglish=new Set(),newMeaning=new Set();
+ const oldEnglish=new Map(),oldMeaning=new Map(),newEnglish=new Set(),newMeaning=new Set();
  for(const word of catalog.words){
   if(!word||typeof word.english!=='string'||typeof word.meaning!=='string')throw Error('Malformed Production word');
-  oldEnglish.add(normalize(word.english));
-  oldMeaning.add(normalize(word.meaning));
+  const en=normalize(word.english),vi=normalize(word.meaning);
+  if(!oldEnglish.has(en))oldEnglish.set(en,[]);
+  if(!oldMeaning.has(vi))oldMeaning.set(vi,[]);
+  oldEnglish.get(en).push(word);
+  oldMeaning.get(vi).push(word);
  }
+ let presentCount=0;
  const collisions=[],problems=[],perTopic={},evidence={};
  for(const [i,w] of batch.records.entries()){
   const idx=i+1;
@@ -47,8 +51,16 @@ export function auditLife01Candidate({batch,catalog,topics}={}){
   if(typeof w.source_url!=='string'||!w.source_url.startsWith('https://'))
    problems.push({index:idx,issue:'missing_public_source_reference'});
   const en=normalize(w.english),vi=normalize(w.meaning);
-  if(oldEnglish.has(en))collisions.push({index:idx,type:'live_english',word:w.english});
-  if(oldMeaning.has(vi))collisions.push({index:idx,type:'live_vietnamese_cue',word:w.english});
+  const existing=oldEnglish.get(en)||[];
+  const isSame=existing.some(o=>['topic','english','meaning','ipa','example','translation']
+    .every(key=>normalize(o[key])===normalize(w[key])));
+  if(isSame)presentCount++;
+  // Replaying the exact same published record is not a new-word collision.
+  // A conflicting English term or Vietnamese cue remains a hard blocker.
+  if(existing.some(o=>!isSame||['topic','meaning'].some(k=>normalize(o[k])!==normalize(w[k]))))
+    collisions.push({index:idx,type:'live_english',word:w.english});
+  if((oldMeaning.get(vi)||[]).some(o=>normalize(o.english)!==en))
+    collisions.push({index:idx,type:'live_vietnamese_cue',word:w.english});
   if(newEnglish.has(en))collisions.push({index:idx,type:'in_batch_english',word:w.english});
   if(newMeaning.has(vi))collisions.push({index:idx,type:'in_batch_vietnamese_cue',word:w.english});
   newEnglish.add(en);newMeaning.add(vi);
@@ -58,13 +70,14 @@ export function auditLife01Candidate({batch,catalog,topics}={}){
  return Object.freeze({
   batch_id:'LIFE-01',candidate_status:'DRAFT',candidate_count:batch.records.length,
   live_word_count:catalog.words.length,
-  potential_new_words:batch.records.length,
-  potential_total_if_every_record_is_approved_and_published:catalog.words.length+batch.records.length,
+  already_present_count:presentCount,
+  potential_new_words:batch.records.length-presentCount,
+  potential_total_if_every_record_is_approved_and_published:catalog.words.length+batch.records.length-presentCount,
   per_topic:perTopic,source_evidence:evidence,collisions,problems,
   independent_human_review_complete:false,
   approved_records:0,
   can_publish_to_production:false,
-  explanation:'Zero collisions does not authorize inserting 100 PROVISIONAL DRAFT items. An independent bilingual review, approved import manifest, isolated database acceptance and verified backup are still required.',
+  explanation:'This is a read-only catalog reconciliation, not an approval or insert command. Same-word published records count as already present, while all original draft CEFR claims remain PROVISIONAL and require independent review.',
   source_of_truth:'Read-only live public API and repo vocab/batches/LIFE-01.json',
   mutations:0
  });
