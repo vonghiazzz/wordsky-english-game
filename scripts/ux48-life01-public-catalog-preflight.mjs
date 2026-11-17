@@ -77,7 +77,7 @@ export function auditLife01Candidate({batch,catalog,topics}={}){
   independent_human_review_complete:false,
   approved_records:0,
   can_publish_to_production:false,
-  explanation:'This is a read-only catalog reconciliation, not an approval or insert command. Same-word published records count as already present, while all original draft CEFR claims remain PROVISIONAL and require independent review.',
+  explanation:'This is a read-only catalog reconciliation, not an approval or insert command. Same-word published records count as already present, while all original draft CEFR claims remain PROVISIONAL and require independent bilingual review.',
   source_of_truth:'Read-only live public API and repo vocab/batches/LIFE-01.json',
   mutations:0
  });
