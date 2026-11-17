@@ -958,13 +958,13 @@
       "ipa_quality": "PENDING"
     },
     {
-      "english": "I should check the expiry date",
-      "meaning": "Tôi nên xem ngày hết hạn",
+      "english": "These labels are hard to read",
+      "meaning": "Những nhãn này khó đọc quá",
       "topic": "Home - Nhà cửa",
       "group_id": "home-neighborhood-household",
       "ipa": "",
-      "example": "I should check the expiry date.",
-      "translation": "Tôi nên xem ngày hết hạn.",
+      "example": "These labels are hard to read.",
+      "translation": "Những nhãn này khó đọc quá.",
       "part_of_speech": "conversational utterance",
       "level": "B1",
       "review_status": "PROVISIONAL",
