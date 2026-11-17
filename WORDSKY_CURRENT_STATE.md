@@ -24,6 +24,18 @@ User-authorized additive SQL has now been executed against WordSky Production, w
 
 **Next action:** curate LIFE-08..10 candidates and the remaining distinct vocabulary, verify academic sense/CEFR/IPA evidence, run isolated QA, and only then add any further Production content. Do not redo My Learning or assume the earlier 365 baseline is current.
 
+## SOCIAL-1000 editorial expansion — 2026-11-17
+
+- **PR #101 DRAFT**: https://github.com/vonghiazzz/wordsky-english-game/pull/101
+- Source: `vocab/social-life-batches/SOCIAL-01.json` .. `SOCIAL-10.json` in branch `feature/social-life-1000-editorial-20261117`.
+- **1,000 original speaking utterance cards**, 10 existing social/daily-life topics x 100. Includes Vietnamese cues and standalone example utterances.
+- **0 normalized literal English/cue collisions against 1,099 existing Production words** after 7 exact-collision corrections; 5 more near-duplicate expressions replaced.
+- **742 estimated A2 / 258 estimated B1 — all PROVISIONAL**. No independently approved CEFR sense, no verified IPA (`ipa=""`), no reviewer attestation. Bilingual/CEFR/IPA work queue `vocab/editorial/SOCIAL-1000-review-queue.csv`.
+- Editorial/QA details: `docs/social-life1000-editorial-status.md`; automated checks in `tests/social-life1000-content.test.js`.
+- **Production unchanged at 1,099**. Do NOT equate DRAFT PR with approved/published My Learning content. Publishing all 1,000 without guarding 5–8-word utterances from BOMB/MATCH and validating IPA/CEFR could degrade gameplay.
+- Target if all later reviewed/published: **2,099 shared items**, but **not current live count**.
+- **Next after PR #101:** human bilingual/CEFR/IPA review in 100-record gates, isolated DB import QA, learning-only phrase distribution or game exclusion rules, then carefully release each batch and verify live.
+
 ## 1. Cách đọc trạng thái — không làm lại tính năng đã có
 
 - **CODED**: đã có implementation trong main; không tự đồng nghĩa Production đang bật.
