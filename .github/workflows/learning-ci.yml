@@ -300,6 +300,7 @@ jobs:
             exit 1
           fi
           node scripts/ux39-mobile-nav-e2e.mjs
+          node scripts/ux47-local-verbs-e2e.mjs
 
       - name: Verify temporary QA account cleanup
         run: |
