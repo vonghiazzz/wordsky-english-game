@@ -85,6 +85,15 @@ async function browserQA(name,engine,width){
     document.querySelector('#flashSpeak:not([disabled])')&&
     document.querySelector('#word')?.textContent?.trim(),
     null,{timeout:TIMEOUT});
+   // The page initially displays a local sample card. Wait for the async
+   // shared catalog to finish replacing it before testing playback state.
+   // Otherwise its legitimate MutationObserver stops audio mid-assertion.
+   await page.waitForFunction(() => {
+    const status=document.getElementById('flashVocabularyStatus')?.textContent||'';
+    return status.startsWith('Đã cập nhật ') &&
+     document.getElementById('flashSource')?.value==='server' &&
+     document.getElementById('refreshVocabulary')?.disabled===false;
+   },null,{timeout:TIMEOUT});
    const first=await page.locator('#word').textContent();
    assert.ok(first?.trim(),name+' has a vocabulary term');
    const speak=page.locator('#flashSpeak');
