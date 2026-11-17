@@ -48,13 +48,15 @@ for(const [label,engine] of tests){
    for(let number=1;number<=10;number++){
     assert.match(await page.locator('#ws48Progress').innerText(),new RegExp('Câu '+number+' / 10'));
     const input=await page.locator('#ws48Question').innerText();
-    const m=input.match(/^V1: (\\w+) → (V2|V3) là gì\\?$/);
+    const m=input.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\\?$/);
     assert.ok(m,'Unexpected prompt '+input);
-    const form=await page.evaluate(async ({word})=>{
-     const {lookupVerbForms}=await import('/verb-forms.js');
-     return lookupVerbForms(word);
-    },{word:m[1]});
-    const answer=(m[2]==='V2'?form.v2:form.v3).split(' / ')[0];
+    const answer=await page.evaluate(async ({source,clue,target})=>{
+     const {listVerbEntries}=await import('/verb-dictionary.js');
+     const rows=listVerbEntries();
+     const matches=rows.filter(v=>v['v'+source]===clue);
+     if(matches.length!==1)throw Error('Ambiguous or missing clue: '+clue);
+     return matches[0][target.toLowerCase()].split(' / ')[0];
+    },{source:m[1],clue:m[2],target:m[3]});
     await page.locator('#ws48Answer').fill(answer);
     await page.locator('#ws48Submit').click();
     assert.match(await page.locator('#ws48Feedback').innerText(),/Chính xác/);
