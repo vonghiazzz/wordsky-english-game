@@ -95,6 +95,9 @@ jobs:
         env:
           UX23C_TEST_DATABASE_URL: postgres://wordsky:wordsky_ci_only@127.0.0.1:5432/wordsky_test
 
+      - name: SOCIAL-105 candidate importer dry-run (no DB connection)
+        run: node scripts/import-social1000.mjs --batch=SOCIAL-01
+
       - name: UX43B verify opt-in typed recall contract without DB or SRS writes
         run: |
           set -euo pipefail
@@ -213,6 +216,10 @@ jobs:
       - name: SOCIAL-104 learning-only isolation and rollback acceptance
         run: node scripts/qa-social104-local-db.mjs
         # Isolated 127.0.0.1:5547 only; transaction rolls back and verifies cleanup.
+
+      - name: SOCIAL-105B import 100 synthetic cards and rollback isolated DB
+        run: node scripts/qa-social105b-import-local-db.mjs
+        # Fixture-only, rollback-only; no production or real editorial status changes.
 
       - name: UX43A evaluate SRS v1 on isolated rollback-only QA history
         run: |
