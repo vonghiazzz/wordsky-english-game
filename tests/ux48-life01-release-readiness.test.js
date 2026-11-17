@@ -65,3 +65,33 @@ test('LIFE-01 rejects incomplete datasets rather than assuming a clean catalog',
  assert.throws(()=>auditLife01Candidate({batch,catalog:{scope:'catalog',words:[]},topics}),/missing or malformed/);
  assert.throws(()=>auditLife01Candidate({batch,catalog,topics:{topics:[]}}),/missing or malformed/);
 });
+
+
+test('LIFE-01 read-only audit is idempotent after publishing the exact 100 source records',()=>{
+ const alreadyPublished={
+  scope:'catalog',
+  words:batch.records.map((r,i)=>({
+   word_id:'qa-'+(i+1),
+   topic:r.topic,english:r.english,meaning:r.meaning,ipa:r.ipa,
+   example:r.example,translation:r.translation
+  }))
+ };
+ const r=auditLife01Candidate({batch,catalog:alreadyPublished,topics});
+ assert.equal(r.already_present_count,100);
+ assert.equal(r.potential_new_words,0);
+ assert.equal(r.live_word_count,100);
+ assert.equal(r.potential_total_if_every_record_is_approved_and_published,100);
+ assert.deepEqual(r.collisions,[]);
+ assert.deepEqual(r.problems,[]);
+ assert.equal(r.can_publish_to_production,false);
+});
+
+test('LIFE-01 flags a conflicting same-English published record even when one matching copy exists',()=>{
+ const published=batch.records[0];
+ const existing={word_id:'qa-1',topic:published.topic,english:published.english,
+  meaning:published.meaning,ipa:published.ipa,example:published.example,translation:published.translation};
+ const conflict={...existing,word_id:'qa-2',topic:'Home - Nhà cửa',meaning:'Một nghĩa khác'};
+ const r=auditLife01Candidate({batch,catalog:{scope:'catalog',words:[existing,conflict]},topics});
+ assert.equal(r.already_present_count,1);
+ assert.ok(r.collisions.some(x=>x.type==='live_english'&&x.word===published.english));
+});
