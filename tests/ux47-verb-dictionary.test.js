@@ -35,7 +35,8 @@ test('UX47 phrases do not pollute dictionary and account progress stays independ
  const page=read('public/verbs.html'),progress=read('public/progress.html');
  assert.match(page,/id="ws47Search"/);
  assert.match(page,/id="ws47Rows"/);
- assert.match(page,/Cách dùng/);
+ assert.doesNotMatch(page,/<th scope="col">Cách dùng<\/th>/);
+ assert.doesNotMatch(page,/class="ws47-usage"/);
  assert.match(progress,/href="\/verbs\.html"/);
  const app=read('public/verbs.js');
  assert.doesNotMatch(app,/fetch\(|localStorage|sessionStorage/);
