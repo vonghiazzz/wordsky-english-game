@@ -128,6 +128,8 @@ async function loadVerbHistory(){
   $('ws51Stats').hidden=false;
   $('ws51Status').textContent='Đã đồng bộ lịch sử theo tài khoản.';
   $('ws51Totals').textContent=(history.summary.runs||0)+' lượt · '+(history.summary.correct||0)+'/'+(history.summary.questions||0)+' câu đúng';
+  const weak=Array.isArray(history.weak_forms)?history.weak_forms:[];
+  $('ws51Weak').textContent=weak.length?'Hay sai: '+weak.map(row=>row.v1+' ('+row.form.toUpperCase()+') '+row.mistakes+' lần').join(' · '):'Chưa có dạng động từ sai trong lịch sử.';
   const list=$('ws51Recent');list.replaceChildren();
   for(const run of history.recent.slice(0,5)){
    const item=text('li',(run.mode==='retry'?'Luyện lại':'Bài mới')+' · '+run.correct+'/'+run.total+' · '+new Date(run.completed_at).toLocaleString('vi-VN'));
