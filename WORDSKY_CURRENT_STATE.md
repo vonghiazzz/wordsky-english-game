@@ -8,6 +8,22 @@
 > **Production chậm hơn main phần UX45 QA/docs; không suy diễn merge = deploy.**
 > Khi main/Production đổi SHA, cần xác minh lại trước khi coi thông tin dưới đây là hiện hành.
 
+## Latest Production vocabulary release — 2026-11-17
+
+**This newer live snapshot supersedes the earlier 365-word/26-topic baseline in sections 3 and 4.**
+User-authorized additive SQL has now been executed against WordSky Production, without any Vercel redeploy:
+
+- **1,099 active shared words / 30 active topics**, verified in live `GET /api/learning/vocabulary` and `GET /api/topics` (both HTTP 200).
+- **365 APPROVED / 734 PROVISIONAL**. The 734 newly added items are **not** CEFR certified or independently reviewer-approved.
+- Import history: LIFE-01 +100 (`ws_audit.id=469`); LIFE-02..07 +599 and four new topic records (`id=470`, skip duplicate `itinerary`); legacy CEFR drafts +35 (`id=471`, skip duplicate Vietnamese cue `holiday`). All imported UUIDs are in the audit rows.
+- Original target: 365 baseline + 1,000 distinct new = **1,365**. Current numeric delta is **+734**, leaving **266 more distinct words** for the numeric target. Formal LIFE-1000 batches LIFE-08..10 (300 candidate rows) are **NOT yet authored** in the repository.
+- Learning history unchanged at verification snapshot: 4 users, 160 shared progress rows, 237 flashcard reviews, 161 SRS schedules. Do not treat those as stable counts if new activity occurs.
+- The four topic groups now actually exist in Production: Everyday Conversation, Social Relationships, Cooking & Kitchen, and Money & Payments. Their older Preview-only registration PRs (#93/#94) must not be blindly applied to Production.
+- Content **risk**: MATCH/BOMB/MATRIX/MEMORY may select PROVISIONAL terms; CEFR/IPA/translation/ambiguity review remains. No new independent backup restore drill was evidenced.
+- Detailed post-release report: [docs/ux48-vocabulary-production-bulk-release-20261117.md](docs/ux48-vocabulary-production-bulk-release-20261117.md) (**in PR #100, not merged to main at this snapshot**). Existing LIFE-01 release audit also in that PR.
+
+**Next action:** curate LIFE-08..10 candidates and the remaining distinct vocabulary, verify academic sense/CEFR/IPA evidence, run isolated QA, and only then add any further Production content. Do not redo My Learning or assume the earlier 365 baseline is current.
+
 ## 1. Cách đọc trạng thái — không làm lại tính năng đã có
 
 - **CODED**: đã có implementation trong main; không tự đồng nghĩa Production đang bật.
@@ -38,13 +54,13 @@
 
 ## 3. Dữ liệu từ vựng — phân biệt source và đã phát hành
 
-- **Production public GET** /api/topics = **26 chủ đề**, /api/learning/vocabulary = **365 từ** (UX45 ngày 2026-11-17). Đây là snapshot đọc-only; số có thể đổi.
+- **Historical UX45 baseline before vocabulary imports:** /api/topics = **26 chủ đề**, /api/learning/vocabulary = **365 từ**. **Current live snapshot is 30 topics / 1,099 words** (see latest release section above).
 - **Repo db/seed-vocabulary.json** = **280 từ / 26 topic**. Đây là bộ seed của source, **không phải** snapshot Production.
 - **Repo vocab/cefr-review-all-topics.json** = **397 record** lúc audit: **260 UNREVIEWED, 137 PROVISIONAL**. PR #84 đã merge cập nhật evidence 20 từ; không coi PROVISIONAL là CEFR được chứng nhận.
 - **LIFE-1000**: roadmap mục tiêu 10 batch × 100 mục. **LIFE-01..LIFE-07 có đủ 700/700 candidate** (mỗi file 100, bốn nhóm ×25); tất cả file ở trạng thái DRAFT, toàn bộ record là PROVISIONAL. **LIFE-08/09/10 chưa có batch JSON trong main**.
-- Các batch chưa được xem là 700 từ mới trên Production. Không nhập/đổi CEFR/đổi chủ đề chỉ vì file nằm trên main.
+- Trong 700 LIFE-01..07 DRAFT candidates, **699 distinct items have since been imported to Production as PROVISIONAL**; `itinerary` was already present and skipped. Đó là trạng thái nhập dữ liệu, **không phải độc lập phê duyệt CEFR**. Thêm 35 từ legacy ngoài LIFE-1000.
 - Có script kiểm tra offline: scripts/qa-vocab-life1000.mjs, các tests/vocab-life0*-content.test.js. Có importer CEFR đã duyệt: scripts/import-cefr-approved.js, nhưng **không được dùng để nhập các batch PROVISIONAL**.
-- LIFE-02 và LIFE-03 có cơ chế đăng ký topic **disabled, guarded Preview** tại scripts/register-life02-topic.mjs và scripts/register-life03-topic.mjs. Merge code công cụ không đồng nghĩa tạo chủ đề thật.
+- Repo có cơ chế đăng ký topic **disabled, guarded Preview**. **Production đã có 4 topic mới được tạo bởi đợt import owner-authorized ngày 2026-11-17**; không tự chạy lại script đăng ký chủ đề Preview chỉ vì PR còn mở.
 - Còn PR #93 (LIFE-04 Cooking & Kitchen) và #94 (LIFE-05 Money & Payments) về topic registration; code của chúng **chưa ở main** tại thời điểm audit, cần tái kiểm tra mergeability trước khi xử lý.
 
 Nguồn tra cứu: vocab/life-1000-roadmap.json; vocab/batches/LIFE-01.json .. LIFE-07.json; docs/vocab-life1000-rollout.md; docs/vocab-life07-full-draft-checkpoint.md.
@@ -96,7 +112,7 @@ Nguồn tra cứu: vocab/life-1000-roadmap.json; vocab/batches/LIFE-01.json .. L
 9. UX49 chỉ mở rộng **Insights hiện có** với dữ liệu đáng tin cậy (không giả mastery hoặc accuracy từ nhãn 'đã nhớ').
 10. UX50 giám sát/backup/restore/performance: audit mức độ hiện có trước; chỉ phát triển phần thiếu đã được chứng minh.
 
-**Next single action**: audit read-only **trạng thái kích hoạt SRS trên Production và các hạng mục import/publish Admin**. Ghi kết quả vào file này và chọn **một** gap có bằng chứng để làm PR tiếp, tránh tạo lại roadmap mới.
+**Next single action**: kiểm định nội dung 734 từ PROVISIONAL đã import, xử lý các PR topic cũ cho tương thích Production và biên soạn/kiểm duyệt LIFE-08..10. Thực hiện read-only SRS audit riêng nếu cần, không viết lại UX24 hoặc Admin CRUD.
 
 ## 8. Hướng dẫn cho phiên ChatGPT/Codex tiếp theo
 
