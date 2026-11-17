@@ -12,7 +12,7 @@ export function findVerbEntries(query='',type='all'){
  if(exact.length)return exact.sort((a,b)=>(a.v1===q?-1:0)-(b.v1===q?-1:0)||a.v1.localeCompare(b.v1,'en'));
  const matching=candidates.filter(e=>[e.v1,e.v2,e.v3,e.meaning].some(value=>value.toLowerCase().includes(q)));
  return matching.sort((a,b)=>{
-  const rank=e=>e.v1===q?0:[e.v2,e.v3].some(x=>x.split(' / ').includes(q))?1:e.v1.startsWith(q)?2:3;
+  const rank=e=>e.v1===q?0:[e.v2,e.v3].some(x=>x.split(' / ').includes(q))?1:e.meaning===q?2:e.meaning.split(/[,;()]/).some(m=>m.trim()===q)?3:e.v1.startsWith(q)?4:e.meaning.startsWith(q)?5:6;
   return rank(a)-rank(b)||a.v1.localeCompare(b.v1,'en');
  });
 }
