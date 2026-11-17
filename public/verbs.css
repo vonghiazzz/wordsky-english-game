@@ -32,3 +32,14 @@
 .ws50-mistake span{font-size:12px;color:#d0dfef}
 .ws50-mistake small{font-size:12px;color:#b9cce4;overflow-wrap:anywhere}
 .ws50-perfect{color:#b9f2d4}
+
+/* UX51: account-only quiz history, no Flashcard/SRS writes. */
+.ws51-history{margin-top:18px;border:1px solid #475c79;border-radius:13px;background:#1d2b48;padding:14px}
+.ws51-history-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ws51-history-title h3{font-size:16px;margin:0}
+.ws51-history-title button{min-height:38px;font-size:12px;padding:7px 12px}
+.ws51-history p{font-size:12px;color:#bbd0e7;line-height:1.7}
+.ws51-history ul{padding-left:18px;font-size:12px;line-height:1.9;color:#c8d9ec}
+#ws51Totals{font-size:13px;color:#bef3d5}
+#ws51SaveStatus{font-size:12px;color:#bfead4;line-height:1.7}
+#ws51RetrySave{margin:5px 0 8px}

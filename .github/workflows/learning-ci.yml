@@ -192,7 +192,8 @@ jobs:
             'db/migrations/20261027_ux24b_shadow_srs_schedules.sql',
             'db/migrations/20261029_ux30_admin_users_password_reset.sql',
             'db/migrations/20261031_ux43c_typed_recall_pilot.sql',
-            'db/migrations/20261117_social_learning_only.sql'
+            'db/migrations/20261117_social_learning_only.sql',
+            'db/migrations/20261117_ux51_verb_practice_runs.sql'
           ];
 
           await db.connect();
@@ -220,6 +221,10 @@ jobs:
       - name: SOCIAL-105B import 100 synthetic cards and rollback isolated DB
         run: node scripts/qa-social105b-import-local-db.mjs
         # Fixture-only, rollback-only; no production or real editorial status changes.
+
+      - name: UX51 rollback-only account verb history acceptance
+        run: node scripts/ux51-rollback-qa.mjs
+        # Local PostgreSQL only; no persistent QA account or SRS changes.
 
       - name: UX43A evaluate SRS v1 on isolated rollback-only QA history
         run: |

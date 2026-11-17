@@ -1,9 +1,11 @@
 import {findVerbEntries,listVerbEntries} from './verb-dictionary.js';
 import {paginateVerbs,createVerbQuiz,isVerbAnswerCorrect} from './verb-practice-core.js';
 import {buildVerbMistakeSummary,buildVerbRetryQuestions} from './verb-mistake-retry.js';
+import {learningApi} from './ux10-account-core.js';
 const $=id=>document.getElementById(id);
 const rows=$('ws47Rows'),search=$('ws47Search'),kind=$('ws47Type');
 let page=1,questions=[],questionIndex=0,score=0,answered=false,attempts=[];
+let actorId=null,quizActorId=null,pendingSave=null,quizMode='full';
 function text(tag,value,cls){
  const element=document.createElement(tag);
  if(cls)element.className=cls;
@@ -48,8 +50,10 @@ function showQuestion(){
  $('ws48NextQuestion').hidden=true;
  $('ws48Answer').focus();
 }
-function beginQuestions(items){
+function beginQuestions(items,mode='full'){
  questions=items;score=0;questionIndex=0;answered=false;attempts=[];
+ quizActorId=actorId;quizMode=mode;pendingSave=null;
+ $('ws51SaveStatus').textContent='';$('ws51RetrySave').hidden=true;
  $('ws50Results').hidden=true;
  $('ws50Retry').hidden=true;
  $('ws50Missed').replaceChildren();
@@ -86,6 +90,7 @@ $('ws48NextQuestion').addEventListener('click',()=>{
  $('ws48Meaning').textContent='Bấm “Làm lại 10 câu” để luyện tập lượt mới.';
  $('ws48Feedback').textContent='';
  $('ws48NextQuestion').hidden=true;
+ void persistCompletedQuiz();
  const summary=buildVerbMistakeSummary(questions,attempts);
  $('ws50Results').hidden=false;
  $('ws50Summary').textContent=summary.correct+' / '+summary.total+' đúng · '+summary.incorrect+' câu sai.';
@@ -100,9 +105,70 @@ $('ws48NextQuestion').addEventListener('click',()=>{
  }
  if(summary.incorrect){
   $('ws50Retry').hidden=false;
-  $('ws50Retry').onclick=()=>beginQuestions(buildVerbRetryQuestions(summary.missed));
+  $('ws50Retry').onclick=()=>beginQuestions(buildVerbRetryQuestions(summary.missed),'retry');
  }else{
   container.append(text('p','Bạn đã trả lời đúng tất cả câu hỏi.','ws50-perfect'));
  }
 });
+
+// Account history is separate from SRS and only displayed after server authentication.
+async function loadVerbHistory(){
+ try{
+  const me=await learningApi('auth/me');
+  actorId=me.actor?.role==='player'?me.actor.id:null;
+  if(!actorId){
+   $('ws51Stats').hidden=true;
+   $('ws51Status').textContent='Đăng nhập để lưu và đồng bộ kết quả giữa các thiết bị. Khách vẫn có thể luyện tập.';
+   return;
+  }
+  const current=actorId;
+  const history=await learningApi('learning/verbs/history');
+  if(current!==actorId)return;
+  if(history.scope!=='account-verb-practice')throw Error('Báo cáo không hợp lệ');
+  $('ws51Stats').hidden=false;
+  $('ws51Status').textContent='Đã đồng bộ lịch sử theo tài khoản.';
+  $('ws51Totals').textContent=(history.summary.runs||0)+' lượt · '+(history.summary.correct||0)+'/'+(history.summary.questions||0)+' câu đúng';
+  const weak=Array.isArray(history.weak_forms)?history.weak_forms:[];
+  $('ws51Weak').textContent=weak.length?'Hay sai: '+weak.map(row=>row.v1+' ('+row.form.toUpperCase()+') '+row.mistakes+' lần').join(' · '):'Chưa có dạng động từ sai trong lịch sử.';
+  const list=$('ws51Recent');list.replaceChildren();
+  for(const run of history.recent.slice(0,5)){
+   const item=text('li',(run.mode==='retry'?'Luyện lại':'Bài mới')+' · '+run.correct+'/'+run.total+' · '+new Date(run.completed_at).toLocaleString('vi-VN'));
+   list.append(item);
+  }
+ }catch(error){
+  $('ws51Stats').hidden=true;
+  $('ws51Status').textContent='Chưa tải được tiến độ: '+error.message;
+ }
+}
+async function persistCompletedQuiz(){
+ if(!quizActorId){
+  $('ws51SaveStatus').textContent='Kết quả lượt này chỉ hiển thị tại đây (chưa đăng nhập lúc bắt đầu).';
+  return;
+ }
+ const input=pendingSave||{
+  request_id:crypto.randomUUID(),expected_actor_id:quizActorId,mode:quizMode,
+  answers:questions.map((q,i)=>({v1:q.v1,target:q.target,given:attempts[i].given}))
+ };
+ pendingSave=input;
+ $('ws51SaveStatus').textContent='Đang lưu kết quả…';
+ $('ws51RetrySave').hidden=true;
+ try{
+  const current=await learningApi('auth/me');
+  if(current.actor?.id!==quizActorId||current.actor?.role!=='player')
+   throw Error('Phiên đăng nhập đã thay đổi; không thể lưu vào tài khoản khác');
+  const saved=await learningApi('learning/verbs/attempts',{method:'POST',body:input});
+  if(saved.scope!=='account-verb-practice'||saved.request_id!==input.request_id)
+   throw Error('Máy chủ chưa xác nhận lượt luyện');
+  pendingSave=null;
+  $('ws51SaveStatus').textContent='Đã lưu kết quả theo tài khoản.';
+  await loadVerbHistory();
+ }catch(error){
+  $('ws51SaveStatus').textContent='Chưa lưu được: '+error.message;
+  $('ws51RetrySave').hidden=false;
+ }
+}
+$('ws51Refresh').addEventListener('click',()=>void loadVerbHistory());
+$('ws51RetrySave').addEventListener('click',()=>void persistCompletedQuiz());
+void loadVerbHistory();
+
 render();
