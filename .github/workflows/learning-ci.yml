@@ -106,6 +106,12 @@ jobs:
           node scripts/ux43d-offline-research-qa.mjs
         # No user exports, database credentials, preview builds or SRS writes.
 
+
+      - name: LIFE-01 live public catalog preflight (GET only; no Production writes)
+        if: github.event_name == 'pull_request' && github.head_ref == 'feature/life01-my-learning-release-preflight'
+        run: node scripts/ux48-life01-public-catalog-preflight.mjs --live
+        # Anonymous GET /api/topics and /api/learning/vocabulary, no token, no user data.
+
   browser-srs-e2e:
     needs: unit-and-postgres
     runs-on: ubuntu-latest
