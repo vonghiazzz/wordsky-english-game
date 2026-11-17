@@ -6,7 +6,7 @@ const read=path=>JSON.parse(readFileSync(new URL('../'+path,import.meta.url),'ut
 const norm=s=>String(s??'').normalize('NFKC').trim().toLowerCase().replace(/[’]/gu,"'")
  .replace(/[?!.,]+$/gu,'').replace(/\s+/gu,' ');
 const ids=Array.from({length:10},(_,i)=>'SOCIAL-'+String(i+1).padStart(2,'0'));
-const drafts=ids.map(id=>read('vocab/batches/'+id+'.json'));
+const drafts=ids.map(id=>read('vocab/social-life-batches/'+id+'.json'));
 const all=drafts.flatMap(d=>d.records);
 
 test('SOCIAL-1000: ten original editorial drafts with exactly 100 records each',()=>{
