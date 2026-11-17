@@ -188,7 +188,8 @@ jobs:
             'db/migrations/20261027_ux23_idempotent_review_requests.sql',
             'db/migrations/20261027_ux24b_shadow_srs_schedules.sql',
             'db/migrations/20261029_ux30_admin_users_password_reset.sql',
-            'db/migrations/20261031_ux43c_typed_recall_pilot.sql'
+            'db/migrations/20261031_ux43c_typed_recall_pilot.sql',
+            'db/migrations/20261117_social_learning_only.sql'
           ];
 
           await db.connect();
@@ -208,6 +209,10 @@ jobs:
           JS
 
           node scripts/seed.js
+
+      - name: SOCIAL-104 learning-only isolation and rollback acceptance
+        run: node scripts/qa-social104-local-db.mjs
+        # Isolated 127.0.0.1:5547 only; transaction rolls back and verifies cleanup.
 
       - name: UX43A evaluate SRS v1 on isolated rollback-only QA history
         run: |
