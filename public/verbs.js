@@ -37,7 +37,7 @@ function showQuestion(){
  answered=false;
  $('ws48Progress').textContent='Câu '+(questionIndex+1)+' / '+questions.length;
  $('ws48Score').textContent='Đúng: '+score;
- $('ws48Question').textContent='V1: '+q.v1+' → '+q.target.toUpperCase()+' là gì?';
+ $('ws48Question').textContent=(q.target==='v1'?'V2: '+q.v2:'V1: '+q.v1)+' → '+q.target.toUpperCase()+' là gì?';
  $('ws48Meaning').textContent='Nghĩa: '+q.meaning;
  $('ws48Answer').value='';
  $('ws48Answer').disabled=false;
