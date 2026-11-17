@@ -95,6 +95,9 @@ jobs:
         env:
           UX23C_TEST_DATABASE_URL: postgres://wordsky:wordsky_ci_only@127.0.0.1:5432/wordsky_test
 
+      - name: SOCIAL-105 candidate importer dry-run (no DB connection)
+        run: node scripts/import-social1000.mjs --batch=SOCIAL-01
+
       - name: UX43B verify opt-in typed recall contract without DB or SRS writes
         run: |
           set -euo pipefail
