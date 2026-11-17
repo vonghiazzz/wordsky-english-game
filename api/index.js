@@ -147,7 +147,7 @@ async function fetchTopics(includeWords=false){
   return r.rows;
  }
  const r=await sql('SELECT id,title,enabled FROM ws_topics WHERE enabled=true ORDER BY title');
- const words=await sql('SELECT id,topic_id,english,meaning,ipa,example,translation,cefr_level,cefr_review_status FROM ws_words w WHERE w.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false ORDER BY w.english');
+ const words=await sql(`SELECT w.id,w.topic_id,w.english,w.meaning,w.ipa,w.example,w.translation,w.cefr_level,w.cefr_review_status FROM ws_words w WHERE w.enabled=true AND COALESCE((to_jsonb(w)->>'learning_only')::boolean,false)=false ORDER BY w.english`);
  return r.rows.map(t=>({...t,words:words.rows.filter(w=>w.topic_id===t.id)}));
 }
 async function audit(db,action,entityId,payload={}){await db.query('INSERT INTO ws_audit(actor,action,entity_id,payload) VALUES($1,$2,$3,$4::jsonb)',['owner',action,entityId,JSON.stringify(payload)])}
