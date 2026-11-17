@@ -43,6 +43,8 @@ for(const [label,engine] of tests){
    await page.locator('#ws47Type').selectOption('regular');
    assert.equal(await page.locator('#ws47Rows tr').count(),1);
    await page.locator('#ws47Search').fill('');
+   await page.waitForFunction(()=>document.querySelector('#ws51Status')?.textContent.includes('Đăng nhập'));
+   assert.match(await page.locator('#ws51Status').innerText(),/Đăng nhập/);
    await page.locator('#ws48Start').click();
    assert.ok(await page.locator('#ws48Quiz').isVisible());
    for(let number=1;number<=10;number++){
@@ -64,6 +66,7 @@ for(const [label,engine] of tests){
    }
    assert.match(await page.locator('#ws48Question').innerText(),/10\/10 câu đúng/);
 
+   assert.match(await page.locator('#ws51SaveStatus').innerText(),/chưa đăng nhập/);
    assert.equal(await page.locator('#ws50Retry').isVisible(),false);
    assert.match(await page.locator('#ws50Summary').innerText(),/0 câu sai/);
    await page.locator('#ws48Start').click();
