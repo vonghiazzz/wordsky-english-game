@@ -63,6 +63,41 @@ for(const [label,engine] of tests){
     await page.locator('#ws48NextQuestion').click();
    }
    assert.match(await page.locator('#ws48Question').innerText(),/10\/10 câu đúng/);
+
+   assert.equal(await page.locator('#ws50Retry').isVisible(),false);
+   assert.match(await page.locator('#ws50Summary').innerText(),/0 câu sai/);
+   await page.locator('#ws48Start').click();
+   for(let number=1;number<=10;number++){
+    const prompt=await page.locator('#ws48Question').innerText();
+    const match=prompt.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\?$/);
+    assert.ok(match,'Unexpected retry scenario prompt: '+prompt);
+    const right=await page.evaluate(async ({source,clue,target})=>{
+     const {listVerbEntries}=await import('/verb-dictionary.js');
+     const verb=listVerbEntries().find(v=>v['v'+source]===clue);
+     if(!verb)throw Error('No verb found for '+clue);
+     return verb[target.toLowerCase()].split(' / ')[0];
+    },{source:match[1],clue:match[2],target:match[3]});
+    await page.locator('#ws48Answer').fill(number===1?'incorrect-answer':right);
+    await page.locator('#ws48Submit').click();
+    await page.locator('#ws48NextQuestion').click();
+   }
+   assert.match(await page.locator('#ws50Summary').innerText(),/9 \/ 10 đúng · 1 câu sai/);
+   assert.equal(await page.locator('.ws50-mistake').count(),1);
+   await page.locator('#ws50Retry').click();
+   assert.match(await page.locator('#ws48Progress').innerText(),/Câu 1 \/ 1/);
+   const retryPrompt=await page.locator('#ws48Question').innerText();
+   const retryMatch=retryPrompt.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\?$/);
+   assert.ok(retryMatch,'Retry prompt missing');
+   const retryCorrect=await page.evaluate(async ({source,clue,target})=>{
+    const {listVerbEntries}=await import('/verb-dictionary.js');
+    return listVerbEntries().find(v=>v['v'+source]===clue)[target.toLowerCase()].split(' / ')[0];
+   },{source:retryMatch[1],clue:retryMatch[2],target:retryMatch[3]});
+   await page.locator('#ws48Answer').fill(retryCorrect);
+   await page.locator('#ws48Submit').click();
+   await page.locator('#ws48NextQuestion').click();
+   assert.match(await page.locator('#ws50Summary').innerText(),/1 \/ 1 đúng · 0 câu sai/);
+   assert.equal(await page.locator('#ws50Retry').isVisible(),false);
+
    const doc=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,innerWidth:innerWidth}));
    assert.ok(doc.scrollWidth<=doc.innerWidth+2,'Unexpected horizontal viewport overflow: '+JSON.stringify(doc));
    const back=await page.goto(BASE+'/progress.html',{waitUntil:'domcontentloaded'});

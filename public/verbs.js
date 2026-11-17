@@ -1,8 +1,9 @@
 import {findVerbEntries,listVerbEntries} from './verb-dictionary.js';
 import {paginateVerbs,createVerbQuiz,isVerbAnswerCorrect} from './verb-practice-core.js';
+import {buildVerbMistakeSummary,buildVerbRetryQuestions} from './verb-mistake-retry.js';
 const $=id=>document.getElementById(id);
 const rows=$('ws47Rows'),search=$('ws47Search'),kind=$('ws47Type');
-let page=1,questions=[],questionIndex=0,score=0,answered=false;
+let page=1,questions=[],questionIndex=0,score=0,answered=false,attempts=[];
 function text(tag,value,cls){
  const element=document.createElement(tag);
  if(cls)element.className=cls;
@@ -47,18 +48,25 @@ function showQuestion(){
  $('ws48NextQuestion').hidden=true;
  $('ws48Answer').focus();
 }
-function startQuiz(){
- questions=createVerbQuiz({kind:$('ws48Kind').value});
- score=0;questionIndex=0;
+function beginQuestions(items){
+ questions=items;score=0;questionIndex=0;answered=false;attempts=[];
+ $('ws50Results').hidden=true;
+ $('ws50Retry').hidden=true;
+ $('ws50Missed').replaceChildren();
  $('ws48Quiz').hidden=false;
- $('ws48Start').textContent='Làm lại 10 câu';
  showQuestion();
+}
+function startQuiz(){
+ beginQuestions(createVerbQuiz({kind:$('ws48Kind').value}));
+ $('ws48Start').textContent='Làm bài mới 10 câu';
 }
 $('ws48Start').addEventListener('click',startQuiz);
 $('ws48Form').addEventListener('submit',e=>{
  e.preventDefault();if(answered)return;
  const q=questions[questionIndex];
- const correct=isVerbAnswerCorrect($('ws48Answer').value,q[q.target]);
+ const given=$('ws48Answer').value;
+ const correct=isVerbAnswerCorrect(given,q[q.target]);
+ attempts.push({given,correct});
  if(correct)score++;
  answered=true;
  $('ws48Feedback').textContent=(correct?'✓ Chính xác. ':'✗ Chưa đúng. ')+'Đáp án: '+q.v1+' – '+q.v2+' – '+q.v3;
@@ -78,5 +86,23 @@ $('ws48NextQuestion').addEventListener('click',()=>{
  $('ws48Meaning').textContent='Bấm “Làm lại 10 câu” để luyện tập lượt mới.';
  $('ws48Feedback').textContent='';
  $('ws48NextQuestion').hidden=true;
+ const summary=buildVerbMistakeSummary(questions,attempts);
+ $('ws50Results').hidden=false;
+ $('ws50Summary').textContent=summary.correct+' / '+summary.total+' đúng · '+summary.incorrect+' câu sai.';
+ const container=$('ws50Missed');
+ container.replaceChildren();
+ for(const mistake of summary.missed){
+  const entry=text('article','', 'ws50-mistake');
+  entry.append(text('strong',mistake.v1+' – '+mistake.v2+' – '+mistake.v3),
+    text('span',mistake.meaning),
+    text('small','Cần điền '+mistake.target.toUpperCase()+' · Bạn trả lời: '+(mistake.given||'(trống)')));
+  container.append(entry);
+ }
+ if(summary.incorrect){
+  $('ws50Retry').hidden=false;
+  $('ws50Retry').onclick=()=>beginQuestions(buildVerbRetryQuestions(summary.missed));
+ }else{
+  container.append(text('p','Bạn đã trả lời đúng tất cả câu hỏi.','ws50-perfect'));
+ }
 });
 render();

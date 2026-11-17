@@ -45,7 +45,7 @@
  </section>
  <section class="ws48-practice" id="ws48Practice" aria-labelledby="ws48PracticeTitle">
   <div class="ws48-practice-heading">
-   <div><span class="ws47-eyebrow">LUYỆN TẬP V1 · V2 · V3</span><h2 id="ws48PracticeTitle">Điền dạng động từ đúng</h2><p>10 câu mỗi lượt, điền V2 hoặc V3 dựa trên V1 và nghĩa. Không ảnh hưởng lịch ôn SRS.</p></div>
+   <div><span class="ws47-eyebrow">LUYỆN TẬP V1 · V2 · V3</span><h2 id="ws48PracticeTitle">Điền dạng động từ đúng</h2><p>10 câu mỗi lượt, luyện V1, V2 và V3, xem lỗi và luyện lại câu sai. Không ảnh hưởng lịch ôn SRS.</p></div>
    <label>Nhóm câu hỏi<select id="ws48Kind"><option value="all">Tất cả động từ</option><option value="irregular">Bất quy tắc</option><option value="regular">Có quy tắc</option></select></label>
   </div>
   <div class="ws48-practice-actions"><button type="button" id="ws48Start">Bắt đầu 10 câu</button></div>
@@ -59,6 +59,12 @@
    </form>
    <p id="ws48Feedback" role="status" aria-live="polite"></p>
    <button type="button" id="ws48NextQuestion" hidden>Câu tiếp theo →</button>
+   <section id="ws50Results" class="ws50-results" hidden aria-labelledby="ws50ResultsTitle">
+    <h3 id="ws50ResultsTitle">Tổng kết lượt luyện</h3>
+    <p id="ws50Summary" role="status"></p>
+    <div id="ws50Missed" class="ws50-mistakes"></div>
+    <button type="button" id="ws50Retry" hidden>Luyện lại câu sai</button>
+   </section>
   </div>
  </section>
 </main>

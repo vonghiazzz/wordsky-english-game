@@ -21,3 +21,14 @@
 #ws48Feedback{min-height:24px;line-height:1.7;font-size:14px;color:#bbebd7}
 #ws48NextQuestion{margin-top:4px}
 @media(max-width:620px){.ws48-practice-heading{align-items:stretch;flex-direction:column}.ws48-practice-heading select{width:100%}.ws48-input-row{flex-direction:column}.ws48-input-row button{width:100%}.ws48-pagination{gap:9px}}
+
+/* UX50: compact in-session mistake review, no saved account data. */
+.ws50-results{margin-top:22px;padding-top:18px;border-top:1px solid #405577}
+.ws50-results h3{font-size:17px;margin:0 0 8px}
+.ws50-results>p{color:#c5dcf0;font-size:13px;line-height:1.7}
+.ws50-mistakes{display:grid;gap:9px;margin:12px 0}
+.ws50-mistake{background:#1c2e4b;border:1px solid #405778;border-radius:10px;padding:12px;display:grid;gap:5px}
+.ws50-mistake strong{font-size:14px;color:#c7f4e2}
+.ws50-mistake span{font-size:12px;color:#d0dfef}
+.ws50-mistake small{font-size:12px;color:#b9cce4;overflow-wrap:anywhere}
+.ws50-perfect{color:#b9f2d4}
