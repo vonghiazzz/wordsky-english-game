@@ -95,3 +95,46 @@ test('SOCIAL-1000: ten targeted social and daily-life topics are existing WordSk
   assert.ok(drafts[i].records.every(r=>r.topic===expected[i]));
  }
 });
+
+
+function readQuotedCsv(source){
+ const rows=[];let row=[],field='',quoted=false;
+ for(let i=0;i<source.length;i++){
+  const c=source[i];
+  if(c==='"'){
+   if(quoted&&source[i+1]==='"'){field+='"';i++}else quoted=!quoted;
+  }else if(c===','&&!quoted){
+   row.push(field);field='';
+  }else if(c==='\n'&&!quoted){
+   if(row.length||field.length){row.push(field);rows.push(row);row=[];field='';}
+  }else if(c!=='\r'){field+=c;}
+ }
+ assert.equal(quoted,false,'unterminated CSV quoted field');
+ if(row.length||field.length){row.push(field);rows.push(row);}
+ return rows;
+}
+
+test('SOCIAL-1000: editorial CSV contains exactly the latest 1000 candidate IDs, values and pending gates',()=>{
+ const csv=readQuotedCsv(readFileSync(new URL('../vocab/editorial/SOCIAL-1000-review-queue.csv',import.meta.url),'utf8'));
+ assert.equal(csv.length,1001);
+ const expected=['item_id','batch_id','topic','english','meaning_vi','example_en','translation_vi','proposed_cefr','cefr_review_status','ipa_status','bilingual_review','sense_review','reviewer','reviewed_at','review_notes'];
+ assert.deepEqual(csv[0],expected);
+ for(let i=0;i<1000;i++){
+  const row=csv[i+1],r=all[i],id=ids[Math.floor(i/100)]+'-'+String((i%100)+1).padStart(3,'0');
+  assert.equal(row.length,expected.length,'CSV column count on line '+(i+2));
+  assert.equal(row[0],id);
+  assert.equal(row[1],ids[Math.floor(i/100)]);
+  assert.equal(row[2],r.topic);
+  assert.equal(row[3],r.english);
+  assert.equal(row[4],r.meaning);
+  assert.equal(row[5],r.example);
+  assert.equal(row[6],r.translation);
+  assert.equal(row[7],r.level);
+  assert.equal(row[8],'PROVISIONAL');
+  assert.equal(row[9],'PENDING');
+  assert.equal(row[10],'PENDING');
+  assert.equal(row[11],'PENDING');
+  assert.equal(row[12],'');
+  assert.equal(row[13],'');
+ }
+});
