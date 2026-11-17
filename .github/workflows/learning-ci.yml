@@ -320,3 +320,27 @@ jobs:
       - name: LIFE-03 Social Relationships topic in isolated rollback-only PostgreSQL
         run: node scripts/qa-life03-topic-local-e2e.mjs
         # Disabled empty topic, idempotency, and ROLLBACK before exit.
+
+  # One-time Production QA on UX45 audit PR only. This runner is anonymous:
+  # - no Production DB credentials or account cookies
+  # - blocks all non-GET network requests from browser
+  # - uses fake SpeechSynthesis, no user content writes and NO Vercel deployment
+  ux45-production-readonly:
+    if: github.event_name == 'pull_request' && github.head_ref == 'qa/ux45-production-readonly-smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx --no-install playwright install --with-deps chromium firefox
+      - name: UX45 Production anonymous read-only HTTP + browser QA
+        run: node scripts/ux45-production-readonly-qa.mjs
+        # No Vercel secrets, logins, migrations, game starts or Production writes.
