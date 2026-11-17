@@ -33,6 +33,7 @@ try{
  const history=await getVerbPracticeHistory(actor,query);
  assert.deepEqual(history.summary,{runs:2,questions:11,correct:10});
  assert.equal(history.recent.length,2);
+ assert.deepEqual(history.weak_forms,[{v1:'go',form:'v2',mistakes:1}]);
  assert.equal((await getVerbPracticeHistory(randomUUID(),query)).summary.runs,0);
  const rls=await client.query("SELECT relrowsecurity FROM pg_class WHERE oid='public.ws_verb_practice_runs'::regclass");
  assert.equal(rls.rows[0].relrowsecurity,true);
