@@ -742,13 +742,13 @@
       "ipa_quality": "PENDING"
     },
     {
-      "english": "Could I speak to the manager",
-      "meaning": "Tôi có thể trao đổi với quản lý không",
+      "english": "Who handles customer complaints here",
+      "meaning": "Ở đây ai xử lý khiếu nại của khách hàng",
       "topic": "Shopping - Mua sắm",
       "group_id": "shopping-errands-payments",
       "ipa": "",
-      "example": "Could I speak to the manager?",
-      "translation": "Tôi có thể trao đổi với quản lý không?",
+      "example": "Who handles customer complaints here?",
+      "translation": "Ở đây ai xử lý khiếu nại của khách hàng?",
       "part_of_speech": "conversational utterance",
       "level": "B1",
       "review_status": "PROVISIONAL",
