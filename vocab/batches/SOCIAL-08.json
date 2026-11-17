@@ -1678,13 +1678,13 @@
       "ipa_quality": "PENDING"
     },
     {
-      "english": "Could you wait a moment here",
-      "meaning": "Bạn chờ ở đây một lát được không",
+      "english": "The driver can stop at the next corner",
+      "meaning": "Tài xế có thể dừng ở góc đường kế tiếp",
       "topic": "Travel - Du lịch",
       "group_id": "transport-services-community-travel",
       "ipa": "",
-      "example": "Could you wait a moment here?",
-      "translation": "Bạn chờ ở đây một lát được không?",
+      "example": "The driver can stop at the next corner.",
+      "translation": "Tài xế có thể dừng ở góc đường kế tiếp.",
       "part_of_speech": "conversational utterance",
       "level": "B1",
       "review_status": "PROVISIONAL",
