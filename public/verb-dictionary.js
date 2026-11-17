@@ -8,6 +8,8 @@ export function findVerbEntries(query='',type='all'){
  const q=String(query||'').normalize('NFKC').trim().toLowerCase();
  const candidates=entries.filter(e=>type==='all'||e.kind===type);
  if(!q)return candidates;
+ const exact=candidates.filter(e=>e.v1===q||[e.v2,e.v3].some(x=>x.split(' / ').includes(q)));
+ if(exact.length)return exact.sort((a,b)=>(a.v1===q?-1:0)-(b.v1===q?-1:0)||a.v1.localeCompare(b.v1,'en'));
  const matching=candidates.filter(e=>[e.v1,e.v2,e.v3,e.meaning].some(value=>value.toLowerCase().includes(q)));
  return matching.sort((a,b)=>{
   const rank=e=>e.v1===q?0:[e.v2,e.v3].some(x=>x.split(' / ').includes(q))?1:e.v1.startsWith(q)?2:3;
