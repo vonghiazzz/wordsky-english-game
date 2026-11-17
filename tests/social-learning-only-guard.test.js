@@ -33,3 +33,9 @@ test('SOCIAL phrase safety: migration is additive and defaults old cards to game
  assert.match(migration,/ADD COLUMN IF NOT EXISTS learning_only boolean NOT NULL DEFAULT false/);
  assert.match(read('db/schema.sql'),/learning_only boolean NOT NULL DEFAULT false/);
 });
+
+test('SOCIAL admin catalog: show every enabled card, even learning-only phrases',()=>{
+ const section=source.slice(source.indexOf('async function fetchTopics('),source.indexOf('async function audit('));
+ assert.match(section,/FROM ws_words WHERE enabled=true ORDER BY english/);
+ assert.match(section,/FILTER \(WHERE w.enabled=true AND COALESCE/);
+});
