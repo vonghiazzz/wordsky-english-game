@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { chromium, firefox } from 'playwright';
 import pg from 'pg';
 import { hashPassword } from '../lib/security.js';
@@ -342,6 +342,47 @@ try {
 
     pass('Upcoming mobile layout '+viewport.width+'px');
   }
+
+  // UX51: authenticated cross-browser verb practice history, no SRS side effects.
+  const beforeSrs=(await db.query('SELECT count(*)::int n FROM ws_user_srs_schedules WHERE user_id=$1',[user.id])).rows[0].n;
+  const emptyHistory=await ctxB.request.get(BASE+'/api/learning/verbs/history');
+  assert.equal(emptyHistory.status(),200);
+  assert.equal((await emptyHistory.json()).summary.runs,0);
+  const attempts=[
+   ['go','v1','go'],['eat','v2','ate'],['write','v3','written'],
+   ['have','v1','have'],['make','v2','made'],['study','v3','studied'],
+   ['play','v1','play'],['see','v2','saw'],['do','v3','done'],
+   ['come','v1','incorrect']
+  ].map(([v1,target,given])=>({v1,target,given}));
+  const payload={request_id:randomUUID(),expected_actor_id:user.id,mode:'full',answers:attempts};
+  const write=await ctxA.request.post(BASE+'/api/learning/verbs/attempts',{
+   headers:{origin:BASE},data:payload});
+  assert.equal(write.status(),201,await write.text());
+  assert.equal((await write.json()).correct,9);
+  const replay=await ctxB.request.post(BASE+'/api/learning/verbs/attempts',{
+   headers:{origin:BASE},data:payload});
+  assert.equal(replay.status(),200,await replay.text());
+  assert.equal((await replay.json()).replayed,true);
+  const conflict=await ctxA.request.post(BASE+'/api/learning/verbs/attempts',{
+   headers:{origin:BASE},data:{...payload,answers:attempts.map((a,i)=>i===0?{...a,given:'wrong'}:a)}});
+  assert.equal(conflict.status(),409);
+  const switched=await ctxA.request.post(BASE+'/api/learning/verbs/attempts',{
+   headers:{origin:BASE},data:{...payload,request_id:randomUUID(),expected_actor_id:other.id}});
+  assert.equal(switched.status(),409);
+  const observed=await ctxB.request.get(BASE+'/api/learning/verbs/history');
+  const history=await observed.json();
+  assert.equal(history.summary.runs,1);
+  assert.equal(history.summary.questions,10);
+  assert.equal(history.summary.correct,9);
+  assert.ok(history.weak_forms.some(x=>x.v1==='come'&&x.form==='v1'));
+  const otherHistory=await ctxOther.request.get(BASE+'/api/learning/verbs/history');
+  assert.equal((await otherHistory.json()).summary.runs,0);
+  const afterSrs=(await db.query('SELECT count(*)::int n FROM ws_user_srs_schedules WHERE user_id=$1',[user.id])).rows[0].n;
+  assert.equal(afterSrs,beforeSrs);
+  await A.goto(BASE+'/verbs.html',{waitUntil:'domcontentloaded'});
+  await A.waitForFunction(()=>document.querySelector('#ws51Totals')?.textContent.includes('1 lượt'));
+  assert.match(await A.locator('#ws51Weak').innerText(),/come \(V1\)/);
+  pass('UX51 authenticated cross-device verb history, tamper defense, account isolation, no SRS writes');
 
   console.log('\nWORDSKY UI E2E: 12/12 PASS');
 
