@@ -4,7 +4,7 @@ Updated 2026-11-17. **Source-of-truth: GitHub DRAFT** — NOT published to WordS
 
 ## Goal and inventory
 
-Add **1,000 new conversational learning items**, in 10 batches x 100, to support
+Add **1,000 new conversational learning items**, in 10 batches x 100 (files at `vocab/social-life-batches/SOCIAL-01.json` through `SOCIAL-10.json`), to support
 natural English interaction at home, work, online and in the community.
 These are **English utterances / phrases, not necessarily single dictionary headwords**.
 
@@ -44,8 +44,8 @@ richer two-sentence contextual examples require a separate editorial pass.
 - Editor-estimated CEFR distribution: **A2 = 742, B1 = 258**. This is a
   **rule-based starting estimate, not Oxford/Cambridge/CEFR-accredited evidence**.
 - Every record status is **PROVISIONAL**; every entry has
-  \`editorial_status=AI_DRAFT_NEEDS_BILINGUAL_REVIEW\`, \`ipa_quality=PENDING\`.
-- \`ipa=""\` deliberately: no fabricated phonetic transcript for complete sentences.
+  `editorial_status=AI_DRAFT_NEEDS_BILINGUAL_REVIEW`, `ipa_quality=PENDING`.
+- `ipa=""` deliberately: no fabricated phonetic transcript for complete sentences.
   The web app already has browser-based SpeechSynthesis, but speaker audio / UK vs
   US variations still need human QA.
 
@@ -65,9 +65,9 @@ richer two-sentence contextual examples require a separate editorial pass.
 
 ## Editorial review work queue
 
-Use \`vocab/editorial/SOCIAL-1000-review-queue.csv\`. One row per ID, with
+Use `vocab/editorial/SOCIAL-1000-review-queue.csv`. One row per ID, with
 independent bilingual, sense, CEFR and IPA review columns still **PENDING**.
-Do NOT bulk-write \`APPROVED\` without reviewing each unique word sense/phrase
+Do NOT bulk-write `APPROVED` without reviewing each unique word sense/phrase
 register and source evidence. For longer spoken phrases, a learner-level
 conversation can be aligned to A2/B1 without an individual official label;
 record that distinction explicitly in any approval policy.
@@ -96,7 +96,7 @@ record that distinction explicitly in any approval policy.
 
 ## Deployment status
 
-\`SOCIAL-01..10.json\` and the review CSV are GitHub editorial files only.
+`vocab/social-life-batches/SOCIAL-01..10.json` and the review CSV are GitHub editorial files only.
 There is **no importer or app mutation** in this PR. No Production SQL INSERT,
 Vercel redeploy or user account changes were performed. My Learning stays at
 **1,099 shared words** pending a separate, quality-gated release.
@@ -110,7 +110,7 @@ other database changes. **Do not claim that count until verified in live API.**
 1. Read the actual DRAFT files and the review CSV.
 2. Check the current live API and the GitHub HEAD for changes since this audit.
 3. Work one batch of 100 at a time; record review decisions, links, corrected
-   values and reviewer signoff per line; run \`node --test tests/social-life1000-content.test.js\`.
+   values and reviewer signoff per line; run `node --test tests/social-life1000-content.test.js`.
 4. After content approval, design **learning-only phrase distribution** or a
    game exclusion gate, then import a single tested batch and verify the
    account learning UI before continuing to the next.
