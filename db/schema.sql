@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS ws_words (
  ipa text NOT NULL DEFAULT '',
  example text NOT NULL DEFAULT '',
  translation text NOT NULL DEFAULT '',
+ learning_only boolean NOT NULL DEFAULT false,
  enabled boolean NOT NULL DEFAULT true,
  UNIQUE(topic_id, english),
  CHECK(char_length(english) BETWEEN 1 AND 80),
