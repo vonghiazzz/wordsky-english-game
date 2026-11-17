@@ -23,8 +23,9 @@ for(const [label,engine] of tests){
    assert.equal(await page.locator('#ws47Rows tr').count(),1);
    const onlyRow=await page.locator('#ws47Rows tr').innerText();
    assert.match(onlyRow,/go/);assert.match(onlyRow,/went/);assert.match(onlyRow,/gone/);assert.match(onlyRow,/đi/);
-   await page.locator('#ws47Rows details summary').click();
-   assert.match(await page.locator('#ws47Rows details').innerText(),/I went to school yesterday/);
+   assert.equal(await page.locator('#ws47Rows tr:first-child td').count(),4);
+   assert.equal(await page.locator('#ws47Rows details').count(),0);
+   assert.equal(await page.locator('.ws47-usage').count(),0);
    await page.locator('#ws47Search').fill('gone');
    assert.equal(await page.locator('#ws47Rows tr').count(),1);
    await page.locator('#ws47Search').fill('go');
