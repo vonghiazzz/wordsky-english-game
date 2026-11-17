@@ -48,7 +48,7 @@ for(const [label,engine] of tests){
    for(let number=1;number<=10;number++){
     assert.match(await page.locator('#ws48Progress').innerText(),new RegExp('Câu '+number+' / 10'));
     const input=await page.locator('#ws48Question').innerText();
-    const m=input.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\\?$/);
+    const m=input.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\?$/);
     assert.ok(m,'Unexpected prompt '+input);
     const answer=await page.evaluate(async ({source,clue,target})=>{
      const {listVerbEntries}=await import('/verb-dictionary.js');
