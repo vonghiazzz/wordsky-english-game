@@ -51,3 +51,15 @@
 
 /* UX27.1: the shared site navigation replaces duplicate breadcrumb links. */
 .ws10-container{padding-top:clamp(18px,3vw,32px)}
+
+
+/* UX46: compact accessible V1/V2/V3 disclosure inside My Learning cards. */
+.ws46-verb-forms{margin-top:10px;padding:8px 10px;background:rgba(111,229,181,.07);border:1px solid rgba(111,229,181,.3);border-radius:10px;max-width:410px}
+.ws46-verb-forms summary{cursor:pointer;color:#9ef2d0;font-size:13px;font-weight:800;list-style-position:inside;touch-action:manipulation}
+.ws46-verb-forms summary:focus-visible{outline:2px solid #83dcff;outline-offset:3px}
+.ws46-verb-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}
+.ws46-verb-cell{display:flex;flex-direction:column;gap:2px;min-width:0;padding:7px;border-radius:8px;background:rgba(5,18,38,.45)}
+.ws46-verb-cell small{font-size:11px;opacity:.85}
+.ws46-verb-cell strong{font-size:clamp(12px,2.5vw,15px);overflow-wrap:anywhere}
+.ws46-verb-caption{display:block;margin-top:8px;opacity:.8}
+@media(max-width:420px){.ws46-verb-forms{padding:7px}.ws46-verb-grid{gap:4px}.ws46-verb-cell{padding:6px 4px}}
