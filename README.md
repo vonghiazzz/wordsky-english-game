@@ -1,3 +1,5 @@
+> **Trạng thái phát triển hiện tại (cập nhật 2026-11-17):** đọc [WORDSKY_CURRENT_STATE.md](WORDSKY_CURRENT_STATE.md) trước khi lên kế hoạch hoặc triển khai tiếp. Tài liệu README bên dưới là tài liệu kiến trúc V4 lịch sử; các con số 260 từ và trạng thái "chưa Production" ở phần cũ **không còn phản ánh deployment hiện tại**. Nguồn chính vẫn là code, test, config và Vercel live.
+
 # WordSky Arena V4 — Thi đấu tiếng Anh trực tuyến
 
 > **Trạng thái: mã nguồn MVP / chưa triển khai production.** Bộ backend có hợp đồng API và game logic, giao diện responsive; **cần kết nối PostgreSQL, chạy migrations và seed, cấu hình admin + session, kiểm thử tích hợp đa thiết bị trước khi mở giải thật**. WordSky V3 production không bị thay đổi.
