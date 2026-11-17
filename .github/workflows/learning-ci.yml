@@ -320,3 +320,9 @@ jobs:
       - name: LIFE-03 Social Relationships topic in isolated rollback-only PostgreSQL
         run: node scripts/qa-life03-topic-local-e2e.mjs
         # Disabled empty topic, idempotency, and ROLLBACK before exit.
+
+      - name: UX45 Production anonymous GET-only acceptance (this QA PR only)
+        if: github.event_name == 'pull_request' && github.head_ref == 'qa/ux45-production-readonly-smoke'
+        run: node scripts/ux45-production-readonly-qa.mjs
+        # Browser uses empty, isolated guest context; blocks non-GET, no Prod DB writes.
+        # Reuse pinned Chromium/Firefox and Node 24 from the existing browser job.
