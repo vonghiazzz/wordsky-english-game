@@ -7,6 +7,7 @@ import {hashPassword,verifyPassword,issueSession,parseSession,parseCookie,cookie
 import {rankForXp,awardedAttendance,normalizeRound,normalizeAnswer,roundWindows,createState,reconcile,answerQuestion,publicState,requiredWords,SOLO_MATRIX_SIZES,MATRIX_DURATION_SECONDS,MEMORY_DURATION_SECONDS,assertWordCapacity,carWordRequirements,carMissingWords,fail} from '../lib/game.js';
 import {randomInt} from 'node:crypto';
 import {recordFlashcardReview,getFlashcardProgress,getFlashcardCatalog} from '../lib/learning-progress.js';
+import {getVerbPracticeHistory,saveVerbAttempt} from '../lib/verb-practice-history.js';
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
 import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
 import {getAccountLearningInsights} from '../lib/learning-insights.js';
@@ -676,6 +677,16 @@ export default async function handler(req,res){
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
   if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
   if(method==='GET'&&key==='learning/insights')return output(res,200,await getAccountLearningInsights(mustPlayer(req).id,req.query||{}));
+  // UX51 account-scoped quiz history: never client-supplied user IDs or SRS writes.
+  if(method==='GET'&&key==='learning/verbs/history')
+    return output(res,200,await getVerbPracticeHistory(mustPlayer(req).id));
+  if(method==='POST'&&key==='learning/verbs/attempts'){
+    const userId=mustPlayer(req).id,payload=body(req,4096);
+    if(payload.expected_actor_id!==userId)
+      throw fail('Tài khoản đã thay đổi; không ghi kết quả sang người khác',409);
+    const saved=await saveVerbAttempt(userId,payload);
+    return output(res,saved.replayed?200:201,saved);
+  }
   // UX-24 Production requires two explicitly enabled release flags.
   // Preview flags cannot unlock Production.
   if(method==='GET'&&key==='learning/srs/queue'){
