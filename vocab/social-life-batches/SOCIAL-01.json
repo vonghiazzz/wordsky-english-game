@@ -113,13 +113,13 @@
       "ipa_quality": "PENDING"
     },
     {
-      "english": "It's great to finally meet",
-      "meaning": "Thật vui vì cuối cùng cũng được gặp nhau",
+      "english": "It's great to finally meet you",
+      "meaning": "Thật vui vì cuối cùng cũng được gặp bạn",
       "topic": "Everyday Conversation - Giao tiếp hằng ngày",
       "group_id": "social-introductions-and-smalltalk",
       "ipa": "",
-      "example": "It's great to finally meet.",
-      "translation": "Thật vui vì cuối cùng cũng được gặp nhau.",
+      "example": "It's great to finally meet you.",
+      "translation": "Thật vui vì cuối cùng cũng được gặp bạn.",
       "part_of_speech": "conversational utterance",
       "level": "A2",
       "review_status": "PROVISIONAL",
