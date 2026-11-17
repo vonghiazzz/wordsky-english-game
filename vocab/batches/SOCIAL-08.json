@@ -1264,13 +1264,13 @@
       "ipa_quality": "PENDING"
     },
     {
-      "english": "Is it within walking distance",
-      "meaning": "Có thể đi bộ tới đó không",
+      "english": "Can I reach it on foot from here",
+      "meaning": "Từ đây tôi có thể đi bộ tới đó được không",
       "topic": "Travel - Du lịch",
       "group_id": "transport-services-community-travel",
       "ipa": "",
-      "example": "Is it within walking distance.",
-      "translation": "Có thể đi bộ tới đó không.",
+      "example": "Can I reach it on foot from here.",
+      "translation": "Từ đây tôi có thể đi bộ tới đó được không.",
       "part_of_speech": "conversational utterance",
       "level": "A2",
       "review_status": "PROVISIONAL",
