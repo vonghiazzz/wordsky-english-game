@@ -10,7 +10,7 @@ export function findVerbEntries(query='',type='all'){
  if(!q)return candidates;
  const matching=candidates.filter(e=>[e.v1,e.v2,e.v3,e.meaning].some(value=>value.toLowerCase().includes(q)));
  return matching.sort((a,b)=>{
-  const rank=e=>e.v1===q?0:[e.v2,e.v3].some(x=>x.split(/\\s*\\/\\s*/).includes(q))?1:e.v1.startsWith(q)?2:3;
+  const rank=e=>e.v1===q?0:[e.v2,e.v3].some(x=>x.split(' / ').includes(q))?1:e.v1.startsWith(q)?2:3;
   return rank(a)-rank(b)||a.v1.localeCompare(b.v1,'en');
  });
 }
