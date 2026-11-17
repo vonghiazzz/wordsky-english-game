@@ -49,3 +49,24 @@
 Đối chiếu source: `docs/vocab-life01-editorial-qa.md`, `lib/vocab-life1000-gate.js`, `scripts/import-cefr-approved.js`, `lib/learning-progress.js`, `api/index.js`, `docs/manual-vercel-release-policy.md`, `WORDSKY_CURRENT_STATE.md` (sau khi PR #99 merge).
 
 **Bước tiếp theo duy nhất:** hoàn tất và ký xác nhận review LIFE-01 rồi thử import **trên Preview cô lập**. Không viết lại My Learning hoặc cố redeploy để tăng số từ.
+
+
+## ACTUAL RELEASE RECORD — 2026-11-17, 10:40 Asia/Ho_Chi_Minh
+
+**This section supersedes the pre-import BLOCKED table above for the database write only.** User explicitly requested filtering duplicates and adding the new words into My Learning. Import was performed directly via authenticated Supabase SQL on Production `ilyhbhoqswsioxxpuvcb`; no Vercel deployment or schema migration was performed.
+
+- Source Git blob `1c2dc5febb15688c4155ce8cb2eb923f0baa78e8` (`vocab/batches/LIFE-01.json`, main `caf487f`) — 100 DRAFT/PROVISIONAL candidate entries.
+- Rechecked Production immediately before insert: 365 words, 26 enabled topics, 0 active OPEN/LIVE events, 0 English collisions, 0 exact Vietnamese meaning collisions, both target topics enabled; SQL preview checks all zero problems.
+- Used one atomic PostgreSQL DO statement, locks on `ws_words` and `ws_events`, enforced 365 baseline and 100 clean records, `ON CONFLICT DO NOTHING` plus an exact-100 inserted assertion. Transaction fails as a whole if anything deviates.
+- Inserted 100 new enabled `ws_words`: **75 Daily Life**, **25 Home - Nhà cửa**, each `cefr_review_status='PROVISIONAL'` and candidate `cefr_level` retained; no invented reviewer signoff or APPROVED statuses.
+- Audit entry `ws_audit.id=469`, `action=vocabulary_life01_provisional_import`, containing source hash, before/after counts and **100 inserted UUIDs**. Audit record is database-side; do not duplicate personal data into docs.
+- Verified live Production `GET /api/learning/vocabulary` returns HTTP 200 and **465** words with example terms alarm, toothpaste, laundry.
+- Verified SQL **465 total / 465 enabled / 365 APPROVED / 100 PROVISIONAL**.
+- Account history counts before vs after: **160** shared progress rows, **237** shared review events, **161** SRS schedules, **4** users — unchanged at verification time; new word UUIDs initially have no history.
+- No Player account data, password, existing word UUID or review history was modified. No Vercel redeploy occurred.
+
+**Residual quality issues:** The independent IPA/bilingual and CEFR approval gates are **not complete** for the 100 items; all are correctly marked PROVISIONAL. Since MATCH/BOMB/MATRIX/MEMORY may include non-APPROVED words if eligible pools are short, this release may affect playable vocabulary, not just My Learning. A future explicit approval pass or approved-only game selection guard is warranted. Do not rewrite these rows to APPROVED without evidence.
+
+**Rollback rule:** Never truncate/DELETE user progress. If content is deemed unsuitable, use the 100 exact UUIDs in `ws_audit.id=469` to disable just these words (`enabled=false`) via reviewed transaction after checking for active games and any newly attached review history; preserve all old rows. Avoid blind rollback.
+
+**Next:** UAT My Learning refresh (same account, two browsers, pronunciation), editorial corrections + CEFR review, then consider LIFE-02 after dedicated topic gate. The legacy preflight script still intentionally reports publish approval false because editorial DRAFT is not independent approval.
