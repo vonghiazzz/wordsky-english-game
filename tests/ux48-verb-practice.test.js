@@ -21,11 +21,11 @@ test('UX48 answers support listed alternatives, not arbitrary strings',()=>{
  assert.equal(isVerbAnswerCorrect('gone','went'),false);
  assert.equal(isVerbAnswerCorrect('','went'),false);
 });
-test('UX48 quiz yields 10 unique prompts and alternating V2/V3, scope respected',()=>{
+test('UX48 quiz yields 10 unique prompts and rotating V1/V2/V3, scope respected',()=>{
  const q=createVerbQuiz({random:()=>0.5});
  assert.equal(q.length,10);
  assert.equal(new Set(q.map(x=>x.v1)).size,10);
- assert.deepEqual(q.map(x=>x.target),['v2','v3','v2','v3','v2','v3','v2','v3','v2','v3']);
+ assert.deepEqual(q.map(x=>x.target),['v1','v2','v3','v1','v2','v3','v1','v2','v3','v1']);
  assert.ok(createVerbQuiz({kind:'irregular',random:()=>0.3}).every(x=>x.v2!==undefined));
  assert.ok(createVerbQuiz({kind:'regular',random:()=>0.4}).every(x=>x.v3!==undefined));
 });
