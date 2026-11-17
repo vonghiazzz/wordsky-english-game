@@ -5,6 +5,7 @@ import {publicVocabularySummary} from './ux12-catalog-summary.js';
 import {SERVER_PROGRESS_KEY,SOURCE_PREFERENCE_KEY,parseServerProgress,serverCatalogView,saveServerProgress,loadCachedCatalog,validateAndCacheCatalog,lastPersonalSelection} from './ux15-dashboard-data.js';
 import {eligibleServerImports} from './ux16-account-import.js';
 import {buildUnifiedAccountView} from './ux19-unified-account.js';
+import {lookupVerbForms} from './verb-forms.js';
 export const VOCAB_KEY = 'wordsky_vocab_v2';
 export const LEARNED_KEY = 'wordsky_learned';
 const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -507,6 +508,21 @@ function boot() {
       reviewBtn.disabled = !!view.error || (isAccount && (accountSaving || unifiedSaving || busy));
       knownBtn.addEventListener('click', () => isUnified ? updateUnifiedCard(card, true) : isAccount ? updateAccountCard(card, true) : isServer ? updateServerCard(card,true) : updateCard(card,true));
       reviewBtn.addEventListener('click', () => isUnified ? updateUnifiedCard(card, false) : isAccount ? updateAccountCard(card, false) : isServer ? updateServerCard(card,false) : updateCard(card,false));
+      const forms=lookupVerbForms(card.english);
+      if(forms){
+        const details=node('details','ws46-verb-forms');
+        const summary=node('summary','','V1 · V2 · V3');
+        summary.setAttribute('aria-label','Xem ba dạng động từ '+forms.v1);
+        const grid=node('div','ws46-verb-grid');
+        for(const [label,value] of [['V1',forms.v1],['V2',forms.v2],['V3',forms.v3]]){
+          const cell=node('div','ws46-verb-cell');
+          cell.append(node('small','',label),node('strong','',value));
+          grid.append(cell);
+        }
+        details.append(summary,grid,node('small','ws46-verb-caption',
+          forms.kind==='irregular'?'Động từ bất quy tắc':'Động từ có quy tắc'));
+        meaning.append(details);
+      }
       const pronunciation = window.WordSkySpeech?.makeButton(card.english, true);
       if (pronunciation) actions.append(pronunciation);
       actions.append(knownBtn, reviewBtn);
