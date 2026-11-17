@@ -23,6 +23,6 @@ export function createVerbQuiz({kind='all',count=QUIZ_LENGTH,random=Math.random}
  }
  return shuffled.slice(0,Math.min(count,shuffled.length)).map((v,i)=>({
   index:i+1,v1:v.v1,v2:v.v2,v3:v.v3,meaning:v.meaning,
-  target:i%2===0?'v2':'v3'
+  target:['v1','v2','v3'][i%3]
  }));
 }
