@@ -75,6 +75,16 @@ const approvals=Object.freeze({
   meaning:'nhìn thấy',level:'A1',
   sense_source_url:'https://dictionary.cambridge.org/dictionary/learner-english/see',
   sense_source_id:'cambridge_learner_see_eyes_A1'
+ }),
+ 'find':Object.freeze({
+  meaning:'tìm thấy',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/find',
+  sense_source_id:'cambridge_learner_find_discover_searching_A1'
+ }),
+ 'learn':Object.freeze({
+  meaning:'học',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/learn',
+  sense_source_id:'cambridge_learner_learn_get_skill_A1'
  })
 });
 
