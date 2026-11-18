@@ -85,6 +85,16 @@ const approvals=Object.freeze({
   meaning:'học',level:'A1',
   sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/learn',
   sense_source_id:'cambridge_learner_learn_get_skill_A1'
+ }),
+ 'drink':Object.freeze({
+  meaning:'uống',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/drink',
+  sense_source_id:'cambridge_learner_drink_liquid_A1'
+ }),
+ 'have':Object.freeze({
+  meaning:'có',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/have',
+  sense_source_id:'cambridge_learner_have_own_A1'
  })
 });
 
