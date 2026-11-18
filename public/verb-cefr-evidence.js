@@ -1,6 +1,6 @@
 /* UX53A batch01: editorially matched English VERB headwords, Oxford 3000 (A1-B2).
  * Source: https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf
- * Exact verb POS labels checked against Oxford PDF page 1/11.
+ * Exact verb POS labels checked against Oxford PDF pages 1–2/11.
  * This is HEADWORD/POS level, NOT CEFR verification of a Vietnamese gloss,
  * individual sense, V2/V3 inflection, or a user's proficiency.
  * Unmatched words intentionally remain level=null and status='unreviewed'.
@@ -10,7 +10,7 @@ export const VERB_CEFR_SOURCE=Object.freeze({
  id:'oxford-3000-en-pos-cefr',
  url:"https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf",
  edition:'Oxford 3000 English, A1-B2 wordlist',
- evidence:'page 1/11, verb part-of-speech and CEFR label',
+ evidence:'pages 1–2/11, verb part-of-speech and CEFR label',
  scope:'headword-pos'
 });
 const evidence=Object.freeze({
