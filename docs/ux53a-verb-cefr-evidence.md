@@ -1,14 +1,14 @@
-# UX53A — CEFR evidence for verb dictionary (Batch 01)
+# UX53A — CEFR evidence for 300-verb dictionary
 
 ## State / scope
 - Catalog: 300 distinct V1 headwords, V2, V3, Vietnamese glosses.
-- **147** matched to **Oxford 3000 English edition, pages 1–3/11**, POS **verb**, at headword level (A1–B2).
-- **153** are `unreviewed`; `cefr.level=null` and `source_id=null`. Missing evidence is **not** interpreted as C1, B2, or "too advanced".
+- **197** matched to **Oxford 3000 English edition, pages 1–11/11**, POS **verb**, at headword level (A1–B2).
+- **103** are `unreviewed`; `cefr.level=null` and `source_id=null`. Missing evidence is **not** interpreted as C1, B2, or "too advanced".
 - Status `source_matched` means the English headword and verb POS align with the printed source, **not** that Vietnamese translation, particular verb sense, exact inflection difficulty, or an individual learner is evaluated.
 - No CEFR filter, SRS mutation, database change, or new learning-history writes in this batch.
 
 ## Source of truth
-- [Oxford 3000 English (PDF), pages 1–3](https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf)
+- [Oxford 3000 English (PDF), pages 1–11](https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf)
 - [Oxford overview: how levels are assigned](https://www.oxfordlearnersdictionaries.com/about/wordlists/oxford3000-5000.html)
 - Source evidence data: `public/verb-cefr-evidence.js`; lookup embedded read-only into `public/verb-dictionary.js`.
 
@@ -33,3 +33,10 @@
 - Coverage after batch: 147 source-matched / 153 unreviewed of 300; zero sense-level approved.
 - No training-level filter, account modification, SQL migration, or SRS change. 
 - Regression: `tests/ux53a-oxford-batch03.test.js`.
+
+## Batch 04 — Oxford source matches, release gate
+- 50 additional English **verb/POS** matches from the Oxford 3000 PDF, printed pages 6–11 (leave through visit).
+- Total 197/300 `source_matched` and 103/300 `unreviewed`; **zero approved sense-level CEFR records**. Missing is not assigned C1.
+- Full per-word regression in `tests/ux53a-oxford-batch04.test.js`.
+- This commit **does not** enable CEFR filtering or adaptivity and **does not** write user vocabulary, SRS or practice records.
+- Oxford's wordlist levels are attached at the English verb-headword level. A later editorial review of Vietnamese meanings and intended usage senses is required before UX53B.
