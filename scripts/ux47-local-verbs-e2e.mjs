@@ -67,7 +67,7 @@ for(const [label,engine] of tests){
    assert.ok(await page.evaluate(async (cue)=>{
     const {listVerbEntries}=await import('/verb-dictionary.js');
     const {getApprovedVerbCefrLevel}=await import('/verb-cefr-sense-review.js');
-    const match=cue.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\\?$/);
+    const match=cue.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\?$/);
     if(!match)return false;
     return listVerbEntries().some(v=>v['v'+match[1]]===match[2]&&
       getApprovedVerbCefrLevel(v.v1,v.meaning)==='A1');
