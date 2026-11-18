@@ -1,5 +1,8 @@
 # WordSky Arena V4 — Thi đấu tiếng Anh trực tuyến
 
+> **Để xem trạng thái WordSky mới nhất:** đọc [WORDSKY_CURRENT_STATE.md](WORDSKY_CURRENT_STATE.md). Phần nội dung V4 dưới đây là tài liệu lịch sử; các số liệu 260 từ và mô tả chưa triển khai production không phản ánh hệ thống hiện tại.
+
+
 > **Trạng thái: mã nguồn MVP / chưa triển khai production.** Bộ backend có hợp đồng API và game logic, giao diện responsive; **cần kết nối PostgreSQL, chạy migrations và seed, cấu hình admin + session, kiểm thử tích hợp đa thiết bị trước khi mở giải thật**. WordSky V3 production không bị thay đổi.
 
 ## 1. Phạm vi đã được triển khai trong V4
