@@ -37,10 +37,29 @@ const proposed=Object.freeze({
 // An Oxford headword grade alone never grants approval to an additional sense.
 const approvals=Object.freeze({
  'buy':Object.freeze({
-  meaning:'mua',
-  level:'A1',
+  meaning:'mua',level:'A1',
   sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/buy',
   sense_source_id:'cambridge_learner_buy_purchase_A1'
+ }),
+ 'eat':Object.freeze({
+  meaning:'ăn',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/dictionary/learner-english/eat',
+  sense_source_id:'cambridge_learner_eat_swallow_A1'
+ }),
+ 'go':Object.freeze({
+  meaning:'đi',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/dictionary/learner-english/go',
+  sense_source_id:'cambridge_learner_go_move_A1'
+ }),
+ 'read':Object.freeze({
+  meaning:'đọc',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/dictionary/learner-english/read',
+  sense_source_id:'cambridge_learner_read_words_A1'
+ }),
+ 'write':Object.freeze({
+  meaning:'viết',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/write',
+  sense_source_id:'cambridge_learner_write_words_A1'
  })
 });
 
