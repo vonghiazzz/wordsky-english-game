@@ -20,6 +20,17 @@ test('UX53B 20 reviewed candidates with twelve sourced and explicitly approved s
   assert.equal(getApprovedVerbCefrLevel(row.v1,row.meaning),['buy','come','drink','eat','find','go','have','know','learn','read','see','write'].includes(row.v1)?'A1':null,row.v1);
  }
  assert.equal(list.filter(r=>r.status==='approved').length,12);
+ for(const [v1,sourceId] of [
+  ['drink','cambridge_learner_drink_liquid_A1'],
+  ['have','cambridge_learner_have_own_A1']
+ ]){
+  const row=list.find(v=>v.v1===v1);
+  assert.equal(row.status,'approved',v1);
+  assert.equal(row.level,'A1',v1);
+  assert.equal(row.sense_source_id,sourceId,v1);
+  assert.equal(row.sense_source_url,'https://dictionary.cambridge.org/us/dictionary/learner-english/'+v1);
+  assert.equal(getApprovedVerbCefrLevel(v1,row.meaning+' khác'),null,v1);
+ }
  const buy=list.find(r=>r.v1==='buy');
  assert.equal(buy.sense_source_id,'cambridge_learner_buy_purchase_A1');
  assert.match(buy.sense_source_url,/dictionary\.cambridge\.org/);
