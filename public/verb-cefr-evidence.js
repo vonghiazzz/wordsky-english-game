@@ -1,9 +1,9 @@
-/* UX53A batches 01-05: editorially matched English VERB headwords, Oxford 3000 (A1-B2).
+/* UX53A batches 01-06: editorially matched English VERB headwords, Oxford 3000 (A1-B2) and Oxford 5000 extension (B2-C1).
  * Source: https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf
  * Exact verb POS labels checked against Oxford PDF pages 1–11/11.
  * This is HEADWORD/POS level, NOT CEFR verification of a Vietnamese gloss,
  * individual sense, V2/V3 inflection, or a user's proficiency.
- * Unmatched words intentionally remain level=null and status='unreviewed'.
+ * Exactly five unverified words remain level=null and status='unreviewed'.
  * Data is review evidence, NOT a production training eligibility decision.
  */
 export const VERB_CEFR_SOURCE=Object.freeze({
@@ -154,6 +154,7 @@ const evidence=Object.freeze({
   "hit": "A2",
   "hold": "A2",
   "hope": "A1",
+  "hurt": "A2",
   "identify": "A2",
   "imagine": "A1",
   "improve": "A1",
@@ -173,7 +174,10 @@ const evidence=Object.freeze({
   "lean": "B2",
   "learn": "A1",
   "leave": "A1",
+  "lend": "A2",
   "let": "A1",
+  "light": "A2",
+  "like": "A1",
   "listen": "A1",
   "live": "A1",
   "locate": "B1",
@@ -186,10 +190,12 @@ const evidence=Object.freeze({
   "mean": "A1",
   "meet": "A1",
   "mention": "A2",
+  "mistake": "B2",
   "move": "A1",
   "need": "A1",
   "notice": "A2",
   "observe": "B2",
+  "obtain": "B2",
   "offer": "A2",
   "open": "A1",
   "order": "A1",
@@ -199,6 +205,7 @@ const evidence=Object.freeze({
   "pass": "A2",
   "pay": "A1",
   "perform": "A2",
+  "plan": "A1",
   "play": "A1",
   "prepare": "A1",
   "promise": "A2",
@@ -208,8 +215,15 @@ const evidence=Object.freeze({
   "pull": "A2",
   "push": "A2",
   "put": "A1",
+  "quit": "B1",
+  "rain": "A1",
   "read": "A1",
+  "realize": "A2",
   "receive": "A2",
+  "recognize": "A2",
+  "recommend": "A2",
+  "reduce": "A2",
+  "refuse": "A2",
   "remember": "A1",
   "remind": "B1",
   "repair": "A2",
@@ -217,32 +231,52 @@ const evidence=Object.freeze({
   "reply": "A2",
   "return": "A1",
   "ride": "A1",
+  "ring": "A2",
+  "rise": "A2",
   "run": "A1",
   "save": "A2",
   "say": "A1",
   "see": "A1",
+  "seek": "B2",
   "sell": "A1",
   "send": "A1",
+  "set": "B1",
+  "shake": "A2",
   "share": "A1",
+  "shine": "B1",
+  "shoot": "B1",
   "show": "A1",
+  "shut": "A2",
+  "sing": "A1",
+  "sink": "B1",
   "sit": "A1",
   "sleep": "A1",
+  "slide": "B2",
+  "smile": "A2",
   "speak": "A1",
+  "speed": "B2",
   "spend": "A1",
+  "spread": "B1",
+  "spring": "B1",
   "stand": "A1",
   "start": "A1",
   "stay": "A1",
   "steal": "A2",
+  "stick": "B1",
   "stop": "A1",
+  "strike": "B2",
   "study": "A1",
   "support": "A2",
+  "swear": "B2",
   "sweep": "B2",
   "swim": "A1",
   "take": "A1",
   "talk": "A1",
   "teach": "A1",
+  "tear": "B2",
   "tell": "A1",
   "think": "A1",
+  "throw": "A2",
   "travel": "A1",
   "try": "A1",
   "turn": "A1",
@@ -262,10 +296,42 @@ const evidence=Object.freeze({
   "worry": "A2",
   "write": "A1"
 });
+/* Oxford 5000 extension is an independent source with B2 and C1 bands.
+ * Do not attribute advanced entries to the Oxford 3000 source.
+ */
+export const VERB_CEFR_ADVANCED_SOURCE=Object.freeze({
+ id:'oxford-5000-extension-en-pos-cefr',
+ url:'https://www.oxfordlearnersdictionaries.com/external/pdf/wordlists/oxford-3000-5000/The_Oxford_5000_by_CEFR_level.pdf',
+ edition:'Oxford 5000 English, additional B2-C1 words only',
+ evidence:'B2 section and C1 section, verb POS',
+ scope:'headword-pos'
+});
+const advancedEvidence=Object.freeze({
+  "forbid": "B2",
+  "overcome": "B2",
+  "spill": "B2",
+  "bind": "C1",
+  "bleed": "C1",
+  "burst": "C1",
+  "cling": "C1",
+  "creep": "C1",
+  "flee": "C1",
+  "grind": "C1",
+  "shrink": "C1",
+  "spin": "C1",
+  "swing": "C1",
+  "breed": "C1"
+});
 export function getVerbCefrEvidence(v1){
- const level=Object.hasOwn(evidence,v1)?evidence[v1]:null;
- if(!level)return {level:null,status:'unreviewed',source_id:null,source_url:null,scope:null};
- return {level,status:'source_matched',source_id:VERB_CEFR_SOURCE.id,
-  source_url:VERB_CEFR_SOURCE.url,scope:VERB_CEFR_SOURCE.scope};
+ const inCore=Object.hasOwn(evidence,v1);
+ const inAdvanced=Object.hasOwn(advancedEvidence,v1);
+ if(inCore&&inAdvanced)throw new Error('Duplicate CEFR source for '+v1);
+ if(!inCore&&!inAdvanced)return {level:null,status:'unreviewed',source_id:null,source_url:null,scope:null};
+ const source=inCore?VERB_CEFR_SOURCE:VERB_CEFR_ADVANCED_SOURCE;
+ return {level:inCore?evidence[v1]:advancedEvidence[v1],status:'source_matched',source_id:source.id,
+  source_url:source.url,scope:source.scope};
 }
-export function listVerbCefrMatches(){return Object.entries(evidence).map(([v1,level])=>({v1,level}));}
+export function listVerbCefrMatches(){
+ return [...Object.entries(evidence),...Object.entries(advancedEvidence)]
+  .map(([v1,level])=>({v1,level})).sort((a,b)=>a.v1.localeCompare(b.v1));
+}
