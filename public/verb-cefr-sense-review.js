@@ -60,6 +60,21 @@ const approvals=Object.freeze({
   meaning:'viết',level:'A1',
   sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/write',
   sense_source_id:'cambridge_learner_write_words_A1'
+ }),
+ 'come':Object.freeze({
+  meaning:'đến',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/dictionary/learner-english/come',
+  sense_source_id:'cambridge_learner_come_move_towards_A1'
+ }),
+ 'know':Object.freeze({
+  meaning:'biết',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/dictionary/learner-english/know',
+  sense_source_id:'cambridge_learner_know_information_A1'
+ }),
+ 'see':Object.freeze({
+  meaning:'nhìn thấy',level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/dictionary/learner-english/see',
+  sense_source_id:'cambridge_learner_see_eyes_A1'
  })
 });
 
