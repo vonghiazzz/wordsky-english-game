@@ -60,9 +60,9 @@ test('UX53A batch04 adds 50 distinct Oxford verb headword/POS CEFR labels',()=>{
  assert.equal(new Set(batch.map(([v1])=>v1)).size,50);
  const all=listVerbEntries(),evidence=listVerbCefrMatches();
  assert.equal(all.length,300);
- assert.equal(evidence.length,197);
- assert.equal(all.filter(v=>v.cefr.status==='source_matched').length,197);
- assert.equal(all.filter(v=>v.cefr.status==='unreviewed').length,103);
+ assert.ok(evidence.length>=197);
+ assert.equal(all.filter(v=>v.cefr.status==='source_matched').length,evidence.length);
+ assert.equal(all.filter(v=>v.cefr.status==='unreviewed').length,300-evidence.length);
  assert.equal(new Set(all.map(v=>v.v1)).size,300);
  for(const [v1,level] of batch){
   const word=all.find(v=>v.v1===v1);

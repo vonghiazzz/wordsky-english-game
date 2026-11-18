@@ -2,8 +2,8 @@
 
 ## State / scope
 - Catalog: 300 distinct V1 headwords, V2, V3, Vietnamese glosses.
-- **197** matched to **Oxford 3000 English edition, pages 1–11/11**, POS **verb**, at headword level (A1–B2).
-- **103** are `unreviewed`; `cefr.level=null` and `source_id=null`. Missing evidence is **not** interpreted as C1, B2, or "too advanced".
+- **247** matched to **Oxford 3000 English edition, pages 1–11/11**, POS **verb**, at headword level (A1–B2).
+- **53** are `unreviewed`; `cefr.level=null` and `source_id=null`. Missing evidence is **not** interpreted as C1, B2, or "too advanced".
 - Status `source_matched` means the English headword and verb POS align with the printed source, **not** that Vietnamese translation, particular verb sense, exact inflection difficulty, or an individual learner is evaluated.
 - No CEFR filter, SRS mutation, database change, or new learning-history writes in this batch.
 
@@ -40,3 +40,9 @@
 - Full per-word regression in `tests/ux53a-oxford-batch04.test.js`.
 - This commit **does not** enable CEFR filtering or adaptivity and **does not** write user vocabulary, SRS or practice records.
 - Oxford's wordlist levels are attached at the English verb-headword level. A later editorial review of Vietnamese meanings and intended usage senses is required before UX53B.
+
+## Batch 05 — Oxford 3000 source matches
+- 50 additional English verb/POS CEFR labels, verified against Oxford 3000 PDF (pages 5–11); all entries belong to the 300-verb WordSky dictionary.
+- Source-matched coverage: **247/300**; explicitly unreviewed: **53/300**.
+- `source_matched` remains an English headword/POS reference, not CEFR approval for a Vietnamese translation or usage sense.
+- No new CEFR filter, no database migration, no account/SRS mutation; QA: `tests/ux53a-oxford-batch05.test.js`.
