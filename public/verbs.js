@@ -60,11 +60,31 @@ function beginQuestions(items,mode='full'){
  $('ws48Quiz').hidden=false;
  showQuestion();
 }
+const ws54Level=$('ws54Level'),ws54Availability=$('ws54Availability');
+function selectedQuizOptions(){
+ const level=ws54Level.value;
+ return {kind:$('ws48Kind').value,...(level==='all'?{}:{cefrLevel:level})};
+}
+function refreshQuizAvailability(){
+ const available=createVerbQuiz({...selectedQuizOptions(),count:listVerbEntries().length,random:()=>0}).length;
+ const canStart=available>=10;
+ $('ws48Start').disabled=!canStart;
+ ws54Availability.textContent=canStart
+  ?(ws54Level.value==='all'?'Có '+available+' động từ trong nhóm đã chọn.':'Có '+available+' động từ '+ws54Level.value+' đã kiểm duyệt cho nhóm này.')+' Mỗi lượt gồm 10 câu.'
+  :'Chỉ có '+available+' động từ phù hợp; cần ít nhất 10 để bắt đầu. Hãy chọn nhóm khác hoặc Tất cả cấp độ.';
+}
 function startQuiz(){
- beginQuestions(createVerbQuiz({kind:$('ws48Kind').value}));
+ refreshQuizAvailability();
+ if($('ws48Start').disabled)return;
+ const items=createVerbQuiz(selectedQuizOptions());
+ if(items.length!==10){refreshQuizAvailability();return}
+ beginQuestions(items);
  $('ws48Start').textContent='Làm bài mới 10 câu';
 }
+$('ws48Kind').addEventListener('change',refreshQuizAvailability);
+ws54Level.addEventListener('change',refreshQuizAvailability);
 $('ws48Start').addEventListener('click',startQuiz);
+refreshQuizAvailability();
 $('ws48Form').addEventListener('submit',e=>{
  e.preventDefault();if(answered)return;
  const q=questions[questionIndex];
