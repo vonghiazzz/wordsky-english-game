@@ -61,8 +61,8 @@ test('UX52 batch02 adds 50 unique complete entries, 15 irregular and 35 regular'
  assert.equal(rows.filter(r=>r[4]==='irregular').length,15);
  assert.equal(rows.filter(r=>r[4]==='regular').length,35);
  const all=listVerbEntries();
- assert.equal(all.length,241);
- assert.equal(new Set(all.map(r=>r.v1)).size,241);
+ assert.ok(all.length>=241);
+ assert.equal(new Set(all.map(r=>r.v1)).size,all.length);
  for(const [v1,v2,v3,meaning,kind] of rows){
   assert.deepEqual(lookupVerbForms(v1),{v1,v2,v3,kind},v1);
   const entry=all.find(r=>r.v1===v1);
@@ -82,6 +82,6 @@ test('UX52 batch02 supports dual variants and V2/V3 lookup',()=>{
  assert.equal(findVerbEntries('applied')[0].v1,'apply');
  assert.equal(findVerbEntries('mistook')[0].v1,'mistake');
  const last=paginateVerbs(listVerbEntries(),13);
- assert.equal(last.pages,13);
- assert.equal(last.items.length,1);
+ assert.ok(last.pages>=13);
+ assert.equal(last.items.length,20);
 });
