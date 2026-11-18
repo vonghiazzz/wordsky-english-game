@@ -28,13 +28,13 @@ test('UX53A batch01: at least 47 Oxford headword-POS matches, with no invented C
  }
 });
 test('UX53A selected Oxford verb/POS anchors match specific grade; sense is NOT approved',()=>{
- const checks={be:'A1',go:null,buy:'A1',begin:'A1',accept:'A2',achieve:'A2',
+ const checks={be:'A1',go:'A1',buy:'A1',begin:'A1',accept:'A2',achieve:'A2',
   adapt:'B2',admire:'B1',advise:'B1',approve:'B2',broadcast:'B2',call:'A1',
   borrow:'A2',beat:'A2',book:'A2',arise:'B2',belong:'A2'};
  for(const [v1,level] of Object.entries(checks))assert.equal(getVerbCefrEvidence(v1).level,level,v1);
  assert.ok(!Object.values(getVerbCefrEvidence('be')).includes('approved'));
  assert.equal(findVerbEntries('went')[0].v1,'go');
- assert.equal(findVerbEntries('went')[0].cefr.level,null,'unreviewed words stay unreviewed');
+ assert.equal(findVerbEntries('went')[0].cefr.level,'A1','V2 resolves the sourced V1 CEFR');
 });
 test('UX53A preserves 10-question V1/V2/V3 quiz sampling and does not mutate SRS',()=>{
  const q=createVerbQuiz({random:()=>0.5});
