@@ -45,6 +45,37 @@ for(const [label,engine] of tests){
    await page.locator('#ws47Search').fill('');
    await page.waitForFunction(()=>document.querySelector('#ws51Status')?.textContent.includes('Đăng nhập'));
    assert.match(await page.locator('#ws51Status').innerText(),/Đăng nhập/);
+   // UX54 browser acceptance: selected CEFR requires a sufficiently large,
+   // sense-reviewed pool; other levels never silently fall back to all verbs.
+   assert.equal(await page.locator('#ws54Level').inputValue(),'all');
+   for(const level of ['A2','B1','B2','C1']){
+    assert.equal(await page.locator('#ws54Level option[value="'+level+'"]').evaluate(option=>option.disabled),true);
+   }
+   await page.locator('#ws54Level').selectOption('A1');
+   assert.match(await page.locator('#ws54Availability').innerText(),/12 động từ A1 đã kiểm duyệt/);
+   assert.equal(await page.locator('#ws48Start').isEnabled(),true);
+   await page.locator('#ws48Kind').selectOption('regular');
+   assert.match(await page.locator('#ws54Availability').innerText(),/Chỉ có 1 động từ/);
+   assert.equal(await page.locator('#ws48Start').isDisabled(),true);
+   await page.locator('#ws48Kind').selectOption('irregular');
+   assert.match(await page.locator('#ws54Availability').innerText(),/11 động từ A1 đã kiểm duyệt/);
+   assert.equal(await page.locator('#ws48Start').isEnabled(),true);
+   await page.locator('#ws48Kind').selectOption('all');
+   await page.locator('#ws48Start').click();
+   assert.match(await page.locator('#ws48Progress').innerText(),/Câu 1 \/ 10/);
+   const approvedCue=await page.locator('#ws48Question').innerText();
+   assert.ok(await page.evaluate(async (cue)=>{
+    const {listVerbEntries}=await import('/verb-dictionary.js');
+    const {getApprovedVerbCefrLevel}=await import('/verb-cefr-sense-review.js');
+    const match=cue.match(/^V(1|2): (.+) → (V1|V2|V3) là gì\?$/);
+    if(!match)return false;
+    return listVerbEntries().some(v=>v['v'+match[1]]===match[2]&&
+      getApprovedVerbCefrLevel(v.v1,v.meaning)==='A1');
+   },approvedCue),'A1 question must be from reviewed pool');
+   await page.locator('#ws54Level').selectOption('all');
+   await page.locator('#ws48Kind').selectOption('all');
+   assert.equal(await page.locator('#ws48Start').isEnabled(),true);
+   assert.match(await page.locator('#ws54Availability').innerText(),/300 động từ trong nhóm/);
    await page.locator('#ws48Start').click();
    assert.ok(await page.locator('#ws48Quiz').isVisible());
    for(let number=1;number<=10;number++){
