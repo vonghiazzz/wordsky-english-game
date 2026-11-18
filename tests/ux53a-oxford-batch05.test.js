@@ -59,9 +59,9 @@ test('UX53A batch05 has 50 distinct sourced CEFR verb POS matches',()=>{
  assert.equal(new Set(verified.map(row=>row[0])).size,50);
  const catalog=listVerbEntries(), sourced=listVerbCefrMatches();
  assert.equal(catalog.length,300);
- assert.equal(sourced.length,247);
- assert.equal(catalog.filter(v=>v.cefr.status==='source_matched').length,247);
- assert.equal(catalog.filter(v=>v.cefr.status==='unreviewed').length,53);
+ assert.ok(sourced.length>=247);
+ assert.equal(catalog.filter(v=>v.cefr.status==='source_matched').length,sourced.length);
+ assert.equal(catalog.filter(v=>v.cefr.status==='unreviewed').length,300-sourced.length);
  assert.equal(new Set(catalog.map(v=>v.v1)).size,300);
  for(const [v1,level] of verified){
   const word=catalog.find(v=>v.v1===v1);
@@ -74,7 +74,7 @@ test('UX53A batch05 has 50 distinct sourced CEFR verb POS matches',()=>{
  }
 });
 test('UX53A batch05 does not infer unverified grade or approve training',()=>{
- assert.equal(getVerbCefrEvidence('forbid').level,null);
+ assert.equal(getVerbCefrEvidence('kneel').level,null);
  assert.equal(getVerbCefrEvidence('unknown').status,'unreviewed');
  assert.equal(listVerbEntries().filter(v=>v.cefr.status==='approved').length,0);
 });

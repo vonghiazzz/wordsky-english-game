@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {listVerbEntries,findVerbEntries} from '../public/verb-dictionary.js';
-import {listVerbCefrMatches,getVerbCefrEvidence,VERB_CEFR_SOURCE} from '../public/verb-cefr-evidence.js';
+import {listVerbCefrMatches,getVerbCefrEvidence,VERB_CEFR_SOURCE,VERB_CEFR_ADVANCED_SOURCE} from '../public/verb-cefr-evidence.js';
 import {createVerbQuiz} from '../public/verb-practice-core.js';
 
 test('UX53A batch01: at least 47 Oxford headword-POS matches, with no invented CEFR',()=>{
@@ -12,15 +12,15 @@ test('UX53A batch01: at least 47 Oxford headword-POS matches, with no invented C
  assert.equal(all.filter(v=>v.cefr.status==='source_matched').length,matched.length);
  assert.equal(all.filter(v=>v.cefr.status==='unreviewed').length,300-matched.length);
  assert.equal(all.filter(v=>v.cefr.level===null).length,300-matched.length);
- assert.deepEqual(new Set(matched.map(v=>v.level)).size,4);
+ assert.deepEqual(new Set(matched.map(v=>v.level)).size,5);
  assert.match(VERB_CEFR_SOURCE.url,/oxfordlearnersdictionaries\.com/);
  assert.equal(VERB_CEFR_SOURCE.scope,'headword-pos');
  for(const v of all){
   assert.deepEqual(v.cefr,getVerbCefrEvidence(v.v1));
   if(v.cefr.status==='source_matched'){
-   assert.ok(['A1','A2','B1','B2'].includes(v.cefr.level));
+   assert.ok(['A1','A2','B1','B2','C1'].includes(v.cefr.level));
    assert.equal(v.cefr.scope,'headword-pos');
-   assert.equal(v.cefr.source_url,VERB_CEFR_SOURCE.url);
+   assert.ok([VERB_CEFR_SOURCE.url,VERB_CEFR_ADVANCED_SOURCE.url].includes(v.cefr.source_url));
   }else{
    assert.equal(v.cefr.level,null);
    assert.equal(v.cefr.source_id,null);

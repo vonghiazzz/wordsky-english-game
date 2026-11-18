@@ -78,5 +78,5 @@ test('UX53A batch04 never treats source match as meaning-level approval or SRS a
  const all=listVerbEntries();
  assert.equal(all.filter(v=>v.cefr.status==='approved').length,0);
  assert.equal(getVerbCefrEvidence('unknown').status,'unreviewed');
- assert.equal(getVerbCefrEvidence('forbid').level,null);
+ assert.equal(getVerbCefrEvidence('kneel').level,null);
 });
