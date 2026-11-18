@@ -2,13 +2,13 @@
 
 ## State / scope
 - Catalog: 300 distinct V1 headwords, V2, V3, Vietnamese glosses.
-- **47** matched to **Oxford 3000 English edition, page 1/11**, POS **verb**, at headword level (A1–B2).
+- **47** matched to **Oxford 3000 English edition, pages 1–2/11**, POS **verb**, at headword level (A1–B2).
 - **253** are `unreviewed`; `cefr.level=null` and `source_id=null`. Missing evidence is **not** interpreted as C1, B2, or "too advanced".
 - Status `source_matched` means the English headword and verb POS align with the printed source, **not** that Vietnamese translation, particular verb sense, exact inflection difficulty, or an individual learner is evaluated.
 - No CEFR filter, SRS mutation, database change, or new learning-history writes in this batch.
 
 ## Source of truth
-- [Oxford 3000 English (PDF), page 1](https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf)
+- [Oxford 3000 English (PDF), pages 1–2](https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf)
 - [Oxford overview: how levels are assigned](https://www.oxfordlearnersdictionaries.com/about/wordlists/oxford3000-5000.html)
 - Source evidence data: `public/verb-cefr-evidence.js`; lookup embedded read-only into `public/verb-dictionary.js`.
 
