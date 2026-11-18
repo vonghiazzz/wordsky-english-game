@@ -1,6 +1,6 @@
-/* UX53A batches 01-02: editorially matched English VERB headwords, Oxford 3000 (A1-B2).
+/* UX53A batches 01-03: editorially matched English VERB headwords, Oxford 3000 (A1-B2).
  * Source: https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf
- * Exact verb POS labels checked against Oxford PDF pages 1–3/11.
+ * Exact verb POS labels checked against Oxford PDF pages 1–6/11.
  * This is HEADWORD/POS level, NOT CEFR verification of a Vietnamese gloss,
  * individual sense, V2/V3 inflection, or a user's proficiency.
  * Unmatched words intentionally remain level=null and status='unreviewed'.
@@ -10,7 +10,7 @@ export const VERB_CEFR_SOURCE=Object.freeze({
  id:'oxford-3000-en-pos-cefr',
  url:"https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf",
  edition:'Oxford 3000 English, A1-B2 wordlist',
- evidence:'pages 1–3/11, verb part-of-speech and CEFR label',
+ evidence:'pages 1–6/11, verb part-of-speech and CEFR label',
  scope:'headword-pos'
 });
 const evidence=Object.freeze({
@@ -110,7 +110,57 @@ const evidence=Object.freeze({
   "draw": "A1",
   "dream": "A2",
   "drink": "A1",
-  "drive": "A1"
+  "drive": "A1",
+  "earn": "A2",
+  "eat": "A1",
+  "educate": "B1",
+  "encourage": "B1",
+  "enjoy": "A1",
+  "enter": "A2",
+  "exchange": "B1",
+  "exist": "A2",
+  "expect": "A2",
+  "explain": "A1",
+  "express": "A2",
+  "fail": "A2",
+  "fall": "A1",
+  "feed": "A2",
+  "feel": "A1",
+  "fight": "A2",
+  "fill": "A1",
+  "find": "A1",
+  "finish": "A1",
+  "fix": "A2",
+  "fly": "A1",
+  "follow": "A1",
+  "forget": "A1",
+  "forgive": "B2",
+  "form": "A1",
+  "freeze": "B1",
+  "gather": "B1",
+  "get": "A1",
+  "give": "A1",
+  "go": "A1",
+  "greet": "A2",
+  "grow": "A1",
+  "guess": "A1",
+  "handle": "B2",
+  "hang": "B1",
+  "happen": "A1",
+  "have": "A1",
+  "hear": "A1",
+  "hide": "A2",
+  "hit": "A2",
+  "hold": "A2",
+  "hope": "A1",
+  "join": "A1",
+  "jump": "A2",
+  "keep": "A1",
+  "know": "A1",
+  "lay": "B1",
+  "lead": "A2",
+  "lean": "B2",
+  "learn": "A1"
 });
 export function getVerbCefrEvidence(v1){
  const level=Object.hasOwn(evidence,v1)?evidence[v1]:null;

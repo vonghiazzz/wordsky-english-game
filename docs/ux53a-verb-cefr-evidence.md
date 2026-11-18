@@ -2,8 +2,8 @@
 
 ## State / scope
 - Catalog: 300 distinct V1 headwords, V2, V3, Vietnamese glosses.
-- **97** matched to **Oxford 3000 English edition, pages 1–3/11**, POS **verb**, at headword level (A1–B2).
-- **203** are `unreviewed`; `cefr.level=null` and `source_id=null`. Missing evidence is **not** interpreted as C1, B2, or "too advanced".
+- **147** matched to **Oxford 3000 English edition, pages 1–3/11**, POS **verb**, at headword level (A1–B2).
+- **153** are `unreviewed`; `cefr.level=null` and `source_id=null`. Missing evidence is **not** interpreted as C1, B2, or "too advanced".
 - Status `source_matched` means the English headword and verb POS align with the printed source, **not** that Vietnamese translation, particular verb sense, exact inflection difficulty, or an individual learner is evaluated.
 - No CEFR filter, SRS mutation, database change, or new learning-history writes in this batch.
 
@@ -27,3 +27,9 @@
 - Batch-02 CEFR labels remain review evidence and are not displayed as approved learning levels.
 - Existing user SRS scheduling, XP, and quiz sampling remain unchanged.
 - The dictionary remains 300 entries; 203 remain intentionally unreviewed.
+
+## Batch 03 — Oxford English verb/POS evidence
+- 50 further verbs (earn through learn) checked against Oxford 3000 English PDF printed pages 4–6/11.
+- Coverage after batch: 147 source-matched / 153 unreviewed of 300; zero sense-level approved.
+- No training-level filter, account modification, SQL migration, or SRS change. 
+- Regression: `tests/ux53a-oxford-batch03.test.js`.
