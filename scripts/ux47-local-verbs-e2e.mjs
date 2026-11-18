@@ -49,7 +49,7 @@ for(const [label,engine] of tests){
    // sense-reviewed pool; other levels never silently fall back to all verbs.
    assert.equal(await page.locator('#ws54Level').inputValue(),'all');
    for(const level of ['A2','B1','B2','C1']){
-    assert.equal(await page.locator('#ws54Level option[value="'+level+'"]').isDisabled(),true);
+    assert.equal(await page.locator('#ws54Level option[value="'+level+'"]').evaluate(option=>option.disabled),true);
    }
    await page.locator('#ws54Level').selectOption('A1');
    assert.match(await page.locator('#ws54Availability').innerText(),/12 động từ A1 đã kiểm duyệt/);
