@@ -5,7 +5,7 @@ import {findVerbEntries,listVerbEntries} from '../public/verb-dictionary.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('UX47 curated dictionary has meanings and V1/V2/V3 for every entry',()=>{
  const all=listVerbEntries();
- assert.equal(all.length,191);
+ assert.equal(all.length,241);
  assert.equal(new Set(all.map(v=>v.v1)).size,all.length);
  for(const v of all){
   assert.ok(v.v1&&v.v2&&v.v3&&v.meaning,'Missing verb form/translation');

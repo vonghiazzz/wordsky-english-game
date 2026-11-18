@@ -17,14 +17,14 @@ for(const [label,engine] of tests){
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    const response=await page.goto(BASE+'/verbs.html',{waitUntil:'domcontentloaded'});
    assert.equal(response.status(),200);
-   await page.waitForFunction(()=>document.querySelector('#ws47Count')?.textContent.includes('191'));
+   await page.waitForFunction(()=>document.querySelector('#ws47Count')?.textContent.includes('241'));
    assert.equal(await page.locator('#ws47Rows tr').count(),20);
-   assert.match(await page.locator('#ws47Showing').innerText(),/Trang 1 \/ 10/);
+   assert.match(await page.locator('#ws47Showing').innerText(),/Trang 1 \/ 13/);
    await page.locator('#ws48Next').click();
    assert.equal(await page.locator('#ws47Rows tr').count(),20);
-   assert.match(await page.locator('#ws47Showing').innerText(),/Trang 2 \/ 10/);
+   assert.match(await page.locator('#ws47Showing').innerText(),/Trang 2 \/ 13/);
    await page.locator('#ws48Prev').click();
-   assert.match(await page.locator('#ws47Showing').innerText(),/Trang 1 \/ 10/);
+   assert.match(await page.locator('#ws47Showing').innerText(),/Trang 1 \/ 13/);
    await page.locator('#ws47Search').fill('went');
    assert.equal(await page.locator('#ws47Rows tr').count(),1);
    const onlyRow=await page.locator('#ws47Rows tr').innerText();

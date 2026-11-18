@@ -62,8 +62,8 @@ test('UX52 batch01 has exactly 50 unique new V1/V2/V3/VI entries',()=>{
  assert.equal(rows.length,50);
  assert.equal(new Set(rows.map(r=>r[0])).size,50);
  const catalog=listVerbEntries();
- assert.equal(catalog.length,191);
- assert.equal(new Set(catalog.map(r=>r.v1)).size,191);
+ assert.ok(catalog.length>=191);
+ assert.equal(new Set(catalog.map(r=>r.v1)).size,catalog.length);
  for(const [v1,v2,v3,meaning] of rows){
   const found=catalog.find(r=>r.v1===v1);
   assert.ok(found,'missing headword '+v1);
@@ -82,6 +82,6 @@ test('UX52 inflected lookup and alternate past forms are accepted',()=>{
  assert.ok(isVerbAnswerCorrect('dreamed','dreamt / dreamed'));
  assert.equal(isVerbAnswerCorrect('dreamt','dreamt / dreamed'),true);
  assert.equal(isVerbAnswerCorrect('dreaming','dreamt / dreamed'),false);
- assert.equal(paginateVerbs(listVerbEntries(),10).items.length,11);
+ assert.equal(paginateVerbs(listVerbEntries(),10).items.length,20);
  assert.equal(createVerbQuiz({kind:'irregular',random:()=>0.42}).length,10);
 });
