@@ -1,6 +1,6 @@
-/* UX53A batch01: editorially matched English VERB headwords, Oxford 3000 (A1-B2).
+/* UX53A batches 01-02: editorially matched English VERB headwords, Oxford 3000 (A1-B2).
  * Source: https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf
- * Exact verb POS labels checked against Oxford PDF pages 1–2/11.
+ * Exact verb POS labels checked against Oxford PDF pages 1–3/11.
  * This is HEADWORD/POS level, NOT CEFR verification of a Vietnamese gloss,
  * individual sense, V2/V3 inflection, or a user's proficiency.
  * Unmatched words intentionally remain level=null and status='unreviewed'.
@@ -10,7 +10,7 @@ export const VERB_CEFR_SOURCE=Object.freeze({
  id:'oxford-3000-en-pos-cefr',
  url:"https://www.oxfordlearnersdictionaries.com/us/external/pdf/wordlists/oxford-3000-5000/The_Oxford_3000.pdf",
  edition:'Oxford 3000 English, A1-B2 wordlist',
- evidence:'pages 1–2/11, verb part-of-speech and CEFR label',
+ evidence:'pages 1–3/11, verb part-of-speech and CEFR label',
  scope:'headword-pos'
 });
 const evidence=Object.freeze({
@@ -60,7 +60,57 @@ const evidence=Object.freeze({
   "build": "A1",
   "burn": "A2",
   "buy": "A1",
-  "call": "A1"
+  "call": "A1",
+  "carry": "A1",
+  "catch": "A2",
+  "celebrate": "A2",
+  "change": "A1",
+  "charge": "B1",
+  "check": "A1",
+  "choose": "A1",
+  "clean": "A1",
+  "close": "A1",
+  "collect": "A2",
+  "come": "A1",
+  "communicate": "A2",
+  "compare": "A1",
+  "complain": "A2",
+  "complete": "A1",
+  "concentrate": "B1",
+  "confirm": "B1",
+  "connect": "A2",
+  "consider": "A2",
+  "contact": "B1",
+  "continue": "A2",
+  "cook": "A1",
+  "copy": "A2",
+  "cost": "A1",
+  "count": "A2",
+  "cover": "A2",
+  "create": "A1",
+  "cut": "A1",
+  "damage": "B1",
+  "dance": "A1",
+  "deal": "A2",
+  "decide": "A1",
+  "decorate": "B1",
+  "decrease": "B2",
+  "deliver": "B1",
+  "demand": "B2",
+  "depend": "A2",
+  "describe": "A1",
+  "design": "A1",
+  "destroy": "A2",
+  "develop": "A2",
+  "dig": "B2",
+  "discover": "A2",
+  "discuss": "A1",
+  "divide": "B1",
+  "do": "A1",
+  "draw": "A1",
+  "dream": "A2",
+  "drink": "A1",
+  "drive": "A1"
 });
 export function getVerbCefrEvidence(v1){
  const level=Object.hasOwn(evidence,v1)?evidence[v1]:null;
