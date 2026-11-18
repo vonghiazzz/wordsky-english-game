@@ -22,3 +22,8 @@
 - Add 50 verbs from Oxford 3000 PDF, printed pages 2–3/11 (carry through drive).
 - Total source matches: 97/300; unreviewed: 203/300. Every item remains `source_matched`, not `approved`.
 - Batch 02 tests: `tests/ux53a-oxford-batch02.test.js`.
+
+## PR #115 validation gate
+- Batch-02 CEFR labels remain review evidence and are not displayed as approved learning levels.
+- Existing user SRS scheduling, XP, and quiz sampling remain unchanged.
+- The dictionary remains 300 entries; 203 remain intentionally unreviewed.
