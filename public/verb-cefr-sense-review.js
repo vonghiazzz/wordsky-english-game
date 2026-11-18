@@ -1,4 +1,4 @@
-/* UX53B phase 1 — proposed verb-sense review, not training approval.
+/* UX53B phase 2 — explicit source-backed sense approval, no UI rollout.
  * Oxford 3000/5000 levels describe English verb headword/POS; Vietnamese gloss
  * sense eligibility is independently reviewed and explicitly approved later.
  * Fail closed: only 'approved' exact-meaning records can enter CEFR quizzes.
@@ -32,16 +32,28 @@ const proposed=Object.freeze({
  'take':'lấy, mang',
  'write':'viết'
 });
-const approvals=Object.freeze({}); // UX53B release gate: no approved sense labels yet.
+// Only senses explicitly verified against a learner dictionary may be approved.
+// Cambridge Learner's Dictionary marks the payment/purchase sense of buy as A1.
+// An Oxford headword grade alone never grants approval to an additional sense.
+const approvals=Object.freeze({
+ 'buy':Object.freeze({
+  meaning:'mua',
+  level:'A1',
+  sense_source_url:'https://dictionary.cambridge.org/us/dictionary/learner-english/buy',
+  sense_source_id:'cambridge_learner_buy_purchase_A1'
+ })
+});
 
 export function getVerbCefrSenseReview(v1,meaning){
  const proposedMeaning=Object.hasOwn(proposed,v1)?proposed[v1]:null;
  const source=getVerbCefrEvidence(v1);
  if(!proposedMeaning||proposedMeaning!==meaning||!source.level)
   return {status:'unreviewed',level:null,source_id:null};
- const approved=Object.hasOwn(approvals,v1)&&approvals[v1]===meaning;
+ const record=Object.hasOwn(approvals,v1)?approvals[v1]:null;
+ const approved=!!record&&record.meaning===meaning&&record.level===source.level&&!!record.sense_source_url;
  return {status:approved?'approved':'proposed',
-  level:source.level,source_id:source.source_id};
+  level:source.level,source_id:source.source_id,
+  ...(approved?{sense_source_id:record.sense_source_id,sense_source_url:record.sense_source_url}:{})};
 }
 export function getApprovedVerbCefrLevel(v1,meaning){
  const review=getVerbCefrSenseReview(v1,meaning);
