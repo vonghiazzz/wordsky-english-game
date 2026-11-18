@@ -63,7 +63,7 @@ test('UX52 batch01 has exactly 50 unique new V1/V2/V3/VI entries',()=>{
  assert.equal(new Set(rows.map(r=>r[0])).size,50);
  const catalog=listVerbEntries();
  assert.ok(catalog.length>=191);
- assert.equal(new Set(catalog.map(r=>r.v1)).size,191);
+ assert.equal(new Set(catalog.map(r=>r.v1)).size,catalog.length);
  for(const [v1,v2,v3,meaning] of rows){
   const found=catalog.find(r=>r.v1===v1);
   assert.ok(found,'missing headword '+v1);
