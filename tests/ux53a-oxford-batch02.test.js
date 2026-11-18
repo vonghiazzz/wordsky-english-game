@@ -73,7 +73,7 @@ test('UX53A batch02 has 50 new non-duplicate Oxford verb/POS labels',()=>{
  }
 });
 test('UX53A evidence remains non-approved and never predicts CEFR for other words',()=>{
- assert.equal(getVerbCefrEvidence('forgive').level,null);
+ assert.equal(getVerbCefrEvidence('forbid').level,null);
  assert.equal(getVerbCefrEvidence('unknown').status,'unreviewed');
  const all=listVerbEntries();
  assert.equal(all.filter(v=>v.cefr.status==='approved').length,0);
