@@ -20,6 +20,10 @@ export function srsReviewCards(payload,actorId){
      typeof word.english!=='string'||typeof word.topic!=='string')
    throw Error('Dữ liệu thẻ SRS không hợp lệ.');
  }
+ // Render below dereferences summary even if the daily card is hidden.
+ // Reject absent, inconsistent, or cross-account totals before committing
+ // the response to UI state; never leave a partial My Learning view.
+ dailyPlanFromSrsQueue(payload,actorId);
  return payload;
 }
 export function srsActionLabels(status){

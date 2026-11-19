@@ -11,7 +11,8 @@ test('UX24C queue URL safely encodes topic and pagination',()=>{
  assert.equal(srsQuery({topic:'Food & Drinks'}).includes('Food+%26+Drinks'),true);
 });
 test('UX24C rejects a mismatched actor and invalid version without personal data leakage',()=>{
- const data={scope:'account-srs',actor_id:user,total:1,topics:['Daily Life'],words:[
+ const data={scope:'account-srs',actor_id:user,total:1,topics:['Daily Life'],
+  summary:{due:1,new:0,upcoming:0,total:1},words:[
   {source:'shared',id:word,topic:'Daily Life',english:'wake',status:'due',review_count:1}
  ]};
  assert.equal(srsReviewCards(data,user),data);
