@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "source": "Production ws_words + ws_topics public lexical fields, read-only snapshot 2026-11-19",
+  "scope": "public-shared-vocabulary-only",
+  "status": "REVIEW_REQUIRED_NOT_APPROVED_CORRECTION",
+  "cards": [
+    {
+      "source": "shared",
+      "topic": "School - Trường học",
+      "english": "assess",
+      "meaning": "đánh giá",
+      "cefr": "B2",
+      "review_status": "APPROVED",
+      "example": "The teacher will assess our progress."
+    },
+    {
+      "source": "shared",
+      "topic": "School - Trường học",
+      "english": "evaluate",
+      "meaning": "đánh giá",
+      "cefr": "C1",
+      "review_status": "APPROVED",
+      "example": "We must evaluate the results carefully."
+    },
+    {
+      "source": "shared",
+      "topic": "Numbers - Số đếm",
+      "english": "five",
+      "meaning": "Năm",
+      "cefr": "A1",
+      "review_status": "APPROVED",
+      "example": "She has five books."
+    },
+    {
+      "source": "shared",
+      "topic": "Time & Dates - Thời gian",
+      "english": "year",
+      "meaning": "Năm",
+      "cefr": "A1",
+      "review_status": "APPROVED",
+      "example": "I learn English this year."
+    },
+    {
+      "source": "shared",
+      "topic": "Adjectives - Tính từ",
+      "english": "significant",
+      "meaning": "đáng kể",
+      "cefr": "B2",
+      "review_status": "APPROVED",
+      "example": "There was a significant improvement."
+    },
+    {
+      "source": "shared",
+      "topic": "Adjectives - Tính từ",
+      "english": "substantial",
+      "meaning": "đáng kể",
+      "cefr": "C1",
+      "review_status": "APPROVED",
+      "example": "The team made substantial progress."
+    },
+    {
+      "source": "shared",
+      "topic": "Animals - Động vật",
+      "english": "habitat",
+      "meaning": "môi trường sống tự nhiên",
+      "cefr": "C1",
+      "review_status": "APPROVED",
+      "example": "Deforestation destroys the animals' habitat."
+    },
+    {
+      "source": "shared",
+      "topic": "Nature - Thiên nhiên",
+      "english": "habitat",
+      "meaning": "môi trường sống",
+      "cefr": "C1",
+      "review_status": "APPROVED",
+      "example": "The wetland provides habitat for rare birds."
+    }
+  ],
+  "review_requirements": [
+    "Distinguish whether quiz prompt must include topic or example context",
+    "Confirm learner-facing ambiguity for each mode separately",
+    "Do not auto-mark synonyms correct or modify SRS grading",
+    "Keep both habitat records until exact per-topic usage and user progress are assessed"
+  ]
+}
