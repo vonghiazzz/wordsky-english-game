@@ -69,6 +69,16 @@
       <h2 id="ws24Title">Ôn tập đúng thời điểm ✳</h2>
       <p>Lịch ôn theo tài khoản PostgreSQL. Khác với nút “Cần ôn” trong thư viện, nhóm “Đến hạn” chỉ chứa các từ đến ngày cần ôn.</p>
     </div><span class="ws10-count" id="ws24Count">—</span></div>
+    <section class="ws58-daily" id="ws58DailyPlan" aria-labelledby="ws58DailyTitle" hidden>
+      <div class="ws58-daily-head"><div><span class="ws10-overline">UX58 · KẾ HOẠCH HỌC HÔM NAY</span><h3 id="ws58DailyTitle">Gợi ý từ lịch ôn của bạn</h3></div><strong id="ws58DailyTotal">—</strong></div>
+      <div class="ws58-daily-grid">
+        <div><span>Ôn từ đến hạn</span><strong id="ws58DailyDue">—</strong></div>
+        <div><span>Học từ mới</span><strong id="ws58DailyNew">—</strong></div>
+        <div><span>Sắp đến hạn</span><strong id="ws58DailyUpcoming">—</strong></div>
+      </div>
+      <p id="ws58DailyMessage" role="status" aria-live="polite">Đang lấy gợi ý từ PostgreSQL theo tài khoản.</p>
+      <small>Gợi ý học, không phải số từ đã hoàn thành hôm nay. Dùng nút “Luyện từ” bên dưới để học nhóm đã chọn.</small>
+    </section>
     <div class="ws24-filters">
       <label>Nhóm ôn <select id="ws24Status">
         <option value="due">Đến hạn (Due)</option><option value="new">Từ mới (New)</option>

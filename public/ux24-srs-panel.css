@@ -49,3 +49,17 @@
  .ws24-filters #ws24Reload,.ws24-filters #ws24Practice{flex:1 1 calc(50% - 8px);min-width:0;font-size:12px;padding-inline:6px}
  .ws24-filters .ws24-practice{padding-inline:12px}
 }
+
+/* UX58: compact, read-only account daily plan inside the existing SRS panel. */
+.ws58-daily{border:1px solid #506d99;border-radius:15px;background:#172a48;padding:16px;margin:15px 0 17px;color:#f5f9ff}
+.ws58-daily[hidden]{display:none!important}
+.ws58-daily-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ws58-daily-head h3{font-size:18px;margin:5px 0}
+.ws58-daily-head>strong{font-size:13px;color:#9ee0de}
+.ws58-daily-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.ws58-daily-grid>div{background:#203757;padding:12px;border-radius:10px;min-width:0}
+.ws58-daily-grid span{display:block;font-size:12px;color:#afc4dd;line-height:1.45}
+.ws58-daily-grid strong{display:block;font-size:20px;margin-top:5px;font-variant-numeric:tabular-nums}
+.ws58-daily p{font-size:13px;margin:13px 0 5px;color:#daebf7}
+.ws58-daily small{font-size:12px;color:#a7bad0;line-height:1.5}
+@media(max-width:560px){.ws58-daily{padding:12px}.ws58-daily-grid{gap:6px}.ws58-daily-grid>div{padding:9px 7px}.ws58-daily-grid strong{font-size:17px}.ws58-daily-grid span{font-size:11px}}

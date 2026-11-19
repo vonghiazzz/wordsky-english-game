@@ -45,3 +45,23 @@ export function createDailyLearningPlan(
   streak:null
  });
 }
+
+/**
+ * Validate the unfiltered, account-scoped summary returned with ANY SRS queue
+ * page. The summary is global, not the current topic/page's `total`.
+ * Never derive daily counts from paginated `words`.
+ */
+export function dailyPlanFromSrsQueue(payload,actorId,goals){
+ const summary=payload?.summary;
+ if(!actorId||typeof actorId!=='string'||
+    payload?.scope!=='account-srs'||payload.actor_id!==actorId||
+    !Array.isArray(payload.words)||!summary||typeof summary!=='object')
+  throw Error('Dữ liệu kế hoạch không khớp tài khoản SRS');
+ const due=integer(summary.due,'đến hạn');
+ const fresh=integer(summary.new,'từ mới');
+ const upcoming=integer(summary.upcoming,'sắp đến hạn');
+ const total=integer(summary.total,'tổng SRS');
+ if(due+fresh+upcoming!==total)
+  throw Error('Tổng số từ SRS không khớp các nhóm');
+ return createDailyLearningPlan({due,new:fresh,upcoming},goals);
+}

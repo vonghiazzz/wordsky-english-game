@@ -1,4 +1,5 @@
 import {learningApi,postUnifiedAccountReview} from './ux10-account-core.js';
+import {dailyPlanFromSrsQueue} from './ux58-daily-plan-core.js';
 
 // UX-24C: account-scoped SRS review UI. The SRS endpoint remains Preview-only.
 // Keep topic/status/page stable across review updates and HTTP 409 refreshes.
@@ -45,6 +46,12 @@ function initSrs(){
  const audit=document.getElementById('ws24Audit');
  const auditResult=document.getElementById('ws24AuditResult');
  const summary=document.getElementById('ws24Summary');
+ const daily=document.getElementById('ws58DailyPlan');
+ const dailyDue=document.getElementById('ws58DailyDue');
+ const dailyNew=document.getElementById('ws58DailyNew');
+ const dailyUpcoming=document.getElementById('ws58DailyUpcoming');
+ const dailyTotal=document.getElementById('ws58DailyTotal');
+ const dailyMessage=document.getElementById('ws58DailyMessage');
  let actorId=null,requested=0,pending=false,page=0,received=null;
  const showMessage=(message,error=false)=>{notice.textContent=message;notice.dataset.error=String(error);};
  const render=()=>{
@@ -59,7 +66,23 @@ function initSrs(){
   practice.disabled=pending||!data||!actorId||data.total===0;
   practice.title=!data||!actorId?'Chờ xác nhận lịch ôn':data.total===0?
     'Nhóm ôn hiện tại chưa có từ để luyện':'Luyện các từ trong nhóm ôn đang chọn';
-  if(!data)return;
+  // Do not show a previous account's daily totals during auth refresh,
+  // logout, account switch, or a failed SRS response.
+  daily.hidden=true;
+  if(!data||pending||!actorId)return;
+  try{
+   const plan=dailyPlanFromSrsQueue(data,actorId);
+   dailyDue.textContent=plan.tasks[0].planned+' / '+plan.tasks[0].available;
+   dailyNew.textContent=plan.tasks[1].planned+' / '+plan.tasks[1].available;
+   dailyUpcoming.textContent=String(plan.upcoming);
+   dailyTotal.textContent=plan.totalPlanned+' từ gợi ý';
+   dailyMessage.textContent=plan.hasWork
+    ?'Ưu tiên ôn từ đến hạn trước, sau đó học từ mới. Số lượng áp dụng cho tất cả chủ đề.'
+    :'Hôm nay chưa có từ đến hạn hoặc từ mới trong lịch ôn.';
+   daily.hidden=false;
+  }catch{
+   // Invalid actor/summary: hide the entire suggestion, not stale counts.
+  }
   summary.textContent='Cần ôn '+data.summary.due+' · Sắp đến hạn '+data.summary.upcoming+
     ' · Từ mới '+data.summary.new+' · Tổng '+data.summary.total;
   for(const word of rows){
