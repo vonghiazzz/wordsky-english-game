@@ -266,6 +266,7 @@ jobs:
 
           node scripts/local-srs-smoke.mjs
           node scripts/local-ui-e2e.mjs
+          node scripts/ux57-local-error-ui-e2e.mjs
           node scripts/ux26-browser-audio-qa.mjs
           node scripts/ux44-browser-speech-qa.mjs
           node scripts/ux27-local-integration.mjs
