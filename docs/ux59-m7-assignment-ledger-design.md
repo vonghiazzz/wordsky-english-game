@@ -1,11 +1,11 @@
 # UX59 M7 — Delayed-recall assignment ledger: schema design review
 
-**Status: DESIGN ONLY / BLOCKED pending actual UX43 migration and database-constraint audit.** Related #151, protocol #148, M5 #149, M6 #150, draft PR #146, UX58 Preview release gate #144.
+**Status: DESIGN ONLY / UX43 migration source verified; isolated Preview DB constraints not yet verified.** Related #151, protocol #148, M5 #149, M6 #150, draft PR #146, UX58 Preview release gate #144.
 
 ## Source of truth / known code
 From `lib/ux43c-recall-service.js` (verified on main/PR branch), the Preview/local research pilot writes to `public.ws_recall_consents`, `public.ws_recall_trials` and `public.ws_recall_evidence`, and reads `public.ws_recall_curated_prompts`. Actor/session version and consent are checked in a transaction, review evidence is server-graded and idempotent, and opt-out removes research data. The feature is disabled on Production independently of Preview flags. No UX59 code is integrated into the runtime.
 
-The exact UX43 migration filenames, foreign keys, uniqueness rules, FK cascades, indexes and deployed Preview DB schema **have not been verified** in this review. The following is a **proposed contract, not executable SQL or an approved schema**.
+The UX43 migration source has now been verified at `db/migrations/20261031_ux43c_typed_recall_pilot.sql` on `main` (originally introduced via PR #76). The deployed Preview DB schema and actual migration application status **have not** been verified. The following is a **proposed contract, not executable SQL or an approved schema**.
 
 ## Proposed separate assignment ledger (review before DDL)
 An independently scheduled delayed assessment should use a server-owned immutable record with:
@@ -38,4 +38,4 @@ Require a uniqueness contract preventing duplicate assessments under the same st
 - Ensure the actual schema supports account deletion/withdrawal and cannot cross-link another user. Review migration history for version conflicts.
 
 ## Release gates / next action
-**STOP before creating or running migration.** First retrieve existing UX43 DDL and inspect exact constraints in an isolated nonproduction database. Then obtain study/privacy/editorial protocol approval, design a minimal Preview-only migration on a separate PR, test transaction/rollback/replay and sign off protected Preview (#144). Production feature flags remain off. UX59 algorithm status remains **HOLD_NO_RUNTIME_CHANGE**.
+**STOP before creating or running migration.** Existing UX43 DDL source has been inspected (see M8 audit). Next confirm actual constraints and applied migration in an isolated nonproduction database. Then obtain study/privacy/editorial protocol approval, design a minimal Preview-only migration on a separate PR, test transaction/rollback/replay and sign off protected Preview (#144). Production feature flags remain off. UX59 algorithm status remains **HOLD_NO_RUNTIME_CHANGE**.
