@@ -269,7 +269,7 @@ try {
  const state=createState({
    mode:'MATCH',difficulty:'EASY',question_count:3,duration_seconds:20,
    points_per_correct:100,penalty:25
- },[...vocab.rows].map(w=>({...w,meaning:'Test'})),Date.now()-40000,Date.now()-1000);
+ },[...vocab.rows].map((w,i)=>({...w,meaning:'Test '+i})),Date.now()-40000,Date.now()-1000);
  state.wrongWordIds=[wordC.id];
  const pendingRun=await createRun(userA.id,[]);
  await db.query(
