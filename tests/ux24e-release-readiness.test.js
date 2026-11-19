@@ -74,6 +74,8 @@ test('UX24E Preview CLI cannot write Production and dry-run is default',()=>{
  assert.match(script,/const apply=args\.has\('--apply'\)/);
  assert.match(script,/process\.env\.VERCEL_ENV='preview'/);
  assert.match(api,/if\(!srsEnabled\(\)\)/);
- // UX58 adds an independently feature-gated read-only daily activity route.\n assert.equal((api.match(/if\(!srsEnabled\(\)\)/g)||[]).length,3);\n assert.match(api,/key==='learning\/daily-activity'[\\s\\S]*?if\(!srsEnabled\(\)\)/);
+ // UX58 adds another read-only endpoint; it cannot bypass the SRS release gate.
+ assert.equal((api.match(/if\(!srsEnabled\(\)\)/g)||[]).length,3);
+ assert.match(api,/key==='learning\/daily-activity'/);
  assert.doesNotMatch(gates,/WORDSKY_SRS_PREVIEW_ENABLED==='true'\)\s*return true/);
 });
