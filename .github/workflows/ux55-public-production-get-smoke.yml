@@ -22,5 +22,9 @@ jobs:
         run: node --check scripts/ux55-production-get-smoke.mjs
       - name: Read-only HTTPS GET against public Production
         run: node scripts/ux55-production-get-smoke.mjs
+      - name: UX56 public lexical inventory (GET-only)
+        run: |
+          node --check scripts/ux56-public-vocabulary-quality-audit.mjs
+          node scripts/ux56-public-vocabulary-quality-audit.mjs
         # Never provide accounts, tokens, cookies or Production DB secrets.
         # This does not exercise account history or write learner records.
