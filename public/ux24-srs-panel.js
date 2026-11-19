@@ -1,5 +1,5 @@
 import {learningApi,postUnifiedAccountReview} from './ux10-account-core.js';
-import {dailyPlanFromSrsQueue} from './ux58-daily-plan-core.js';
+import {dailyPlanFromSrsQueue,validateDailyActivity} from './ux58-daily-plan-core.js';
 
 // UX-24C: account-scoped SRS review UI. The SRS endpoint remains Preview-only.
 // Keep topic/status/page stable across review updates and HTTP 409 refreshes.
@@ -52,7 +52,12 @@ function initSrs(){
  const dailyUpcoming=document.getElementById('ws58DailyUpcoming');
  const dailyTotal=document.getElementById('ws58DailyTotal');
  const dailyMessage=document.getElementById('ws58DailyMessage');
- let actorId=null,requested=0,pending=false,page=0,received=null;
+ const activityBox=document.getElementById('ws58Activity');
+ const reviewsToday=document.getElementById('ws58ReviewsToday');
+ const uniqueToday=document.getElementById('ws58UniqueToday');
+ const streak=document.getElementById('ws58Streak');
+ const activityNotice=document.getElementById('ws58ActivityNotice');
+ let actorId=null,requested=0,pending=false,page=0,received=null,activity=null,activityError='';
  const showMessage=(message,error=false)=>{notice.textContent=message;notice.dataset.error=String(error);};
  const render=()=>{
   const data=received;
@@ -69,6 +74,8 @@ function initSrs(){
   // Do not show a previous account's daily totals during auth refresh,
   // logout, account switch, or a failed SRS response.
   daily.hidden=true;
+  activityBox.hidden=true;
+  activityNotice.textContent='';
   if(!data||pending||!actorId)return;
   try{
    const plan=dailyPlanFromSrsQueue(data,actorId);
@@ -79,6 +86,23 @@ function initSrs(){
    dailyMessage.textContent=plan.hasWork
     ?'Ưu tiên ôn từ đến hạn trước, sau đó học từ mới. Số lượng áp dụng cho tất cả chủ đề.'
     :'Hôm nay chưa có từ đến hạn hoặc từ mới trong lịch ôn.';
+   if(activity){
+    try{
+     const verified=validateDailyActivity(activity,actorId);
+     reviewsToday.textContent=String(verified.reviews_today);
+     uniqueToday.textContent=String(verified.unique_words_today);
+     streak.textContent=String(verified.streak_days)+(verified.streak_capped?'+':'');
+     activityBox.hidden=false;
+     activityNotice.textContent=verified.streak_days&&verified.streak_ends_on!==verified.day
+      ?'Chuỗi ngày được giữ từ hôm qua. Ôn một từ hôm nay để tiếp tục.'
+      :'Lượt ôn đã xác nhận trên máy chủ, tính theo giờ Việt Nam.';
+    }catch{
+     activityBox.hidden=true;
+     activityNotice.textContent='Chưa xác minh được hoạt động học.';
+    }
+   }else{
+    activityNotice.textContent=activityError||'Chưa có dữ liệu hoạt động học được xác nhận.';
+   }
    daily.hidden=false;
   }catch{
    // Invalid actor/summary: hide the entire suggestion, not stale counts.
@@ -114,6 +138,7 @@ function initSrs(){
  };
  const refresh=async({keepMessage=false}={})=>{
   const seq=++requested;
+  activity=null;activityError='';
   pending=true;
   if(!keepMessage)showMessage('Đang đồng bộ lịch ôn từ tài khoản…');
   render();
@@ -141,6 +166,16 @@ function initSrs(){
    topic.value=data.topics.includes(oldTopic)?oldTopic:'';
    if(oldTopic&&!data.topics.includes(oldTopic)){page=0;await refresh();return;}
    if(page>0&&page>=data.total_pages){page=Math.max(0,data.total_pages-1);await refresh();return;}
+   // Activity read is independent from queue availability: a failed request
+   // must not block SRS cards or silently show another account's last streak.
+   try{
+    const result=await learningApi('learning/daily-activity');
+    if(seq!==requested)return;
+    activity=validateDailyActivity(result,actorId);
+   }catch(error){
+    if(seq!==requested)return;
+    activity=null;activityError='Chưa tải được hoạt động hôm nay. Hãy làm mới lịch ôn.';
+   }
    if(!keepMessage)showMessage('Lịch ôn được đọc từ PostgreSQL theo tài khoản.');
   }catch(error){
    if(seq!==requested)return;

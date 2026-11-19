@@ -65,3 +65,19 @@ export function dailyPlanFromSrsQueue(payload,actorId,goals){
   throw Error('Tổng số từ SRS không khớp các nhóm');
  return createDailyLearningPlan({due,new:fresh,upcoming},goals);
 }
+
+export function validateDailyActivity(payload,actorId){
+ if(!actorId||payload?.scope!=='account-daily-review-activity'||
+   payload.actor_id!==actorId||payload.time_zone!=='Asia/Ho_Chi_Minh'||
+   !/^\d{4}-\d{2}-\d{2}$/.test(payload.day)||!Number.isFinite(Date.parse(payload.as_of))||
+   payload.basis!=='confirmed-review-history-not-game-scores')
+  throw Error('Hoạt động học không khớp tài khoản hoặc múi giờ');
+ for(const key of ['reviews_today','unique_words_today','streak_days'])
+  integer(payload[key],key);
+ if(payload.unique_words_today>payload.reviews_today||
+    typeof payload.streak_capped!=='boolean'||payload.completed_goal!==null||
+    (payload.streak_ends_on!==null&&typeof payload.streak_ends_on!=='string')||
+    (payload.streak_days===0)!==(payload.streak_ends_on===null))
+  throw Error('Dữ liệu hoạt động học không nhất quán');
+ return payload;
+}

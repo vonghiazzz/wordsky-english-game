@@ -63,3 +63,11 @@
 .ws58-daily p{font-size:13px;margin:13px 0 5px;color:#daebf7}
 .ws58-daily small{font-size:12px;color:#a7bad0;line-height:1.5}
 @media(max-width:560px){.ws58-daily{padding:12px}.ws58-daily-grid{gap:6px}.ws58-daily-grid>div{padding:9px 7px}.ws58-daily-grid strong{font-size:17px}.ws58-daily-grid span{font-size:11px}}
+
+/* UX58 M3: verified daily activity, read-only and actor scoped. */
+.ws58-activity{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ws58-activity[hidden]{display:none!important}
+.ws58-activity>span{background:#263e5c;border:1px solid #456584;border-radius:9px;padding:9px 11px;font-size:12px;color:#d3e6f5}
+.ws58-activity strong{font-variant-numeric:tabular-nums;color:#fff;font-size:15px}
+.ws58-activity-note{font-size:12px!important;color:#acd9d6!important;margin-top:8px!important}
+@media(max-width:560px){.ws58-activity>span{flex:1 1 100%;display:flex;justify-content:space-between}}

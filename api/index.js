@@ -11,6 +11,7 @@ import {getVerbPracticeHistory,saveVerbAttempt} from '../lib/verb-practice-histo
 import {listPersonalVocabulary,addPersonalCard,markPersonalCard,updatePersonalCard,deletePersonalCard} from '../lib/personal-vocabulary.js';
 import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
 import {getAccountLearningInsights} from '../lib/learning-insights.js';
+import {getAccountDailyReviewActivity} from '../lib/daily-review-activity.js';
 import {getAccountSrsQueue} from '../lib/srs-queue.js';
 import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
@@ -677,6 +678,11 @@ export default async function handler(req,res){
   // Per-request actor pin prevents stale tabs from writing into a newly signed-in account.
   if(method==='GET'&&key==='learning/me/summary')return output(res,200,await getUnifiedLearningSummary(mustPlayer(req).id));
   if(method==='GET'&&key==='learning/insights')return output(res,200,await getAccountLearningInsights(mustPlayer(req).id,req.query||{}));
+  // UX58: server-confirmed review history, no streak writes or user_id query.
+  if(method==='GET'&&key==='learning/daily-activity'){
+    if(!srsEnabled())return output(res,404,{error:'Kế hoạch học SRS chưa được bật.'});
+    return output(res,200,await getAccountDailyReviewActivity(mustPlayer(req).id));
+  }
   // UX51 account-scoped quiz history: never client-supplied user IDs or SRS writes.
   if(method==='GET'&&key==='learning/verbs/history')
     return output(res,200,await getVerbPracticeHistory(mustPlayer(req).id));
