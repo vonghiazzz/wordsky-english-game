@@ -8,7 +8,7 @@ const actor='12345678-1234-4234-8234-123456789abc';
 const today='2026-11-19',asOf='2026-11-19T07:20:00.000Z';
 const make=(rows,day=today)=>summarizeDailyReviewActivity({actorId:actor,today:day,asOf,rows});
 
-test('UX58 M3: today's confirmed reviews and unique word count, not a mastery claim',()=>{
+test('UX58 M3: confirmed reviews today and unique word count, not a mastery claim',()=>{
  const x=make([{day:today,reviews:4,unique_words:2},{day:'2026-11-18',reviews:1,unique_words:1}]);
  assert.equal(x.reviews_today,4);
  assert.equal(x.unique_words_today,2);
@@ -20,7 +20,7 @@ test('UX58 M3: today's confirmed reviews and unique word count, not a mastery cl
  assert.ok(Object.isFrozen(x));
 });
 
-test('UX58 M3: yesterday still counts as an active streak before today's first review',()=>{
+test('UX58 M3: yesterday still counts as an active streak before the first review today',()=>{
  const x=make([{day:'2026-11-18',reviews:3,unique_words:2},{day:'2026-11-17',reviews:1,unique_words:1}]);
  assert.equal(x.reviews_today,0);assert.equal(x.streak_days,2);
  assert.equal(x.streak_ends_on,'2026-11-18');
