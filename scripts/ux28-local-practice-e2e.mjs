@@ -181,6 +181,39 @@ try{
  assert.equal(dueA,2,'owner must have two due words from isolated game fixture');
  assert.equal(dueB,1,'other account must have one due word from isolated game fixture');
  pass('UX60 dashboard renders actor-scoped global totals and progressive details for A/B');
+
+ // UX60 M5: delay an audit response while login switches from A to B in
+ // the SAME open tab. A's diagnostic counts must never reappear for B.
+ let releaseAudit, auditFetched;
+ const gate=new Promise(resolve=>{releaseAudit=resolve});
+ const fetched=new Promise(resolve=>{auditFetched=resolve});
+ await pA.route('**/api/learning/srs/diagnostics',async route=>{
+  const response=await route.fetch();
+  assert.equal(response.status(),200);
+  const body=await response.json();
+  assert.equal(body.actor_id,owner.id);
+  auditFetched();
+  await gate;
+  await route.fulfill({response});
+ });
+ await pA.locator('.ws24-advanced summary').click();
+ await pA.locator('#ws24Audit').click();
+ await fetched;
+ await login(ctxA,other);
+ await pA.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await pA.waitForFunction(()=>
+  document.querySelector('#ws58DailyDue')?.textContent==='1'&&
+  document.querySelector('#ws24Count')?.textContent==='1 từ trong nhóm');
+ assert.equal(await pA.locator('#ws24AuditResult').textContent(),'',
+  'Switching account must clear previous audit');
+ releaseAudit();
+ await pA.waitForFunction(()=>!document.querySelector('#ws24Audit').disabled);
+ assert.equal(await pA.locator('#ws24AuditResult').textContent(),'',
+  'Delayed audit from A leaked into account B');
+ await pA.unroute('**/api/learning/srs/diagnostics');
+ await login(ctxA,owner);
+ await group(pA,'due');
+ pass('UX60 delayed audit never leaks old actor after login switch');
  const toolbar=await pA.evaluate(()=>{
   const refresh=document.querySelector('#ws24Reload').getBoundingClientRect();
   const practice=document.querySelector('#ws24Practice').getBoundingClientRect();
