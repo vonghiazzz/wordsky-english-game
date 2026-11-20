@@ -66,7 +66,7 @@ test('UX57 offline audit excludes disabled and personal words; does not expose u
 test('UX57 audit fails closed on malformed and duplicate public records',()=>{
  assert.throws(()=>auditSharedCueCollisions({wrong:[]}),/Expected JSON array/);
  assert.throws(()=>auditSharedCueCollisions([null]),/Invalid vocabulary/);
- assert.throws(()=>auditSharedCueCollisions([{id:'x',meaning:'năm'}]),/Missing id/);
+ assert.throws(()=>auditSharedCueCollisions([{id:'x',meaning:'năm'}]),/Missing word_id\/id/);
  assert.throws(()=>auditSharedCueCollisions([realStyleFixture[0],realStyleFixture[0]]),/Duplicate public word ID/);
  assert.throws(()=>auditSharedCueCollisions([{...realStyleFixture[0],word_id:'different'}]),/Conflicting word_id/);
 });
