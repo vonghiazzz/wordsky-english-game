@@ -24,12 +24,17 @@ export function auditSharedCueCollisions(payload){
      (row.source!==undefined&&row.source!=='shared')){
    skipped++;continue;
   }
-  if(typeof row.id!=='string'||!row.id.trim()||
+  // Public /api/learning/vocabulary uses word_id; historical exports
+  // and editorial fixtures may use id. Never silently join conflicting IDs.
+  const rawId=row.word_id??row.id;
+  if(typeof rawId!=='string'||!rawId.trim()||
      typeof row.english!=='string'||typeof row.meaning!=='string')
-   throw new TypeError('Missing id, english or meaning at position '+index);
+   throw new TypeError('Missing word_id/id, english or meaning at position '+index);
+  if(row.word_id!==undefined&&row.id!==undefined&&row.word_id!==row.id)
+   throw new Error('Conflicting word_id and id at position '+index);
   const cue=normalizeCue(row.meaning),en=normalizeEnglish(row.english);
   if(!cue||!en){skipped++;continue;}
-  const id=row.id.trim();
+  const id=rawId.trim();
   if(ids.has(id))throw new Error('Duplicate public word ID in input');
   ids.add(id);eligible++;
   const words=byCue.get(cue)||[];
