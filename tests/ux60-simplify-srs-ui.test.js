@@ -45,5 +45,7 @@ test('UX60 progressively discloses sensitive and advanced info without removing 
 test('UX60 responsive SRS has two metric columns and narrow-screen overrides',()=>{
  assert.match(css,/\.ws58-daily-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:560px\)/);
- assert.match(css,/\.ws24-filters \.ws24-practice\{order:3;flex:1 1 100%/);
+ assert.match(css,/\.ws24-filters #ws24Reload,\.ws24-filters #ws24Practice\{/);
+ assert.match(css,/flex:1 1 calc\(50% - 6px\)/);
+ assert.match(css,/\.ws24-filters #ws24Practice\{order:4\}/);
 });
