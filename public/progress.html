@@ -65,37 +65,40 @@
   </section>
 
   <section class="ws24-panel" id="ws24Srs" aria-labelledby="ws24Title" hidden>
-    <div class="ws10-section-top"><div><span class="ws10-overline">SMART REVIEW · SRS PREVIEW</span>
-      <h2 id="ws24Title">Ôn tập đúng thời điểm ✳</h2>
-      <p>Lịch ôn theo tài khoản PostgreSQL. Khác với nút “Cần ôn” trong thư viện, nhóm “Đến hạn” chỉ chứa các từ đến ngày cần ôn.</p>
+    <div class="ws10-section-top ws60-heading"><div>
+      <h2 id="ws24Title">Ôn từ vựng</h2>
+      <p>Lịch ôn của bạn, cập nhật theo tài khoản.</p>
     </div><span class="ws10-count" id="ws24Count">—</span></div>
     <section class="ws58-daily" id="ws58DailyPlan" aria-labelledby="ws58DailyTitle" hidden>
-      <div class="ws58-daily-head"><div><span class="ws10-overline">UX58 · KẾ HOẠCH HỌC HÔM NAY</span><h3 id="ws58DailyTitle">Gợi ý từ lịch ôn của bạn</h3></div><strong id="ws58DailyTotal">—</strong></div>
+      <div class="ws58-daily-head"><h3 id="ws58DailyTitle">Hôm nay bạn muốn học gì?</h3></div>
       <div class="ws58-daily-grid">
-        <div><span>Ôn từ đến hạn</span><strong id="ws58DailyDue">—</strong></div>
-        <div><span>Học từ mới</span><strong id="ws58DailyNew">—</strong></div>
-        <div><span>Sắp đến hạn</span><strong id="ws58DailyUpcoming">—</strong></div>
+        <div><span>Cần ôn</span><strong id="ws58DailyDue">—</strong></div>
+        <div><span>Từ mới</span><strong id="ws58DailyNew">—</strong></div>
       </div>
       <div id="ws58Activity" class="ws58-activity" hidden>
-        <span>Đã ôn hôm nay <strong id="ws58ReviewsToday">—</strong> lượt</span>
-        <span>Từ khác nhau <strong id="ws58UniqueToday">—</strong></span>
-        <span>Ngày học liên tiếp <strong id="ws58Streak">—</strong></span>
+        <span>🔥 <strong id="ws58Streak">—</strong> ngày liên tiếp</span>
+        <span>Đã ôn <strong id="ws58ReviewsToday">—</strong> lượt hôm nay</span>
       </div>
-      <p id="ws58ActivityNotice" class="ws58-activity-note" role="status" aria-live="polite"></p>
-      <p id="ws58DailyMessage" role="status" aria-live="polite">Đang lấy gợi ý từ PostgreSQL theo tài khoản.</p>
-      <small>Gợi ý học, không phải số từ đã hoàn thành hôm nay. Dùng nút “Luyện từ” bên dưới để học nhóm đã chọn.</small>
+      <p id="ws58DailyMessage" role="status" aria-live="polite">Đang tải lịch ôn.</p>
+      <details class="ws60-more">
+        <summary>Chi tiết lịch ôn</summary>
+        <p>Sắp đến hạn: <strong id="ws58DailyUpcoming">—</strong> từ · Từ khác nhau đã ôn hôm nay: <strong id="ws58UniqueToday">—</strong></p>
+        <p id="ws58ActivityNotice" class="ws58-activity-note" role="status" aria-live="polite"></p>
+        <p id="ws58DailyTotal">—</p>
+        <small>Số từ được gợi ý không phải số từ đã học xong. Lịch và hoạt động được đọc từ tài khoản.</small>
+      </details>
     </section>
     <div class="ws24-filters">
-      <label>Nhóm ôn <select id="ws24Status">
-        <option value="due">Đến hạn (Due)</option><option value="new">Từ mới (New)</option>
-        <option value="upcoming">Sắp đến hạn (Upcoming)</option>
+      <label>Nhóm từ <select id="ws24Status">
+        <option value="due">Cần ôn</option><option value="new">Từ mới</option>
+        <option value="upcoming">Sắp đến hạn</option>
       </select></label>
       <label>Chủ đề <select id="ws24Topic"><option value="">Tất cả chủ đề</option></select></label>
-      <button class="ws10-button ws10-secondary" id="ws24Reload" type="button">↻ Làm mới lịch</button>
-      <button class="ws10-button ws10-primary ws24-practice" id="ws24Practice" type="button" disabled>✦ Luyện từ</button>
+      <button class="ws10-button ws10-primary ws24-practice" id="ws24Practice" type="button" disabled>✦ Luyện từ trong nhóm đã chọn</button>
+      <button class="ws10-button ws10-secondary" id="ws24Reload" type="button">↻ Làm mới</button>
     </div>
-    <p id="ws24Summary" class="ws24-summary" role="status"></p>
-    <details class="ws24-advanced"><summary>Kiểm tra đồng bộ</summary>
+    <details class="ws24-advanced"><summary>Thông tin và kiểm tra đồng bộ</summary>
+      <p id="ws24Summary" class="ws24-summary" role="status"></p>
       <button class="ws10-button ws10-secondary" id="ws24Audit" type="button">✓ Đối chiếu lịch ôn</button>
       <p id="ws24AuditResult" class="ws24-summary" role="status" aria-live="polite"></p>
     </details>
