@@ -14,6 +14,7 @@ assert.equal(url.port,'5547');
 assert.equal(url.pathname,'/wordsky_v6_test');
 const db=new pg.Pool({connectionString:url.toString(),ssl:false});
 const users=[],runs=[];
+let scaleTopicId=null;
 let chrome,fox;
 const pass=msg=>console.log('PASS: UX28.1 '+msg);
 
@@ -290,6 +291,70 @@ try{
  assert.equal(await pA.locator('#ws28Meaning').textContent(),three.meaning);
  pass('login switch isolates SRS queue and clears previous account question bank');
 
+ // UX60 M3: exercise real account-scoped API + dashboard with a vocabulary
+ // catalogue at least as large as Production (2099 enabled shared cards).
+ // All writes stay on the pinned disposable localhost database.
+ const scaleTitle='UX60 scale QA '+randomBytes(6).toString('hex');
+ const added=await db.query(
+  'INSERT INTO ws_topics(title,enabled) VALUES($1,true) RETURNING id',
+  [scaleTitle]);
+ scaleTopicId=added.rows[0].id;
+ const generated=await db.query(
+  "INSERT INTO ws_words(topic_id,english,meaning,enabled) "+
+  "SELECT $1::uuid,'qascaleword' || lpad(i::text,5,'0'),"+
+  "'synthetic scale-only meaning',true FROM generate_series(1,2099) AS g(i) RETURNING id",
+  [scaleTopicId]);
+ assert.equal(generated.rowCount,2099);
+ const countResult=await db.query(
+  'SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
+  'WHERE w.enabled=true AND t.enabled=true');
+ const activeTotal=countResult.rows[0].n;
+ assert.ok(activeTotal>=2099&&activeTotal<5000,'Scale fixture exceeds queue safety limits');
+ const started=Date.now();
+ const all=await ctxB.request.get(
+  BASE+'/api/learning/srs/queue?status=new&page=0&size=100',{timeout:30000});
+ assert.equal(all.status(),200,await all.text());
+ const data=await all.json();
+ assert.equal(data.actor_id,other.id);
+ assert.equal(data.summary.total,activeTotal);
+ assert.equal(data.summary.due,1);
+ assert.equal(data.summary.upcoming,0);
+ assert.equal(data.summary.new,activeTotal-1);
+ assert.equal(data.total,activeTotal-1);
+ assert.equal(data.words.length,100);
+ assert.equal(data.total_pages,Math.ceil((activeTotal-1)/100));
+ assert.ok(data.words.every(w=>w.status==='new'));
+ assert.ok(data.words.some(w=>w.topic===scaleTitle),
+  'Synthetic vocabulary should be retrievable without truncation');
+ const lastPage=data.total_pages-1;
+ const tail=await ctxB.request.get(
+  BASE+'/api/learning/srs/queue?status=new&page='+lastPage+'&size=100',
+  {timeout:30000});
+ assert.equal(tail.status(),200,await tail.text());
+ const last=await tail.json();
+ assert.equal(last.summary.total,activeTotal);
+ assert.equal(last.total_pages,data.total_pages);
+ assert.equal(last.words.length,data.total-lastPage*100);
+ assert.ok(last.words.length>0&&last.words.length<=100);
+ await pA.goto(BASE+'/progress.html');
+ await pA.locator('#ws58DailyPlan').waitFor({state:'visible'});
+ await pA.waitForFunction(expected=>
+  document.querySelector('#ws58DailyNew')?.textContent===String(expected),
+  data.summary.new);
+ await pA.locator('#ws24Status').selectOption('new');
+ await pA.waitForFunction(expected=>
+  document.querySelectorAll('#ws24List .ws24-card').length===20 &&
+  document.querySelector('#ws24Count')?.textContent===expected+' từ trong nhóm',
+  data.summary.new);
+ const scaleLayout=await pA.evaluate(()=>({
+  overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth
+ }));
+ assert.ok(scaleLayout.overflow<=1,
+  'Production-size My Learning must not overflow at 360px: '+JSON.stringify(scaleLayout));
+ pass('UX60 production-scale SRS '+activeTotal+
+  ' cards: global counts, pagination, actor isolation and 360px UI ('+
+  (Date.now()-started)+'ms)');
+
  await Promise.allSettled([ctxA.close(),ctxA2.close(),ctxB.close(),ctxGuest.close()]);
  console.log('\nUX28.1 SINGLE ENTRY ACCOUNT SRS E2E: PASS');
 }catch(error){
@@ -297,6 +362,10 @@ try{
  process.exitCode=1;
 }finally{
  await Promise.allSettled([chrome?.close(),fox?.close()]);
+ if(scaleTopicId){
+  try{await db.query('DELETE FROM ws_topics WHERE id=$1',[scaleTopicId])}
+  catch(error){console.error('UX60 scale vocabulary cleanup',error.message);process.exitCode=1;}
+ }
  if(runs.length){
   try{await db.query('DELETE FROM ws_solo_runs WHERE id=ANY($1::uuid[])',[runs])}
   catch(error){console.error('UX28.1 run cleanup',error.message);process.exitCode=1;}
