@@ -83,6 +83,36 @@ async function group(page,status,topic=''){
   return button&&!button.disabled;
  });
 }
+/* UX60: verify the actual dashboard DOM with actor-scoped API facts.
+ * This uses existing disposable local QA accounts only; it never calls Preview/Prod.
+ */
+async function assertUx60Dashboard(page,ctx){
+ const response=await ctx.request.get(BASE+'/api/learning/srs/queue?status=due&page=0&size=20');
+ assert.equal(response.status(),200,await response.text());
+ const payload=await response.json();
+ await page.locator('#ws58DailyPlan').waitFor({state:'visible'});
+ assert.equal(await page.locator('#ws58DailyDue').textContent(),String(payload.summary.due));
+ assert.equal(await page.locator('#ws58DailyNew').textContent(),String(payload.summary.new));
+ assert.equal(await page.locator('#ws58DailyTotal').textContent(),
+  'Gợi ý hôm nay: '+Math.min(10,payload.summary.due)+
+  ' từ cần ôn + '+Math.min(10,payload.summary.new)+' từ mới');
+ const details=page.locator('#ws58DailyPlan .ws60-more');
+ assert.equal(await details.evaluate(node=>node.open),false);
+ assert.equal(await page.locator('#ws58DailyUpcoming').isVisible(),false);
+ await details.locator('summary').click();
+ assert.equal(await page.locator('#ws58DailyUpcoming').isVisible(),true);
+ assert.equal(await page.locator('#ws58DailyUpcoming').textContent(),String(payload.summary.upcoming));
+ await details.locator('summary').click();
+ const firstWord=page.locator('#ws24List .ws60-word-details').first();
+ await firstWord.waitFor({state:'attached'});
+ assert.equal(await firstWord.locator('small').isVisible(),false);
+ await firstWord.locator('summary').click();
+ assert.equal(await firstWord.locator('small').isVisible(),true);
+ await firstWord.locator('summary').click();
+ assert.equal(await page.locator('#ws58Activity').isVisible(),true);
+ assert.equal(await page.locator('#ws24Practice').count(),1);
+ return payload.summary.due;
+}
 async function launch(page,status,topic=''){
  await group(page,status,topic);
  await page.locator('#ws24Practice').click();
@@ -144,6 +174,12 @@ try{
  pass('same account has identical queue; different account is isolated');
 
  await group(pA,'due');
+ const dueA=await assertUx60Dashboard(pA,ctxA);
+ await group(pB,'due');
+ const dueB=await assertUx60Dashboard(pB,ctxB);
+ assert.equal(dueA,2,'owner must have two due words from isolated game fixture');
+ assert.equal(dueB,1,'other account must have one due word from isolated game fixture');
+ pass('UX60 dashboard renders actor-scoped global totals and progressive details for A/B');
  const toolbar=await pA.evaluate(()=>{
   const refresh=document.querySelector('#ws24Reload').getBoundingClientRect();
   const practice=document.querySelector('#ws24Practice').getBoundingClientRect();
