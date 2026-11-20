@@ -67,7 +67,7 @@ function initSrs(){
   const data=received;
   const rows=data?.words??[];
   list.replaceChildren();
-  count.textContent=data?data.total+' từ phù hợp':'—';
+  count.textContent=data?data.total+' từ trong nhóm':'—';
   pageText.textContent=data?'Trang '+(page+1)+' / '+Math.max(1,data.total_pages):'';
   prev.disabled=pending||!data||page===0;
   next.disabled=pending||!data||page+1>=data.total_pages;
@@ -83,13 +83,13 @@ function initSrs(){
   if(!data||pending||!actorId)return;
   try{
    const plan=dailyPlanFromSrsQueue(data,actorId);
-   dailyDue.textContent=plan.tasks[0].planned+' / '+plan.tasks[0].available;
-   dailyNew.textContent=plan.tasks[1].planned+' / '+plan.tasks[1].available;
+   dailyDue.textContent=String(plan.tasks[0].available);
+   dailyNew.textContent=String(plan.tasks[1].available);
    dailyUpcoming.textContent=String(plan.upcoming);
-   dailyTotal.textContent=plan.totalPlanned+' từ gợi ý';
+   dailyTotal.textContent='Gợi ý hôm nay: '+plan.tasks[0].planned+' từ cần ôn + '+plan.tasks[1].planned+' từ mới';
    dailyMessage.textContent=plan.hasWork
-    ?'Ưu tiên ôn từ đến hạn trước, sau đó học từ mới. Số lượng áp dụng cho tất cả chủ đề.'
-    :'Hôm nay chưa có từ đến hạn hoặc từ mới trong lịch ôn.';
+    ?'Chọn nhóm từ bên dưới rồi bấm Luyện từ để bắt đầu.'
+    :'Không có từ cần ôn hoặc từ mới trong lịch hiện tại.';
    if(activity){
     try{
      const verified=validateDailyActivity(activity,actorId);
@@ -122,7 +122,11 @@ function initSrs(){
    const due=make('small',word.due_at
     ? 'Đến hạn: '+new Date(word.due_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})
     : 'Từ chưa học');
-   content.append(heading,subtitle,meaning,due);
+   content.append(heading,subtitle,meaning);
+   const details=make('details',undefined,'ws60-word-details');
+   const detailTitle=make('summary','Xem lịch của từ');
+   details.append(detailTitle,due);
+   content.append(details);
    if(word.status==='scheduled')
     content.append(make('small',
      'Ôn sớm ghi nhận lượt nhớ nhưng không đổi ngày ôn tiếp theo.',
