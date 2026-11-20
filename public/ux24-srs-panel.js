@@ -234,12 +234,17 @@ function initSrs(){
    window.location.assign('/practice.html?'+params.toString());
  });
  audit.addEventListener('click',async()=>{
-  const clickedActor=actorId;
+  const clickedActor=actorId,clickedRequest=requested;
   if(!clickedActor)return;
   audit.disabled=true;
   auditResult.textContent='Đang đối chiếu lịch ôn với lịch sử trên PostgreSQL…';
+  const stillCurrent=()=>actorId===clickedActor&&requested===clickedRequest;
   try{
    const data=await learningApi('learning/srs/diagnostics');
+   // The server may correctly return A after the tab has switched to B.
+   // The old response must never update B's UI, even if actor validation
+   // against the originally clicked account succeeds.
+   if(!stillCurrent())return;
    if(data.scope!=='account-srs-diagnostics'||data.actor_id!==clickedActor)
     throw Error('Phiên đăng nhập đã thay đổi; không hiển thị kết quả tài khoản khác.');
    const matched=data.matched+'/'+data.materialized+' lịch đã lưu khớp';
@@ -248,7 +253,7 @@ function initSrs(){
      (data.mismatched||data.orphaned?' · '+(data.mismatched+data.orphaned)+' lịch sai lệch':'')+
      (data.status==='complete'?' · Hoàn tất':' · Tiếp tục theo dõi');
   }catch(error){
-   auditResult.textContent='Chưa kiểm tra được lịch: '+error.message;
+   if(stillCurrent())auditResult.textContent='Chưa kiểm tra được lịch: '+error.message;
   }finally{audit.disabled=false;}
  });
  window.addEventListener('wordsky:my-learning-review-saved',()=>refresh());
