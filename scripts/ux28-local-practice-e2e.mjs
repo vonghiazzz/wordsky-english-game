@@ -291,6 +291,135 @@ try{
  assert.equal(await pA.locator('#ws28Meaning').textContent(),three.meaning);
  pass('login switch isolates SRS queue and clears previous account question bank');
 
+ // UX60 M4: exercise real server-calculated VN calendar boundaries and streaks.
+ // All QA users/history are disposable and strictly on local PostgreSQL.
+ const guestActivity=await ctxGuest.request.get(BASE+'/api/learning/daily-activity');
+ assert.equal(guestActivity.status(),401,'guest must not see private activity');
+
+ const originalA=await (await ctxA2.request.get(BASE+'/api/learning/daily-activity')).json();
+ const originalB=await (await ctxB.request.get(BASE+'/api/learning/daily-activity')).json();
+ assert.equal(originalA.actor_id,owner.id);
+ assert.equal(originalB.actor_id,other.id);
+
+ const calendar=await account();
+ const ctxCalendar=await chrome.newContext({viewport:{width:360,height:800}});
+ await login(ctxCalendar,calendar);
+ const clock=(await db.query(
+  "SELECT to_char(now() AT TIME ZONE 'Asia/Ho_Chi_Minh','YYYY-MM-DD') AS today, "+
+  "((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date::timestamp "+
+  "AT TIME ZONE 'Asia/Ho_Chi_Minh') AS midnight"
+ )).rows[0];
+ const midnight=new Date(clock.midnight).getTime();
+ assert.ok(Number.isFinite(midnight));
+ const yesterday=new Date(Date.parse(clock.today+'T00:00:00Z')-86400000)
+  .toISOString().slice(0,10);
+ await db.query(
+  'INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
+  'VALUES($1,$2,false,$3)',
+  [calendar.id,one.id,new Date(midnight-1000).toISOString()]);
+ const yesterdayResponse=await ctxCalendar.request.get(
+  BASE+'/api/learning/daily-activity');
+ assert.equal(yesterdayResponse.status(),200,await yesterdayResponse.text());
+ const yesterdayData=await yesterdayResponse.json();
+ assert.equal(yesterdayData.actor_id,calendar.id);
+ assert.equal(yesterdayData.day,clock.today);
+ assert.equal(yesterdayData.time_zone,'Asia/Ho_Chi_Minh');
+ assert.equal(yesterdayData.reviews_today,0);
+ assert.equal(yesterdayData.unique_words_today,0);
+ assert.equal(yesterdayData.streak_days,1);
+ assert.equal(yesterdayData.streak_ends_on,yesterday);
+ assert.equal(yesterdayData.completed_goal,null);
+
+ const now=new Date();
+ await db.query(
+  'INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
+  'VALUES($1,$2,true,$3),($1,$2,false,$4)',
+  [calendar.id,one.id,new Date(now.getTime()-1000).toISOString(),now.toISOString()]);
+ const activityResponse=await ctxCalendar.request.get(
+  BASE+'/api/learning/daily-activity');
+ assert.equal(activityResponse.status(),200,await activityResponse.text());
+ const activity=await activityResponse.json();
+ assert.equal(activity.actor_id,calendar.id);
+ assert.equal(activity.day,clock.today);
+ assert.equal(activity.reviews_today,2);
+ assert.equal(activity.unique_words_today,1);
+ assert.equal(activity.streak_days,2);
+ assert.equal(activity.streak_capped,false);
+ assert.equal(activity.streak_ends_on,clock.today);
+ assert.equal(activity.completed_goal,null);
+
+ const pCalendar=await ctxCalendar.newPage();
+ await pCalendar.goto(BASE+'/progress.html');
+ await pCalendar.locator('#ws58DailyPlan').waitFor({state:'visible'});
+ await pCalendar.waitForFunction(()=>(
+  document.getElementById('ws58ReviewsToday')?.textContent==='2' &&
+  document.getElementById('ws58Streak')?.textContent==='2'
+ ));
+ const activityDetails=pCalendar.locator('#ws58DailyPlan .ws60-more');
+ await activityDetails.locator('summary').click();
+ assert.equal(await pCalendar.locator('#ws58UniqueToday').textContent(),'1');
+
+ const recheck=await (await ctxCalendar.request.get(
+  BASE+'/api/learning/daily-activity')).json();
+ assert.equal(recheck.reviews_today,2);
+ assert.equal(recheck.unique_words_today,1);
+ assert.equal(recheck.streak_days,2);
+ const stored=await db.query(
+  'SELECT count(*)::int AS events FROM ws_learning_flashcard_reviews WHERE user_id=$1',
+  [calendar.id]);
+ const scheduleCount=await db.query(
+  'SELECT count(*)::int AS n FROM ws_user_srs_schedules WHERE user_id=$1',
+  [calendar.id]);
+ assert.equal(stored.rows[0].events,3,'GET must not append review events');
+ assert.equal(scheduleCount.rows[0].n,0,'GET must not write SRS schedules');
+
+ assert.deepEqual(
+  {
+   actor: (await (await ctxA2.request.get(
+    BASE+'/api/learning/daily-activity')).json()).actor_id,
+   today: (await (await ctxA2.request.get(
+    BASE+'/api/learning/daily-activity')).json()).reviews_today
+  },
+  {actor:owner.id,today:originalA.reviews_today},
+  'calendar QA must not alter account A activity');
+ assert.equal((await (await ctxB.request.get(
+  BASE+'/api/learning/daily-activity')).json()).reviews_today,
+  originalB.reviews_today,'calendar QA must not alter account B activity');
+
+ await login(ctxCalendar,other);
+ await pCalendar.reload();
+ await pCalendar.locator('#ws58DailyPlan').waitFor({state:'visible'});
+ await pCalendar.waitForFunction(expected=>(
+  document.getElementById('ws58ReviewsToday')?.textContent===String(expected)
+ ),originalB.reviews_today);
+ assert.equal(await pCalendar.locator('#ws58ReviewsToday').textContent(),
+  String(originalB.reviews_today));
+ assert.equal(await pCalendar.locator('#ws58Streak').textContent(),
+  String(originalB.streak_days)+(originalB.streak_capped?'+':''));
+ pass('UX60 VN midnight yesterday carry-over, today unique reviews, pure GET and account-switch isolation');
+
+ const archive=await account();
+ const ctxArchive=await fox.newContext({viewport:{width:390,height:844}});
+ await login(ctxArchive,archive);
+ const archiveInsert=await db.query(
+  'INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
+  "SELECT $1,$2,false,now()-(g.i*interval '1 day') "+
+  'FROM generate_series(0,365) AS g(i)',
+  [archive.id,two.id]);
+ assert.equal(archiveInsert.rowCount,366);
+ const archiveResponse=await ctxArchive.request.get(
+  BASE+'/api/learning/daily-activity');
+ assert.equal(archiveResponse.status(),200,await archiveResponse.text());
+ const archiveActivity=await archiveResponse.json();
+ assert.equal(archiveActivity.actor_id,archive.id);
+ assert.equal(archiveActivity.streak_days,366);
+ assert.equal(archiveActivity.streak_capped,true);
+ assert.equal(archiveActivity.reviews_today,1);
+ assert.equal(archiveActivity.unique_words_today,1);
+ assert.equal(archiveActivity.completed_goal,null);
+ await Promise.allSettled([ctxCalendar.close(),ctxArchive.close()]);
+ pass('UX60 366-day calendar history respects capped streak without claiming daily-goal completion');
+
  // UX60 M3: exercise real account-scoped API + dashboard with a vocabulary
  // catalogue at least as large as Production (2099 enabled shared cards).
  // All writes stay on the pinned disposable localhost database.
