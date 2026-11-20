@@ -399,7 +399,7 @@ try{
  pass('UX60 VN midnight yesterday carry-over, today unique reviews, pure GET and account-switch isolation');
 
  const archive=await account();
- const ctxArchive=await firefox.newContext({viewport:{width:390,height:844}});
+ const ctxArchive=await fox.newContext({viewport:{width:390,height:844}});
  await login(ctxArchive,archive);
  const archiveInsert=await db.query(
   'INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
