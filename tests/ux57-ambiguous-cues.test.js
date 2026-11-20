@@ -10,7 +10,7 @@ import {
 
 const NOW=1_000_000;
 const key=value=>String(value).normalize('NFKC').trim()
- .replace(/\\s+/gu,' ').toLocaleLowerCase('vi');
+ .replace(/\s+/gu,' ').toLocaleLowerCase('vi');
 const conflicts=[
  {id:'five',english:'five',meaning:'năm'},
  {id:'year',english:'year',meaning:' NĂM  '},
