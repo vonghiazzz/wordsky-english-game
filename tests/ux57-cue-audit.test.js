@@ -31,6 +31,16 @@ test('UX57 editorial offline audit detects exactly three ambiguous VI cue groups
   'Repeated English headword with distinct meanings is not a same-cue alternative');
 });
 
+test('UX57 accepts actual public vocabulary API word_id format',()=>{
+ const publicRows=realStyleFixture.map(({id,...rest})=>({word_id:id,...rest}));
+ const report=auditSharedCueCollisions({scope:'public-vocabulary',words:publicRows});
+ assert.equal(report.eligible_shared_words,8);
+ assert.equal(report.ambiguous_cue_groups,3);
+ assert.equal(report.affected_cards,6);
+ assert.deepEqual(report,
+  auditSharedCueCollisions({words:realStyleFixture}));
+});
+
 test('UX57 audit has deterministic order independent of input order and formatting',()=>{
  const a=auditSharedCueCollisions(realStyleFixture);
  const b=auditSharedCueCollisions([...realStyleFixture].reverse());
@@ -58,6 +68,7 @@ test('UX57 audit fails closed on malformed and duplicate public records',()=>{
  assert.throws(()=>auditSharedCueCollisions([null]),/Invalid vocabulary/);
  assert.throws(()=>auditSharedCueCollisions([{id:'x',meaning:'năm'}]),/Missing id/);
  assert.throws(()=>auditSharedCueCollisions([realStyleFixture[0],realStyleFixture[0]]),/Duplicate public word ID/);
+ assert.throws(()=>auditSharedCueCollisions([{...realStyleFixture[0],word_id:'different'}]),/Conflicting word_id/);
 });
 
 test('UX57 confirms exact-match typed recall does not automatically accept ambiguous English alternatives',()=>{
