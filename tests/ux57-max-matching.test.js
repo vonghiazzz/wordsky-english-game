@@ -31,7 +31,7 @@ test('UX57: correct card IDs survive into MATCH and BOMB public game rounds',()=
   for(let i=0;i<65;i++){
    const state=createState(round(mode,3),hard,100000);
    const chosen=mode==='MATCH'?state.pairs:state.bombs;
-   assert.deepEqual(chosen.map(w=>w.id).sort(),['a-y','b-x','c-z']);
+   assert.deepEqual(chosen.map(w=>mode==='BOMB'?w.wordId:w.id).sort(),['a-y','b-x','c-z']);
    distinct(chosen);
    const visible=publicState(state,100000);
    if(mode==='MATCH')assert.equal(visible.rightOptions.length,3);
