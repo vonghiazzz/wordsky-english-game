@@ -45,6 +45,30 @@ test('UX61.4 blocks exactly six known shared sense-review cards regardless of cu
  assert.equal(countPendingEditorialRecall(null),0);
 });
 
+test('UX61.4 production-shaped bilingual topic labels and verified public UUIDs are held',()=>{
+ const rows=[
+  make('Numbers - Số đếm','five','Năm',{id:'7bccae74-7819-4456-85ee-b262d425546e'}),
+  make('Time & Dates - Thời gian','year','Năm',{id:'c74d6d8c-da74-4562-a0ed-26edf47ef547'}),
+  make('School - Trường học','assess','đánh giá',{id:'dba50551-ef7a-4934-8437-16b0d6d2e544'}),
+  make('School - Trường học','evaluate','đánh giá',{id:'3d186425-189f-44db-b910-980efce3e9d4'}),
+  make('Adjectives - Tính từ','significant','đáng kể',{id:'2cbd48a9-ccae-4922-bae9-3e4b223953df'}),
+  make('Adjectives - Tính từ','substantial','đáng kể',{id:'2a45ef4a-3c78-4e65-b41f-da7a48a6b9aa'}),
+ ];
+ assert.equal(countPendingEditorialRecall(rows),6);
+ assert.deepEqual(selectPracticeQueue(payload(rows),actor,selection,10),[]);
+ for(const word of rows){
+  assert.equal(isPendingEditorialRecall({...word,id:randomUUID()}),true,
+   'Bilingual topic must match without a pinned ID');
+  assert.equal(isPendingEditorialRecall({...word,topic:'Renamed topic',english:'new translation'}),true,
+   'Verified UUID must hold even across later content edits until signoff');
+  assert.equal(isPendingEditorialRecall({...word,source:'personal'}),false);
+ }
+ assert.equal(isPendingEditorialRecall(
+  make('Animals - Động vật','habitat','môi trường sống tự nhiên')),false);
+ assert.equal(isPendingEditorialRecall(
+  make('Nature - Thiên nhiên','habitat','môi trường sống')),false);
+});
+
 test('UX61.4 account SRS queue skips six ambiguous cards but retains other shared and personal words',()=>{
  const six=held();
  const safeShared=make('Travel','take off','cất cánh');
