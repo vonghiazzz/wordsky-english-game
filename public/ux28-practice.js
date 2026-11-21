@@ -4,6 +4,7 @@ import {
 } from './ux28-practice-core.js';
 import {isPendingEditorialRecall,countPendingEditorialRecall} from './ux61-pending-recall.js';
 import {groupPendingEditorialCards} from './ux61-editorial-groups.js';
+import {referenceForPendingSense} from './ux61-editorial-sources.js';
 
 // UX28.1: one My Learning entry. The selected SRS group is the source of
 // questions; server-accepted reviews remain the only durable learning record.
@@ -53,6 +54,17 @@ function renderEditorialReference(rows=[]){
    const cue=text('span','Nghĩa đang dùng: '+word.meaning,'ws28-editorial-meaning');
    const topic=text('small',word.topic||'Kho từ chung');
    item.append(heading,cue,topic);
+   const evidence=referenceForPendingSense(word);
+   if(evidence){
+    item.append(text('small','Từ loại tham khảo: '+evidence.partOfSpeech));
+    const link=document.createElement('a');
+    link.className='ws28-editorial-source';
+    link.href=evidence.url;
+    link.textContent='Đối chiếu nghĩa trên Cambridge (chưa phê duyệt)';
+    link.target='_blank';
+    link.rel='noopener noreferrer';
+    item.append(link);
+   }
    if(word.example?.trim())item.append(text('p','Ví dụ gốc: '+word.example));
    if(word.translation?.trim())item.append(text('p','Dịch ví dụ: '+word.translation));
    cards.append(item);
