@@ -174,6 +174,44 @@ try{
  assert.equal((await pB.locator('body').textContent()).includes(one.english),false);
  pass('same account has identical queue; different account is isolated');
 
+ // UX61.4: API response fixture only. An authenticated browser must never
+ // auto-grade six pending shared senses; normal account cards remain usable.
+ const heldPage=await ctxA.newPage();
+ let heldQueueIntercepted=false;
+ await heldPage.route('**/api/learning/srs/queue?*',async route=>{
+  const response=await route.fetch();
+  assert.equal(response.status(),200,await response.text());
+  const data=await response.json();
+  assert.equal(data.actor_id,owner.id);
+  assert.ok(data.words.length>=2);
+  const template=data.words[0];
+  const holdSpecs=[
+   ['Numbers','five','năm'],['Time & Dates','year','năm'],
+   ['School','assess','đánh giá'],['School','evaluate','đánh giá'],
+   ['Adjectives','significant','đáng kể'],
+   ['Adjectives','substantial','đáng kể'],
+  ];
+  const injected=holdSpecs.map(([topic,english,meaning])=>({
+   ...template,id:randomUUID(),source:'shared',topic,english,meaning
+  }));
+  data.words=[...injected,...data.words];
+  data.total+=injected.length;
+  heldQueueIntercepted=true;
+  await route.fulfill({response,contentType:'application/json',
+   body:JSON.stringify(data)});
+ });
+ await heldPage.goto(BASE+'/practice.html?status=due');
+ await heldPage.locator('#ws28Play').waitFor({state:'visible'});
+ assert.equal(heldQueueIntercepted,true);
+ assert.equal(await heldPage.locator('#ws28Position').textContent(),'1 / 2');
+ assert.match(await heldPage.locator('#ws28Notice').textContent(),
+  /Đã tạm bỏ qua 6 thẻ mơ hồ/);
+ const heldMeaning=await heldPage.locator('#ws28Meaning').textContent();
+ assert.ok([one.meaning,two.meaning].includes(heldMeaning));
+ assert.equal(await heldPage.locator('#ws28Feedback').isVisible(),false);
+ await heldPage.close();
+ pass('UX61.4 six ambiguous shared cards are excluded before graded recall, no SRS writes');
+
  await group(pA,'due');
  const dueA=await assertUx60Dashboard(pA,ctxA);
  await group(pB,'due');
