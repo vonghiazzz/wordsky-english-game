@@ -1,3 +1,4 @@
+import {isPendingEditorialRecall} from './ux61-pending-recall.js';
 /* UX28.1: active recall from the same account-owned SRS queue shown in My Learning.
  * No separate list of game mistakes or progress database is introduced.
  */
@@ -44,7 +45,7 @@ export function selectPracticeQueue(payload,actorId,{status,topic},limit=10){
   if(seen.has(key))throw Error('Lịch ôn chứa từ bị lặp.');
   seen.add(key);
   // Never put a word without a Vietnamese meaning into a meaning-to-English quiz.
-  if(row.meaning.trim()&&row.english.trim()&&words.length<limit)
+  if(row.meaning.trim()&&row.english.trim()&&!isPendingEditorialRecall(row)&&words.length<limit)
    words.push({word_id:row.id,source:row.source,english:row.english,
     meaning:row.meaning,topic:row.topic,ipa:row.ipa||'',example:row.example||'',
     review_count:row.review_count,status:row.status});
