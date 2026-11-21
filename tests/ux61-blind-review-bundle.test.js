@@ -23,6 +23,15 @@ const fakeCompleted=(code)=>{
  }
  return p;
 };
+test('UX61.9 committed A/B reviewer templates are exactly generated blank handoffs',()=>{
+ for(const code of ['REVIEWER_A','REVIEWER_B']){
+  const fromRepo=JSON.parse(readFileSync(
+   new URL('../docs/ux61-9-review-templates/ux61-9-'+code+'.json',import.meta.url),'utf8'));
+  assert.deepEqual(fromRepo,createBlindReviewTemplate(packet,code));
+  assert.equal(inspectBlindReviewForm(fromRepo,packet,code).completed_cards,0);
+ }
+});
+
 test('UX61.9 produces two independent empty forms with identical immutable source evidence',()=>{
  const a=make('REVIEWER_A'),b=make('REVIEWER_B');
  assert.equal(a.schema,BLIND_REVIEW_SCHEMA);
