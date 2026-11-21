@@ -1,0 +1,93 @@
+{
+  "schema": "ux61-9-blind-offline-v1",
+  "scope": "offline-unverified-review-form",
+  "review_code": "REVIEWER_B",
+  "source_snapshot_sha256": "9d6b1a001519b8d89b7f410bed98ba2849dea87636915e8b6d610fbd53574afe",
+  "instructions": "Review the WordSky source and bilingual dictionary independently. Do not view the other form. Form labels do not verify real-person identity or approve SRS.",
+  "cards": [
+    {
+      "word_id": "4b406577-b4d7-43a5-903e-55e734dca399",
+      "english": "five",
+      "topic": "Numbers - Số đếm",
+      "meaning": "Năm",
+      "example": "She has five books.",
+      "translation": "Cô ấy có năm quyển sách.",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/five",
+      "decision": null,
+      "proposed_prompt_vi": null,
+      "accepted_english": null,
+      "reasoning": null,
+      "reviewed_source_url": null
+    },
+    {
+      "word_id": "81bf2f1f-a7ab-49f7-ac0e-088ea7bee93d",
+      "english": "year",
+      "topic": "Time & Dates - Thời gian",
+      "meaning": "Năm",
+      "example": "I learn English this year.",
+      "translation": "Tôi học tiếng Anh trong năm nay.",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/year",
+      "decision": null,
+      "proposed_prompt_vi": null,
+      "accepted_english": null,
+      "reasoning": null,
+      "reviewed_source_url": null
+    },
+    {
+      "word_id": "850c23ad-1d31-4d64-ab9e-7b05744e10f6",
+      "english": "assess",
+      "topic": "School - Trường học",
+      "meaning": "đánh giá",
+      "example": "The teacher will assess our progress.",
+      "translation": "Giáo viên sẽ đánh giá tiến bộ của chúng tôi.",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/assess",
+      "decision": null,
+      "proposed_prompt_vi": null,
+      "accepted_english": null,
+      "reasoning": null,
+      "reviewed_source_url": null
+    },
+    {
+      "word_id": "b7fb767d-b77c-4911-b45b-c4588747c2bc",
+      "english": "evaluate",
+      "topic": "School - Trường học",
+      "meaning": "đánh giá",
+      "example": "We must evaluate the results carefully.",
+      "translation": "Chúng ta phải đánh giá kỹ kết quả.",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/evaluate",
+      "decision": null,
+      "proposed_prompt_vi": null,
+      "accepted_english": null,
+      "reasoning": null,
+      "reviewed_source_url": null
+    },
+    {
+      "word_id": "ad2b5bf6-dcd1-4232-bfd2-a3765a467ae5",
+      "english": "significant",
+      "topic": "Adjectives - Tính từ",
+      "meaning": "đáng kể",
+      "example": "There was a significant improvement.",
+      "translation": "Đã có sự cải thiện đáng kể.",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/significant",
+      "decision": null,
+      "proposed_prompt_vi": null,
+      "accepted_english": null,
+      "reasoning": null,
+      "reviewed_source_url": null
+    },
+    {
+      "word_id": "91001117-6921-488d-a052-34dbc248e838",
+      "english": "substantial",
+      "topic": "Adjectives - Tính từ",
+      "meaning": "đáng kể",
+      "example": "The team made substantial progress.",
+      "translation": "Nhóm đã đạt tiến bộ đáng kể.",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/substantial",
+      "decision": null,
+      "proposed_prompt_vi": null,
+      "accepted_english": null,
+      "reasoning": null,
+      "reviewed_source_url": null
+    }
+  ]
+}
