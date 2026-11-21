@@ -4,6 +4,15 @@
 
 WordSky currently keeps six shared words off auto-graded typed recall because three Vietnamese cues are shared by more than one English headword: `năm` (`five/year`), `đánh giá` (`assess/evaluate`), and `đáng kể` (`significant/substantial`). Their original meanings, source examples and production UUIDs remain unchanged.
 
+## Two ready-to-share blank forms
+
+The repository also contains two **unfilled**, version-pinned sample handoffs, validated against the UX61.8 production evidence snapshot:
+
+- [REVIEWER_A template](./ux61-9-review-templates/ux61-9-REVIEWER_A.json)
+- [REVIEWER_B template](./ux61-9-review-templates/ux61-9-REVIEWER_B.json)
+
+They are empty templates, **not** real reviewer submissions. Save separate local copies before completing them; do not commit private review responses or personal reviewer details. If the production vocabulary changes, generate new local packets rather than editing the immutable source fields.
+
 ## Generate two forms
 
 Run from the repository root (Node.js 24):
