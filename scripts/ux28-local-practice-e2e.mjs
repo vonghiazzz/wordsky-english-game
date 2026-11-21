@@ -177,6 +177,7 @@ try{
  // UX61.4: API response fixture only. An authenticated browser must never
  // auto-grade six pending shared senses; normal account cards remain usable.
  const heldPage=await ctxA.newPage();
+ const heldBefore=(await db.query('SELECT count(*)::int n FROM ws_learning_review_requests WHERE user_id=$1',[owner.id])).rows[0].n;
  let heldQueueIntercepted=false;
  await heldPage.route('**/api/learning/srs/queue?*',async route=>{
   const response=await route.fetch();
@@ -210,6 +211,8 @@ try{
  assert.ok([one.meaning,two.meaning].includes(heldMeaning));
  assert.equal(await heldPage.locator('#ws28Feedback').isVisible(),false);
  await heldPage.close();
+ const heldAfter=(await db.query('SELECT count(*)::int n FROM ws_learning_review_requests WHERE user_id=$1',[owner.id])).rows[0].n;
+ assert.equal(heldAfter,heldBefore,'Previewing held cards must not create SRS review records');
  pass('UX61.4 six ambiguous shared cards are excluded before graded recall, no SRS writes');
 
  await group(pA,'due');
