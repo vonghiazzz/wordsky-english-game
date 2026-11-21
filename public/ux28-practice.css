@@ -90,6 +90,8 @@
 .ws28-editorial-group h4{margin:0;color:#d0f9ee;font-size:14px;font-weight:800;line-height:1.55;overflow-wrap:anywhere}
 .ws28-editorial-caution{margin:6px 0 0;color:#c9dceb;font-size:12px;line-height:1.55}
 .ws28-editorial-group ul{margin-top:11px}
+.ws28-editorial-source{display:inline-block;margin-top:9px;color:#b8f9e4!important;font-size:12px;line-height:1.5;text-decoration:underline;overflow-wrap:anywhere}
+.ws28-editorial-source:focus-visible{outline:3px solid #ffdd93;outline-offset:3px}
 .ws28-editorial-review ul{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:0;margin:14px 0 0;gap:10px}
 .ws28-editorial-review li{min-width:0;border:1px solid #4b718a;border-radius:12px;background:#213a50;padding:14px;overflow-wrap:anywhere}
 .ws28-editorial-review li strong{display:block;color:#fff;font-size:18px}
