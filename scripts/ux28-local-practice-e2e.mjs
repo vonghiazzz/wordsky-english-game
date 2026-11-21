@@ -187,10 +187,10 @@ try{
   assert.ok(data.words.length>=2);
   const template=data.words[0];
   const holdSpecs=[
-   ['Numbers','five','năm'],['Time & Dates','year','năm'],
-   ['School','assess','đánh giá'],['School','evaluate','đánh giá'],
-   ['Adjectives','significant','đáng kể'],
-   ['Adjectives','substantial','đáng kể'],
+   ['Numbers - Số đếm','five','năm'],['Time & Dates - Thời gian','year','năm'],
+   ['School - Trường học','assess','đánh giá'],['School - Trường học','evaluate','đánh giá'],
+   ['Adjectives - Tính từ','significant','đáng kể'],
+   ['Adjectives - Tính từ','substantial','đáng kể'],
   ];
   const injected=holdSpecs.map(([topic,english,meaning])=>({
    ...template,id:randomUUID(),source:'shared',topic,english,meaning
