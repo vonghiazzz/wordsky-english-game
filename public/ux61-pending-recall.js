@@ -7,22 +7,22 @@
 const normalize=value=>String(value??'').normalize('NFKC').trim()
  .replace(/\s+/gu,' ').toLocaleLowerCase('vi');
 
-// Match the exact shared card's topic, English headword and current VI cue.
-// Other topics, personal words and already corrected content are unaffected.
+// Match each shared card by topic and English headword until human signoff.
+// A changed meaning alone must NOT silently lift the unreviewed-sense hold.
+// Other topics and personal words are unaffected.
 const pendingCards=[
- ['Numbers','five','năm'],
- ['Time & Dates','year','năm'],
- ['School','assess','đánh giá'],
- ['School','evaluate','đánh giá'],
- ['Adjectives','significant','đáng kể'],
- ['Adjectives','substantial','đáng kể'],
+ ['Numbers','five'],
+ ['Time & Dates','year'],
+ ['School','assess'],
+ ['School','evaluate'],
+ ['Adjectives','significant'],
+ ['Adjectives','substantial'],
 ].map(values=>values.map(normalize));
 
 export function isPendingEditorialRecall(row){
  if(row?.source!=='shared')return false;
- const topic=normalize(row.topic),english=normalize(row.english),
-  cue=normalize(row.meaning);
- return pendingCards.some(([t,e,c])=>t===topic&&e===english&&c===cue);
+ const topic=normalize(row.topic),english=normalize(row.english);
+ return pendingCards.some(([t,e])=>t===topic&&e===english);
 }
 export function countPendingEditorialRecall(rows){
  if(!Array.isArray(rows))return 0;
