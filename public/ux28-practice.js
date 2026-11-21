@@ -2,7 +2,7 @@ import {learningApi,postUnifiedAccountReview} from './ux10-account-core.js';
 import {
  gradeRecall,practiceSelectionFromUrl,reviewGroupLabel,selectPracticeQueue
 } from './ux28-practice-core.js';
-import {countPendingEditorialRecall} from './ux61-pending-recall.js';
+import {isPendingEditorialRecall,countPendingEditorialRecall} from './ux61-pending-recall.js';
 
 // UX28.1: one My Learning entry. The selected SRS group is the source of
 // questions; server-accepted reviews remain the only durable learning record.
@@ -31,9 +31,29 @@ function groupName(){
  if(!selection)return 'Nhóm ôn';
  return reviewGroupLabel(selection.status)+(selection.topic?' · '+selection.topic:'');
 }
+function renderEditorialReference(rows=[]){
+ const section=$('ws28EditorialReview'),list=$('ws28EditorialList');
+ list.replaceChildren();
+ section.open=false;
+ section.hidden=!rows.length;
+ $('ws28EditorialSummary').textContent=rows.length+
+  ' từ đang chờ kiểm duyệt · xem để học (không chấm điểm)';
+ for(const word of rows){
+  const item=document.createElement('li');
+  const heading=text('strong',word.english);
+  const cue=text('span','Nghĩa đang dùng: '+word.meaning,'ws28-editorial-meaning');
+  const topic=text('small',word.topic||'Kho từ chung');
+  item.append(heading,cue,topic);
+  if(word.example?.trim())item.append(text('p','Ví dụ gốc: '+word.example));
+  if(word.translation?.trim())item.append(text('p','Dịch ví dụ: '+word.translation));
+  list.append(item);
+ }
+}
+
 async function loadAccount(message=''){
  const ticket=++loading;
  actorId=null;quiz=[];index=0;pendingAttempt=null;saving=false;editorialHeld=0;
+ renderEditorialReference();
  correctCount=0;confirmedCount=0;
  view('');
  $('ws28ActorState').textContent='Đang xác minh tài khoản';
@@ -55,11 +75,13 @@ async function loadAccount(message=''){
   const data=await learningApi('learning/srs/queue?'+params.toString());
   const words=selectPracticeQueue(data,id,selection,MAX_CARDS);
   const held=countPendingEditorialRecall(data.words);
+  const heldCards=data.words.filter(isPendingEditorialRecall);
   const confirm=await learningApi('auth/me');
   if(ticket!==loading)return;
   if(confirm.actor?.role!=='player'||confirm.actor.id!==id)
    throw Error('Tài khoản đã thay đổi; không hiển thị từ của người khác.');
   actorId=id;quiz=words;editorialHeld=held;
+  renderEditorialReference(heldCards);
   $('ws28ActorState').textContent='✓ Tài khoản đã xác thực';
   if(!quiz.length){
    view('Setup');

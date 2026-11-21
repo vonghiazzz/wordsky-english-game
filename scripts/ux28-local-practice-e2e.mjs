@@ -210,6 +210,20 @@ try{
  const heldMeaning=await heldPage.locator('#ws28Meaning').textContent();
  assert.ok([one.meaning,two.meaning].includes(heldMeaning));
  assert.equal(await heldPage.locator('#ws28Feedback').isVisible(),false);
+ // UX61.6: Held cards remain readable in a collapsed reference; their
+ // visibility must not trigger a review write or turn into graded questions.
+ const editorial=heldPage.locator('#ws28EditorialReview');
+ await editorial.waitFor({state:'visible'});
+ assert.match(await heldPage.locator('#ws28EditorialSummary').textContent(),/6 từ đang chờ kiểm duyệt/);
+ assert.equal(await editorial.locator('li').count(),6);
+ assert.equal(await editorial.evaluate(el=>el.open),false,'Editorial list is collapsed by default');
+ await editorial.locator('summary').click();
+ assert.equal(await editorial.evaluate(el=>el.open),true);
+ const wordsShown=await editorial.locator('li strong').allTextContents();
+ assert.deepEqual(wordsShown,['five','year','assess','evaluate','significant','substantial']);
+ assert.equal(await heldPage.locator('#ws28Position').textContent(),'1 / 2',
+  'Opening the reference cannot add graded questions');
+ assert.equal(await heldPage.locator('#ws28Feedback').isVisible(),false);
  await heldPage.close();
  const heldAfter=(await db.query('SELECT count(*)::int n FROM ws_learning_review_requests WHERE user_id=$1',[owner.id])).rows[0].n;
  assert.equal(heldAfter,heldBefore,'Previewing held cards must not create SRS review records');
