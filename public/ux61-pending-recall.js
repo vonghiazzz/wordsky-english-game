@@ -19,9 +19,10 @@ const pendingCards=[
  ['Adjectives','substantial'],
 ].map(values=>values.map(normalize));
 
-// Public shared word IDs verified via READ-ONLY Preview vocabulary API on
-// 2026-11-21. IDs remain stable even when a topic display title changes.
-// Never alter the referenced word rows, learning schedules or review history.
+// Public shared word IDs verified with read-only Preview (365 cards) and
+// staged Production (2,099 cards) vocabulary APIs on 2026-11-21.
+// These environments use different UUIDs. Both are pinned so a topic rename
+// does not silently remove the safety hold. Do not mutate SRS/history.
 const pendingSharedIds=new Set([
  '7bccae74-7819-4456-85ee-b262d425546e', // five
  'c74d6d8c-da74-4562-a0ed-26edf47ef547', // year
@@ -29,6 +30,13 @@ const pendingSharedIds=new Set([
  '3d186425-189f-44db-b910-980efce3e9d4', // evaluate
  '2cbd48a9-ccae-4922-bae9-3e4b223953df', // significant
  '2a45ef4a-3c78-4e65-b41f-da7a48a6b9aa', // substantial
+ // Production shared IDs (staged production GET verification):
+ '4b406577-b4d7-43a5-903e-55e734dca399', // five
+ '81bf2f1f-a7ab-49f7-ac0e-088ea7bee93d', // year
+ '850c23ad-1d31-4d64-ab9e-7b05744e10f6', // assess
+ 'b7fb767d-b77c-4911-b45b-c4588747c2bc', // evaluate
+ 'ad2b5bf6-dcd1-4232-bfd2-a3765a467ae5', // significant
+ '91001117-6921-488d-a052-34dbc248e838', // substantial
 ]);
 
 export function isPendingEditorialRecall(row){

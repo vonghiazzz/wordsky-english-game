@@ -69,6 +69,25 @@ test('UX61.4 production-shaped bilingual topic labels and verified public UUIDs 
   make('Nature - Thiên nhiên','habitat','môi trường sống')),false);
 });
 
+test('UX61.4 staged production 2,099-word UUIDs hold despite content/label changes',()=>{
+ const production=[
+  ['4b406577-b4d7-43a5-903e-55e734dca399','Numbers - Số đếm','five','Năm'],
+  ['81bf2f1f-a7ab-49f7-ac0e-088ea7bee93d','Time & Dates - Thời gian','year','Năm'],
+  ['850c23ad-1d31-4d64-ab9e-7b05744e10f6','School - Trường học','assess','đánh giá'],
+  ['b7fb767d-b77c-4911-b45b-c4588747c2bc','School - Trường học','evaluate','đánh giá'],
+  ['ad2b5bf6-dcd1-4232-bfd2-a3765a467ae5','Adjectives - Tính từ','significant','đáng kể'],
+  ['91001117-6921-488d-a052-34dbc248e838','Adjectives - Tính từ','substantial','đáng kể'],
+ ];
+ const rows=production.map(([id,topic,english,meaning])=>make(topic,english,meaning,{id}));
+ assert.equal(countPendingEditorialRecall(rows),6);
+ assert.deepEqual(selectPracticeQueue(payload(rows),actor,selection),[]);
+ for(const row of rows){
+  assert.equal(isPendingEditorialRecall({...row,topic:'Renamed topic',meaning:'Reworded translation',
+   english:'Reworded English'}),true,'Production UUID must remain held despite renames');
+  assert.equal(isPendingEditorialRecall({...row,source:'personal'}),false);
+ }
+});
+
 test('UX61.4 account SRS queue skips six ambiguous cards but retains other shared and personal words',()=>{
  const six=held();
  const safeShared=make('Travel','take off','cất cánh');
