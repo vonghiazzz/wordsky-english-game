@@ -229,6 +229,18 @@ try{
   'Gợi ý nghĩa: đáng kể · 2 từ'
  ]);
  assert.equal(await editorial.locator('.ws28-editorial-caution').count(),3);
+ // UX61.8: reviewer source links are fixed/allowlisted and never approve a
+ // question. Six held cards remain outside the SRS graded queue.
+ const sourceLinks=editorial.locator('a.ws28-editorial-source');
+ assert.equal(await sourceLinks.count(),6);
+ for(const english of ['five','year','assess','evaluate','significant','substantial']){
+  const hrefs=await sourceLinks.evaluateAll(els=>els.map(a=>a.href));
+  assert.ok(hrefs.includes('https://dictionary.cambridge.org/dictionary/english/'+english));
+ }
+ assert.ok(await sourceLinks.evaluateAll(els=>els.every(a=>
+  a.target==='_blank'&&a.rel.split(' ').includes('noopener')&&
+  a.rel.split(' ').includes('noreferrer')&&a.textContent.includes('chưa phê duyệt'))));
+
  assert.equal(await heldPage.locator('#ws28Position').textContent(),'1 / 2',
   'Opening the reference cannot add graded questions');
  assert.equal(await heldPage.locator('#ws28Feedback').isVisible(),false);
