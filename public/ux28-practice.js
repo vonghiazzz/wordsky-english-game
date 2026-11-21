@@ -3,6 +3,7 @@ import {
  gradeRecall,practiceSelectionFromUrl,reviewGroupLabel,selectPracticeQueue
 } from './ux28-practice-core.js';
 import {isPendingEditorialRecall,countPendingEditorialRecall} from './ux61-pending-recall.js';
+import {groupPendingEditorialCards} from './ux61-editorial-groups.js';
 
 // UX28.1: one My Learning entry. The selected SRS group is the source of
 // questions; server-accepted reviews remain the only durable learning record.
@@ -35,18 +36,29 @@ function renderEditorialReference(rows=[]){
  const section=$('ws28EditorialReview'),list=$('ws28EditorialList');
  list.replaceChildren();
  section.open=false;
- section.hidden=!rows.length;
+ const groups=groupPendingEditorialCards(rows);
+ section.hidden=!groups.length;
  $('ws28EditorialSummary').textContent=rows.length+
-  ' từ đang chờ kiểm duyệt · xem để học (không chấm điểm)';
- for(const word of rows){
-  const item=document.createElement('li');
-  const heading=text('strong',word.english);
-  const cue=text('span','Nghĩa đang dùng: '+word.meaning,'ws28-editorial-meaning');
-  const topic=text('small',word.topic||'Kho từ chung');
-  item.append(heading,cue,topic);
-  if(word.example?.trim())item.append(text('p','Ví dụ gốc: '+word.example));
-  if(word.translation?.trim())item.append(text('p','Dịch ví dụ: '+word.translation));
-  list.append(item);
+  ' từ đang chờ kiểm duyệt · '+groups.length+' nhóm gợi ý (không chấm điểm)';
+ for(const group of groups){
+  const container=document.createElement('section');
+  container.className='ws28-editorial-group';
+  container.append(text('h4','Gợi ý nghĩa: '+group.cue+' · '+group.words.length+' từ'));
+  if(group.words.length>1)
+   container.append(text('p','Các từ có cùng gợi ý tiếng Việt; cần xem ngữ cảnh, không phải đáp án thay thế cho nhau.','ws28-editorial-caution'));
+  const cards=document.createElement('ul');
+  for(const word of group.words){
+   const item=document.createElement('li');
+   const heading=text('strong',word.english);
+   const cue=text('span','Nghĩa đang dùng: '+word.meaning,'ws28-editorial-meaning');
+   const topic=text('small',word.topic||'Kho từ chung');
+   item.append(heading,cue,topic);
+   if(word.example?.trim())item.append(text('p','Ví dụ gốc: '+word.example));
+   if(word.translation?.trim())item.append(text('p','Dịch ví dụ: '+word.translation));
+   cards.append(item);
+  }
+  container.append(cards);
+  list.append(container);
  }
 }
 
