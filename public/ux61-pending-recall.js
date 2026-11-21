@@ -37,7 +37,7 @@ export function isPendingEditorialRecall(row){
  if(pendingSharedIds.has(id))return true;
  // Real public/SRS topics contain bilingual display names such as
  // "School - Trường học"; historical fixtures use the short English name.
- const topic=normalize(row.topic).split(/\\s+-\\s+/u)[0];
+ const topic=normalize(row.topic).split(/\s+-\s+/u)[0];
  const english=normalize(row.english);
  return pendingCards.some(([t,e])=>t===topic&&e===english);
 }
