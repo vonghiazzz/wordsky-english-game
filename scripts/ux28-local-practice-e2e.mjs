@@ -216,11 +216,19 @@ try{
  await editorial.waitFor({state:'visible'});
  assert.match(await heldPage.locator('#ws28EditorialSummary').textContent(),/6 từ đang chờ kiểm duyệt/);
  assert.equal(await editorial.locator('li').count(),6);
+ assert.equal(await editorial.locator('.ws28-editorial-group').count(),3);
  assert.equal(await editorial.evaluate(el=>el.open),false,'Editorial list is collapsed by default');
  await editorial.locator('summary').click();
  assert.equal(await editorial.evaluate(el=>el.open),true);
  const wordsShown=await editorial.locator('li strong').allTextContents();
  assert.deepEqual(wordsShown,['five','year','assess','evaluate','significant','substantial']);
+ const labels=await editorial.locator('.ws28-editorial-group h4').allTextContents();
+ assert.deepEqual(labels,[
+  'Gợi ý nghĩa: năm · 2 từ',
+  'Gợi ý nghĩa: đánh giá · 2 từ',
+  'Gợi ý nghĩa: đáng kể · 2 từ'
+ ]);
+ assert.equal(await editorial.locator('.ws28-editorial-caution').count(),3);
  assert.equal(await heldPage.locator('#ws28Position').textContent(),'1 / 2',
   'Opening the reference cannot add graded questions');
  assert.equal(await heldPage.locator('#ws28Feedback').isVisible(),false);
