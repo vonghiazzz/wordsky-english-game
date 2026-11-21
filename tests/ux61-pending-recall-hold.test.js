@@ -76,6 +76,6 @@ test('UX61.4 UI must disclose held cards, preserve normal quiz progress and avoi
  assert.match(ui,/countPendingEditorialRecall\(data\.words\)/);
  assert.match(ui,/editorialHeld=held/);
  assert.match(ui,/Đã tạm bỏ qua/);
- assert.match(ui,/không ghi review hay thay đổi lịch SRS/);
+ assert.match(ui,/Chưa ghi review hay thay đổi lịch SRS/);
  assert.match(ui,/pendingAttempt=\{word,correct:skipped\?false:result\.correct,confirmed:false\}/);
 });
