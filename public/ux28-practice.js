@@ -2,12 +2,13 @@ import {learningApi,postUnifiedAccountReview} from './ux10-account-core.js';
 import {
  gradeRecall,practiceSelectionFromUrl,reviewGroupLabel,selectPracticeQueue
 } from './ux28-practice-core.js';
+import {countPendingEditorialRecall} from './ux61-pending-recall.js';
 
 // UX28.1: one My Learning entry. The selected SRS group is the source of
 // questions; server-accepted reviews remain the only durable learning record.
 const $=id=>document.getElementById(id);
 let actorId=null,quiz=[],index=0,correctCount=0,confirmedCount=0;
-let pendingAttempt=null,saving=false,loading=0,selection=null;
+let pendingAttempt=null,saving=false,loading=0,selection=null,editorialHeld=0;
 let answerPronunciation=null;
 const MAX_CARDS=10;
 const rowText=(value)=>String(value??'');
@@ -32,7 +33,7 @@ function groupName(){
 }
 async function loadAccount(message=''){
  const ticket=++loading;
- actorId=null;quiz=[];index=0;pendingAttempt=null;saving=false;
+ actorId=null;quiz=[];index=0;pendingAttempt=null;saving=false;editorialHeld=0;
  correctCount=0;confirmedCount=0;
  view('');
  $('ws28ActorState').textContent='Đang xác minh tài khoản';
@@ -53,15 +54,18 @@ async function loadAccount(message=''){
   });
   const data=await learningApi('learning/srs/queue?'+params.toString());
   const words=selectPracticeQueue(data,id,selection,MAX_CARDS);
+  const held=countPendingEditorialRecall(data.words);
   const confirm=await learningApi('auth/me');
   if(ticket!==loading)return;
   if(confirm.actor?.role!=='player'||confirm.actor.id!==id)
    throw Error('Tài khoản đã thay đổi; không hiển thị từ của người khác.');
-  actorId=id;quiz=words;
+  actorId=id;quiz=words;editorialHeld=held;
   $('ws28ActorState').textContent='✓ Tài khoản đã xác thực';
   if(!quiz.length){
    view('Setup');
-   notice('Không có từ có nghĩa tiếng Việt để luyện trong nhóm '+groupName()+'.');
+   notice(editorialHeld
+    ?'Đã tạm bỏ qua '+editorialHeld+' thẻ chung có gợi ý chưa được kiểm duyệt nghĩa. Chưa ghi review hay thay đổi lịch SRS; hãy chọn nhóm ôn khác.'
+    :'Không có từ có nghĩa tiếng Việt để luyện trong nhóm '+groupName()+'.');
    return;
   }
   view('Play');
@@ -99,7 +103,8 @@ function renderQuestion(){
  $('ws28Retry').hidden=true;
  $('ws28Next').hidden=true;
  $('ws28Exit').disabled=false;
- notice('Câu '+(index+1)+'/'+quiz.length+' · '+groupName()+'. Gõ từ hoặc chọn Không nhớ.');
+ notice('Câu '+(index+1)+'/'+quiz.length+' · '+groupName()+'. Gõ từ hoặc chọn Không nhớ.'+
+  (editorialHeld?' Đã tạm bỏ qua '+editorialHeld+' thẻ mơ hồ; lịch ôn của chúng giữ nguyên.':''));
  $('ws28Answer').focus({preventScroll:true});
 }
 function showFeedback(attempt){
@@ -182,6 +187,8 @@ function showSummary(partial=false){
   ?'Bạn có thể luyện tiếp từ My Learning. Các lượt đã lưu được giữ nguyên.'
   :'Đã lưu '+confirmedCount+' lượt ôn vào PostgreSQL. Đúng '+correctCount+
    ', cần luyện thêm '+(confirmedCount-correctCount)+'. Mở My Learning để xem lịch mới.';
+ if(editorialHeld)$('ws28DoneMessage').textContent+=
+  ' '+editorialHeld+' thẻ đang chờ kiểm duyệt nghĩa được bỏ qua, không ghi lượt ôn.';
  notice('Đã đồng bộ tiến độ ôn theo tài khoản.','success');
 }
 async function validateIdentity(){
