@@ -1,0 +1,146 @@
+{
+  "schema": "wordsky-ux61-8-editorial-evidence-v1",
+  "scope": "offline-editorial-reference-only",
+  "decision_status": "PENDING_HUMAN_REVIEW",
+  "source": {
+    "kind": "read-only-public-catalog",
+    "url": "https://wordsky-english-game.vercel.app/api/learning/vocabulary",
+    "environment": "production",
+    "as_of": "2026-11-21",
+    "observed_total_words": 2099
+  },
+  "release_gate": {
+    "allow_auto_apply": false,
+    "allow_approval_from_packet": false,
+    "allow_graded_srs_activation": false,
+    "allow_cefr_mutation": false,
+    "allow_user_history_change": false,
+    "requires_independent_human_sense_review": true,
+    "requires_verified_reviewer_identity": true,
+    "requires_exact_catalog_recheck": true,
+    "requires_preview_e2e": true
+  },
+  "reviewer_instructions": "Mỗi đề xuất phải có bằng chứng từ từ điển, ngữ cảnh không lộ đáp án, danh sách đáp án đồng nghĩa chấp nhận được. Sau hai lượt duyệt độc lập, xây gói phiên bản mới theo cơ chế UX43E2. Tệp này KHÔNG có phê duyệt, không ghi DB và không tự mở SRS.",
+  "cards": [
+    {
+      "english": "five",
+      "topic": "Numbers - Số đếm",
+      "word_id": "4b406577-b4d7-43a5-903e-55e734dca399",
+      "existing_meaning": "Năm",
+      "original_example": "She has five books.",
+      "original_translation": "Cô ấy có năm quyển sách.",
+      "part_of_speech": "number",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/five",
+      "candidate_contextual_cue_vi": "số đếm 5",
+      "editorial_note": "Cần phân biệt số đếm với đơn vị thời gian.",
+      "review": {
+        "status": "PENDING_HUMAN_REVIEW",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "accepted_english": null,
+        "approved_prompt_vi": null,
+        "independent_receipts": []
+      }
+    },
+    {
+      "english": "year",
+      "topic": "Time & Dates - Thời gian",
+      "word_id": "81bf2f1f-a7ab-49f7-ac0e-088ea7bee93d",
+      "existing_meaning": "Năm",
+      "original_example": "I learn English this year.",
+      "original_translation": "Tôi học tiếng Anh trong năm nay.",
+      "part_of_speech": "noun",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/year",
+      "candidate_contextual_cue_vi": "một năm (đơn vị thời gian)",
+      "editorial_note": "Đơn vị thời gian, không phải con số five.",
+      "review": {
+        "status": "PENDING_HUMAN_REVIEW",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "accepted_english": null,
+        "approved_prompt_vi": null,
+        "independent_receipts": []
+      }
+    },
+    {
+      "english": "assess",
+      "topic": "School - Trường học",
+      "word_id": "850c23ad-1d31-4d64-ab9e-7b05744e10f6",
+      "existing_meaning": "đánh giá",
+      "original_example": "The teacher will assess our progress.",
+      "original_translation": "Giáo viên sẽ đánh giá tiến bộ của chúng tôi.",
+      "part_of_speech": "verb",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/assess",
+      "candidate_contextual_cue_vi": null,
+      "editorial_note": "Assess và evaluate có thể thay thế trong nhiều ngữ cảnh; không được tự gán đáp án độc quyền.",
+      "review": {
+        "status": "PENDING_HUMAN_REVIEW",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "accepted_english": null,
+        "approved_prompt_vi": null,
+        "independent_receipts": []
+      }
+    },
+    {
+      "english": "evaluate",
+      "topic": "School - Trường học",
+      "word_id": "b7fb767d-b77c-4911-b45b-c4588747c2bc",
+      "existing_meaning": "đánh giá",
+      "original_example": "We must evaluate the results carefully.",
+      "original_translation": "Chúng ta phải đánh giá kỹ kết quả.",
+      "part_of_speech": "verb",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/evaluate",
+      "candidate_contextual_cue_vi": null,
+      "editorial_note": "Phải có quy tắc chấp nhận đồng nghĩa hoặc câu hỏi thực sự phân biệt được trước khi mở chấm điểm.",
+      "review": {
+        "status": "PENDING_HUMAN_REVIEW",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "accepted_english": null,
+        "approved_prompt_vi": null,
+        "independent_receipts": []
+      }
+    },
+    {
+      "english": "significant",
+      "topic": "Adjectives - Tính từ",
+      "word_id": "ad2b5bf6-dcd1-4232-bfd2-a3765a467ae5",
+      "existing_meaning": "đáng kể",
+      "original_example": "There was a significant improvement.",
+      "original_translation": "Đã có sự cải thiện đáng kể.",
+      "part_of_speech": "adjective",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/significant",
+      "candidate_contextual_cue_vi": "quan trọng hoặc đáng chú ý",
+      "editorial_note": "Significant có thể là thay đổi có ý nghĩa hoặc mức đáng kể; ví dụ hiện tại chồng lấn substantial.",
+      "review": {
+        "status": "PENDING_HUMAN_REVIEW",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "accepted_english": null,
+        "approved_prompt_vi": null,
+        "independent_receipts": []
+      }
+    },
+    {
+      "english": "substantial",
+      "topic": "Adjectives - Tính từ",
+      "word_id": "91001117-6921-488d-a052-34dbc248e838",
+      "existing_meaning": "đáng kể",
+      "original_example": "The team made substantial progress.",
+      "original_translation": "Nhóm đã đạt tiến bộ đáng kể.",
+      "part_of_speech": "adjective",
+      "source_url": "https://dictionary.cambridge.org/dictionary/english/substantial",
+      "candidate_contextual_cue_vi": "lớn về số lượng hoặc quy mô",
+      "editorial_note": "Substantial thường nhấn mạnh quy mô/mức độ nhưng không luôn tách biệt significant.",
+      "review": {
+        "status": "PENDING_HUMAN_REVIEW",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "accepted_english": null,
+        "approved_prompt_vi": null,
+        "independent_receipts": []
+      }
+    }
+  ]
+}

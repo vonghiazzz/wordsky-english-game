@@ -33,3 +33,8 @@ jobs:
           node --check scripts/ux61-production-cue-policy-guard.mjs
           node scripts/ux61-production-cue-policy-guard.mjs --live
         # No auth, no cookies, no SRS history and no Production mutation.
+      - name: UX61.8 require exact pending editorial source evidence (GET-only)
+        run: |
+          node --check scripts/ux61-8-review-production.mjs
+          node scripts/ux61-8-review-production.mjs --live
+        # Never accept an approval receipt from this offline packet or write user data.
