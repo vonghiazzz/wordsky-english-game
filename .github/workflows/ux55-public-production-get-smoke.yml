@@ -28,3 +28,8 @@ jobs:
           node scripts/ux56-public-vocabulary-quality-audit.mjs
         # Never provide accounts, tokens, cookies or Production DB secrets.
         # This does not exercise account history or write learner records.
+      - name: UX61.5 guard production Vietnamese cue ambiguity (GET-only)
+        run: |
+          node --check scripts/ux61-production-cue-policy-guard.mjs
+          node scripts/ux61-production-cue-policy-guard.mjs --live
+        # No auth, no cookies, no SRS history and no Production mutation.
