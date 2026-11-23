@@ -48,6 +48,7 @@ export const options={
   },
   rps:selectedProfile.rps,
   discardResponseBodies:true,
+  summaryTrendStats:['avg','min','med','max','p(90)','p(95)','p(99)'],
   maxRedirects:0,
   userAgent:'WordSky-PERF01-Local-ReadOnly/1.0',
   thresholds:{
