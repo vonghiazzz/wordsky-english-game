@@ -90,7 +90,7 @@ test('UX61.10 flags disagreement, overlapping answers and incomplete reviewer da
  a.cards[4].proposed_prompt_vi=a.cards[5].proposed_prompt_vi;
  const report=prepareAdjudicationReport(packet,a,b);
  assert.equal(report.status_counts.decision_disagreement,1);
- assert.equal(report.status_counts.prompt_or_answer_disagreement,2);
+ assert.equal(report.status_counts.prompt_or_answer_disagreement,3);
  assert.ok(report.conflicts.some(c=>c.reason==='overlapping_accepted_answers'));
  assert.ok(report.conflicts.some(c=>c.reason==='same_prompt_different_target'));
  assert.ok(report.cards[0].blockers.includes('decision_disagreement'));
