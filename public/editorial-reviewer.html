@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<title>WordSky · Phiếu kiểm duyệt riêng tư trên trình duyệt</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#f4f7fa;color:#152f40}
+main{max-width:1000px;margin:auto;padding:20px 16px 70px}
+h1{margin:8px 0 10px;font-size:clamp(1.35rem,4vw,2rem)}h2{font-size:1.14rem;margin:0 0 8px}
+p{line-height:1.6}label{font-weight:650;display:block;margin:10px 0 5px}
+input[type=file]{display:block;max-width:100%;margin:15px 0}
+textarea,select{display:block;width:100%;border:1px solid #8ba3b0;background:#fff;border-radius:8px;padding:10px;font:inherit}
+textarea{resize:vertical;min-height:68px}
+button{border:0;border-radius:9px;background:#146c6e;color:#fff;padding:12px 18px;font:inherit;font-weight:750;cursor:pointer}
+button:disabled{background:#8f9fa7;cursor:not-allowed}
+a{color:#075b8a;overflow-wrap:anywhere}
+.panel{padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 1px 7px #10283a15;margin:14px 0}
+.card{border-top:1px solid #dae2e7;padding:18px 0}.card:first-child{border-top:0}
+.card h3{font-size:1.12rem;margin:0 0 8px}.meta{font-size:.94rem;color:#496375;line-height:1.65}
+.note{font-size:.9rem;color:#526c78}.warn{border-left:4px solid #a36c14;padding:12px 14px;background:#fff6e7}
+.inline{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.check{display:flex;align-items:flex-start;gap:9px;font-weight:500}
+.check input{margin-top:4px;flex:none}
+#status{min-height:30px;white-space:pre-wrap;overflow-wrap:anywhere}
+.good{color:#155b42}.bad{color:#a02b24}
+footer{font-size:.86rem;color:#486272;margin-top:20px}
+[hidden]{display:none!important}
+@media(min-width:760px){.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="meta">WordSky · UX61.12 · Biểu mẫu trên trình duyệt · không tải lên máy chủ</p>
+<h1>Phiếu kiểm duyệt nghĩa &amp; câu hỏi</h1>
+<p>Nhập <strong>một file REVIEWER_A hoặc REVIEWER_B</strong> chưa điền. Trả lời 6 thẻ, rồi xuất JSON để gửi riêng cho người điều phối kiểm duyệt.</p>
+<div class="warn"><strong>Không phải phê duyệt.</strong> Hai phiếu trùng đáp án cũng không chứng minh hai người độc lập hoặc cấp quyền kích hoạt SRS. Trang này được tải từ WordSky, nhưng không đăng nhập, không gọi API để gửi câu trả lời và không lưu dữ liệu phiếu lên máy chủ WordSky. Bấm liên kết từ điển sẽ mở website bên ngoài theo lựa chọn của bạn.</div>
+</header>
+<section class="panel" aria-labelledby="importHeading">
+<h2 id="importHeading">1. Mở mẫu phiếu của bạn</h2>
+<label for="templateFile">File JSON được giao riêng cho người đánh giá</label>
+<input id="templateFile" type="file" accept=".json,application/json">
+<p class="note">Bạn có thể dùng trang này ngay trên trình duyệt hoặc tải bản HTML ngoại tuyến. Nội dung chỉ được giữ trong trang đang mở; hãy xuất file trước khi đóng.</p>
+<p id="status" role="status" aria-live="polite">Chưa nhập mẫu phiếu.</p>
+</section>
+<section class="panel" id="formPanel" aria-labelledby="reviewHeading" hidden>
+<div class="inline">
+<h2 id="reviewHeading">2. Điền nhận xét độc lập</h2>
+<strong id="reviewerLabel"></strong>
+</div>
+<p class="note">Ví dụ tiếng Anh chỉ dành để người đánh giá tham khảo; không sử dụng câu ví dụ chứa đáp án để đặt câu hỏi chấm điểm.</p>
+<div id="cards"></div>
+<div class="inline">
+<button type="button" id="exportButton">3. Kiểm tra &amp; xuất JSON</button>
+<span class="note">Tệp trả lời vẫn cần kiểm tra bằng công cụ UX61.9/61.10 trước khi sử dụng.</span>
+</div>
+</section>
+<footer>Không tự xác thực danh tính, không thay đổi CEFR, SRS hay dữ liệu production. Khi có bất đồng, giữ nguyên sáu thẻ đang chờ duyệt.</footer>
+</main>
+<script>
+'use strict';
+(()=>{
+ const $=id=>document.getElementById(id);
+ const WORDS=['five','year','assess','evaluate','significant','substantial'];
+ const mutable=['decision','proposed_prompt_vi','accepted_english','reasoning','reviewed_source_url'];
+ const immutable=['word_id','english','topic','meaning','example','translation','source_url'];
+ const templateKeys=['schema','scope','review_code','source_snapshot_sha256','instructions','cards'];
+ const cardKeys=[...immutable,...mutable];
+ let base=null;
+ const controls=[];
+ const status=(message,bad=false)=>{
+  $('status').textContent=message;
+  $('status').className=bad?'bad':'good';
+ };
+ const sameKeys=(obj,expected)=>{
+  if(!obj||typeof obj!=='object'||Array.isArray(obj))return false;
+  return Object.keys(obj).sort().join('|')===expected.slice().sort().join('|');
+ };
+ const text=(tag,value,cls)=>{
+  const el=document.createElement(tag);
+  el.textContent=String(value??'');
+  if(cls)el.className=cls;
+  return el;
+ };
+ const field=(labelText,control)=>{
+  const wrap=document.createElement('div');
+  const label=document.createElement('label');
+  label.textContent=labelText;
+  label.append(control);
+  wrap.append(label);
+  return wrap;
+ };
+ const clean=(value,max)=>{
+  if(typeof value!=='string'||!value.trim()||value!==value.trim()||
+   value.length>max||/[\u0000-\u001f\u007f]/u.test(value))
+    throw Error('Một trường nhập chưa hợp lệ (trống, quá dài hoặc có ký tự điều khiển).');
+  return value;
+ };
+ function validateTemplate(input){
+  if(!sameKeys(input,templateKeys)||
+   input.schema!=='ux61-9-blind-offline-v1'||
+   input.scope!=='offline-unverified-review-form'||
+   !['REVIEWER_A','REVIEWER_B'].includes(input.review_code)||
+   !/^[a-f0-9]{64}$/.test(input.source_snapshot_sha256)||
+   typeof input.instructions!=='string'||
+   !Array.isArray(input.cards)||input.cards.length!==6)
+   throw Error('Mẫu phiếu không đúng cấu trúc UX61.9.');
+  for(let i=0;i<6;i++){
+   const card=input.cards[i];
+   if(!sameKeys(card,cardKeys)||card.english!==WORDS[i]||
+    !/^[0-9a-f-]{36}$/i.test(card.word_id)||
+    card.source_url!=='https://dictionary.cambridge.org/dictionary/english/'+card.english||
+    !immutable.every(key=>typeof card[key]==='string'&&card[key].length>0))
+    throw Error('Nguồn bản ghi không hợp lệ ở thẻ '+(i+1)+'.');
+   if(![null,'needs_revision','suitable_for_adjudication'].includes(card.decision))
+    throw Error('Trạng thái phiếu không đúng.');
+  }
+  return structuredClone(input);
+ }
+ function createCard(card,i){
+  const section=document.createElement('section');
+  section.className='card';
+  section.append(text('h3',(i+1)+'. '+card.english));
+  section.append(text('p',card.topic+' · Gợi ý đang dùng: '+card.meaning,'meta'));
+  section.append(text('p','Ví dụ gốc: '+card.example,'meta'));
+  section.append(text('p','Bản dịch hiện tại: '+card.translation,'meta'));
+  const link=document.createElement('a');
+  link.href=card.source_url;link.target='_blank';link.rel='noopener noreferrer';
+  link.textContent='Đối chiếu từ điển Cambridge';
+  section.append(link);
+  const select=document.createElement('select');
+  for(const [value,caption] of [
+   ['','Chưa đánh giá'],['suitable_for_adjudication','Có thể đề xuất để phân xử'],
+   ['needs_revision','Cần sửa / chưa thể xác định đáp án công bằng']
+  ]){
+   const option=document.createElement('option');
+   option.value=value;option.textContent=caption;select.append(option);
+  }
+  select.value=card.decision??'';
+  section.append(field('Quyết định sơ bộ',select));
+  const prompt=document.createElement('textarea');
+  prompt.maxLength=180;prompt.rows=2;
+  prompt.placeholder='Câu hỏi tiếng Việt theo ngữ cảnh; không được chứa đáp án tiếng Anh';
+  prompt.value=card.proposed_prompt_vi??'';
+  section.append(field('Câu hỏi theo ngữ cảnh (nếu phù hợp)',prompt));
+  const answers=document.createElement('textarea');
+  answers.maxLength=800;answers.rows=2;
+  answers.placeholder='Các đáp án tiếng Anh được chấp nhận, mỗi đáp án một dòng';
+  answers.value=card.accepted_english?.join('\n')??'';
+  section.append(field('Đáp án tiếng Anh được chấp nhận',answers));
+  const reasoning=document.createElement('textarea');
+  reasoning.maxLength=1200;reasoning.rows=3;
+  reasoning.placeholder='Lý do ngôn ngữ học, lưu ý từ đồng nghĩa, trường hợp không chắc chắn';
+  reasoning.value=card.reasoning??'';
+  section.append(field('Giải thích và lý do',reasoning));
+  const reviewed=document.createElement('input');
+  reviewed.type='checkbox';
+  reviewed.checked=card.reviewed_source_url===card.source_url;
+  const cbox=document.createElement('label');
+  cbox.className='check';
+  cbox.append(reviewed,text('span','Tôi đã tự mở và đối chiếu nguồn Cambridge ở trên.'));
+  section.append(cbox);
+  const switchFields=()=>{
+   const needs=select.value==='suitable_for_adjudication';
+   prompt.disabled=!needs;answers.disabled=!needs;
+   // Do not discard previously typed text on changing a decision.
+  };
+  select.addEventListener('change',switchFields);switchFields();
+  controls.push({card,select,prompt,answers,reasoning,reviewed});
+  return section;
+ }
+ function loadForm(input){
+  base=validateTemplate(input);controls.length=0;
+  $('cards').replaceChildren();
+  for(let i=0;i<6;i++)$('cards').append(createCard(base.cards[i],i));
+  $('reviewerLabel').textContent=base.review_code;
+  $('formPanel').hidden=false;
+  status('Đã nhập mẫu '+base.review_code+' (6 thẻ). Phiếu vẫn CHƯA ĐƯỢC PHÊ DUYỆT.');
+ }
+ function exportForm(){
+  if(!base)throw Error('Chưa tải mẫu phiếu.');
+  const output=structuredClone(base);
+  for(let i=0;i<controls.length;i++){
+   const {card,select,prompt,answers,reasoning,reviewed}=controls[i];
+   const result=output.cards[i];
+   if(!immutable.every(k=>result[k]===card[k]))throw Error('Nguồn thẻ đã bị thay đổi.');
+   const decision=select.value||null;
+   result.decision=decision;
+   if(decision===null){
+    if(prompt.value.trim()||answers.value.trim()||reasoning.value.trim()||reviewed.checked)
+     throw Error('Thẻ '+card.english+': hãy chọn quyết định trước khi nhập nhận xét.');
+    for(const key of mutable)result[key]=null;
+    continue;
+   }
+   result.reasoning=clean(reasoning.value,1200);
+   if(!reviewed.checked)throw Error('Thẻ '+card.english+': chưa xác nhận đã kiểm tra nguồn.');
+   result.reviewed_source_url=card.source_url;
+   if(decision==='needs_revision'){
+    result.proposed_prompt_vi=null;
+    result.accepted_english=null;
+    continue;
+   }
+   result.proposed_prompt_vi=clean(prompt.value,180);
+   if(new RegExp('(^|[^a-z])'+card.english+'([^a-z]|$)','i').test(result.proposed_prompt_vi))
+    throw Error('Thẻ '+card.english+': câu hỏi tiết lộ đáp án tiếng Anh.');
+   const list=answers.value.split(/\r?\n/u).map(x=>x.trim()).filter(Boolean);
+   if(list.length<1||list.length>8)throw Error('Thẻ '+card.english+': cần 1–8 đáp án.');
+   list.forEach(v=>clean(v,100));
+   const normalized=list.map(v=>v.normalize('NFKC').toLocaleLowerCase('vi'));
+   if(new Set(normalized).size!==list.length||!normalized.includes(card.english))
+    throw Error('Thẻ '+card.english+': thiếu đáp án gốc hoặc trùng đáp án.');
+   result.accepted_english=list;
+  }
+  const blob=new Blob([JSON.stringify(output,null,2)+'\n'],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='ux61-9-'+base.review_code+'-filled.json';
+  document.body.append(a);a.click();a.remove();
+  // Revocation after the browser's click processing completes; no network call.
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  status('Đã xuất phiếu '+base.review_code+'. Chưa phải phê duyệt; gửi riêng cho người điều phối để chạy bước đối chiếu.');
+ }
+ $('templateFile').addEventListener('change',async event=>{
+  base=null;$('formPanel').hidden=true;$('cards').replaceChildren();controls.length=0;
+  try{
+   const file=event.target.files?.[0];
+   if(!file)throw Error('Chưa chọn file.');
+   if(file.size>50000)throw Error('File JSON vượt giới hạn 50 KB.');
+   loadForm(JSON.parse(await file.text()));
+  }catch(error){status(error.message,true);}
+ });
+ $('exportButton').addEventListener('click',()=>{
+  try{exportForm();}catch(error){status(error.message,true);}
+ });
+})();
+</script>
+</body>
+</html>
