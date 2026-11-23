@@ -30,6 +30,14 @@ node scripts/ux61-10-adjudication.mjs \
 
 Mẫu có thể được điền một phần và xuất thành JSON; công cụ đối chiếu sẽ hiển thị phần nào còn thiếu. File được **tải xuống thiết bị**, không gửi lên WordSky. Mở liên kết từ điển sẽ tự chủ động truy cập trang web bên ngoài, nhưng nội dung phiếu không được gửi kèm.
 
+## UX61.13 — Kiểm tra tính toàn vẹn mẫu nguồn ngay tại biểu mẫu
+
+Biểu mẫu trực tuyến và HTML offline hiện kiểm tra **đúng mã phiên bản nguồn**, hướng dẫn mẫu và toàn bộ thông tin bất biến của 6 thẻ (UUID, từ, chủ đề, nghĩa, ví dụ, bản dịch, liên kết từ điển). Nếu người đánh giá chọn mẫu A/B cũ, sửa tay hoặc chứa dữ liệu nguồn bị thay đổi, biểu mẫu từ chối tải và hướng dẫn xin mẫu mới.
+
+Nếu WordSky sau này thay đổi kho từ nguồn một cách hợp lệ, đội phát triển phải đối chiếu lại nguồn production và phát hành lại **cả** hai mẫu A/B, bản HTML offline và trang public trong một PR được kiểm thử. Không nới lỏng cổng vì lý do tiện lợi.
+
+Đây là đối chiếu mã phiên bản và dữ liệu tham chiếu được nhúng trong HTML tĩnh, **không phải chữ ký số, không chứng minh tệp được gửi bởi ai, và không thay thế** lệnh kiểm tra server-side ở UX61.9/61.10. Không phải nguồn phê duyệt nghĩa hay chấm điểm.
+
 ## Chốt bảo mật và phát hành
 
 - File HTML không dùng thư viện từ CDN, không có endpoint upload, không có `fetch` hoặc `XMLHttpRequest` và giới hạn `connect-src 'none'` để chặn kết nối mạng tự động.
