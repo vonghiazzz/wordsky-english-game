@@ -32,15 +32,23 @@ Supabase Performance Advisor: 8 cảnh báo foreign keys thiếu covering index 
 
 1. Cài k6: macOS `brew install k6` (hoặc dùng gói chính thức của Grafana k6). Cài Node 24 và Postgres 17 local qua Docker hoặc công cụ bạn quen dùng.
 2. Thiết lập một database test local **riêng**, áp dụng schema/migration + fixtures từ dự án WordSky. Không import dữ liệu thật hoặc credentials production. Sao chép cấu hình cần thiết sang `.env.perf-local`, trong đó `DATABASE_URL` phải có host `localhost`, `127.0.0.1` hoặc `[::1]`. Không sử dụng `npm run dev` mặc định nếu `.env` có nguy cơ kết nối production.
-3. Trong `.env.perf-local`, đặt `PERF_LOCAL_DB_ACK=I_VERIFIED_ISOLATED_LOCAL_POSTGRES`, `PERF_PROFILE=smoke`, `PERF_TARGET=http://127.0.0.1:3000`. Không commit hoặc gửi file này.
-4. Terminal A — kiểm tra cổng an toàn và khởi động WordSky dùng **đúng** cấu hình test:
+3. Tạo schema trong chính database test local. **Chạy các migration đúng thứ tự trong [workflow CI hiện hành](../.github/workflows/learning-ci.yml)**, từ `db/schema.sql` đến các thay đổi SRS/verb/social; không chạy glob `db/migrations/*.sql` theo thứ tự tùy ý. Ví dụ sau đây chỉ sử dụng database trên máy:
+```sh
+psql -h 127.0.0.1 -U wordsky -d wordsky_perf -f db/schema.sql
+# Tiếp tục từng migration trong danh sách của .github/workflows/learning-ci.yml.
+node --env-file=.env.perf-local scripts/seed.js
+```
+**Lưu ý:** fixture seed mặc định ít thẻ từ hơn production (2.099), nên baseline ban đầu chỉ kiểm tra tính hoạt động và định hướng điểm nghẽn, **chưa đại diện tải 10k**. Muốn so sánh năng lực cần tạo dữ liệu test với kích thước và phân bố tương đương mà không sao chép người dùng thật.
+
+4. Trong `.env.perf-local`, đặt `PERF_LOCAL_DB_ACK=I_VERIFIED_ISOLATED_LOCAL_POSTGRES`, `PERF_PROFILE=smoke`, `PERF_TARGET=http://127.0.0.1:3000`. Không commit hoặc gửi file này.
+5. Terminal A — kiểm tra cổng an toàn và khởi động WordSky dùng **đúng** cấu hình test:
 
 ```sh
 node --env-file=.env.perf-local scripts/perf-01/preflight.mjs
 node --env-file=.env.perf-local scripts/local-server.js
 ```
 
-5. Terminal B — chạy smoke 1 VU; chỉ 3 GET công khai `/`, `/api/topics`, `/api/learning/vocabulary`. **Không** gửi POST, tạo user, ghi SRS hay tham gia game:
+6. Terminal B — chạy smoke 1 VU; chỉ 3 GET công khai `/`, `/api/topics`, `/api/learning/vocabulary`. **Không** gửi POST, tạo user, ghi SRS hay tham gia game:
 
 ```sh
 mkdir -p .perf-results
@@ -50,7 +58,7 @@ k6 run -e PERF_PROFILE=smoke \
 node scripts/perf-01/report.mjs .perf-results/smoke.json
 ```
 
-6. Nếu smoke PASS, lặp lại với `PERF_PROFILE=baseline` (tối đa 10 VU, cap 10 RPS), rồi `step50` (tối đa 50 VU, cap 25 RPS). Phải có quan sát database và dừng nếu lỗi tăng, pg connections cao, hoặc p95 vượt ngưỡng:
+7. Nếu smoke PASS, lặp lại với `PERF_PROFILE=baseline` (tối đa 10 VU, cap 10 RPS), rồi `step50` (tối đa 50 VU, cap 25 RPS). Phải có quan sát database và dừng nếu lỗi tăng, pg connections cao, hoặc p95 vượt ngưỡng:
 
 ```sh
 k6 run -e PERF_PROFILE=baseline \
