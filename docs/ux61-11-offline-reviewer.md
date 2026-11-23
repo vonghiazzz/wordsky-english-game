@@ -1,0 +1,36 @@
+# UX61.11 — Điền phiếu kiểm duyệt WordSky trực tiếp trên máy (không cần sửa JSON)
+
+Đây là **công cụ ngoại tuyến**, không phải giao diện production, API xét duyệt hay hệ thống xác thực người đánh giá. File nằm tại `tools/ux61-11-reviewer-form.html` trong repository. Mở file HTML bằng Chrome hoặc Firefox trên máy tính, không cần chạy server.
+
+## Cách dùng cho hai người đánh giá độc lập
+
+1. Người điều phối kiểm tra kho từ production trước: `node scripts/ux61-8-review-production.mjs --live`, sau đó gửi **riêng** file `docs/ux61-9-review-templates/ux61-9-REVIEWER_A.json` hoặc `REVIEWER_B.json` cho từng người. Gửi cùng file HTML này, nhưng không gửi kết quả của người còn lại.
+2. Người đánh giá mở file HTML ở máy của mình, chọn mẫu JSON được cấp; lần lượt xác định “có thể đề xuất phân xử”, “cần chỉnh sửa”, hoặc để trống.
+3. Với trường hợp có thể đề xuất: nhập câu hỏi ngữ cảnh tiếng Việt không chứa từ tiếng Anh cần đoán; nhập mỗi đáp án tiếng Anh có thể chấp nhận vào **một dòng**, bao gồm từ đích. Nhập giải thích rõ ràng. Với trường hợp cần sửa: chỉ nhập giải thích, không nhập đáp án để chấm.
+4. Đọc từ điển bằng liên kết Cambridge sau khi chủ động nhấn. Sau khi kiểm tra nguồn, tick xác nhận cho từng thẻ đã điền.
+5. Nhấn **Kiểm tra & xuất JSON**. Gửi file `ux61-9-REVIEWER_A-filled.json` hoặc `ux61-9-REVIEWER_B-filled.json` qua kênh riêng. Không gửi mật khẩu hoặc mã đăng nhập WordSky.
+6. Người điều phối chạy công cụ kiểm tra chặt tại repository:
+
+```sh
+node scripts/ux61-9-blind-review.mjs --compare \
+  ./review-local/ux61-9-REVIEWER_A-filled.json \
+  ./review-local/ux61-9-REVIEWER_B-filled.json
+
+node scripts/ux61-10-adjudication.mjs \
+  ./review-local/ux61-9-REVIEWER_A-filled.json \
+  ./review-local/ux61-9-REVIEWER_B-filled.json \
+  --output ./review-local/ux61-10-report.md
+```
+
+Mẫu có thể được điền một phần và xuất thành JSON; công cụ đối chiếu sẽ hiển thị phần nào còn thiếu. File được **tải xuống thiết bị**, không gửi lên WordSky. Mở liên kết từ điển sẽ tự chủ động truy cập trang web bên ngoài, nhưng nội dung phiếu không được gửi kèm.
+
+## Chốt bảo mật và phát hành
+
+- File HTML không dùng thư viện từ CDN, không có endpoint upload, không có `fetch` hoặc `XMLHttpRequest` và giới hạn `connect-src 'none'` để chặn kết nối mạng tự động.
+- Mọi dữ liệu từ JSON người đánh giá cung cấp đều hiển thị bằng `textContent`, không dùng `innerHTML`. Ký tự đặc biệt hoặc HTML trong ví dụ sẽ chỉ là văn bản.
+- Giao diện kiểm tra sơ bộ, còn `lib/ux61-9-blind-review.js` là lớp kiểm tra chặt; không được bỏ qua CLI cuối để tạo báo cáo.
+- Định danh `REVIEWER_A` và `REVIEWER_B` không chứng minh danh tính thật hoặc sự độc lập của hai con người. Người điều phối cần xác nhận bằng quy trình riêng.
+- **Không thể bật chấm điểm SRS bằng bất kỳ file phản hồi nào.** Tất cả 6 thẻ vẫn ở trạng thái chưa duyệt cho đến khi có bản đánh giá ngữ nghĩa và phê duyệt được xác thực, sau đó lập PR riêng có QA/rollback.
+- Không tự động ghi CEFR, dữ liệu người dùng hoặc từ điển production.
+
+**Phạm vi thay đổi:** chỉ `tools/`, `tests/` và tài liệu, không chỉnh `public/`, `api/`, `lib/game.js` hay DB. Vì vậy không cần phát hành Vercel mới sau khi merge.
