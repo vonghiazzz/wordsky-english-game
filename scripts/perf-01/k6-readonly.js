@@ -78,6 +78,8 @@ export function setup(){
   return {safe:true};
 }
 export function publicVisitor(){
+  // CLI scenario overrides cannot generate requests from VUs above this cap.
+  if(__VU>selectedProfile.maxVus)fail('PERF-01 VU limit exceeded: no request sent');
   const endpoint=choosePath();
   const res=http.get(target+endpoint.path,{
     redirects:0,timeout:'8s',tags:{endpoint:endpoint.tag}
