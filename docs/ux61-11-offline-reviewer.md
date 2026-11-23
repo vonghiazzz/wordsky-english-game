@@ -1,6 +1,12 @@
 # UX61.11 — Điền phiếu kiểm duyệt WordSky trực tiếp trên máy (không cần sửa JSON)
 
-Đây là **công cụ ngoại tuyến**, không phải giao diện production, API xét duyệt hay hệ thống xác thực người đánh giá. File nằm tại `tools/ux61-11-reviewer-form.html` trong repository. Mở file HTML bằng Chrome hoặc Firefox trên máy tính, không cần chạy server.
+Đây là **công cụ chỉ xử lý phiếu trong trình duyệt**, không phải API xét duyệt hay hệ thống xác thực người đánh giá. Bản offline vẫn hoạt động độc lập.
+
+**UX61.12 đã thêm đường dẫn trên WordSky:** https://wordsky-english-game.vercel.app/editorial-reviewer.html
+
+Biểu mẫu này được tải dưới dạng HTML tĩnh, không có nút gửi lên server. Phản hồi có `Cache-Control: no-store`, `noindex`, CSP chặn kết nối mạng (`connect-src 'none'`) và chặn gửi form (`form-action 'none'`). Dữ liệu được nhập/xuất tại thiết bị người đánh giá. Người điều phối vẫn gửi **riêng** một mẫu A hoặc B. Việc mở Cambridge bằng liên kết chủ động sẽ đi đến website bên ngoài, nhưng không kèm nội dung phiếu.
+
+Để bảo mật hơn khi người đánh giá sử dụng thiết bị không tin cậy hoặc không muốn tải HTML trực tiếp từ website, dùng file `tools/ux61-11-reviewer-form.html` offline như trước. File nằm tại `tools/ux61-11-reviewer-form.html` trong repository. Mở file HTML bằng Chrome hoặc Firefox trên máy tính, không cần chạy server.
 
 ## Cách dùng cho hai người đánh giá độc lập
 
@@ -33,4 +39,4 @@ Mẫu có thể được điền một phần và xuất thành JSON; công cụ
 - **Không thể bật chấm điểm SRS bằng bất kỳ file phản hồi nào.** Tất cả 6 thẻ vẫn ở trạng thái chưa duyệt cho đến khi có bản đánh giá ngữ nghĩa và phê duyệt được xác thực, sau đó lập PR riêng có QA/rollback.
 - Không tự động ghi CEFR, dữ liệu người dùng hoặc từ điển production.
 
-**Phạm vi thay đổi:** chỉ `tools/`, `tests/` và tài liệu, không chỉnh `public/`, `api/`, `lib/game.js` hay DB. Vì vậy không cần phát hành Vercel mới sau khi merge.
+**Phạm vi UX61.12:** thêm `public/editorial-reviewer.html` từ bản offline đã được kiểm thử và header bảo vệ trong `vercel.json`. Không sửa `api/`, `lib/game.js`, dữ liệu từ điển, CEFR hay SRS. Khác UX61.11, thay đổi này cần Preview QA và staged production smoke trước khi promote.
