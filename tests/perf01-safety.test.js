@@ -57,6 +57,7 @@ test('PERF-01 k6 profile is hard local-only and has no mutation endpoints',()=>{
   "PERF_LOCAL_DB_ACK!=='I_VERIFIED_ISOLATED_LOCAL_POSTGRES'",
   "'http://127.0.0.1:3000','http://localhost:3000'",
   "rps:selectedProfile.rps",
+  "if(__VU>selectedProfile.maxVus)fail(",
   "summaryTrendStats:['avg','min','med','max','p(90)','p(95)','p(99)']",
   "http_req_failed",
   "http_req_duration",
