@@ -71,6 +71,9 @@ footer{font-size:.86rem;color:#486272;margin-top:20px}
  const immutable=['word_id','english','topic','meaning','example','translation','source_url'];
  const templateKeys=['schema','scope','review_code','source_snapshot_sha256','instructions','cards'];
  const cardKeys=[...immutable,...mutable];
+ const SOURCE_SNAPSHOT="9d6b1a001519b8d89b7f410bed98ba2849dea87636915e8b6d610fbd53574afe";
+ const SOURCE_INSTRUCTIONS="Review the WordSky source and bilingual dictionary independently. Do not view the other form. Form labels do not verify real-person identity or approve SRS.";
+ const SOURCE_RECORDS=Object.freeze([{"word_id":"4b406577-b4d7-43a5-903e-55e734dca399","english":"five","topic":"Numbers - Số đếm","meaning":"Năm","example":"She has five books.","translation":"Cô ấy có năm quyển sách.","source_url":"https://dictionary.cambridge.org/dictionary/english/five"},{"word_id":"81bf2f1f-a7ab-49f7-ac0e-088ea7bee93d","english":"year","topic":"Time & Dates - Thời gian","meaning":"Năm","example":"I learn English this year.","translation":"Tôi học tiếng Anh trong năm nay.","source_url":"https://dictionary.cambridge.org/dictionary/english/year"},{"word_id":"850c23ad-1d31-4d64-ab9e-7b05744e10f6","english":"assess","topic":"School - Trường học","meaning":"đánh giá","example":"The teacher will assess our progress.","translation":"Giáo viên sẽ đánh giá tiến bộ của chúng tôi.","source_url":"https://dictionary.cambridge.org/dictionary/english/assess"},{"word_id":"b7fb767d-b77c-4911-b45b-c4588747c2bc","english":"evaluate","topic":"School - Trường học","meaning":"đánh giá","example":"We must evaluate the results carefully.","translation":"Chúng ta phải đánh giá kỹ kết quả.","source_url":"https://dictionary.cambridge.org/dictionary/english/evaluate"},{"word_id":"ad2b5bf6-dcd1-4232-bfd2-a3765a467ae5","english":"significant","topic":"Adjectives - Tính từ","meaning":"đáng kể","example":"There was a significant improvement.","translation":"Đã có sự cải thiện đáng kể.","source_url":"https://dictionary.cambridge.org/dictionary/english/significant"},{"word_id":"91001117-6921-488d-a052-34dbc248e838","english":"substantial","topic":"Adjectives - Tính từ","meaning":"đáng kể","example":"The team made substantial progress.","translation":"Nhóm đã đạt tiến bộ đáng kể.","source_url":"https://dictionary.cambridge.org/dictionary/english/substantial"}].map(row=>Object.freeze(row)));
  let base=null;
  const controls=[];
  const status=(message,bad=false)=>{
@@ -106,10 +109,14 @@ footer{font-size:.86rem;color:#486272;margin-top:20px}
    input.schema!=='ux61-9-blind-offline-v1'||
    input.scope!=='offline-unverified-review-form'||
    !['REVIEWER_A','REVIEWER_B'].includes(input.review_code)||
-   !/^[a-f0-9]{64}$/.test(input.source_snapshot_sha256)||
+   typeof input.source_snapshot_sha256!=='string'||
    typeof input.instructions!=='string'||
    !Array.isArray(input.cards)||input.cards.length!==6)
    throw Error('Mẫu phiếu không đúng cấu trúc UX61.9.');
+  if(input.source_snapshot_sha256!==SOURCE_SNAPSHOT)
+   throw Error('Mẫu phiếu sai phiên bản dữ liệu nguồn. Hãy xin file A/B mới từ người điều phối.');
+  if(input.instructions!==SOURCE_INSTRUCTIONS)
+   throw Error('Hướng dẫn trong file mẫu đã bị thay đổi. Hãy xin bản mẫu gốc.');
   for(let i=0;i<6;i++){
    const card=input.cards[i];
    if(!sameKeys(card,cardKeys)||card.english!==WORDS[i]||
@@ -117,6 +124,8 @@ footer{font-size:.86rem;color:#486272;margin-top:20px}
     card.source_url!=='https://dictionary.cambridge.org/dictionary/english/'+card.english||
     !immutable.every(key=>typeof card[key]==='string'&&card[key].length>0))
     throw Error('Nguồn bản ghi không hợp lệ ở thẻ '+(i+1)+'.');
+   if(!immutable.every(key=>card[key]===SOURCE_RECORDS[i][key]))
+    throw Error('Dữ liệu gốc bị thay đổi ở thẻ '+card.english+'. Hãy xin bản mẫu mới.');
    if(![null,'needs_revision','suitable_for_adjudication'].includes(card.decision))
     throw Error('Trạng thái phiếu không đúng.');
   }
