@@ -12,7 +12,7 @@
 | Catalog GET | `/api/learning/vocabulary`: tải toàn bộ danh mục 2.099 từ, `Cache-Control: no-store` từ API | Nhiều người tải lại đồng thời gây tăng query/load truyền dữ liệu |
 | Topics GET | `/api/topics`: GROUP BY và count DISTINCT qua `ws_words` | Cần benchmark và cân nhắc cache/ETag sau khi có chính sách invalidation |
 | SRS | `lib/srs-queue.js`: giao dịch repeatable-read, đọc toàn bộ shared/personal cards và lịch sử per-user (giới hạn 5.000 cards + 50.000 history mỗi nguồn), sau đó tính JS | Có nguy cơ tốn CPU/DB cao khi dữ liệu người học tăng |
-| Multiplayer | `GET /api/rooms/:code` gọi `eventInfo()`, `membership()`, `standings()` | Polling 1 lần/giây * 500 người = **500 lần gọi endpoint/giây** cho một phòng, chưa kể số SQL truy vấn |
+| Multiplayer | `GET /api/rooms/:code` gọi `eventInfo()`, `membership()`, `standings()` | Frontend `public/app.js` hiện poll mỗi **1,2 giây** khi đang ở phòng; 500 người trong một phòng tương đương khoảng **417 GET/giây**, 10.000 người trong nhiều phòng tương đương khoảng **8.333 GET/giây** chỉ cho polling này, chưa kể SQL/game answers |
 | Room limit | `adminInputEvent` đặt `max_players` 2–500 cho mỗi cuộc thi | 10k cùng thi cần từ 20 phòng trở lên, và rất khác 10k người đang mở website |
 
 Supabase Performance Advisor: 8 cảnh báo foreign keys thiếu covering index (INFO); cần đối chiếu query plan trước khi thêm index. Chưa đổi schema, pooler, RLS hoặc dữ liệu production. Không ghi dữ liệu người dùng trong audit.
