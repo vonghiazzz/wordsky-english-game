@@ -31,6 +31,9 @@ test('UX61.12 public reviewer uses the identical vetted offline JS/CSS',()=>{
 test('UX61.12 hosted form has strict response header CSP and no cache or index',()=>{
  const route=cfg.headers.find(h=>h.source==='/editorial-reviewer.html');
  assert.ok(route,'Missing dedicated headers for hosted reviewer');
+ assert.ok(cfg.headers.findIndex(h=>h.source==='/editorial-reviewer.html')>
+  cfg.headers.findIndex(h=>h.source==='/(.*)'),
+  'Specific no-referrer response must override generic site header');
  const headers=Object.fromEntries(route.headers.map(h=>[h.key.toLowerCase(),h.value]));
  assert.equal(headers['cache-control'],'no-store');
  assert.match(headers['x-robots-tag'],/noindex/);
