@@ -291,7 +291,21 @@ try{
   assert.ok(layout.overflow<=1,'UX59.6 SRS breakdown overflows: '+JSON.stringify(layout));
   assert.ok(layout.countWidth<=layout.viewport,'UX59.6 label exceeds viewport');
  }
- pass('UX59.6 per-actor totals match paginated API and 360px UI');
+ const desktopCtx=await chrome.newContext({viewport:{width:1280,height:800}});
+ try{
+  await login(desktopCtx,owner);
+  const desktopPage=await desktopCtx.newPage();
+  await group(desktopPage,'due');
+  const label=await desktopPage.locator('#ws24Count').textContent();
+  assert.ok(label.startsWith('2 từ trong nhóm · '));
+  const metrics=await desktopPage.evaluate(()=>({
+   overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+   countWidth:document.querySelector('#ws24Count').getBoundingClientRect().width
+  }));
+  assert.ok(metrics.overflow<=1,'UX59.6 desktop scroll overflow: '+JSON.stringify(metrics));
+  assert.ok(metrics.countWidth<=1280,'UX59.6 desktop count exceeds viewport');
+ }finally{await desktopCtx.close();}
+ pass('UX59.6 full account breakdown holds across pages, actor switch and mobile/desktop');
 
  // UX60 M5: delay an audit response while login switches from A to B in
  // the SAME open tab. A's diagnostic counts must never reappear for B.
