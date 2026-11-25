@@ -261,6 +261,19 @@ try {
   );
   assert.equal(await C.locator('#ws10Known').innerText(), '0');
 
+  // UX59.15: account B cannot read account A's personal SRS queue.
+  await C.locator('#ws24Srs').waitFor({ state: 'visible' });
+  for (const status of ['due', 'upcoming']) {
+    await C.locator('#ws24Status').selectOption(status);
+    assert.equal(
+      await C.locator('#ws24List .ws24-card')
+        .filter({ hasText: unique }).count(),
+      0,
+      'Another account exposed a private SRS card in ' + status
+    );
+  }
+  pass('Different account cannot see private SRS cards in Due or Upcoming');
+
   pass('Different account cannot see personal learning data');
 
   await A.reload();
@@ -384,7 +397,7 @@ try {
   assert.match(await A.locator('#ws51Weak').innerText(),/come \(V1\)/);
   pass('UX51 authenticated cross-device verb history, tamper defense, account isolation, no SRS writes');
 
-  console.log('\nWORDSKY UI E2E: 12/12 PASS');
+  console.log('\nWORDSKY UI E2E: 13/13 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
