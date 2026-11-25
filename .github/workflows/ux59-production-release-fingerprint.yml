@@ -45,3 +45,8 @@ jobs:
             echo "Release not yet visible on public domain (attempt ${attempt}/40)"
             sleep 15
           done
+      - name: Summarize production commit and diagnose stale alias
+        if: always()
+        env:
+          EXPECTED_RELEASE_SHA: ${{ github.sha }}
+        run: node scripts/ux59-release-diagnostics.mjs
