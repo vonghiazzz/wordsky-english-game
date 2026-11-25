@@ -30,7 +30,7 @@ test('UX59.4 validates counts from the same account and rejects inconsistent glo
 });
 
 test('UX59.4 topic-scoped due count uses filtered full group, never current page',()=>{
- const p={...base(),topic:'Daily Life',total:2,due_breakdown:{overdue:6,today:2}};
+ const p={...base(),topic:'Daily Life',total:8,due_breakdown:{overdue:6,today:2}};
  assert.deepEqual(srsDueBreakdown(p),p.due_breakdown);
  assert.throws(()=>srsDueBreakdown({...p,due_breakdown:{overdue:1,today:0}}),/nhất quán/);
  const other={...base(),status:'new',topic:'Daily Life',due_breakdown:{overdue:6,today:2}};
