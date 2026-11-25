@@ -110,3 +110,6 @@
  .ws24-filters #ws24Reload{order:3}
  .ws24-filters #ws24Practice{order:4}
 }
+
+/* UX59.3: compact overdue indicator without altering the 360px card grid. */
+.ws24-card-body .ws59-due-label{display:inline-block;align-self:flex-start;margin-top:5px;padding:4px 8px;border-radius:8px;border:1px solid #6389a9;background:#213956;color:#f0faff;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.4}
