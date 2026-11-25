@@ -42,7 +42,7 @@ test('UX59.2 scheduling remains unchanged for early repeats and upcoming',()=>{
   {id:'r1',remembered:true,reviewed_at:'2026-11-24T00:00:00Z'},
   {id:'r2',remembered:true,reviewed_at:'2026-11-24T01:00:00Z'}
  ];
- const state=computeSrsState(early,{now:T});
+ const state=computeSrsState(early,{now:'2026-11-24T23:00:00Z'});
  assert.equal(state.status,'scheduled');
  assert.equal(state.due_at,'2026-11-25T00:00:00.000Z');
  assert.equal(state.consecutive_remembered,1);
