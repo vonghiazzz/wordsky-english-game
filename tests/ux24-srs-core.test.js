@@ -9,7 +9,7 @@ test('UX24 unseen cards are new; never silently counted as overdue',()=>{
  const s=computeSrsState([],{now:T});
  assert.deepEqual(s,{
   status:'new',review_count:0,remembered:null,consecutive_remembered:0,
-  interval_days:0,last_reviewed_at:null,due_at:null
+  interval_days:0,last_reviewed_at:null,due_at:null,overdue_days:null
  });
 });
 
