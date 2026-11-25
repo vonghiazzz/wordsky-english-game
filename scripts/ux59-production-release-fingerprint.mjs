@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {expectedReleaseIdentity} from '../lib/release-attestation.js';
 
 export const paths=Object.freeze([
  '/progress.html','/ux24-srs-panel.js','/ux24-srs-panel.css'
@@ -42,7 +43,27 @@ export async function checkProduction({
  }
  return results;
 }
+// UX59.10: assets alone cannot prove a commit when their bytes are unchanged.
+export async function verifyReleaseCommit(expectedSha,{
+ origin='https://wordsky-english-game.vercel.app',fetcher=fetch
+}={}){
+ assert.equal(origin,'https://wordsky-english-game.vercel.app','Unexpected target origin');
+ const response=await fetcher(origin+'/api/release',{
+  method:'GET',redirect:'manual',cache:'no-store',
+  headers:{'Cache-Control':'no-store',accept:'application/json'},
+  signal:AbortSignal.timeout(15000)
+ });
+ assert.equal(response.status,200,'Public release identity unavailable');
+ const type=response.headers.get('content-type')||'';
+ assert.match(type,/application\/json/i,'Release identity must be JSON');
+ const payload=await response.json();
+ expectedReleaseIdentity(payload,expectedSha);
+ return payload;
+}
+
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
  const results=await checkProduction();
- console.log(JSON.stringify({result:'PASS_EXACT_PRODUCTION_ASSETS',assets:results}));
+ const expected=process.env.EXPECTED_RELEASE_SHA;
+ const identity=expected?await verifyReleaseCommit(expected):null;
+ console.log(JSON.stringify({result:'PASS_EXACT_PRODUCTION_ASSETS',assets:results,release:identity}));
 }
