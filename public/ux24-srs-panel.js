@@ -26,6 +26,17 @@ export function srsReviewCards(payload,actorId){
  dailyPlanFromSrsQueue(payload,actorId);
  return payload;
 }
+// UX59.3: labels only. Do not infer a new due date or change SRS state.
+export function srsDueLabel(word){
+ if(!word||typeof word!=='object')return '';
+ if(word.status==='new')return 'Từ mới';
+ if(word.status==='scheduled')return 'Sắp đến hạn';
+ if(word.status!=='due')return '';
+ const days=word.overdue_days;
+ if(Number.isSafeInteger(days)&&days>0)return 'Quá hạn '+days+' ngày';
+ return 'Đến hạn';
+}
+
 export function srsActionLabels(status){
  if(status==='scheduled')return [
   ['↻ Cần ôn ngay',false],
@@ -123,6 +134,9 @@ function initSrs(){
     ? 'Đến hạn: '+new Date(word.due_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})
     : 'Từ chưa học');
    content.append(heading,subtitle,meaning);
+   const dueLabel=srsDueLabel(word);
+   if(dueLabel&&word.status==='due')
+    content.append(make('small',dueLabel,'ws59-due-label'));
    const details=make('details',undefined,'ws60-word-details');
    const detailTitle=make('summary','Xem lịch của từ');
    details.append(detailTitle,due);
