@@ -22,6 +22,12 @@ jobs:
         run: node --check scripts/ux55-production-get-smoke.mjs
       - name: Read-only HTTPS GET against public Production
         run: node scripts/ux55-production-get-smoke.mjs
+      - name: UX59.14 anonymous account and SRS isolation (GET-only)
+        run: |
+          node --check scripts/ux59-production-guest-isolation.mjs
+          node --test tests/ux59-production-guest-isolation.test.js
+          node scripts/ux59-production-guest-isolation.mjs
+        # No cookies, test account credentials, authentication writes or Production DB changes.
       - name: UX56 public lexical inventory (GET-only)
         run: |
           node --check scripts/ux56-public-vocabulary-quality-audit.mjs
