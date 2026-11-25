@@ -277,8 +277,21 @@ try{
   }
  }
  for(const [page,expectedDue] of [[pA,2],[pB,1]]){
-  const text=await page.locator('#ws24Count').textContent();
-  assert.match(text,new RegExp('^'+expectedDue+' từ trong nhóm · [0-9]+ quá hạn · [0-9]+ đến hạn
+  const label=await page.locator('#ws24Count').textContent();
+  assert.ok(label.startsWith(expectedDue+' từ trong nhóm · '));
+  assert.ok(label.endsWith(' đến hạn'));
+  const values=label.match(/[0-9]+/g).map(Number);
+  assert.equal(values[0],expectedDue);
+  assert.equal(values[1]+values[2],expectedDue);
+  const layout=await page.evaluate(()=>({
+   overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+   countWidth:document.querySelector('#ws24Count').getBoundingClientRect().width,
+   viewport:document.documentElement.clientWidth
+  }));
+  assert.ok(layout.overflow<=1,'UX59.6 SRS breakdown overflows: '+JSON.stringify(layout));
+  assert.ok(layout.countWidth<=layout.viewport,'UX59.6 label exceeds viewport');
+ }
+ pass('UX59.6 per-actor totals match paginated API and 360px UI');
 
  // UX60 M5: delay an audit response while login switches from A to B in
  // the SAME open tab. A's diagnostic counts must never reappear for B.
@@ -303,8 +316,8 @@ try{
   document.querySelector('#ws58DailyDue')?.textContent==='1'&&
   document.querySelector('#ws24Count')?.textContent?.startsWith('1 từ trong nhóm · '));
  const switchedCount=await pA.locator('#ws24Count').textContent();
- assert.match(switchedCount,/^1 từ trong nhóm · (\\d+) quá hạn · (\\d+) đến hạn$/);
- const switchedBreakdown=switchedCount.match(/· (\\d+) quá hạn · (\\d+) đến hạn$/);
+ assert.match(switchedCount,/^1 từ trong nhóm · ([0-9]+) quá hạn · ([0-9]+) đến hạn$/);
+ const switchedBreakdown=switchedCount.match(/· ([0-9]+) quá hạn · ([0-9]+) đến hạn$/);
  assert.equal(Number(switchedBreakdown[1])+Number(switchedBreakdown[2]),1);
  assert.equal(await pA.locator('#ws24List .ws24-card').count(),1,
   'Account switch must not keep previous actor cards');
@@ -644,7 +657,7 @@ try{
  console.log('UX28.1 isolated QA cleanup completed');
 }
 ));
-  const nums=text.match(/· (\\d+) quá hạn · (\\d+) đến hạn$/);
+  const nums=text.match(/· ([0-9]+) quá hạn · ([0-9]+) đến hạn$/);
   assert.equal(Number(nums[1])+Number(nums[2]),expectedDue);
   const layout=await page.evaluate(()=>({
    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
