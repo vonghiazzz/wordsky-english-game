@@ -1,0 +1,27 @@
+name: UX59 Production Release Fingerprint
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-live-assets:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Check read-only release verifier
+        run: |
+          node --check scripts/ux59-production-release-fingerprint.mjs
+          node --test tests/ux59-production-release-fingerprint.test.js
+      - name: Verify exact assets at user-facing production domain
+        run: node scripts/ux59-production-release-fingerprint.mjs
+        # Trigger only after Vercel prod is READY and the custom alias has been assigned.
+        # Compares deployed bytes against the checked-out main release commit; never logs in.
