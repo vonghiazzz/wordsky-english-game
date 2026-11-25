@@ -13,6 +13,7 @@ import {getUnifiedLearningSummary} from '../lib/unified-learning.js';
 import {getAccountLearningInsights} from '../lib/learning-insights.js';
 import {getAccountDailyReviewActivity} from '../lib/daily-review-activity.js';
 import {getAccountSrsQueue} from '../lib/srs-queue.js';
+import {releaseIdentity} from '../lib/release-attestation.js';
 import {getAccountSrsDiagnostics} from '../lib/srs-diagnostics.js';
 import {srsEnabled} from '../lib/srs-release-gates.js';
 import {recordUnifiedReview} from '../lib/unified-review.js';
@@ -747,6 +748,10 @@ export default async function handler(req,res){
   // Enabled vocabulary is public to all learners, including guests.
   // No user progress, credentials, or CEFR moderation metadata is exposed.
   if(method==='GET'&&key==='learning/vocabulary')return output(res,200,await getFlashcardCatalog());
+  if(method==='GET'&&key==='release'){
+   const identity=releaseIdentity(process.env);
+   return identity?output(res,200,identity):output(res,503,{error:'Release metadata unavailable'});
+  }
   if(method==='GET'&&key==='health')return output(res,200,{ok:true,service:'wordsky-v4',database:isDatabaseTargetConfigured()});
   if(method==='POST'&&key==='auth/login')return output(res,200,await signIn(req,res));
   if(method==='POST'&&key==='auth/signup')return output(res,201,await signUp(req,res));
