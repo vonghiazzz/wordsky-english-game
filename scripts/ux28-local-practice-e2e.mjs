@@ -256,6 +256,56 @@ try{
  assert.equal(dueA,2,'owner must have two due words from isolated game fixture');
  assert.equal(dueB,1,'other account must have one due word from isolated game fixture');
  pass('UX60 dashboard renders actor-scoped global totals and progressive details for A/B');
+ // UX59.6: full account breakdown must be independent of the page size.
+ for(const [ctx,expectedDue] of [[ctxA,2],[ctxB,1]]){
+  const url=BASE+'/api/learning/srs/queue?status=due&page=0&size=1';
+  const res=await ctx.request.get(url);
+  assert.equal(res.status(),200,await res.text());
+  const body=await res.json();
+  assert.equal(body.total,expectedDue);
+  assert.equal(body.words.length,1);
+  assert.equal(body.summary.due,expectedDue);
+  assert.equal(body.total_pages,expectedDue);
+  assert.equal(body.due_breakdown.overdue+body.due_breakdown.today,expectedDue);
+  if(expectedDue>1){
+   const next=await ctx.request.get(BASE+'/api/learning/srs/queue?status=due&page=1&size=1');
+   assert.equal(next.status(),200);
+   const after=await next.json();
+   assert.deepEqual(after.due_breakdown,body.due_breakdown);
+   assert.notEqual(after.words[0].id,body.words[0].id);
+  }
+ }
+ for(const [page,expectedDue] of [[pA,2],[pB,1]]){
+  const label=await page.locator('#ws24Count').textContent();
+  assert.ok(label.startsWith(expectedDue+' từ trong nhóm · '));
+  assert.ok(label.endsWith(' đến hạn'));
+  const values=label.match(/[0-9]+/g).map(Number);
+  assert.equal(values[0],expectedDue);
+  assert.equal(values[1]+values[2],expectedDue);
+  const layout=await page.evaluate(()=>({
+   overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+   countWidth:document.querySelector('#ws24Count').getBoundingClientRect().width,
+   viewport:document.documentElement.clientWidth
+  }));
+  assert.ok(layout.overflow<=1,'UX59.6 mobile horizontal overflow: '+JSON.stringify(layout));
+  assert.ok(layout.countWidth<=layout.viewport,'UX59.6 mobile due count exceeds viewport');
+ }
+ const desktopCtx=await chrome.newContext({viewport:{width:1280,height:800}});
+ try{
+  await login(desktopCtx,owner);
+  const desktopPage=await desktopCtx.newPage();
+  await group(desktopPage,'due');
+  const label=await desktopPage.locator('#ws24Count').textContent();
+  assert.ok(label.startsWith('2 từ trong nhóm · '));
+  const layout=await desktopPage.evaluate(()=>({
+   overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+   countWidth:document.querySelector('#ws24Count').getBoundingClientRect().width
+  }));
+  assert.ok(layout.overflow<=1,'UX59.6 desktop horizontal overflow');
+  assert.ok(layout.countWidth<=1280,'UX59.6 desktop due count exceeds viewport');
+ }finally{await desktopCtx.close();}
+ pass('UX59.6 account breakdown matches API paging and mobile/desktop UI');
+
 
  // UX60 M5: delay an audit response while login switches from A to B in
  // the SAME open tab. A's diagnostic counts must never reappear for B.
@@ -279,6 +329,12 @@ try{
  await pA.waitForFunction(()=>
   document.querySelector('#ws58DailyDue')?.textContent==='1'&&
   document.querySelector('#ws24Count')?.textContent?.startsWith('1 từ trong nhóm · '));
+ const switchLabel=await pA.locator('#ws24Count').textContent();
+ assert.ok(switchLabel.startsWith('1 từ trong nhóm · '));
+ const switchNumbers=switchLabel.match(/[0-9]+/g).map(Number);
+ assert.equal(switchNumbers[1]+switchNumbers[2],1);
+ assert.equal(await pA.locator('#ws24List .ws24-card').count(),1,
+  'Switching account must not retain the old actor cards');
  assert.equal(await pA.locator('#ws24AuditResult').textContent(),'',
   'Switching account must clear previous audit');
  releaseAudit();
