@@ -1,5 +1,7 @@
 name: UX59 Production Release Fingerprint
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -9,7 +11,10 @@ jobs:
   verify-live-assets:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    concurrency:
+      group: ux59-prod-asset-check-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -21,7 +26,22 @@ jobs:
         run: |
           node --check scripts/ux59-production-release-fingerprint.mjs
           node --test tests/ux59-production-release-fingerprint.test.js
-      - name: Verify exact assets at user-facing production domain
-        run: node scripts/ux59-production-release-fingerprint.mjs
-        # Trigger only after Vercel prod is READY and the custom alias has been assigned.
-        # Compares deployed bytes against the checked-out main release commit; never logs in.
+      - name: Poll exact production-domain assets after main release
+        shell: bash
+        run: |
+          set -euo pipefail
+          # An ordinary merge does not guarantee Vercel READY or alias assignment.
+          # The first 40 checks allow the independently managed release to complete.
+          # Never writes, promotes, or changes an alias using CI credentials.
+          for attempt in $(seq 1 40); do
+            if node scripts/ux59-production-release-fingerprint.mjs; then
+              echo "PASS: production assets match checked-out main SHA ${GITHUB_SHA}"
+              exit 0
+            fi
+            if [ "$attempt" -eq 40 ]; then
+              echo "::error::UX59.9 production release incomplete or domain alias stale for ${GITHUB_SHA}"
+              exit 1
+            fi
+            echo "Release not yet visible on public domain (attempt ${attempt}/40)"
+            sleep 15
+          done
