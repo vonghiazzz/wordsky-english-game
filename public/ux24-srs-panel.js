@@ -53,6 +53,11 @@ export function srsDueBreakdown(payload){
  return b;
 }
 
+// UX59.5: never show a cached actor's rows during auth refresh or logout.
+export function srsVisibleRows(data,actorId,pending){
+ return !pending&&actorId&&Array.isArray(data?.words)?data.words:[];
+}
+
 export function srsActionLabels(status){
  if(status==='scheduled')return [
   ['↻ Cần ôn ngay',false],
@@ -92,14 +97,14 @@ function initSrs(){
  const showMessage=(message,error=false)=>{notice.textContent=message;notice.dataset.error=String(error);};
  const render=()=>{
   const data=received;
-  const rows=data?.words??[];
+  const rows=srsVisibleRows(data,actorId,pending);
   list.replaceChildren();
-  count.textContent=data?data.total+' từ trong nhóm':'—';
+  count.textContent=data&&actorId&&!pending?data.total+' từ trong nhóm':'—';
   const dueBreakdown=data&&actorId&&!pending&&data.status==='due'?
    srsDueBreakdown(data):null;
   if(dueBreakdown)
    count.textContent+=' · '+dueBreakdown.overdue+' quá hạn · '+dueBreakdown.today+' đến hạn';
-  pageText.textContent=data?'Trang '+(page+1)+' / '+Math.max(1,data.total_pages):'';
+  pageText.textContent=data&&actorId&&!pending?'Trang '+(page+1)+' / '+Math.max(1,data.total_pages):'';
   prev.disabled=pending||!data||page===0;
   next.disabled=pending||!data||page+1>=data.total_pages;
   reload.disabled=pending;
@@ -176,7 +181,8 @@ function initSrs(){
    card.append(content,buttons);
    list.append(card);
   }
-  if(!rows.length)list.append(make('p','Không có từ phù hợp trong nhóm này.','ws24-empty'));
+  if(!pending&&actorId&&data&&!rows.length)
+   list.append(make('p','Không có từ phù hợp trong nhóm này.','ws24-empty'));
  };
  const refresh=async({keepMessage=false}={})=>{
   const seq=++requested;
@@ -221,7 +227,7 @@ function initSrs(){
    if(!keepMessage)showMessage('Lịch ôn được đọc từ PostgreSQL theo tài khoản.');
   }catch(error){
    if(seq!==requested)return;
-   received=null;
+   received=null;actorId=null;
    // Never show the experimental UI on Production or when the preview flag is off.
    panel.hidden=error.status===404;
    if(error.status===404)showMessage('Lịch ôn thử nghiệm chưa được bật trên môi trường này.',true);
