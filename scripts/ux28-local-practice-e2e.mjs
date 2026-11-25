@@ -256,18 +256,17 @@ try{
  assert.equal(dueA,2,'owner must have two due words from isolated game fixture');
  assert.equal(dueB,1,'other account must have one due word from isolated game fixture');
  pass('UX60 dashboard renders actor-scoped global totals and progressive details for A/B');
-
- // UX59.6: exercise the real actor-scoped API with deliberately smaller page size.
- // Counts must come from the full matching queue, not the first page.
+ // UX59.6: full account breakdown must be independent of the page size.
  for(const [ctx,expectedDue] of [[ctxA,2],[ctxB,1]]){
-  const res=await ctx.request.get(BASE+'/api/learning/srs/queue?status=due&page=0&size=1');
+  const url=BASE+'/api/learning/srs/queue?status=due&page=0&size=1';
+  const res=await ctx.request.get(url);
   assert.equal(res.status(),200,await res.text());
   const body=await res.json();
   assert.equal(body.total,expectedDue);
   assert.equal(body.words.length,1);
-  assert.equal(body.due_breakdown.overdue+body.due_breakdown.today,expectedDue);
   assert.equal(body.summary.due,expectedDue);
   assert.equal(body.total_pages,expectedDue);
+  assert.equal(body.due_breakdown.overdue+body.due_breakdown.today,expectedDue);
   if(expectedDue>1){
    const next=await ctx.request.get(BASE+'/api/learning/srs/queue?status=due&page=1&size=1');
    assert.equal(next.status(),200);
@@ -288,8 +287,8 @@ try{
    countWidth:document.querySelector('#ws24Count').getBoundingClientRect().width,
    viewport:document.documentElement.clientWidth
   }));
-  assert.ok(layout.overflow<=1,'UX59.6 SRS breakdown overflows: '+JSON.stringify(layout));
-  assert.ok(layout.countWidth<=layout.viewport,'UX59.6 label exceeds viewport');
+  assert.ok(layout.overflow<=1,'UX59.6 mobile horizontal overflow: '+JSON.stringify(layout));
+  assert.ok(layout.countWidth<=layout.viewport,'UX59.6 mobile due count exceeds viewport');
  }
  const desktopCtx=await chrome.newContext({viewport:{width:1280,height:800}});
  try{
@@ -298,14 +297,15 @@ try{
   await group(desktopPage,'due');
   const label=await desktopPage.locator('#ws24Count').textContent();
   assert.ok(label.startsWith('2 từ trong nhóm · '));
-  const metrics=await desktopPage.evaluate(()=>({
+  const layout=await desktopPage.evaluate(()=>({
    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
    countWidth:document.querySelector('#ws24Count').getBoundingClientRect().width
   }));
-  assert.ok(metrics.overflow<=1,'UX59.6 desktop scroll overflow: '+JSON.stringify(metrics));
-  assert.ok(metrics.countWidth<=1280,'UX59.6 desktop count exceeds viewport');
+  assert.ok(layout.overflow<=1,'UX59.6 desktop horizontal overflow');
+  assert.ok(layout.countWidth<=1280,'UX59.6 desktop due count exceeds viewport');
  }finally{await desktopCtx.close();}
- pass('UX59.6 full account breakdown holds across pages, actor switch and mobile/desktop');
+ pass('UX59.6 account breakdown matches API paging and mobile/desktop UI');
+
 
  // UX60 M5: delay an audit response while login switches from A to B in
  // the SAME open tab. A's diagnostic counts must never reappear for B.
@@ -329,383 +329,12 @@ try{
  await pA.waitForFunction(()=>
   document.querySelector('#ws58DailyDue')?.textContent==='1'&&
   document.querySelector('#ws24Count')?.textContent?.startsWith('1 từ trong nhóm · '));
- const switchedCount=await pA.locator('#ws24Count').textContent();
- assert.match(switchedCount,/^1 từ trong nhóm · ([0-9]+) quá hạn · ([0-9]+) đến hạn$/);
- const switchedBreakdown=switchedCount.match(/· ([0-9]+) quá hạn · ([0-9]+) đến hạn$/);
- assert.equal(Number(switchedBreakdown[1])+Number(switchedBreakdown[2]),1);
+ const switchLabel=await pA.locator('#ws24Count').textContent();
+ assert.ok(switchLabel.startsWith('1 từ trong nhóm · '));
+ const switchNumbers=switchLabel.match(/[0-9]+/g).map(Number);
+ assert.equal(switchNumbers[1]+switchNumbers[2],1);
  assert.equal(await pA.locator('#ws24List .ws24-card').count(),1,
-  'Account switch must not keep previous actor cards');
- assert.equal(await pA.locator('#ws24AuditResult').textContent(),'',
-  'Switching account must clear previous audit');
- releaseAudit();
- await pA.waitForFunction(()=>!document.querySelector('#ws24Audit').disabled);
- assert.equal(await pA.locator('#ws24AuditResult').textContent(),'',
-  'Delayed audit from A leaked into account B');
- await pA.unroute('**/api/learning/srs/diagnostics');
- await login(ctxA,owner);
- await group(pA,'due');
- pass('UX60 delayed audit never leaks old actor after login switch');
- const toolbar=await pA.evaluate(()=>{
-  const refresh=document.querySelector('#ws24Reload').getBoundingClientRect();
-  const practice=document.querySelector('#ws24Practice').getBoundingClientRect();
-  return {yDiff:Math.abs(refresh.y-practice.y),overflow:
-    document.documentElement.scrollWidth-document.documentElement.clientWidth};
- });
- assert.ok(toolbar.yDiff<=12,'Practice not next to Refresh at 360px: '+JSON.stringify(toolbar));
- assert.ok(toolbar.overflow<=1,'My Learning overflows on mobile: '+JSON.stringify(toolbar));
- assert.equal(await pA.locator('a[href="/practice.html"]').count(),0);
- assert.equal(await pA.locator('a[href="/mistakes.html"]').count(),0);
- pass('one Luyện từ beside Làm mới lịch; no duplicate navigation on 360px');
-
- await pA.locator('#ws24Practice').click();
- await pA.waitForURL(url=>url.pathname==='/practice.html');
- assert.equal(new URL(pA.url()).searchParams.get('status'),'due');
- await pA.locator('#ws28Play').waitFor({state:'visible'});
- assert.equal(await pA.locator('#ws28Position').textContent(),'1 / 2');
- const mobile=await pA.evaluate(()=>({
-  overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth
- }));
- assert.ok(mobile.overflow<=1,'UX28 mobile overflow '+JSON.stringify(mobile));
- const map=new Map(vocab.map(v=>[v.meaning,v]));
- const first=map.get(await pA.locator('#ws28Meaning').textContent());
- assert.ok(first&&[one.id,two.id].includes(first.id));
- assert.equal(await pA.locator('#ws28Feedback').isVisible(),false,
-  'English answer leaked before submitting');
- pass('selected Due group opens directly in recall quiz without setup or duplicate counters');
-
- let lost=false;
- await pA.route('**/api/learning/reviews',async route=>{
-  if(!lost){
-   lost=true;
-   const saved=await route.fetch();
-   assert.ok([200,201].includes(saved.status()));
-   await route.abort('failed');
-  }else await route.continue();
- });
- await pA.locator('#ws28Skip').click();
- await pA.locator('#ws28Retry').waitFor({state:'visible'});
- await pA.locator('#ws28Retry').click();
- await pA.locator('#ws28Next').waitFor({state:'visible'});
- assert.equal(await reviewCount(owner,first.id),2);
- assert.equal((await waitProgress(owner,first.id,2)).remembered,false);
- pass('lost response replays same request ID, no duplicate review');
-
- await pA.locator('#ws28Next').click();
- const second=map.get(await pA.locator('#ws28Meaning').textContent());
- assert.ok(second&&second.id!==first.id);
- await pA.locator('#ws28Answer').fill('  '+second.english.toUpperCase()+'  ');
- await pA.locator('#ws28Check').click();
- await pA.locator('#ws28Next').waitFor({state:'visible'});
- assert.equal((await waitProgress(owner,second.id,2)).remembered,true);
- await pA.locator('#ws28Next').click();
- await pA.locator('#ws28Done').waitFor({state:'visible'});
- assert.equal(await pA.locator('#ws28CorrectCount').textContent(),'1');
- assert.equal(await pA.locator('#ws28DoneTotal').textContent(),'2');
- pass('typed recall writes correct/incorrect results to shared SRS and summary');
-
- const due=await ctxA2.request.get(BASE+'/api/learning/srs/queue?status=due&page=0&size=100');
- const up=await ctxA2.request.get(BASE+'/api/learning/srs/queue?status=upcoming&page=0&size=100');
- assert.equal(due.status(),200);
- assert.equal(up.status(),200);
- const dueWords=(await due.json()).words,upcomingWords=(await up.json()).words;
- assert.ok(dueWords.some(w=>w.id===first.id));
- assert.ok(upcomingWords.some(w=>w.id===second.id));
- pass('SRS group updates sync to second browser; schedule separation preserved');
-
- await launch(pA,'new',personalTopic);
- assert.equal(await pA.locator('#ws28Meaning').textContent(),'sự quan sát');
- assert.equal(await pA.locator('#ws28Position').textContent(),'1 / 1');
- await pA.locator('#ws28Answer').fill('OBSERVATION');
- await pA.locator('#ws28Check').click();
- await pA.locator('#ws28Next').waitFor({state:'visible'});
- assert.equal((await waitProgress(owner,personal.id,1,'personal')).remembered,true);
- pass('New topic filter and personal vocabulary use same account review API');
-
- const shadow=(await db.query(
-  'SELECT source,word_id::text,review_count FROM ws_user_srs_schedules '+
-  'WHERE user_id=$1 AND word_id=ANY($2::uuid[])',
-  [owner.id,[one.id,two.id,personal.id]])).rows;
- assert.equal(shadow.length,3);
- assert.ok(shadow.some(w=>w.source==='personal'&&w.word_id===personal.id));
- pass('shared and personal SRS shadow align to persisted reviews');
-
- // A stale device cannot overwrite an intervening review by another device.
- await pA.goto(BASE+'/practice.html?status=due');
- await pA.locator('#ws28Play').waitFor({state:'visible'});
- assert.equal(await pA.locator('#ws28Meaning').textContent(),first.meaning);
- const concurrent=await ctxA2.request.post(BASE+'/api/learning/reviews',{
-  headers:{origin:BASE},
-  data:{request_id:randomUUID(),source:'shared',word_id:first.id,
-   remembered:false,expected_review_count:2,expected_actor_id:owner.id}
- });
- assert.equal(concurrent.status(),201,await concurrent.text());
- await pA.locator('#ws28Answer').fill(first.english);
- await pA.locator('#ws28Check').click();
- await pA.locator('#ws28Play').waitFor({state:'visible'});
- const changed=await waitProgress(owner,first.id,3);
- assert.equal(changed.remembered,false);
- assert.equal(await reviewCount(owner,first.id),3);
- pass('concurrent 409 triggers safe reload; older quiz never overwrites review');
-
- // Reloading the practice page after login swap must not show the old actor.
- await login(ctxA,other);
- await pA.goto(BASE+'/practice.html?status=due');
- await pA.locator('#ws28Play').waitFor({state:'visible'});
- assert.equal(await pA.locator('#ws28Position').textContent(),'1 / 1');
- assert.equal(await pA.locator('#ws28Meaning').textContent(),three.meaning);
- pass('login switch isolates SRS queue and clears previous account question bank');
-
- // UX60 M4: exercise real server-calculated VN calendar boundaries and streaks.
- // All QA users/history are disposable and strictly on local PostgreSQL.
- const guestActivity=await ctxGuest.request.get(BASE+'/api/learning/daily-activity');
- assert.equal(guestActivity.status(),401,'guest must not see private activity');
-
- const originalA=await (await ctxA2.request.get(BASE+'/api/learning/daily-activity')).json();
- const originalB=await (await ctxB.request.get(BASE+'/api/learning/daily-activity')).json();
- assert.equal(originalA.actor_id,owner.id);
- assert.equal(originalB.actor_id,other.id);
-
- const calendar=await account();
- const ctxCalendar=await chrome.newContext({viewport:{width:360,height:800}});
- await login(ctxCalendar,calendar);
- const clock=(await db.query(
-  "SELECT to_char(now() AT TIME ZONE 'Asia/Ho_Chi_Minh','YYYY-MM-DD') AS today, "+
-  "((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date::timestamp "+
-  "AT TIME ZONE 'Asia/Ho_Chi_Minh') AS midnight"
- )).rows[0];
- const midnight=new Date(clock.midnight).getTime();
- assert.ok(Number.isFinite(midnight));
- const yesterday=new Date(Date.parse(clock.today+'T00:00:00Z')-86400000)
-  .toISOString().slice(0,10);
- await db.query(
-  'INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
-  'VALUES($1,$2,false,$3)',
-  [calendar.id,one.id,new Date(midnight-1000).toISOString()]);
- const yesterdayResponse=await ctxCalendar.request.get(
-  BASE+'/api/learning/daily-activity');
- assert.equal(yesterdayResponse.status(),200,await yesterdayResponse.text());
- const yesterdayData=await yesterdayResponse.json();
- assert.equal(yesterdayData.actor_id,calendar.id);
- assert.equal(yesterdayData.day,clock.today);
- assert.equal(yesterdayData.time_zone,'Asia/Ho_Chi_Minh');
- assert.equal(yesterdayData.reviews_today,0);
- assert.equal(yesterdayData.unique_words_today,0);
- assert.equal(yesterdayData.streak_days,1);
- assert.equal(yesterdayData.streak_ends_on,yesterday);
- assert.equal(yesterdayData.completed_goal,null);
-
- const now=new Date();
- await db.query(
-  'INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
-  'VALUES($1,$2,true,$3),($1,$2,false,$4)',
-  [calendar.id,one.id,new Date(now.getTime()-1000).toISOString(),now.toISOString()]);
- const activityResponse=await ctxCalendar.request.get(
-  BASE+'/api/learning/daily-activity');
- assert.equal(activityResponse.status(),200,await activityResponse.text());
- const activity=await activityResponse.json();
- assert.equal(activity.actor_id,calendar.id);
- assert.equal(activity.day,clock.today);
- assert.equal(activity.reviews_today,2);
- assert.equal(activity.unique_words_today,1);
- assert.equal(activity.streak_days,2);
- assert.equal(activity.streak_capped,false);
- assert.equal(activity.streak_ends_on,clock.today);
- assert.equal(activity.completed_goal,null);
-
- const pCalendar=await ctxCalendar.newPage();
- await pCalendar.goto(BASE+'/progress.html');
- await pCalendar.locator('#ws58DailyPlan').waitFor({state:'visible'});
- await pCalendar.waitForFunction(()=>(
-  document.getElementById('ws58ReviewsToday')?.textContent==='2' &&
-  document.getElementById('ws58Streak')?.textContent==='2'
- ));
- const activityDetails=pCalendar.locator('#ws58DailyPlan .ws60-more');
- await activityDetails.locator('summary').click();
- assert.equal(await pCalendar.locator('#ws58UniqueToday').textContent(),'1');
-
- const recheck=await (await ctxCalendar.request.get(
-  BASE+'/api/learning/daily-activity')).json();
- assert.equal(recheck.reviews_today,2);
- assert.equal(recheck.unique_words_today,1);
- assert.equal(recheck.streak_days,2);
- const stored=await db.query(
-  'SELECT count(*)::int AS events FROM ws_learning_flashcard_reviews WHERE user_id=$1',
-  [calendar.id]);
- const scheduleCount=await db.query(
-  'SELECT count(*)::int AS n FROM ws_user_srs_schedules WHERE user_id=$1',
-  [calendar.id]);
- assert.equal(stored.rows[0].events,3,'GET must not append review events');
- assert.equal(scheduleCount.rows[0].n,0,'GET must not write SRS schedules');
-
- assert.deepEqual(
-  {
-   actor: (await (await ctxA2.request.get(
-    BASE+'/api/learning/daily-activity')).json()).actor_id,
-   today: (await (await ctxA2.request.get(
-    BASE+'/api/learning/daily-activity')).json()).reviews_today
-  },
-  {actor:owner.id,today:originalA.reviews_today},
-  'calendar QA must not alter account A activity');
- assert.equal((await (await ctxB.request.get(
-  BASE+'/api/learning/daily-activity')).json()).reviews_today,
-  originalB.reviews_today,'calendar QA must not alter account B activity');
-
- await login(ctxCalendar,other);
- await pCalendar.reload();
- await pCalendar.locator('#ws58DailyPlan').waitFor({state:'visible'});
- await pCalendar.waitForFunction(expected=>(
-  document.getElementById('ws58ReviewsToday')?.textContent===String(expected)
- ),originalB.reviews_today);
- assert.equal(await pCalendar.locator('#ws58ReviewsToday').textContent(),
-  String(originalB.reviews_today));
- assert.equal(await pCalendar.locator('#ws58Streak').textContent(),
-  String(originalB.streak_days)+(originalB.streak_capped?'+':''));
- pass('UX60 VN midnight yesterday carry-over, today unique reviews, pure GET and account-switch isolation');
-
- const archive=await account();
- const ctxArchive=await fox.newContext({viewport:{width:390,height:844}});
- await login(ctxArchive,archive);
- const archiveInsert=await db.query(
-  'INSERT INTO ws_learning_flashcard_reviews(user_id,word_id,remembered,reviewed_at) '+
-  "SELECT $1,$2,false,now()-(g.i*interval '1 day') "+
-  'FROM generate_series(0,365) AS g(i)',
-  [archive.id,two.id]);
- assert.equal(archiveInsert.rowCount,366);
- const archiveResponse=await ctxArchive.request.get(
-  BASE+'/api/learning/daily-activity');
- assert.equal(archiveResponse.status(),200,await archiveResponse.text());
- const archiveActivity=await archiveResponse.json();
- assert.equal(archiveActivity.actor_id,archive.id);
- assert.equal(archiveActivity.streak_days,366);
- assert.equal(archiveActivity.streak_capped,true);
- assert.equal(archiveActivity.reviews_today,1);
- assert.equal(archiveActivity.unique_words_today,1);
- assert.equal(archiveActivity.completed_goal,null);
- await Promise.allSettled([ctxCalendar.close(),ctxArchive.close()]);
- pass('UX60 366-day calendar history respects capped streak without claiming daily-goal completion');
-
- // UX60 M3: exercise real account-scoped API + dashboard with a vocabulary
- // catalogue at least as large as Production (2099 enabled shared cards).
- // All writes stay on the pinned disposable localhost database.
- const scaleTitle='UX60 scale QA '+randomBytes(6).toString('hex');
- const added=await db.query(
-  'INSERT INTO ws_topics(title,enabled) VALUES($1,true) RETURNING id',
-  [scaleTitle]);
- scaleTopicId=added.rows[0].id;
- const generated=await db.query(
-  "INSERT INTO ws_words(topic_id,english,meaning,enabled) "+
-  "SELECT $1::uuid,'qascaleword' || lpad(i::text,5,'0'),"+
-  "'synthetic scale-only meaning',true FROM generate_series(1,2099) AS g(i) RETURNING id",
-  [scaleTopicId]);
- assert.equal(generated.rowCount,2099);
- const countResult=await db.query(
-  'SELECT count(*)::int AS n FROM ws_words w JOIN ws_topics t ON t.id=w.topic_id '+
-  'WHERE w.enabled=true AND t.enabled=true');
- const activeTotal=countResult.rows[0].n;
- assert.ok(activeTotal>=2099&&activeTotal<5000,'Scale fixture exceeds queue safety limits');
- const started=Date.now();
- const all=await ctxB.request.get(
-  BASE+'/api/learning/srs/queue?status=new&page=0&size=100',{timeout:30000});
- assert.equal(all.status(),200,await all.text());
- const data=await all.json();
- assert.equal(data.actor_id,other.id);
- assert.equal(data.summary.total,activeTotal);
- assert.equal(data.summary.due,1);
- assert.equal(data.summary.upcoming,0);
- assert.equal(data.summary.new,activeTotal-1);
- assert.equal(data.total,activeTotal-1);
- assert.equal(data.words.length,100);
- assert.equal(data.total_pages,Math.ceil((activeTotal-1)/100));
- assert.ok(data.words.every(w=>w.status==='new'));
- assert.ok(data.words.some(w=>w.topic===scaleTitle),
-  'Synthetic vocabulary should be retrievable without truncation');
- const lastPage=data.total_pages-1;
- const tail=await ctxB.request.get(
-  BASE+'/api/learning/srs/queue?status=new&page='+lastPage+'&size=100',
-  {timeout:30000});
- assert.equal(tail.status(),200,await tail.text());
- const last=await tail.json();
- assert.equal(last.summary.total,activeTotal);
- assert.equal(last.total_pages,data.total_pages);
- assert.equal(last.words.length,data.total-lastPage*100);
- assert.ok(last.words.length>0&&last.words.length<=100);
- await pA.goto(BASE+'/progress.html');
- await pA.locator('#ws58DailyPlan').waitFor({state:'visible'});
- await pA.waitForFunction(expected=>
-  document.querySelector('#ws58DailyNew')?.textContent===String(expected),
-  data.summary.new);
- await pA.locator('#ws24Status').selectOption('new');
- await pA.waitForFunction(expected=>
-  document.querySelectorAll('#ws24List .ws24-card').length===20 &&
-  document.querySelector('#ws24Count')?.textContent===expected+' từ trong nhóm',
-  data.summary.new);
- const scaleLayout=await pA.evaluate(()=>({
-  overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth
- }));
- assert.ok(scaleLayout.overflow<=1,
-  'Production-size My Learning must not overflow at 360px: '+JSON.stringify(scaleLayout));
- pass('UX60 production-scale SRS '+activeTotal+
-  ' cards: global counts, pagination, actor isolation and 360px UI ('+
-  (Date.now()-started)+'ms)');
-
- await Promise.allSettled([ctxA.close(),ctxA2.close(),ctxB.close(),ctxGuest.close()]);
- console.log('\nUX28.1 SINGLE ENTRY ACCOUNT SRS E2E: PASS');
-}catch(error){
- console.error('\nUX28.1 SINGLE ENTRY ACCOUNT SRS E2E: FAIL\n'+(error.stack||error));
- process.exitCode=1;
-}finally{
- await Promise.allSettled([chrome?.close(),fox?.close()]);
- if(scaleTopicId){
-  try{await db.query('DELETE FROM ws_topics WHERE id=$1',[scaleTopicId])}
-  catch(error){console.error('UX60 scale vocabulary cleanup',error.message);process.exitCode=1;}
- }
- if(runs.length){
-  try{await db.query('DELETE FROM ws_solo_runs WHERE id=ANY($1::uuid[])',[runs])}
-  catch(error){console.error('UX28.1 run cleanup',error.message);process.exitCode=1;}
- }
- if(users.length){
-  try{await db.query('DELETE FROM ws_users WHERE id=ANY($1::uuid[])',[users])}
-  catch(error){console.error('UX28.1 account cleanup',error.message);process.exitCode=1;}
- }
- await db.end();
- console.log('UX28.1 isolated QA cleanup completed');
-}
-));
-  const nums=text.match(/· ([0-9]+) quá hạn · ([0-9]+) đến hạn$/);
-  assert.equal(Number(nums[1])+Number(nums[2]),expectedDue);
-  const layout=await page.evaluate(()=>({
-   overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
-   countWidth:document.querySelector('#ws24Count').getBoundingClientRect().width,
-   viewport:document.documentElement.clientWidth
-  }));
-  assert.ok(layout.overflow<=1,'UX59.6 SRS breakdown overflows at mobile viewport: '+JSON.stringify(layout));
-  assert.ok(layout.countWidth<=layout.viewport,'UX59.6 count exceeds viewport');
- }
- pass('UX59.6 per-actor due totals stay consistent across pagination and 360px layout');
-
-
- // UX60 M5: delay an audit response while login switches from A to B in
- // the SAME open tab. A's diagnostic counts must never reappear for B.
- let releaseAudit, auditFetched;
- const gate=new Promise(resolve=>{releaseAudit=resolve});
- const fetched=new Promise(resolve=>{auditFetched=resolve});
- await pA.route('**/api/learning/srs/diagnostics',async route=>{
-  const response=await route.fetch();
-  assert.equal(response.status(),200);
-  const body=await response.json();
-  assert.equal(body.actor_id,owner.id);
-  auditFetched();
-  await gate;
-  await route.fulfill({response});
- });
- await pA.locator('.ws24-advanced summary').click();
- await pA.locator('#ws24Audit').click();
- await fetched;
- await login(ctxA,other);
- await pA.evaluate(()=>window.dispatchEvent(new Event('focus')));
- await pA.waitForFunction(()=>
-  document.querySelector('#ws58DailyDue')?.textContent==='1'&&
-  document.querySelector('#ws24Count')?.textContent?.startsWith('1 từ trong nhóm · '));
+  'Switching account must not retain the old actor cards');
  assert.equal(await pA.locator('#ws24AuditResult').textContent(),'',
   'Switching account must clear previous audit');
  releaseAudit();
