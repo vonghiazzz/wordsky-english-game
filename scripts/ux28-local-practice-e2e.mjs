@@ -278,7 +278,7 @@ try{
  await pA.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await pA.waitForFunction(()=>
   document.querySelector('#ws58DailyDue')?.textContent==='1'&&
-  document.querySelector('#ws24Count')?.textContent==='1 từ trong nhóm');
+  document.querySelector('#ws24Count')?.textContent?.startsWith('1 từ trong nhóm · '));
  assert.equal(await pA.locator('#ws24AuditResult').textContent(),'',
   'Switching account must clear previous audit');
  releaseAudit();
