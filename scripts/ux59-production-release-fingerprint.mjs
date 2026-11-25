@@ -32,7 +32,10 @@ export async function checkProduction({
   });
   assert.equal(response.status,200,path+' unexpected HTTP status');
   const mime=response.headers.get('content-type')||'';
-  assert.match(mime,path.endsWith('.css')?/text\\/css/i:path.endsWith('.js')?/javascript|text\\/plain/i:/text\\/html/i,path+' wrong MIME');
+  const mimeOk=path.endsWith('.css')?mime.includes('text/css'):
+   path.endsWith('.js')?(mime.includes('javascript')||mime.includes('text/plain')):
+   mime.includes('text/html');
+  assert.ok(mimeOk,path+' wrong MIME '+mime);
   const bytes=Buffer.from(await response.arrayBuffer());
   assert.ok(bytes.length>0&&bytes.length<=2_000_000,path+' size invalid');
   results.push(assertSameAsset(path,await loader(path),bytes));
