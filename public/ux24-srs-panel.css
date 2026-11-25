@@ -113,3 +113,7 @@
 
 /* UX59.3: compact overdue indicator without altering the 360px card grid. */
 .ws24-card-body .ws59-due-label{display:inline-block;align-self:flex-start;margin-top:5px;padding:4px 8px;border-radius:8px;border:1px solid #6389a9;background:#213956;color:#f0faff;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.4}
+
+/* UX59.4: account-scoped due summary wraps safely on 360px screens. */
+.ws60-heading #ws24Count{white-space:normal;overflow-wrap:anywhere;text-align:right;line-height:1.5;max-width:100%}
+@media(max-width:560px){.ws60-heading #ws24Count{flex:1 1 100%;text-align:left;font-size:12px}}
