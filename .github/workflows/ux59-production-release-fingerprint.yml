@@ -34,7 +34,7 @@ jobs:
           # The first 40 checks allow the independently managed release to complete.
           # Never writes, promotes, or changes an alias using CI credentials.
           for attempt in $(seq 1 40); do
-            if node scripts/ux59-production-release-fingerprint.mjs; then
+            if EXPECTED_RELEASE_SHA="${GITHUB_SHA}" node scripts/ux59-production-release-fingerprint.mjs; then
               echo "PASS: production assets match checked-out main SHA ${GITHUB_SHA}"
               exit 0
             fi
