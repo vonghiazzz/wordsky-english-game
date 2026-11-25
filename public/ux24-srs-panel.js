@@ -24,6 +24,7 @@ export function srsReviewCards(payload,actorId){
  // Reject absent, inconsistent, or cross-account totals before committing
  // the response to UI state; never leave a partial My Learning view.
  dailyPlanFromSrsQueue(payload,actorId);
+ srsDueBreakdown(payload);
  return payload;
 }
 // UX59.3: labels only. Do not infer a new due date or change SRS state.
@@ -35,6 +36,21 @@ export function srsDueLabel(word){
  const days=word.overdue_days;
  if(Number.isSafeInteger(days)&&days>0)return 'Quá hạn '+days+' ngày';
  return 'Đến hạn';
+}
+
+// Optional for compatibility with pre-UX59.4 previews. Never derive account
+// totals from a single paginated page or retain another actor's breakdown.
+export function srsDueBreakdown(payload){
+ const b=payload?.due_breakdown;
+ if(b===undefined)return null;
+ if(!b||!Number.isSafeInteger(b.overdue)||b.overdue<0||
+    !Number.isSafeInteger(b.today)||b.today<0)
+  throw Error('Thống kê lịch ôn quá hạn không hợp lệ.');
+ const dueTotal=payload.topic?payload.status==='due'?payload.total:null:
+  payload.summary?.due;
+ if(dueTotal!==null&&b.overdue+b.today!==dueTotal)
+  throw Error('Thống kê lịch ôn quá hạn không nhất quán.');
+ return b;
 }
 
 export function srsActionLabels(status){
@@ -79,6 +95,10 @@ function initSrs(){
   const rows=data?.words??[];
   list.replaceChildren();
   count.textContent=data?data.total+' từ trong nhóm':'—';
+  const dueBreakdown=data&&actorId&&!pending&&data.status==='due'?
+   srsDueBreakdown(data):null;
+  if(dueBreakdown)
+   count.textContent+=' · '+dueBreakdown.overdue+' quá hạn · '+dueBreakdown.today+' đến hạn';
   pageText.textContent=data?'Trang '+(page+1)+' / '+Math.max(1,data.total_pages):'';
   prev.disabled=pending||!data||page===0;
   next.disabled=pending||!data||page+1>=data.total_pages;
