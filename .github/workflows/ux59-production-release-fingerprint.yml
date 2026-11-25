@@ -45,6 +45,20 @@ jobs:
             echo "Release not yet visible on public domain (attempt ${attempt}/40)"
             sleep 15
           done
+      - name: Record verified production release evidence
+        if: success()
+        env:
+          EXPECTED_RELEASE_SHA: ${{ github.sha }}
+          RELEASE_RECEIPT_PATH: release-receipt.json
+        run: node scripts/ux59-production-release-receipt.mjs
+      - name: Upload release evidence for rollback review
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wordsky-production-receipt-${{ github.sha }}
+          path: release-receipt.json
+          retention-days: 30
+          if-no-files-found: error
       - name: Summarize production commit and diagnose stale alias
         if: always()
         env:
