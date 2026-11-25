@@ -20,7 +20,7 @@ async function readPublic(path,{type='text',max=maxBytes}={}){
       });
       assert.equal(response.status,200,path+' returned HTTP '+response.status);
       const mime=response.headers.get('content-type')||'';
-      assert.match(mime,type==='json'?/application\/json/i:/text\/html|javascript/i,path+' unexpected MIME '+mime);
+      assert.match(mime,type==='json'?/application\/json/i:type==='css'?/text\/css/i:/text\/html|javascript/i,path+' unexpected MIME '+mime);
       const raw=await response.text();
       assert.ok(raw.length>0&&raw.length<=max,path+' response empty or too large');
       return type==='json'?JSON.parse(raw):raw;
@@ -31,6 +31,19 @@ async function readPublic(path,{type='text',max=maxBytes}={}){
   }
   throw last;
 }
+// UX59.7 checks the actual public domain, not just a READY Git deployment.
+// A stale alias must fail this smoke even if GitHub/Vercel builds succeeded.
+const progress=await readPublic('/progress.html');
+assert.match(progress,/id="ws24Srs"/,'My Learning SRS panel missing on production domain');
+assert.match(progress,/\/ux24-srs-panel\.js/,'SRS panel entrypoint missing on production domain');
+const panelJs=await readPublic('/ux24-srs-panel.js');
+assert.match(panelJs,/export function srsDueBreakdown\(/,'UX59.4 account totals absent on public domain');
+assert.match(panelJs,/export function srsVisibleRows\(/,'UX59.5 account refresh guard absent on public domain');
+assert.match(panelJs,/srsDueLabel\(/,'UX59.3 due label absent on public domain');
+const panelCss=await readPublic('/ux24-srs-panel.css',{type:'css'});
+assert.match(panelCss,/ws59-due-label/,'UX59.3 overdue badge stylesheet absent');
+assert.match(panelCss,/#ws24Count/,'UX59.4 mobile summary stylesheet absent');
+
 const page=await readPublic('/verbs.html');
 assert.match(page,/id="ws54Level"/,'CEFR selector missing');
 assert.match(page,/<option value="A1"/,'A1 option missing');
@@ -51,7 +64,7 @@ assert.ok(Array.isArray(vocab.words)&&vocab.words.length>0,'No public vocabulary
 assert.ok(vocab.words.every(w=>typeof w.english==='string'&&typeof w.meaning==='string'),'Vocabulary fields invalid');
 console.log(JSON.stringify({
   result:'PASS_READ_ONLY_PUBLIC_PRODUCTION',
-  checked:['/verbs.html','/verbs.js','/api/health','/api/topics','/api/learning/vocabulary'],
+  checked:['/progress.html','/ux24-srs-panel.js','/ux24-srs-panel.css','/verbs.html','/verbs.js','/api/health','/api/topics','/api/learning/vocabulary'],
   topics:topics.topics.length,
   vocabulary:vocab.words.length,
   note:'Counts are observations only; no CEFR approval, user history or interactive browser acceptance asserted.'
