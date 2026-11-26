@@ -465,6 +465,64 @@ try {
   assert.equal(await racePage.locator('#ws24Practice').isEnabled(), false);
   await ctxRace.close();
   pass('Late SRS response for account A is rejected after switching to B');
+  
+  // UX59.24: hold a successful A review POST response, switch the browser
+  // session to B and then deliver it. No A success event or SRS cards may
+  // be published in B's browser; only local disposable QA accounts are used.
+  const ctxReviewRace = await chrome.newContext();
+  await signIn(ctxReviewRace, user);
+  const reviewRacePage = await ctxReviewRace.newPage();
+  await reviewRacePage.goto(BASE + '/progress.html');
+  await reviewRacePage.locator('#ws24Srs').waitFor({ state: 'visible' });
+  await reviewRacePage.locator('#ws24Status').selectOption('upcoming');
+  const reviewRaceCard = reviewRacePage.locator('#ws24List .ws24-card')
+    .filter({ hasText: shared.english }).first();
+  await reviewRaceCard.waitFor({ state: 'visible' });
+  await reviewRacePage.evaluate(() => {
+    window.__ux5924ReviewEvents = 0;
+    window.addEventListener('wordsky:srs-review-saved',
+      () => { window.__ux5924ReviewEvents += 1; });
+  });
+  let captureReview, releaseReview;
+  let interceptedReview = false;
+  const reviewCaptured = new Promise(resolve => { captureReview = resolve; });
+  const reviewRelease = new Promise(resolve => { releaseReview = resolve; });
+  await reviewRacePage.route('**/api/learning/reviews', async route => {
+    if (interceptedReview) { await route.continue(); return; }
+    interceptedReview = true;
+    const response = await route.fetch();
+    captureReview({ status: response.status(), payload: await response.json() });
+    await reviewRelease;
+    await route.fulfill({ response });
+  });
+  await reviewRaceCard.getByRole('button', {
+    name: '↻ Cần ôn ngay: ' + shared.english
+  }).click();
+  const heldReview = await Promise.race([
+    reviewCaptured,
+    new Promise((_, reject) => setTimeout(() =>
+      reject(Error('SRS review POST was not intercepted')), 15000))
+  ]);
+  assert.equal(heldReview.status, 201, JSON.stringify(heldReview.payload));
+  assert.equal(heldReview.payload.scope, 'account-review');
+  await signIn(ctxReviewRace, other);
+  releaseReview();
+  await reviewRacePage.waitForFunction(() =>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Phiên đăng nhập đã thay đổi. Lượt ôn có thể đã được lưu')
+    && document.querySelector('#ws24Reload')?.disabled === false
+  );
+  assert.equal(await reviewRacePage.evaluate(() =>
+    window.__ux5924ReviewEvents), 0,
+    'Stale review emitted a success event after account switch');
+  assert.equal(await reviewRacePage.locator('#ws24List .ws24-card').count(), 0);
+  assert.equal(await reviewRacePage.locator('#ws58DailyPlan').isVisible(), false);
+  assert.equal(await reviewRacePage.locator('#ws24Practice').isEnabled(), false);
+  assert.equal((await (await ctxReviewRace.request.get(
+    BASE + '/api/auth/me')).json()).actor?.id, other.id);
+  await ctxReviewRace.close();
+  pass('Late review success for A cannot update account B SRS UI');
+
 
   // UX59.17: switching the same browser context must evict previous
   // account learning data, not merely isolate two different contexts.
@@ -569,7 +627,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 18/18 PASS');
+  console.log('\nWORDSKY UI E2E: 19/19 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
