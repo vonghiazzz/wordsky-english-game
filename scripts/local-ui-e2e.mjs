@@ -751,6 +751,92 @@ try {
   assert.equal(latest28?.review_count,persisted28.review_count);
   await ctxThree.close();
   pass('Three simultaneous devices: exactly one 201, two 409, no SRS drift');
+  
+  // UX59.29: the server commits a review but its response is lost. A real
+  // page reload must keep BOTH request_id and observed review version in
+  // sessionStorage. Retrying the same action must replay (200), not create
+  // another review. Only isolated local QA accounts and PostgreSQL are used.
+  const reloadCtx29=await chrome.newContext();
+  await signIn(reloadCtx29,user);
+  const reloadPage29=await reloadCtx29.newPage();
+  const beforeReload29=(await db.query(scheduleSql,params)).rows[0];
+  await reloadPage29.goto(BASE+'/progress.html');
+  await reloadPage29.locator('#ws24Srs').waitFor({state:'visible'});
+  await reloadPage29.locator('#ws24Status').selectOption('upcoming');
+  const card29=reloadPage29.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first();
+  await card29.waitFor({state:'visible'});
+  const attempts29=[];
+  await reloadPage29.route('**/api/learning/reviews',async route=>{
+    const payload=route.request().postDataJSON();
+    const response=await route.fetch();
+    attempts29.push({payload,status:response.status(),body:await response.json()});
+    if(attempts29.length===1) await route.abort('failed');
+    else await route.fulfill({response});
+  });
+  const earlyButton29='✓ Ôn sớm (giữ nguyên lịch): '+shared.english;
+  await card29.getByRole('button',{name:earlyButton29}).click();
+  await reloadPage29.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Máy chủ có thể đã lưu. Hãy bấm lại cùng nút')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.equal(attempts29.length,1);
+  assert.equal(attempts29[0].status,201);
+  assert.equal(attempts29[0].body.replayed,false);
+  const pendingBefore29=await reloadPage29.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+  );
+  assert.equal(pendingBefore29.length,1,
+    'Lost review must persist exactly one pending command');
+  assert.equal(pendingBefore29[0].pending.request_id,
+    attempts29[0].payload.request_id);
+  assert.equal(pendingBefore29[0].pending.expected_review_count,
+    attempts29[0].payload.expected_review_count);
+  await wait(async()=>{
+    const row=(await db.query(scheduleSql,params)).rows[0];
+    return row?.review_count===beforeReload29.review_count+1;
+  });
+  await reloadPage29.reload();
+  await reloadPage29.locator('#ws24Srs').waitFor({state:'visible'});
+  await reloadPage29.locator('#ws24Status').selectOption('upcoming');
+  const cardAfterReload29=reloadPage29.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first();
+  await cardAfterReload29.waitFor({state:'visible'});
+  const pendingAfter29=await reloadPage29.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+  );
+  assert.deepEqual(pendingAfter29,pendingBefore29,
+    'Reload destroyed pending review request identity or observed version');
+  await cardAfterReload29.getByRole('button',{name:earlyButton29}).click();
+  await reloadPage29.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Đã ghi nhận ôn sớm')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.equal(attempts29.length,2);
+  assert.equal(attempts29[1].status,200);
+  assert.equal(attempts29[1].body.replayed,true);
+  assert.equal(attempts29[1].payload.request_id,
+    attempts29[0].payload.request_id);
+  assert.equal(attempts29[1].payload.expected_review_count,
+    attempts29[0].payload.expected_review_count);
+  const afterReload29=(await db.query(scheduleSql,params)).rows[0];
+  assert.equal(afterReload29.review_count,beforeReload29.review_count+1,
+    'Reload replay wrote an extra review');
+  assert.equal(afterReload29.due_at.toISOString(),
+    beforeReload29.due_at.toISOString(),
+    'Reload replay changed due date for an early review');
+  assert.equal(await reloadPage29.evaluate(()=>
+    Object.keys(sessionStorage).filter(key=>key.startsWith('ws23-review:')).length),
+    0,'Successful replay left a stale pending command');
+  await reloadCtx29.close();
+  pass('Page reload preserves pending SRS request; replay 200, no duplicate');
+
 
   await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
   pass('Two devices: stale SRS review returns 409 and never double-counts');
@@ -861,7 +947,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 23/23 PASS');
+  console.log('\nWORDSKY UI E2E: 24/24 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
