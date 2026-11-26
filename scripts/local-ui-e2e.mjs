@@ -479,8 +479,28 @@ try {
     'Logout of one browser unexpectedly invalidated another session');
   pass('Logout denies account learning routes and preserves other browser session');
 
+  // UX59.21: after logout, the same browser must not render stale private
+  // dashboard rows, SRS cards or account-scoped daily activity on reload.
+  await A.goto(BASE + '/progress.html');
+  await A.waitForFunction(() => {
+    const badge = document.getElementById('ws10SourceBadge');
+    const status = document.getElementById('ws15ScopeStatus');
+    return badge && badge.textContent !== 'ACCOUNT · POSTGRESQL' &&
+      status && !status.textContent.includes('Đang kiểm tra');
+  });
+  assert.notEqual(await A.locator('#ws10SourceBadge').innerText(),
+    'ACCOUNT · POSTGRESQL', 'Logged-out view retained account source');
+  assert.equal(await A.locator('#ws24List .ws24-card').count(), 0,
+    'Logged-out browser rendered private SRS cards');
+  assert.equal(await A.locator('#ws58DailyPlan').isVisible(), false,
+    'Logged-out browser displayed account daily plan');
+  assert.equal(await A.locator('#ws10WordList')
+    .filter({ hasText: unique }).count(), 0,
+    'Logged-out browser displayed private vocabulary');
+  pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
-  console.log('\nWORDSKY UI E2E: 15/15 PASS');
+
+  console.log('\nWORDSKY UI E2E: 16/16 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
