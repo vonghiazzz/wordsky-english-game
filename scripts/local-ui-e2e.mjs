@@ -454,7 +454,33 @@ try {
     .filter({ hasText: unique }).count(), 0);
   pass('Same browser account switch clears previous learning and SRS data');
 
-  console.log('\nWORDSKY UI E2E: 14/14 PASS');
+  // UX59.18: logout must remove the same browser session from every
+  // account-only learning route, without revoking other browser sessions.
+  const logout = await ctxA.request.post(BASE + '/api/auth/logout', {
+    headers: { origin: BASE }
+  });
+  assert.equal(logout.status(), 200, await logout.text());
+  assert.equal((await logout.json()).ok, true);
+  const guest = await ctxA.request.get(BASE + '/api/auth/me');
+  assert.equal(guest.status(), 200);
+  assert.equal((await guest.json()).actor, null);
+  for (const route of [
+    '/api/learning/me/summary',
+    '/api/learning/srs/queue?status=due&page=0&size=20',
+    '/api/learning/personal'
+  ]) {
+    const response = await ctxA.request.get(BASE + route);
+    assert.equal(response.status(), 401,
+      'Logged-out session accessed ' + route);
+  }
+  const remaining = await ctxB.request.get(BASE + '/api/auth/me');
+  assert.equal(remaining.status(), 200);
+  assert.equal((await remaining.json()).actor?.id, user.id,
+    'Logout of one browser unexpectedly invalidated another session');
+  pass('Logout denies account learning routes and preserves other browser session');
+
+
+  console.log('\nWORDSKY UI E2E: 15/15 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
