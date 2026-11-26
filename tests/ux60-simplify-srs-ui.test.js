@@ -39,7 +39,9 @@ test('UX60 progressively discloses sensitive and advanced info without removing 
  assert.match(js,/daily\.hidden=true/);
  assert.match(js,/activityBox\.hidden=true/);
  assert.match(js,/validateDailyActivity\(activity,actorId\)/);
- assert.match(js,/postUnifiedAccountReview\(word\.source,word\.id,remembered,actorId,word\.review_count\)/);
+ assert.match(js,/postUnifiedAccountReview\(word\.source,word\.id,remembered,clickedActor,word\.review_count\)/);
+ assert.match(js,/verified=await learningApi\('auth\/me'\)/);
+ assert.match(js,/error\.code='SRS_SESSION_CHANGED'/);
 });
 
 test('UX60 responsive SRS has two metric columns and narrow-screen overrides',()=>{
