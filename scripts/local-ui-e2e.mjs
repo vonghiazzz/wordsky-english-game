@@ -667,6 +667,43 @@ try {
   assert.equal(concurrentAfter.due_at.toISOString(),
     concurrentBefore.due_at.toISOString(),
     'Early review changed the original SRS due date');
+
+  
+  // UX59.27: a 409 is not recovered merely because the API can return the
+  // latest data. The stale browser must render the updated SRS card, retain
+  // its selected filter, and accept a NEW action with the fresh version.
+  const staleReviewPayload = staleConflict.request().postDataJSON();
+  assert.equal(staleReviewPayload.expected_review_count,
+    concurrentBefore.review_count);
+  assert.equal(await concurrentB.locator('#ws24Status').inputValue(),
+    'upcoming', '409 recovery changed the selected SRS status');
+  const recoveredCard = concurrentB.locator('#ws24List .ws24-card')
+    .filter({ hasText: shared.english }).first();
+  await recoveredCard.waitFor({ state: 'visible' });
+  const recoveryResponse = concurrentB.waitForResponse(response =>
+    new URL(response.url()).pathname === '/api/learning/reviews' &&
+    response.request().method() === 'POST');
+  await recoveredCard.getByRole('button',
+    { name: concurrentAction }).click();
+  const recoveredSave = await recoveryResponse;
+  assert.equal(recoveredSave.status(),201,await recoveredSave.text());
+  const recoveredPayload = recoveredSave.request().postDataJSON();
+  assert.equal(recoveredPayload.expected_review_count,
+    concurrentBefore.review_count + 1,
+    'Browser did not use refreshed review_count after 409');
+  assert.notEqual(recoveredPayload.request_id,staleReviewPayload.request_id,
+    'A conflict retry reused the rejected idempotency key');
+  await wait(async () => {
+    const row=(await db.query(scheduleSql,params)).rows[0];
+    return row?.review_count === concurrentBefore.review_count + 2;
+  });
+  const afterRecoveredReview=(await db.query(scheduleSql,params)).rows[0];
+  assert.equal(afterRecoveredReview.due_at.toISOString(),
+    concurrentBefore.due_at.toISOString(),
+    'Recovered early review shifted the SRS due date');
+  assert.equal(await concurrentB.locator('#ws24Status').inputValue(),
+    'upcoming');
+  pass('409 recovery refreshes browser SRS version and permits one new review');
   await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
   pass('Two devices: stale SRS review returns 409 and never double-counts');
 
@@ -776,7 +813,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 21/21 PASS');
+  console.log('\nWORDSKY UI E2E: 22/22 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
