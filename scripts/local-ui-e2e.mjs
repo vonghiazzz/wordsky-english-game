@@ -522,6 +522,75 @@ try {
     BASE + '/api/auth/me')).json()).actor?.id, other.id);
   await ctxReviewRace.close();
   pass('Late review success for A cannot update account B SRS UI');
+  
+  // UX59.25: simulate the server committing a review but the network dropping
+  // its HTTP response. The user's retry must replay the same request_id,
+  // never record an additional review or advance its SRS schedule twice.
+  const ctxLost = await chrome.newContext();
+  await signIn(ctxLost, user);
+  const lostPage = await ctxLost.newPage();
+  const beforeLost = (await db.query(
+    'SELECT review_count FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',
+    [user.id, shared.id]
+  )).rows[0].review_count;
+  await lostPage.goto(BASE + '/progress.html');
+  await lostPage.locator('#ws24Srs').waitFor({ state: 'visible' });
+  await lostPage.locator('#ws24Status').selectOption('due');
+  const retryCard = lostPage.locator('#ws24List .ws24-card')
+    .filter({ hasText: shared.english }).first();
+  await retryCard.waitFor({ state: 'visible' });
+  const seenRetries = [];
+  await lostPage.route('**/api/learning/reviews', async route => {
+    const submitted = route.request().postDataJSON();
+    const response = await route.fetch();
+    const body = await response.json();
+    seenRetries.push({ request_id:submitted.request_id,
+      expected_review_count:submitted.expected_review_count,
+      status:response.status(),body });
+    if (seenRetries.length === 1) await route.abort('failed');
+    else await route.fulfill({response});
+  });
+  const retryButton = retryCard.getByRole('button', {
+    name: '✓ Đã nhớ: ' + shared.english
+  });
+  await retryButton.click();
+  await lostPage.waitForFunction(() =>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Máy chủ có thể đã lưu. Hãy bấm lại cùng nút')
+    && document.querySelector('#ws24Reload')?.disabled === false
+  );
+  await wait(async () => {
+    const row = (await db.query(
+      'SELECT review_count FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',
+      [user.id, shared.id]
+    )).rows[0];
+    return row?.review_count === beforeLost + 1;
+  });
+  assert.equal(seenRetries.length,1);
+  assert.equal(seenRetries[0].status,201);
+  assert.equal(seenRetries[0].body.replayed,false);
+  await retryButton.click();
+  await lostPage.waitForFunction(() =>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Đã lưu từ')
+    && document.querySelector('#ws24Reload')?.disabled === false
+  );
+  assert.equal(seenRetries.length,2);
+  assert.equal(seenRetries[1].status,200);
+  assert.equal(seenRetries[1].body.replayed,true);
+  assert.equal(seenRetries[1].request_id,seenRetries[0].request_id,
+    'Lost HTTP response generated a different idempotency key on retry');
+  assert.equal(seenRetries[1].expected_review_count,
+    seenRetries[0].expected_review_count);
+  const afterLost=(await db.query(
+    'SELECT review_count FROM ws_learning_word_progress WHERE user_id=$1 AND word_id=$2',
+    [user.id, shared.id]
+  )).rows[0].review_count;
+  assert.equal(afterLost,beforeLost+1,
+    'Lost-response retry incremented review count twice');
+  await ctxLost.close();
+  pass('Lost review HTTP response replays request_id exactly once');
+
 
 
   // UX59.17: switching the same browser context must evict previous
@@ -627,7 +696,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 19/19 PASS');
+  console.log('\nWORDSKY UI E2E: 20/20 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
