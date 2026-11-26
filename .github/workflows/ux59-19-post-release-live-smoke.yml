@@ -1,5 +1,7 @@
 name: UX59.19 Post-release Live Production Smoke
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       expected_sha:
@@ -19,7 +21,7 @@ concurrency:
 jobs:
   public-production-readonly:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 16
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -31,11 +33,17 @@ jobs:
       - name: Check that expected commit is the current main head
         env:
           INPUT_SHA: ${{ inputs.expected_sha }}
+          TRIGGER_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
           set -euo pipefail
           HEAD_SHA="$(git rev-parse HEAD)"
           if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then exit 1; fi
+          if [[ "$EVENT_NAME" == "push" && "$TRIGGER_SHA" != "$HEAD_SHA" ]]; then
+            echo "STOP: main moved since this push; do not validate another commit"
+            exit 1
+          fi
           if [[ -n "$INPUT_SHA" && "$INPUT_SHA" != "$HEAD_SHA" ]]; then
             echo "STOP: expected release SHA does not match current main"
             exit 1
@@ -46,4 +54,27 @@ jobs:
           node --check scripts/ux59-19-post-release-smoke.mjs
           node --test tests/ux59-19-post-release-smoke.test.js
       - name: Verify production runtime and exact release identity (GET-only)
-        run: node scripts/ux59-19-post-release-smoke.mjs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A push precedes WordSky's intentionally manual Vercel production
+          # release. Allow the approved commit time to become live, but fail
+          # closed if it never does. Manual/scheduled audits run only once.
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            for attempt in $(seq 1 20); do
+              if node scripts/ux59-19-post-release-smoke.mjs; then
+                echo "PASS: live production matches approved push SHA"
+                exit 0
+              fi
+              if [[ "$attempt" == "20" ]]; then
+                echo "FAIL: production did not match approved SHA after 20 checks"
+                exit 1
+              fi
+              echo "Production not ready for approved SHA (attempt $attempt/20)"
+              sleep 30
+            done
+          else
+            node scripts/ux59-19-post-release-smoke.mjs
+          fi
