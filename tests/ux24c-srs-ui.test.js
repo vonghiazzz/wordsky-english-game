@@ -32,7 +32,9 @@ test('UX24C My Learning includes a Preview-gated SRS panel with due/new/upcoming
  assert.match(html,/id="ws24Topic"/);
  assert.match(html,/id="ws24Prev"/);
  assert.match(html,/id="ws24Next"/);
- assert.match(ui,/postUnifiedAccountReview\(word\.source,word\.id,remembered,actorId,word\.review_count\)/);
+ assert.match(ui,/postUnifiedAccountReview\(word\.source,word\.id,remembered,clickedActor,word\.review_count\)/);
+ assert.match(ui,/verified=await learningApi\('auth\/me'\)/);
+ assert.match(ui,/error\.code='SRS_SESSION_CHANGED'/);
  assert.match(ui,/if\(error\.status===409\)/);
  assert.match(ui,/panel\.hidden=error\.status===404/);
  assert.match(ui,/wordsky:srs-review-saved/);
