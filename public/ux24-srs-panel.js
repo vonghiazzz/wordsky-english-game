@@ -199,11 +199,29 @@ function initSrs(){
     received=null;page=0;topic.value='';auditResult.textContent='';
    }
    actorId=auth.actor.id;
+   const expectedActorId=auth.actor.id;
    const data=srsReviewCards(await learningApi(srsQuery({
     status:status.value,topic:topic.value,page
-   })),actorId);
+   })),expectedActorId);
    if(seq!==requested)return;
+   // Keep all account-scoped results local until the session is rechecked.
+   // An in-flight response for A must never populate B's dashboard.
+   let nextActivity=null;
+   let nextActivityError='';
+   try{
+    const result=await learningApi('learning/daily-activity');
+    if(seq!==requested)return;
+    nextActivity=validateDailyActivity(result,expectedActorId);
+   }catch(error){
+    if(seq!==requested)return;
+    nextActivityError='Chưa tải được hoạt động hôm nay. Hãy làm mới lịch ôn.';
+   }
+   const verified=await learningApi('auth/me');
+   if(seq!==requested)return;
+   if(verified.actor?.role!=='player'||verified.actor.id!==expectedActorId)
+    throw Error('Phiên đăng nhập đã thay đổi; không hiển thị lịch ôn của tài khoản trước.');
    received=data;
+   activity=nextActivity;activityError=nextActivityError;
    panel.hidden=false;
    const oldTopic=topic.value;
    topic.replaceChildren(make('option','Tất cả chủ đề'));
@@ -214,20 +232,11 @@ function initSrs(){
    topic.value=data.topics.includes(oldTopic)?oldTopic:'';
    if(oldTopic&&!data.topics.includes(oldTopic)){page=0;await refresh();return;}
    if(page>0&&page>=data.total_pages){page=Math.max(0,data.total_pages-1);await refresh();return;}
-   // Activity read is independent from queue availability: a failed request
-   // must not block SRS cards or silently show another account's last streak.
-   try{
-    const result=await learningApi('learning/daily-activity');
-    if(seq!==requested)return;
-    activity=validateDailyActivity(result,actorId);
-   }catch(error){
-    if(seq!==requested)return;
-    activity=null;activityError='Chưa tải được hoạt động hôm nay. Hãy làm mới lịch ôn.';
-   }
    if(!keepMessage)showMessage('Lịch ôn được đọc từ PostgreSQL theo tài khoản.');
   }catch(error){
    if(seq!==requested)return;
    received=null;actorId=null;
+   summary.textContent='';auditResult.textContent='';
    // Never show the experimental UI on Production or when the preview flag is off.
    panel.hidden=error.status===404;
    if(error.status===404)showMessage('Lịch ôn thử nghiệm chưa được bật trên môi trường này.',true);
