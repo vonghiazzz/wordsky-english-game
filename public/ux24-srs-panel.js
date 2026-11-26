@@ -247,15 +247,26 @@ function initSrs(){
  };
  const reviewWord=async(word,remembered)=>{
   if(pending||!actorId)return;
+  const clickedActor=actorId,clickedRequest=requested;
   pending=true;render();
   try{
    const auth=await learningApi('auth/me');
-   if(auth.actor?.role!=='player'||auth.actor.id!==actorId)
+   if(auth.actor?.role!=='player'||auth.actor.id!==clickedActor)
     throw Error('Tài khoản đã thay đổi; hãy tải lại trước khi ôn.');
-   await postUnifiedAccountReview(word.source,word.id,remembered,actorId,word.review_count);
+   await postUnifiedAccountReview(word.source,word.id,remembered,clickedActor,word.review_count);
+   // A successful response can belong to A even when the browser has
+   // switched to B while the POST was in flight. Never publish A's result
+   // or emit a review-saved event for the new session.
+   const verified=await learningApi('auth/me');
+   if(verified.actor?.role!=='player'||verified.actor.id!==clickedActor||
+      requested!==clickedRequest||actorId!==clickedActor){
+    const error=new Error('Phiên đăng nhập đã thay đổi trong khi lưu lượt ôn.');
+    error.code='SRS_SESSION_CHANGED';
+    throw error;
+   }
    auditResult.textContent='Đã có lượt học mới; bấm Kiểm tra đồng bộ để đối chiếu.';
    // Existing My Learning filters are preserved by its soft account refresh.
-   window.dispatchEvent(new CustomEvent('wordsky:srs-review-saved',{detail:{actorId}}));
+   window.dispatchEvent(new CustomEvent('wordsky:srs-review-saved',{detail:{actorId:clickedActor}}));
    showMessage(word.status==='scheduled'&&remembered
     ? 'Đã ghi nhận ôn sớm từ “'+word.english+'”. Ngày ôn tiếp theo được giữ nguyên.'
     : 'Đã lưu từ “'+word.english+'”. Lịch ôn đã được cập nhật.');
@@ -263,7 +274,14 @@ function initSrs(){
    await refresh({keepMessage:true});
   }catch(error){
    pending=false;
-   if(error.status===409){
+   if(error.code==='SRS_SESSION_CHANGED'){
+    // The server may already have recorded the review for the old actor;
+    // do not claim the write failed or display the old account's cards.
+    received=null;actorId=null;activity=null;activityError='';
+    summary.textContent='';auditResult.textContent='';
+    showMessage('Phiên đăng nhập đã thay đổi. Lượt ôn có thể đã được lưu cho tài khoản trước; hãy làm mới lịch ôn.',true);
+    render();
+   }else if(error.status===409){
     showMessage('Từ đã được cập nhật ở thiết bị khác. Đã tải trạng thái mới; hãy xác nhận lại.',true);
     await refresh({keepMessage:true});
    }else{
