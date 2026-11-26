@@ -427,6 +427,45 @@ try {
   assert.match(await A.locator('#ws51Weak').innerText(),/come \(V1\)/);
   pass('UX51 authenticated cross-device verb history, tamper defense, account isolation, no SRS writes');
 
+  // UX59.23: hold A's SRS HTTP response, change the actual session to B,
+  // then release the old response. Never render stale A cards under B.
+  const ctxRace = await chrome.newContext();
+  await signIn(ctxRace, user);
+  const racePage = await ctxRace.newPage();
+  let captureQueue, releaseQueue;
+  let held = false;
+  const captured = new Promise(resolve => { captureQueue = resolve; });
+  const release = new Promise(resolve => { releaseQueue = resolve; });
+  await racePage.route('**/api/learning/srs/queue?*', async route => {
+    if (held) { await route.continue(); return; }
+    held = true;
+    const response = await route.fetch();
+    captureQueue(await response.json());
+    await release;
+    await route.fulfill({ response });
+  });
+  await racePage.goto(BASE + '/progress.html', { waitUntil: 'domcontentloaded' });
+  const heldQueue = await Promise.race([
+    captured,
+    new Promise((_, reject) => setTimeout(() =>
+      reject(Error('SRS route was not intercepted')), 15000))
+  ]);
+  assert.equal(heldQueue.actor_id, user.id,
+    'Held HTTP response must originate from account A');
+  await signIn(ctxRace, other);
+  releaseQueue();
+  await racePage.waitForFunction(() => {
+    const notice = document.querySelector('#ws24Notice');
+    return notice?.dataset.error === 'true' &&
+      notice.textContent.includes('Phiên đăng nhập đã thay đổi') &&
+      document.querySelector('#ws24Reload')?.disabled === false;
+  });
+  assert.equal(await racePage.locator('#ws24List .ws24-card').count(), 0);
+  assert.equal(await racePage.locator('#ws58DailyPlan').isVisible(), false);
+  assert.equal(await racePage.locator('#ws24Practice').isEnabled(), false);
+  await ctxRace.close();
+  pass('Late SRS response for account A is rejected after switching to B');
+
   // UX59.17: switching the same browser context must evict previous
   // account learning data, not merely isolate two different contexts.
   await signIn(ctxA, other);
@@ -530,7 +569,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 17/17 PASS');
+  console.log('\nWORDSKY UI E2E: 18/18 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);

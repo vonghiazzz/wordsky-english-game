@@ -80,6 +80,8 @@ test('UX58 M3: endpoint is gated, authenticated and read only; UI has single pra
  assert.match(lib,/ISOLATION LEVEL REPEATABLE READ READ ONLY/);
  assert.match(lib,/Asia\/Ho_Chi_Minh/);
  assert.equal((page.match(/id="ws24Practice"/g)||[]).length,1);
- assert.match(ui,/validateDailyActivity\(result,actorId\)/);
+ assert.match(ui,/nextActivity=validateDailyActivity\(result,expectedActorId\)/);
+ assert.match(ui,/const verified=await learningApi\('auth\/me'\)/);
+ assert.match(ui,/verified\.actor\.id!==expectedActorId/);
  assert.match(ui,/activityBox.hidden=true/);
 });
