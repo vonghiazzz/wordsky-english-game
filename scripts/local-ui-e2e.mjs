@@ -503,7 +503,7 @@ try {
     new Promise((_, reject) => setTimeout(() =>
       reject(Error('SRS review POST was not intercepted')), 15000))
   ]);
-  assert.equal(heldReview.status, 200, JSON.stringify(heldReview.payload));
+  assert.equal(heldReview.status, 201, JSON.stringify(heldReview.payload));
   assert.equal(heldReview.payload.scope, 'account-review');
   await signIn(ctxReviewRace, other);
   releaseReview();
