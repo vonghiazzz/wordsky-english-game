@@ -248,11 +248,13 @@ function initSrs(){
  const reviewWord=async(word,remembered)=>{
   if(pending||!actorId)return;
   const clickedActor=actorId,clickedRequest=requested;
+  let postStarted=false;
   pending=true;render();
   try{
    const auth=await learningApi('auth/me');
    if(auth.actor?.role!=='player'||auth.actor.id!==clickedActor)
     throw Error('Tài khoản đã thay đổi; hãy tải lại trước khi ôn.');
+   postStarted=true;
    await postUnifiedAccountReview(word.source,word.id,remembered,clickedActor,word.review_count);
    // A successful response can belong to A even when the browser has
    // switched to B while the POST was in flight. Never publish A's result
@@ -284,6 +286,12 @@ function initSrs(){
    }else if(error.status===409){
     showMessage('Từ đã được cập nhật ở thiết bị khác. Đã tải trạng thái mới; hãy xác nhận lại.',true);
     await refresh({keepMessage:true});
+   }else if(postStarted&&!error.status){
+    // The server may already have committed the review even if the response
+    // was lost. postUnifiedAccountReview preserves its original request_id
+    // and observed version so retrying the SAME action cannot count twice.
+    showMessage('Chưa nhận được xác nhận lượt ôn “'+word.english+'”. Máy chủ có thể đã lưu. Hãy bấm lại cùng nút để kiểm tra an toàn, không ghi trùng.',true);
+    render();
    }else{
     showMessage('Chưa lưu được từ “'+word.english+'”: '+error.message,true);
     render();
