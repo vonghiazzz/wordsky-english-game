@@ -704,6 +704,54 @@ try {
   assert.equal(await concurrentB.locator('#ws24Status').inputValue(),
     'upcoming');
   pass('409 recovery refreshes browser SRS version and permits one new review');
+  
+  // UX59.28: three independently authenticated devices submit the SAME
+  // observed SRS version at once. Exactly one commit is allowed, while the
+  // other two requests must conflict without any extra review or due drift.
+  // Uses only disposable local PostgreSQL QA accounts; no production writes.
+  const ctxThree = await chrome.newContext();
+  await signIn(ctxThree,user);
+  const reviewers28=[ctxConcurrentA,ctxConcurrentB,ctxThree];
+  const versions28=await Promise.all(reviewers28.map(async context=>{
+    const response=await context.request.get(concurrentEndpoint);
+    assert.equal(response.status(),200,await response.text());
+    const json=await response.json();
+    assert.equal(json.actor_id,user.id);
+    const word=json.words.find(w=>w.id===shared.id);
+    assert.ok(word,'Three-device fixture lost scheduled shared word');
+    return word.review_count;
+  }));
+  assert.deepEqual(versions28,Array(3).fill(afterRecoveredReview.review_count),
+    'Devices must start at the same observed review version');
+  const requests28=reviewers28.map(()=>randomUUID());
+  const results28=await Promise.all(reviewers28.map((context,i)=>
+    context.request.post(BASE+'/api/learning/reviews',{
+      headers:{origin:BASE},
+      data:{
+        request_id:requests28[i],source:'shared',word_id:shared.id,
+        remembered:true,expected_actor_id:user.id,
+        expected_review_count:versions28[i]
+      }
+    })
+  ));
+  const statuses28=results28.map(x=>x.status()).sort((a,b)=>a-b);
+  assert.deepEqual(statuses28,[201,409,409],
+    'Three competing reviews must result in one commit and two conflicts');
+  const winner28=results28.find(x=>x.status()===201);
+  assert.equal((await winner28.json()).replayed,false);
+  const persisted28=(await db.query(scheduleSql,params)).rows[0];
+  assert.equal(persisted28.review_count,afterRecoveredReview.review_count+1,
+    'Three simultaneous reviews double-counted one version');
+  assert.equal(persisted28.due_at.toISOString(),
+    afterRecoveredReview.due_at.toISOString(),
+    'Early concurrent review unexpectedly changed SRS due date');
+  const verified28=await ctxThree.request.get(concurrentEndpoint);
+  assert.equal(verified28.status(),200);
+  const latest28=(await verified28.json()).words.find(w=>w.id===shared.id);
+  assert.equal(latest28?.review_count,persisted28.review_count);
+  await ctxThree.close();
+  pass('Three simultaneous devices: exactly one 201, two 409, no SRS drift');
+
   await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
   pass('Two devices: stale SRS review returns 409 and never double-counts');
 
@@ -813,7 +861,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 22/22 PASS');
+  console.log('\nWORDSKY UI E2E: 23/23 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
