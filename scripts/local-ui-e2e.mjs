@@ -590,6 +590,86 @@ try {
     'Lost-response retry incremented review count twice');
   await ctxLost.close();
   pass('Lost review HTTP response replays request_id exactly once');
+  
+  // UX59.26: two devices load the same SRS version. A saves; B submits its
+  // stale version and must receive 409, refresh, and NOT record another
+  // review. All writes use disposable local QA users and PostgreSQL.
+  const ctxConcurrentA = await chrome.newContext();
+  const ctxConcurrentB = await fox.newContext();
+  await signIn(ctxConcurrentA, user);
+  await signIn(ctxConcurrentB, user);
+  const concurrentA = await ctxConcurrentA.newPage();
+  const concurrentB = await ctxConcurrentB.newPage();
+  await Promise.all([
+    concurrentA.goto(BASE + '/progress.html'),
+    concurrentB.goto(BASE + '/progress.html')
+  ]);
+  for (const p of [concurrentA, concurrentB]) {
+    await p.locator('#ws24Srs').waitFor({ state: 'visible' });
+    await p.locator('#ws24Status').selectOption('upcoming');
+    await p.locator('#ws24List .ws24-card')
+      .filter({ hasText: shared.english }).first().waitFor({ state: 'visible' });
+  }
+  const concurrentEndpoint = BASE +
+    '/api/learning/srs/queue?status=upcoming&page=0&size=20';
+  const [queueAResponse, queueBResponse] = await Promise.all([
+    ctxConcurrentA.request.get(concurrentEndpoint),
+    ctxConcurrentB.request.get(concurrentEndpoint)
+  ]);
+  assert.equal(queueAResponse.status(), 200);
+  assert.equal(queueBResponse.status(), 200);
+  const [queueA, queueB] = await Promise.all([
+    queueAResponse.json(), queueBResponse.json()
+  ]);
+  assert.equal(queueA.actor_id, user.id);
+  assert.equal(queueB.actor_id, user.id);
+  const snapshotA = queueA.words.find(w => w.id === shared.id);
+  const snapshotB = queueB.words.find(w => w.id === shared.id);
+  assert.ok(snapshotA && snapshotB,
+    'The same scheduled shared card must be visible on both devices');
+  assert.equal(snapshotA.review_count, snapshotB.review_count);
+  const concurrentBefore = (await db.query(scheduleSql, params)).rows[0];
+  assert.equal(concurrentBefore.review_count, snapshotA.review_count);
+  const concurrentAction = '✓ Ôn sớm (giữ nguyên lịch): ' + shared.english;
+  const successResponse = concurrentA.waitForResponse(response =>
+    new URL(response.url()).pathname === '/api/learning/reviews' &&
+    response.request().method() === 'POST');
+  await concurrentA.locator('#ws24List .ws24-card')
+    .filter({ hasText: shared.english }).first()
+    .getByRole('button', { name: concurrentAction }).click();
+  const accepted = await successResponse;
+  assert.equal(accepted.status(), 201);
+  assert.equal((await accepted.json()).replayed, false);
+  await wait(async () => {
+    const p = (await db.query(scheduleSql,params)).rows[0];
+    return p?.review_count === concurrentBefore.review_count + 1;
+  });
+  const conflictResponse = concurrentB.waitForResponse(response =>
+    new URL(response.url()).pathname === '/api/learning/reviews' &&
+    response.request().method() === 'POST');
+  await concurrentB.locator('#ws24List .ws24-card')
+    .filter({ hasText: shared.english }).first()
+    .getByRole('button', { name: concurrentAction }).click();
+  const conflict = await conflictResponse;
+  assert.equal(conflict.status(),409,await conflict.text());
+  await concurrentB.waitForFunction(() =>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Từ đã được cập nhật ở thiết bị khác. Đã tải trạng thái mới')
+    && document.querySelector('#ws24Reload')?.disabled === false
+  );
+  const refreshed = await ctxConcurrentB.request.get(concurrentEndpoint);
+  assert.equal(refreshed.status(),200);
+  assert.equal((await refreshed.json()).words.find(w =>
+    w.id === shared.id)?.review_count,concurrentBefore.review_count + 1);
+  const concurrentAfter = (await db.query(scheduleSql,params)).rows[0];
+  assert.equal(concurrentAfter.review_count,concurrentBefore.review_count + 1,
+    'Second device stale review incorrectly incremented progress');
+  assert.equal(concurrentAfter.due_at.toISOString(),
+    concurrentBefore.due_at.toISOString(),
+    'Early review changed the original SRS due date');
+  await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
+  pass('Two devices: stale SRS review returns 409 and never double-counts');
+
 
 
 
@@ -696,7 +776,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 20/20 PASS');
+  console.log('\nWORDSKY UI E2E: 21/21 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
