@@ -650,8 +650,8 @@ try {
   await concurrentB.locator('#ws24List .ws24-card')
     .filter({ hasText: shared.english }).first()
     .getByRole('button', { name: concurrentAction }).click();
-  const conflict = await conflictResponse;
-  assert.equal(conflict.status(),409,await conflict.text());
+  const staleConflict = await conflictResponse;
+  assert.equal(staleConflict.status(),409,await staleConflict.text());
   await concurrentB.waitForFunction(() =>
     document.querySelector('#ws24Notice')?.textContent.includes(
       'Từ đã được cập nhật ở thiết bị khác. Đã tải trạng thái mới')
