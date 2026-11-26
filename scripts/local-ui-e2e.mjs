@@ -497,10 +497,40 @@ try {
   assert.equal(await A.locator('#ws10WordList')
     .filter({ hasText: unique }).count(), 0,
     'Logged-out browser displayed private vocabulary');
+  // UX59.22: do not pass on the temporarily empty SRS loading view.
+  // Verify settled unauthorized state at narrow phone widths in the same
+  // browser session after logout, with no production user data involved.
+  for (const width of [360, 390]) {
+    await A.setViewportSize({ width, height: 800 });
+    await A.reload();
+    await A.waitForFunction(() => {
+      const notice = document.querySelector('#ws24Notice');
+      const reload = document.querySelector('#ws24Reload');
+      return notice?.textContent.includes('Đăng nhập học viên') &&
+        notice.dataset.error === 'true' && reload?.disabled === false;
+    });
+    const mobile = await A.evaluate(() => ({
+      overflow: document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+      count: document.querySelectorAll('#ws24List .ws24-card').length,
+      dailyHidden: document.querySelector('#ws58DailyPlan')?.hidden,
+      practiceDisabled: document.querySelector('#ws24Practice')?.disabled,
+      source: document.querySelector('#ws10SourceBadge')?.textContent
+    }));
+    assert.ok(mobile.overflow <= 1,
+      'Logged-out My Learning overflows at ' + width + 'px: ' + JSON.stringify(mobile));
+    assert.equal(mobile.count, 0,
+      'Logged-out SRS cards visible at ' + width + 'px');
+    assert.equal(mobile.dailyHidden, true);
+    assert.equal(mobile.practiceDisabled, true);
+    assert.notEqual(mobile.source, 'ACCOUNT · POSTGRESQL');
+  }
+  pass('Logout mobile SRS settles without stale private data at 360/390px');
+
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 16/16 PASS');
+  console.log('\nWORDSKY UI E2E: 17/17 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
