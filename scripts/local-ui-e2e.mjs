@@ -261,15 +261,45 @@ try {
   );
   assert.equal(await C.locator('#ws10Known').innerText(), '0');
 
-  // UX59.15: account B cannot read account A's personal SRS queue.
+  // UX59.16: never count an empty SRS UI before its account query settles.
   await C.locator('#ws24Srs').waitFor({ state: 'visible' });
+  await C.waitForFunction(() =>
+    document.querySelector('#ws24Notice')?.textContent
+      .includes('Lịch ôn được đọc từ PostgreSQL theo tài khoản.') &&
+    document.querySelector('#ws24Reload')?.disabled === false
+  );
   for (const status of ['due', 'upcoming']) {
-    await C.locator('#ws24Status').selectOption(status);
+    if (status !== 'due') {
+      const responsePromise = C.waitForResponse(response => {
+        const url = new URL(response.url());
+        return url.pathname === '/api/learning/srs/queue' &&
+          url.searchParams.get('status') === status &&
+          response.request().method() === 'GET';
+      });
+      await C.locator('#ws24Status').selectOption(status);
+      const response = await responsePromise;
+      assert.equal(response.status(), 200);
+      await C.waitForFunction(() =>
+        document.querySelector('#ws24Reload')?.disabled === false &&
+        document.querySelector('#ws24Notice')?.textContent
+          .includes('Lịch ôn được đọc từ PostgreSQL theo tài khoản.')
+      );
+    }
+    const result = await ctxOther.request.get(
+      BASE + '/api/learning/srs/queue?status=' + status + '&page=0&size=20'
+    );
+    assert.equal(result.status(), 200, await result.text());
+    const queue = await result.json();
+    assert.equal(queue.actor_id, other.id,
+      'SRS API returned another account for ' + status);
+    assert.ok(Array.isArray(queue.words));
+    assert.equal(queue.words.some(word => word.english === unique), false,
+      'SRS API exposed private card in ' + status);
     assert.equal(
       await C.locator('#ws24List .ws24-card')
         .filter({ hasText: unique }).count(),
       0,
-      'Another account exposed a private SRS card in ' + status
+      'SRS UI exposed private card in ' + status
     );
   }
   pass('Different account cannot see private SRS cards in Due or Upcoming');
