@@ -427,7 +427,34 @@ try {
   assert.match(await A.locator('#ws51Weak').innerText(),/come \(V1\)/);
   pass('UX51 authenticated cross-device verb history, tamper defense, account isolation, no SRS writes');
 
-  console.log('\nWORDSKY UI E2E: 13/13 PASS');
+  // UX59.17: switching the same browser context must evict previous
+  // account learning data, not merely isolate two different contexts.
+  await signIn(ctxA, other);
+  await A.goto(BASE + '/progress.html');
+  await A.waitForFunction(() =>
+    document.getElementById('ws10SourceBadge')
+      ?.textContent === 'ACCOUNT · POSTGRESQL'
+  );
+  await A.waitForFunction(() =>
+    document.getElementById('ws10Known')?.textContent === '0'
+  );
+  const newActor = await ctxA.request.get(BASE + '/api/auth/me');
+  assert.equal((await newActor.json()).actor?.id, other.id);
+  const switchedQueue = await ctxA.request.get(
+    BASE + '/api/learning/srs/queue?status=due&page=0&size=20'
+  );
+  assert.equal(switchedQueue.status(), 200, await switchedQueue.text());
+  const switchedData = await switchedQueue.json();
+  assert.equal(switchedData.actor_id, other.id);
+  assert.equal(switchedData.words.some(w => w.english === unique), false);
+  await A.goto(BASE + '/personal.html');
+  await A.locator('#personalAccount').waitFor({ state: 'visible' });
+  assert.equal(await A.locator('#personalTotal').innerText(), '0');
+  assert.equal(await A.locator('#personalList .word-row')
+    .filter({ hasText: unique }).count(), 0);
+  pass('Same browser account switch clears previous learning and SRS data');
+
+  console.log('\nWORDSKY UI E2E: 14/14 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
