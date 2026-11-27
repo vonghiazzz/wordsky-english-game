@@ -958,6 +958,141 @@ try {
     'Early offline recovery shifted SRS due date');
   await Promise.all([offlineCtxA30.close(),onlineCtxB30.close()]);
   pass('Offline A versus online B: retry 409, fresh 201, no duplicate');
+  
+  // UX59.31: two DIFFERENT shared words can each have an uncertain POST
+  // outcome. Both original commands must survive a same-tab reload, and
+  // replaying either word must not duplicate the other's saved progress.
+  // All setup/writes stay in disposable local PostgreSQL QA data.
+  const second31=(await db.query(`
+    SELECT w.id,w.english
+    FROM ws_words w
+    JOIN ws_topics t ON t.id=w.topic_id
+    WHERE w.enabled=true AND t.enabled=true
+      AND w.id<>$1 AND lower(w.english)<>lower($2)
+    ORDER BY w.id LIMIT 1
+  `,[shared.id,shared.english])).rows[0];
+  assert.ok(second31,'A second enabled shared word is required for multiword QA');
+  const multiCtx31=await chrome.newContext();
+  await signIn(multiCtx31,user);
+  const multiPage31=await multiCtx31.newPage();
+  await multiPage31.goto(BASE+'/progress.html');
+  await multiPage31.waitForFunction(()=>
+    document.getElementById('ws10SourceBadge')?.textContent===
+      'ACCOUNT · POSTGRESQL'
+  );
+  await multiPage31.locator('#ws10Search').fill(second31.english);
+  await multiPage31.getByRole('button',{
+    name:'Đánh dấu đã nhớ: '+second31.english,exact:true
+  }).first().click();
+  const secondSchedule31=[
+    user.id,second31.id
+  ];
+  await wait(async()=>{
+    const r=(await db.query(scheduleSql,secondSchedule31)).rows[0];
+    return r?.review_count===1&&r?.due_at;
+  });
+  await multiPage31.locator('#ws24Srs').waitFor({state:'visible'});
+  await multiPage31.locator('#ws24Status').selectOption('upcoming');
+  for(const word31 of [shared,second31]){
+    await multiPage31.locator('#ws24List .ws24-card')
+      .filter({hasText:word31.english}).first().waitFor({state:'visible'});
+  }
+  const beforeMulti31=await Promise.all(
+    [params,secondSchedule31].map(async args=>
+      (await db.query(scheduleSql,args)).rows[0])
+  );
+  const captures31=[];
+  await multiPage31.route('**/api/learning/reviews',async route=>{
+    const payload=route.request().postDataJSON();
+    const response=await route.fetch();
+    captures31.push({payload,status:response.status(),
+      body:await response.json()});
+    if(captures31.length<=2)await route.abort('failed');
+    else await route.fulfill({response});
+  });
+  const label31=word=>'✓ Ôn sớm (giữ nguyên lịch): '+word.english;
+  for(const word31 of [shared,second31]){
+    await multiPage31.locator('#ws24List .ws24-card')
+      .filter({hasText:word31.english}).first()
+      .getByRole('button',{name:label31(word31)}).click();
+    await multiPage31.waitForFunction(()=>
+      document.querySelector('#ws24Notice')?.textContent.includes(
+        'Máy chủ có thể đã lưu. Hãy bấm lại cùng nút')
+      && document.querySelector('#ws24Reload')?.disabled===false
+    );
+  }
+  assert.deepEqual(captures31.map(x=>x.status),[201,201]);
+  assert.deepEqual(captures31.map(x=>x.body.replayed),[false,false]);
+  assert.notEqual(captures31[0].payload.request_id,
+    captures31[1].payload.request_id,'Different words shared one request ID');
+  assert.deepEqual(captures31.map(x=>x.payload.word_id),
+    [shared.id,second31.id]);
+  const pendingMulti31=await multiPage31.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+      .sort((a,b)=>a.key.localeCompare(b.key))
+  );
+  assert.equal(pendingMulti31.length,2,
+    'Lost responses must preserve both independent pending commands');
+  for(const request31 of captures31){
+    assert.ok(pendingMulti31.some(row=>
+      row.pending.request_id===request31.payload.request_id&&
+      row.pending.expected_review_count===
+        request31.payload.expected_review_count));
+  }
+  await wait(async()=>{
+    const vals=await Promise.all(
+      [params,secondSchedule31].map(async args=>
+        (await db.query(scheduleSql,args)).rows[0]?.review_count));
+    return vals.every((count,i)=>
+      count===beforeMulti31[i].review_count+1);
+  });
+  await multiPage31.reload();
+  await multiPage31.locator('#ws24Srs').waitFor({state:'visible'});
+  await multiPage31.locator('#ws24Status').selectOption('upcoming');
+  const afterPageReload31=await multiPage31.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+      .sort((a,b)=>a.key.localeCompare(b.key))
+  );
+  assert.deepEqual(afterPageReload31,pendingMulti31,
+    'Reload lost the pending request for one of the words');
+  for(const word31 of [shared,second31]){
+    await multiPage31.locator('#ws24List .ws24-card')
+      .filter({hasText:word31.english}).first()
+      .getByRole('button',{name:label31(word31)}).click();
+    await multiPage31.waitForFunction(()=>
+      document.querySelector('#ws24Notice')?.textContent.includes(
+        'Đã ghi nhận ôn sớm')
+      && document.querySelector('#ws24Reload')?.disabled===false
+    );
+  }
+  assert.deepEqual(captures31.map(x=>x.status),[201,201,200,200]);
+  assert.deepEqual(captures31.slice(2).map(x=>x.body.replayed),[true,true]);
+  for(let i=0;i<2;i++){
+    assert.equal(captures31[i+2].payload.request_id,
+      captures31[i].payload.request_id);
+    assert.equal(captures31[i+2].payload.expected_review_count,
+      captures31[i].payload.expected_review_count);
+  }
+  for(let i=0;i<2;i++){
+    const saved31=(await db.query(scheduleSql,
+      [params,secondSchedule31][i])).rows[0];
+    assert.equal(saved31.review_count,beforeMulti31[i].review_count+1,
+      'Multiword reload retried one review more than once');
+    assert.equal(saved31.due_at.toISOString(),
+      beforeMulti31[i].due_at.toISOString(),
+      'Early multiword replay changed due date');
+  }
+  assert.equal(await multiPage31.evaluate(()=>
+    Object.keys(sessionStorage)
+      .filter(key=>key.startsWith('ws23-review:')).length),0,
+    'Confirmed multiword replays left pending transport commands');
+  await multiCtx31.close();
+  pass('Two words: lost replies survive reload and replay without duplicates');
+
 
 
 
@@ -1070,7 +1205,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 25/25 PASS');
+  console.log('\nWORDSKY UI E2E: 26/26 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
