@@ -1096,6 +1096,66 @@ try {
 
 
 
+
+  // UX59.32: a stale review on word A must not invalidate an independent
+  // successful review of word B, even when two devices observed the same
+  // original versions. Only disposable local QA account data is mutated.
+  const ctxA32=await chrome.newContext();
+  const ctxB32=await fox.newContext();
+  await signIn(ctxA32,user);
+  await signIn(ctxB32,user);
+  const before32=await Promise.all(
+    [params,secondSchedule31].map(async args=>
+      (await db.query(scheduleSql,args)).rows[0])
+  );
+  const observed32=await Promise.all([ctxA32,ctxB32].map(async ctx=>{
+    const res=await ctx.request.get(concurrentEndpoint);
+    assert.equal(res.status(),200,await res.text());
+    const body=await res.json();
+    assert.equal(body.actor_id,user.id);
+    return [shared,second31].map(w=>{
+      const found=body.words.find(x=>x.id===w.id);
+      assert.ok(found,'Two-device fixture missing SRS word '+w.english);
+      return found.review_count;
+    });
+  }));
+  assert.deepEqual(observed32[0],observed32[1],
+    'Devices must start with identical observed versions for both words');
+  assert.deepEqual(observed32[0],before32.map(w=>w.review_count));
+  const review32=(ctx,word,index,requestId,version)=>ctx.request.post(
+    BASE+'/api/learning/reviews',{
+      headers:{origin:BASE},
+      data:{request_id:requestId,source:'shared',word_id:word.id,
+        remembered:true,expected_actor_id:user.id,
+        expected_review_count:version}
+    }
+  );
+  const ids32=[randomUUID(),randomUUID(),randomUUID()];
+  const savedA32=await review32(ctxA32,shared,0,ids32[0],observed32[0][0]);
+  assert.equal(savedA32.status(),201,await savedA32.text());
+  assert.equal((await savedA32.json()).replayed,false);
+  const savedB32=await review32(ctxB32,second31,1,ids32[1],observed32[1][1]);
+  assert.equal(savedB32.status(),201,await savedB32.text());
+  assert.equal((await savedB32.json()).replayed,false);
+  const staleA32=await review32(ctxB32,shared,0,ids32[2],observed32[1][0]);
+  assert.equal(staleA32.status(),409,await staleA32.text());
+  const replayB32=await review32(ctxB32,second31,1,ids32[1],observed32[1][1]);
+  assert.equal(replayB32.status(),200,await replayB32.text());
+  assert.equal((await replayB32.json()).replayed,true);
+  const after32=await Promise.all(
+    [params,secondSchedule31].map(async args=>
+      (await db.query(scheduleSql,args)).rows[0])
+  );
+  for(let i=0;i<2;i++){
+    assert.equal(after32[i].review_count,before32[i].review_count+1,
+      'Cross-word stale retry or replay double-counted a review');
+    assert.equal(after32[i].due_at.toISOString(),
+      before32[i].due_at.toISOString(),
+      'Cross-device early review drifted SRS due date');
+  }
+  await Promise.all([ctxA32.close(),ctxB32.close()]);
+  pass('Two devices, two words: independent 201, stale 409, replay 200');
+  
   await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
   pass('Two devices: stale SRS review returns 409 and never double-counts');
 
@@ -1205,7 +1265,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 26/26 PASS');
+  console.log('\nWORDSKY UI E2E: 27/27 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
