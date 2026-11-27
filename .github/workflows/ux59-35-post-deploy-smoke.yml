@@ -29,6 +29,9 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 17
+    permissions:
+      contents: read
+      statuses: write
     concurrency:
       group: ux59-35-production-${{ github.sha }}
       cancel-in-progress: false
@@ -47,7 +50,37 @@ jobs:
           test "$GITHUB_REF" = "refs/heads/main"
           test "$(git rev-parse HEAD)" = "$COMMIT_SHA"
           node --check scripts/ux59-35-postdeploy-smoke.mjs
+      - name: Publish pending post-deploy status for exact commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state=pending \
+            -f context="WordSky Post-Deploy HTTP Smoke" \
+            -f description="Waiting for exact-SHA deployment and live GET checks" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
       - name: Verify exact SHA deployment then GET-only production routes
+        id: smoke
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/ux59-35-postdeploy-smoke.mjs
+      - name: Publish final post-deploy status for exact commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$SMOKE_OUTCOME" = "success" ]; then
+            state=success
+            description="Exact-SHA deployment and 5 read-only production GET checks PASS"
+          else
+            state=failure
+            description="Post-deploy validation failed or did not run; inspect workflow logs"
+          fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context="WordSky Post-Deploy HTTP Smoke" \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
