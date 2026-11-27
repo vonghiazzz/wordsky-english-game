@@ -836,6 +836,129 @@ try {
     0,'Successful replay left a stale pending command');
   await reloadCtx29.close();
   pass('Page reload preserves pending SRS request; replay 200, no duplicate');
+  
+  // UX59.30: A loses its connection BEFORE a review POST reaches the server.
+  // B then commits a review from the same observed version. Reconnecting A
+  // must retry its original request_id and version, receive 409 (not 201),
+  // clear the stale pending command, and allow one fresh valid review.
+  const offlineCtxA30=await chrome.newContext();
+  const onlineCtxB30=await fox.newContext();
+  await signIn(offlineCtxA30,user);
+  await signIn(onlineCtxB30,user);
+  const offlinePage30=await offlineCtxA30.newPage();
+  const onlinePage30=await onlineCtxB30.newPage();
+  await Promise.all([
+    offlinePage30.goto(BASE+'/progress.html'),
+    onlinePage30.goto(BASE+'/progress.html')
+  ]);
+  for(const p of [offlinePage30,onlinePage30]){
+    await p.locator('#ws24Srs').waitFor({state:'visible'});
+    await p.locator('#ws24Status').selectOption('upcoming');
+    await p.locator('#ws24List .ws24-card')
+      .filter({hasText:shared.english}).first().waitFor({state:'visible'});
+  }
+  const beforeOffline30=(await db.query(scheduleSql,params)).rows[0];
+  const button30='✓ Ôn sớm (giữ nguyên lịch): '+shared.english;
+  const aAttempts30=[];
+  await offlinePage30.route('**/api/learning/reviews',async route=>{
+    const payload=route.request().postDataJSON();
+    if(aAttempts30.length===0){
+      aAttempts30.push({payload,status:'offline'});
+      await route.abort('internetdisconnected');
+      return;
+    }
+    const response=await route.fetch();
+    aAttempts30.push({payload,status:response.status(),
+      body:await response.json()});
+    await route.fulfill({response});
+  });
+  await offlinePage30.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first()
+    .getByRole('button',{name:button30}).click();
+  await offlinePage30.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Máy chủ có thể đã lưu. Hãy bấm lại cùng nút')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.equal(aAttempts30.length,1);
+  const offlineCommand30=await offlinePage30.evaluate(()=>
+    Object.entries(sessionStorage).filter(([k])=>k.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+  );
+  assert.equal(offlineCommand30.length,1);
+  assert.equal(offlineCommand30[0].pending.request_id,
+    aAttempts30[0].payload.request_id);
+  assert.equal(offlineCommand30[0].pending.expected_review_count,
+    beforeOffline30.review_count);
+  assert.equal((await db.query(scheduleSql,params)).rows[0].review_count,
+    beforeOffline30.review_count,
+    'Offline A request unexpectedly wrote to PostgreSQL');
+  const bResponse30=onlinePage30.waitForResponse(r=>
+    new URL(r.url()).pathname==='/api/learning/reviews'&&
+    r.request().method()==='POST');
+  await onlinePage30.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first()
+    .getByRole('button',{name:button30}).click();
+  const bSaved30=await bResponse30;
+  assert.equal(bSaved30.status(),201,await bSaved30.text());
+  await wait(async()=>
+    (await db.query(scheduleSql,params)).rows[0]?.review_count===
+      beforeOffline30.review_count+1
+  );
+  const aConflictPromise30=offlinePage30.waitForResponse(r=>
+    new URL(r.url()).pathname==='/api/learning/reviews'&&
+    r.request().method()==='POST');
+  await offlinePage30.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first()
+    .getByRole('button',{name:button30}).click();
+  const aConflict30=await aConflictPromise30;
+  assert.equal(aConflict30.status(),409,await aConflict30.text());
+  await offlinePage30.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Từ đã được cập nhật ở thiết bị khác. Đã tải trạng thái mới')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.equal(aAttempts30.length,2);
+  assert.equal(aAttempts30[1].payload.request_id,
+    aAttempts30[0].payload.request_id,
+    'Offline reconnect changed request ID before conflict resolution');
+  assert.equal(aAttempts30[1].payload.expected_review_count,
+    aAttempts30[0].payload.expected_review_count,
+    'Offline reconnect replaced original observed version');
+  assert.equal(await offlinePage30.evaluate(()=>
+    Object.keys(sessionStorage).filter(k=>k.startsWith('ws23-review:')).length),
+    0,'409 did not clear stale pending request');
+  assert.equal((await db.query(scheduleSql,params)).rows[0].review_count,
+    beforeOffline30.review_count+1,
+    'Stale offline replay double-counted after device B saved');
+  assert.equal(await offlinePage30.locator('#ws24Status').inputValue(),
+    'upcoming');
+  const refreshedCard30=offlinePage30.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first();
+  await refreshedCard30.waitFor({state:'visible'});
+  const aFreshPromise30=offlinePage30.waitForResponse(r=>
+    new URL(r.url()).pathname==='/api/learning/reviews'&&
+    r.request().method()==='POST');
+  await refreshedCard30.getByRole('button',{name:button30}).click();
+  const aFresh30=await aFreshPromise30;
+  assert.equal(aFresh30.status(),201,await aFresh30.text());
+  assert.equal(aAttempts30.length,3);
+  assert.notEqual(aAttempts30[2].payload.request_id,
+    aAttempts30[0].payload.request_id,
+    'Fresh review after 409 reused the stale idempotency key');
+  assert.equal(aAttempts30[2].payload.expected_review_count,
+    beforeOffline30.review_count+1);
+  await wait(async()=>
+    (await db.query(scheduleSql,params)).rows[0]?.review_count===
+      beforeOffline30.review_count+2
+  );
+  const afterOffline30=(await db.query(scheduleSql,params)).rows[0];
+  assert.equal(afterOffline30.due_at.toISOString(),
+    beforeOffline30.due_at.toISOString(),
+    'Early offline recovery shifted SRS due date');
+  await Promise.all([offlineCtxA30.close(),onlineCtxB30.close()]);
+  pass('Offline A versus online B: retry 409, fresh 201, no duplicate');
+
 
 
   await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
@@ -947,7 +1070,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 24/24 PASS');
+  console.log('\nWORDSKY UI E2E: 25/25 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
