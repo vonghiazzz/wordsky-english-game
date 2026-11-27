@@ -1156,6 +1156,99 @@ try {
   await Promise.all([ctxA32.close(),ctxB32.close()]);
   pass('Two devices, two words: independent 201, stale 409, replay 200');
   
+
+  // UX59.33: device A saves an early review of word A but loses the
+  // response. Device B updates independent word B while A is uncertain.
+  // Reloading A must preserve and replay its original command exactly once.
+  // All writes are isolated to the disposable PostgreSQL QA account.
+  const lostCtx33=await chrome.newContext();
+  const otherCtx33=await fox.newContext();
+  await signIn(lostCtx33,user);
+  await signIn(otherCtx33,user);
+  const lostPage33=await lostCtx33.newPage();
+  await lostPage33.goto(BASE+'/progress.html');
+  await lostPage33.locator('#ws24Srs').waitFor({state:'visible'});
+  await lostPage33.locator('#ws24Status').selectOption('upcoming');
+  const before33=await Promise.all(
+    [params,secondSchedule31].map(async args=>
+      (await db.query(scheduleSql,args)).rows[0])
+  );
+  const lostAttempts33=[];
+  await lostPage33.route('**/api/learning/reviews',async route=>{
+    const payload=route.request().postDataJSON();
+    const response=await route.fetch();
+    lostAttempts33.push({payload,status:response.status(),
+      body:await response.json()});
+    if(lostAttempts33.length===1)await route.abort('failed');
+    else await route.fulfill({response});
+  });
+  const action33='✓ Ôn sớm (giữ nguyên lịch): '+shared.english;
+  await lostPage33.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first()
+    .getByRole('button',{name:action33}).click();
+  await lostPage33.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Máy chủ có thể đã lưu. Hãy bấm lại cùng nút')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.equal(lostAttempts33[0].status,201);
+  const pending33=await lostPage33.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+  );
+  assert.equal(pending33.length,1);
+  assert.equal(pending33[0].pending.request_id,
+    lostAttempts33[0].payload.request_id);
+  const other33=await otherCtx33.request.post(BASE+'/api/learning/reviews',{
+    headers:{origin:BASE},
+    data:{request_id:randomUUID(),source:'shared',word_id:second31.id,
+      remembered:true,expected_actor_id:user.id,
+      expected_review_count:before33[1].review_count}
+  });
+  assert.equal(other33.status(),201,await other33.text());
+  assert.equal((await other33.json()).replayed,false);
+  await lostPage33.reload();
+  await lostPage33.locator('#ws24Srs').waitFor({state:'visible'});
+  await lostPage33.locator('#ws24Status').selectOption('upcoming');
+  const reloadedPending33=await lostPage33.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+  );
+  assert.deepEqual(reloadedPending33,pending33);
+  await lostPage33.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first()
+    .getByRole('button',{name:action33}).click();
+  await lostPage33.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Đã ghi nhận ôn sớm')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.equal(lostAttempts33.length,2);
+  assert.equal(lostAttempts33[1].status,200);
+  assert.equal(lostAttempts33[1].body.replayed,true);
+  assert.equal(lostAttempts33[1].payload.request_id,
+    lostAttempts33[0].payload.request_id);
+  assert.equal(lostAttempts33[1].payload.expected_review_count,
+    lostAttempts33[0].payload.expected_review_count);
+  const after33=await Promise.all(
+    [params,secondSchedule31].map(async args=>
+      (await db.query(scheduleSql,args)).rows[0])
+  );
+  for(let i=0;i<2;i++){
+    assert.equal(after33[i].review_count,before33[i].review_count+1,
+      'Cross-device uncertain response double-counted a review');
+    assert.equal(after33[i].due_at.toISOString(),
+      before33[i].due_at.toISOString(),
+      'Cross-device early review shifted due date');
+  }
+  assert.equal(await lostPage33.evaluate(()=>
+    Object.keys(sessionStorage).filter(k=>k.startsWith('ws23-review:')).length),
+    0,'Replay must clear the pending uncertain command');
+  await Promise.all([lostCtx33.close(),otherCtx33.close()]);
+  pass('Cross-device independent update preserves lost-response replay');
+  
   await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
   pass('Two devices: stale SRS review returns 409 and never double-counts');
 
@@ -1265,7 +1358,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 27/27 PASS');
+  console.log('\nWORDSKY UI E2E: 28/28 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
