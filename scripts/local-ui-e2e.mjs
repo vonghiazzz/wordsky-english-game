@@ -1249,6 +1249,98 @@ try {
   await Promise.all([lostCtx33.close(),otherCtx33.close()]);
   pass('Cross-device independent update preserves lost-response replay');
   
+
+  // UX59.34: A's review for a shared word commits, but its HTTP reply is
+  // lost. Device B, holding A's prior version, must receive 409. Reloading A
+  // then replays the ORIGINAL command (200) without an extra increment.
+  // Isolated disposable QA user, never a production account.
+  const lostCtx34=await chrome.newContext();
+  const staleCtx34=await fox.newContext();
+  await signIn(lostCtx34,user);
+  await signIn(staleCtx34,user);
+  const lostPage34=await lostCtx34.newPage();
+  await lostPage34.goto(BASE+'/progress.html');
+  await lostPage34.locator('#ws24Srs').waitFor({state:'visible'});
+  await lostPage34.locator('#ws24Status').selectOption('upcoming');
+  const before34=(await db.query(scheduleSql,params)).rows[0];
+  const staleSnapshot34=await staleCtx34.request.get(concurrentEndpoint);
+  assert.equal(staleSnapshot34.status(),200,await staleSnapshot34.text());
+  const staleWord34=(await staleSnapshot34.json()).words
+    .find(w=>w.id===shared.id);
+  assert.equal(staleWord34?.review_count,before34.review_count);
+  const attempts34=[];
+  await lostPage34.route('**/api/learning/reviews',async route=>{
+    const payload=route.request().postDataJSON();
+    const response=await route.fetch();
+    attempts34.push({payload,status:response.status(),
+      body:await response.json()});
+    if(attempts34.length===1)await route.abort('failed');
+    else await route.fulfill({response});
+  });
+  const action34='✓ Ôn sớm (giữ nguyên lịch): '+shared.english;
+  await lostPage34.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first()
+    .getByRole('button',{name:action34}).click();
+  await lostPage34.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Máy chủ có thể đã lưu. Hãy bấm lại cùng nút')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.equal(attempts34[0].status,201);
+  const pending34=await lostPage34.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+  );
+  assert.equal(pending34.length,1);
+  assert.equal(pending34[0].pending.request_id,
+    attempts34[0].payload.request_id);
+  const competing34=await staleCtx34.request.post(
+    BASE+'/api/learning/reviews',{
+      headers:{origin:BASE},
+      data:{request_id:randomUUID(),source:'shared',word_id:shared.id,
+        remembered:true,expected_actor_id:user.id,
+        expected_review_count:staleWord34.review_count}
+    });
+  assert.equal(competing34.status(),409,await competing34.text());
+  assert.equal((await db.query(scheduleSql,params)).rows[0].review_count,
+    before34.review_count+1,
+    'Competing stale device added a duplicate review');
+  await lostPage34.reload();
+  await lostPage34.locator('#ws24Srs').waitFor({state:'visible'});
+  await lostPage34.locator('#ws24Status').selectOption('upcoming');
+  const restored34=await lostPage34.evaluate(()=>
+    Object.entries(sessionStorage)
+      .filter(([key])=>key.startsWith('ws23-review:'))
+      .map(([key,value])=>({key,pending:JSON.parse(value)}))
+  );
+  assert.deepEqual(restored34,pending34);
+  await lostPage34.locator('#ws24List .ws24-card')
+    .filter({hasText:shared.english}).first()
+    .getByRole('button',{name:action34}).click();
+  await lostPage34.waitForFunction(()=>
+    document.querySelector('#ws24Notice')?.textContent.includes(
+      'Đã ghi nhận ôn sớm')
+    && document.querySelector('#ws24Reload')?.disabled===false
+  );
+  assert.deepEqual(attempts34.map(x=>x.status),[201,200]);
+  assert.equal(attempts34[1].body.replayed,true);
+  assert.equal(attempts34[1].payload.request_id,
+    attempts34[0].payload.request_id);
+  assert.equal(attempts34[1].payload.expected_review_count,
+    attempts34[0].payload.expected_review_count);
+  const final34=(await db.query(scheduleSql,params)).rows[0];
+  assert.equal(final34.review_count,before34.review_count+1,
+    'A replay after stale device conflict double-counted');
+  assert.equal(final34.due_at.toISOString(),
+    before34.due_at.toISOString(),
+    'Early review replay shifted SRS due date');
+  assert.equal(await lostPage34.evaluate(()=>
+    Object.keys(sessionStorage).filter(k=>k.startsWith('ws23-review:')).length),
+    0,'Replayed command was not cleared');
+  await Promise.all([lostCtx34.close(),staleCtx34.close()]);
+  pass('Same-word lost reply: competing device 409, original replay 200');
+  
   await Promise.all([ctxConcurrentA.close(),ctxConcurrentB.close()]);
   pass('Two devices: stale SRS review returns 409 and never double-counts');
 
@@ -1358,7 +1450,7 @@ try {
   pass('Logout refresh clears private My Learning dashboard and SRS UI');
 
 
-  console.log('\nWORDSKY UI E2E: 28/28 PASS');
+  console.log('\nWORDSKY UI E2E: 29/29 PASS');
 
 } catch (error) {
   console.error('\nWORDSKY UI E2E: FAIL:', error.stack || error.message);
