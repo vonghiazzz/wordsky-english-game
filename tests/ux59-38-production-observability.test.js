@@ -8,7 +8,7 @@ const workflow=readFileSync(
   new URL('../.github/workflows/ux59-35-post-deploy-smoke.yml',import.meta.url),'utf8');
 
 test('UX59.38 production smoke checks exactly eight grounded read-only routes',()=>{
-  const checks=[...source.matchAll(/await check\('([^']+)',(\d+),'([^']+)'/g)]
+  const checks=[...source.matchAll(/await check\('([^']+)',\s*(\d+),\s*'([^']+)'/g)]
     .map(([,path,code,type])=>({path,code:Number(code),type}));
   assert.deepEqual(checks,[
     {path:'/',code:200,type:'text/html'},
