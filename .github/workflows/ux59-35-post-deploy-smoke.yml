@@ -2,8 +2,9 @@ name: UX59.35 Post-Deploy Production HTTP Smoke
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
+  # Wait for Vercel's commit SUCCESS event, not the earlier main push.
+  # Preview branch statuses do not match the current main HEAD.
+  status:
   workflow_dispatch:
 
 permissions:
@@ -26,7 +27,14 @@ jobs:
         run: node --check scripts/ux59-35-postdeploy-smoke.mjs
 
   post-deploy-get:
-    if: github.event_name != 'pull_request'
+    # A Vercel success must refer to the current default-branch commit.
+    # Manual rerun remains available after an explicit production release.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'status' &&
+       github.event.context == 'Vercel' &&
+       github.event.state == 'success' &&
+       github.event.sha == github.sha)
     runs-on: ubuntu-latest
     timeout-minutes: 17
     permissions:
@@ -42,13 +50,21 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
-      - name: Assert checked-out commit equals workflow main SHA
+      - name: Assert current main and exact Vercel event SHA
         env:
           COMMIT_SHA: ${{ github.sha }}
+          DEPLOYED_SHA: ${{ github.event.sha }}
+          STATUS_CONTEXT: ${{ github.event.context }}
+          STATUS_STATE: ${{ github.event.state }}
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/main"
           test "$(git rev-parse HEAD)" = "$COMMIT_SHA"
+          if [ "$GITHUB_EVENT_NAME" = "status" ]; then
+            test "$STATUS_CONTEXT" = "Vercel"
+            test "$STATUS_STATE" = "success"
+            test "$DEPLOYED_SHA" = "$COMMIT_SHA"
+          fi
           node --check scripts/ux59-35-postdeploy-smoke.mjs
       - name: Publish pending post-deploy status for exact commit
         env:
