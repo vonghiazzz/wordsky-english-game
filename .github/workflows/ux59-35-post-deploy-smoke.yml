@@ -90,7 +90,7 @@ jobs:
           set -euo pipefail
           if [ "$SMOKE_OUTCOME" = "success" ]; then
             state=success
-            description="Exact-SHA deployment and 5 read-only production GET checks PASS"
+            description="Exact-SHA deployment and 8 read-only production GET checks PASS"
           else
             state=failure
             description="Post-deploy validation failed or did not run; inspect workflow logs"
